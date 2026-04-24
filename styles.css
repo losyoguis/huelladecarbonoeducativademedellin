@@ -90,3 +90,59 @@ main{width:100%;max-width:1760px}
 @media(max-width:420px){
   main{padding:8px}.hero{padding:22px 14px}.hero h1{font-size:1.75rem}.lead{font-size:.95rem}.panel{padding:14px;border-radius:16px}.panel h2{font-size:1.35rem}.cards strong,.big-total strong{font-size:1.25rem}.chart-card canvas#chart{min-width:620px}.environmental-ranking-chart canvas{min-width:700px}.table-wrap table{min-width:800px}.dashboard-table-wrap table{min-width:860px}.plan-mini-chart-svg{min-width:480px}.plan-chart-svg{min-width:560px}th,td{font-size:.8rem;padding:10px 8px}.dashboard-table-wrap th,.dashboard-table-wrap td{font-size:.78rem}.plan-cover h2{font-size:1.35rem}.plan-cover h3{font-size:1.15rem}
 }
+
+
+/* v19: título institucional Guardianes Climáticos MJB */
+.hero-mjb{
+  background:
+    radial-gradient(circle at 18% 12%,rgba(116,162,90,.16),transparent 35%),
+    linear-gradient(135deg,#102617,#1b321d 62%,#2b3a22);
+  color:#f8f1df;
+  align-items:flex-start;
+}
+.hero-title-block{width:100%;max-width:1280px;min-width:0}
+.mjb-chip{
+  display:inline-flex;
+  max-width:100%;
+  margin:0 0 24px;
+  padding:12px 26px;
+  border:2px solid rgba(210,224,186,.18);
+  border-radius:999px;
+  color:#f9efb4;
+  background:rgba(255,255,255,.035);
+  font-weight:950;
+  letter-spacing:.055em;
+  text-transform:uppercase;
+  font-size:clamp(.85rem,1.35vw,1.45rem);
+  line-height:1.2;
+}
+.mjb-title-card{
+  width:100%;
+  border:2px solid rgba(218,226,197,.18);
+  border-radius:28px;
+  background:rgba(255,255,255,.055);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 24px 80px rgba(0,0,0,.16);
+  padding:clamp(22px,3vw,34px);
+}
+.mjb-title-card h1,.mjb-title-card h2{
+  margin:0;
+  color:#fff8e7;
+  font-weight:950;
+  letter-spacing:-.02em;
+  line-height:1.42;
+  text-wrap:balance;
+}
+.mjb-title-card h1{font-size:clamp(1.45rem,2.7vw,2.75rem)}
+.mjb-title-card h2{font-size:clamp(1.28rem,2.45vw,2.45rem);margin-top:6px}
+.hero-mjb .lead{max-width:980px;margin:20px 0 0;color:#efe9d7}
+.hero-mjb .status-pill{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.22);color:#fff8e7}
+@media(max-width:900px){
+  .mjb-chip{border-radius:24px;padding:11px 18px;margin-bottom:18px}
+  .mjb-title-card{border-radius:22px}
+}
+@media(max-width:520px){
+  .mjb-chip{display:flex;width:100%;justify-content:center;text-align:center;font-size:.78rem}
+  .mjb-title-card{padding:18px;border-radius:18px}
+  .mjb-title-card h1{font-size:1.35rem;line-height:1.35}
+  .mjb-title-card h2{font-size:1.12rem;line-height:1.35}
+}
