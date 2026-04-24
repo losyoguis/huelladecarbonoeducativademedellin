@@ -92,3 +92,20 @@ También se ajustó la gráfica de ranking para usar barras más cortas y una co
 ## Ajuste v12
 
 Se reorganizó la pantalla principal para ubicar la sección **Comparar meses** inmediatamente después de **Importación y Diagnóstico** y antes del **Ranking de sedes por consumo eléctrico total (kWh)**.
+
+## Versión v13 · Plan de Gestión por sede
+
+Esta versión agrega un informe personalizado para cada sede educativa. En el **Dashboard ambiental por sede**, cada registro incluye el botón **Plan de Gestión**, que genera automáticamente un documento con:
+
+- diagnóstico energético y ambiental de la sede;
+- consumo kWh acumulado, promedio mensual y proyección anual;
+- toneladas de CO₂e estimadas;
+- árboles equivalentes requeridos;
+- metas de reducción a 1 y 3 años;
+- escenario de energía solar fotovoltaica;
+- acciones para minimizar el consumo eléctrico;
+- cronograma operativo;
+- indicadores de seguimiento;
+- opción para imprimir/guardar en PDF y descargar el plan en HTML.
+
+El plan se construye a partir de los datos reales importados desde las facturas PDF y de la estructura base del Plan de Reducciones GEI-R-001.

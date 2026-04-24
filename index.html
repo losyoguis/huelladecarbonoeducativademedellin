@@ -128,10 +128,27 @@
               <th>CO₂e t</th>
               <th>Árboles requeridos</th>
               <th>Promedio kWh/mes</th>
+              <th>Plan de gestión</th>
             </tr>
           </thead>
           <tbody id="environmentBody"></tbody>
         </table>
+      </div>
+    </section>
+
+    <section class="panel plan-panel" id="planPanel">
+      <div class="section-head">
+        <div>
+          <h2>Planes de Gestión por sede</h2>
+          <p class="muted">Selecciona una sede desde el dashboard ambiental. El sistema generará un informe personalizado para minimizar el consumo de energía eléctrica y reducir las emisiones de GEI en alcance 2.</p>
+        </div>
+        <div class="plan-actions">
+          <button id="printPlanBtn" class="secondary" disabled>PDF/Imprimir plan</button>
+          <button id="downloadPlanBtn" class="secondary" disabled>Descargar HTML</button>
+        </div>
+      </div>
+      <div id="planReport" class="plan-empty">
+        Aún no se ha seleccionado una sede. Usa el botón <strong>Plan de Gestión</strong> en la tabla del Dashboard ambiental por sede.
       </div>
     </section>
 

@@ -37,6 +37,9 @@ function bindEvents(){
   $("exportCsvBtn").addEventListener("click", exportCsv);
   $("exportJsonBtn").addEventListener("click", exportJson);
   $("compareBtn").addEventListener("click", comparePeriods);
+  if($("printPlanBtn")) $("printPlanBtn").addEventListener("click", printCurrentPlan);
+  if($("downloadPlanBtn")) $("downloadPlanBtn").addEventListener("click", downloadCurrentPlan);
+  if($("environmentBody")) $("environmentBody").addEventListener("click", handlePlanButtonClick);
 }
 function initConfig(){
   const cfg = loadConfig();
@@ -480,7 +483,7 @@ function renderDashboard(){
   $('dashTotalCo2').textContent = fmt(totalCo2kg/1000) + ' t CO₂e';
   $('dashTotalTrees').textContent = fmt(totalTrees) + ' árboles';
   if(!rows.length){
-    $('environmentBody').innerHTML = '<tr><td colspan="8">No hay registros de energía eléctrica para mostrar. Importa una factura PDF o revisa los filtros.</td></tr>';
+    $('environmentBody').innerHTML = '<tr><td colspan="9">No hay registros de energía eléctrica para mostrar. Importa una factura PDF o revisa los filtros.</td></tr>';
     drawSiteChart([]);
     return;
   }
@@ -493,8 +496,9 @@ function renderDashboard(){
     <td>${fmt(r.co2kg/1000)}</td>
     <td><strong>${fmt(r.trees)}</strong></td>
     <td>${fmt(r.avgKwhMonth)}</td>
+    <td><button class="plan-btn secondary" data-site-key="${escapeHtml(siteKey(r.site,r.address))}">Plan de Gestión<br><small>${escapeHtml(shortSiteName(r.site))}</small></button></td>
   </tr>`).join('');
-  const totalRow = `<tr class="total-row"><td colspan="4">TOTAL</td><td>${fmt(totalKwh)}</td><td>${fmt(totalCo2kg/1000)}</td><td>${fmt(totalTrees)}</td><td>—</td></tr>`;
+  const totalRow = `<tr class="total-row"><td colspan="4">TOTAL</td><td>${fmt(totalKwh)}</td><td>${fmt(totalCo2kg/1000)}</td><td>${fmt(totalTrees)}</td><td>—</td><td>—</td></tr>`;
   $('environmentBody').innerHTML = totalRow + body;
   drawSiteChart(rows.slice(0,12));
 }
@@ -557,4 +561,179 @@ function fitCanvasText(ctx, text, maxWidth){
     t = t.slice(0, -1);
   }
   return t + '…';
+}
+
+/* Plan de Gestión personalizado por sede - v13 */
+let CURRENT_PLAN_HTML = '';
+let CURRENT_PLAN_FILENAME = 'plan-gestion-sede.html';
+
+function shortSiteName(site){
+  const s = String(site||'Sede').replace(/\s+/g,' ').trim();
+  return s.length > 24 ? s.slice(0,24)+'…' : s;
+}
+
+function slugify(s){
+  return loose(s||'sede').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'') || 'sede';
+}
+
+function handlePlanButtonClick(ev){
+  const btn = ev.target.closest('.plan-btn');
+  if(!btn) return;
+  const key = btn.getAttribute('data-site-key');
+  generateManagementPlan(key);
+}
+
+function recordsForSiteKey(key){
+  return state.records.filter(r => siteKey(r.site, r.address) === key).sort((a,b)=>String(a.period).localeCompare(String(b.period)));
+}
+
+function generateManagementPlan(key){
+  const recs = recordsForSiteKey(key);
+  if(!recs.length){
+    log('No se encontraron registros para generar el plan de gestión.');
+    return;
+  }
+  const site = recs[0].site || 'Sede educativa';
+  const address = recs[0].address || 'Sin dirección registrada';
+  const periods = [...new Set(recs.map(r=>r.period))].sort();
+  const energy = recs.reduce((a,r)=>a+(Number(r.energyKwh)||0),0);
+  const water = recs.reduce((a,r)=>a+(Number(r.waterM3)||0),0);
+  const waste = recs.reduce((a,r)=>a+(Number(r.wasteTon)||0),0);
+  const co2kg = energy * FACTOR_CO2_KG_KWH;
+  const co2t = co2kg / 1000;
+  const trees = Math.ceil(co2kg / TREE_CO2_KG_YEAR);
+  const avgMonth = periods.length ? energy / periods.length : energy;
+  const annualProjection = avgMonth * 12;
+  const target15 = annualProjection * 0.15;
+  const target40 = annualProjection * 0.40;
+  const solar80 = annualProjection * 0.80;
+  const co2Target15 = target15 * FACTOR_CO2_KG_KWH / 1000;
+  const co2Target40 = target40 * FACTOR_CO2_KG_KWH / 1000;
+  const co2Solar80 = solar80 * FACTOR_CO2_KG_KWH / 1000;
+  const intensity = classifyEnergyIntensity(avgMonth);
+  const latest = recs[recs.length-1];
+  const generatedAt = new Date().toLocaleDateString('es-CO', {year:'numeric', month:'long', day:'numeric'});
+
+  CURRENT_PLAN_FILENAME = `plan-gestion-${slugify(site)}.html`;
+  CURRENT_PLAN_HTML = buildPlanHtml({site,address,periods,energy,water,waste,co2t,trees,avgMonth,annualProjection,target15,target40,solar80,co2Target15,co2Target40,co2Solar80,intensity,latest,generatedAt,recs});
+  $('planReport').className = 'plan-report';
+  $('planReport').innerHTML = CURRENT_PLAN_HTML;
+  $('printPlanBtn').disabled = false;
+  $('downloadPlanBtn').disabled = false;
+  $('planPanel').scrollIntoView({behavior:'smooth', block:'start'});
+  log(`Plan de Gestión generado para ${site}.`);
+}
+
+function classifyEnergyIntensity(avgMonth){
+  if(avgMonth >= 5000) return {level:'Alta prioridad', cls:'high', text:'La sede presenta un consumo eléctrico mensual alto. Se recomienda priorizar diagnóstico técnico, medición por circuitos, sustitución LED y evaluación solar fotovoltaica.'};
+  if(avgMonth >= 2000) return {level:'Prioridad media', cls:'medium', text:'La sede presenta un consumo eléctrico moderado. Se recomienda fortalecer hábitos de ahorro, optimizar iluminación y controlar horarios de equipos.'};
+  return {level:'Prioridad preventiva', cls:'low', text:'La sede presenta un consumo eléctrico bajo o moderado. Se recomienda mantener monitoreo, formación ambiental y acciones preventivas de eficiencia.'};
+}
+
+function buildPlanHtml(d){
+  const periodText = d.periods.length ? `${d.periods[0]} a ${d.periods[d.periods.length-1]} (${d.periods.length} periodo(s) importado(s))` : 'Sin periodo';
+  const monthlyRows = d.recs.map(r=>`<tr><td>${escapeHtml(r.period)}</td><td>${fmt(r.energyKwh)} kWh</td><td>${fmt((Number(r.energyKwh)||0)*FACTOR_CO2_KG_KWH/1000)} t CO₂e</td><td>${fmt(Math.ceil(((Number(r.energyKwh)||0)*FACTOR_CO2_KG_KWH)/TREE_CO2_KG_YEAR))}</td><td>${escapeHtml(r.source||'PDF')}</td></tr>`).join('');
+  return `
+    <article class="plan-document">
+      <div class="plan-cover">
+        <div>
+          <p class="plan-code">Código: GEI-R-001 · Plan de Reducciones 2025</p>
+          <h2>Plan de Gestión de Reducción de GEI</h2>
+          <h3>${escapeHtml(d.site)}</h3>
+          <p>${escapeHtml(d.address)}</p>
+        </div>
+        <div class="plan-badge ${d.intensity.cls}">${escapeHtml(d.intensity.level)}</div>
+      </div>
+
+      <div class="plan-meta-grid">
+        <div><span>Elaborado por</span><strong>Juan Carlos Blandón Vargas · Los Yoguis</strong></div>
+        <div><span>Aprobación técnica sugerida</span><strong>GSV Ingeniería</strong></div>
+        <div><span>Fecha de generación</span><strong>${escapeHtml(d.generatedAt)}</strong></div>
+        <div><span>Periodo analizado</span><strong>${escapeHtml(periodText)}</strong></div>
+      </div>
+
+      <h3>1. Diagnóstico energético y ambiental</h3>
+      <p>Este informe personalizado toma como línea base los registros importados desde las facturas EPM procesadas por SiMeCO₂. El objetivo es orientar acciones concretas para minimizar el consumo de energía eléctrica de la sede y reducir sus emisiones indirectas de gases de efecto invernadero en alcance 2.</p>
+      <div class="plan-kpi-grid">
+        <div><span>Energía acumulada</span><strong>${fmt(d.energy)} kWh</strong></div>
+        <div><span>Promedio mensual</span><strong>${fmt(d.avgMonth)} kWh/mes</strong></div>
+        <div><span>Proyección anual</span><strong>${fmt(d.annualProjection)} kWh/año</strong></div>
+        <div><span>CO₂e estimado</span><strong>${fmt(d.co2t)} t CO₂e</strong></div>
+        <div><span>Árboles equivalentes</span><strong>${fmt(d.trees)} árboles/año</strong></div>
+        <div><span>Agua registrada</span><strong>${fmt(d.water)} m³</strong></div>
+      </div>
+      <p class="plan-note"><strong>Lectura técnica:</strong> ${escapeHtml(d.intensity.text)}</p>
+
+      <h3>2. Declaración de compromiso institucional</h3>
+      <p>La sede educativa <strong>${escapeHtml(d.site)}</strong> se compromete a promover una gestión responsable de la energía eléctrica, asignando capacidades humanas, pedagógicas y técnicas para reducir progresivamente su huella de carbono y fortalecer una cultura ambiental escolar.</p>
+
+      <h3>3. Objetivo general</h3>
+      <p>Reducir la huella de carbono en alcance 2 de la sede <strong>${escapeHtml(d.site)}</strong> mediante estrategias de eficiencia energética, monitoreo del consumo, educación ambiental y evaluación de soluciones solares fotovoltaicas.</p>
+
+      <h3>4. Metas de reducción sugeridas</h3>
+      <table class="plan-table">
+        <thead><tr><th>Horizonte</th><th>Meta</th><th>Reducción estimada</th><th>CO₂e evitado estimado</th></tr></thead>
+        <tbody>
+          <tr><td>Corto plazo · 1 año</td><td>Reducir 15% del consumo mediante hábitos, control operativo, sensores y LED.</td><td>${fmt(d.target15)} kWh/año</td><td>${fmt(d.co2Target15)} t CO₂e/año</td></tr>
+          <tr><td>Mediano plazo · 3 años</td><td>Reducir 40% mediante eficiencia energética integral y gestión sistemática.</td><td>${fmt(d.target40)} kWh/año</td><td>${fmt(d.co2Target40)} t CO₂e/año</td></tr>
+          <tr><td>Escenario solar</td><td>Reducir hasta 80% de compra a la red, sujeto a cubierta disponible, radiación y dimensionamiento.</td><td>${fmt(d.solar80)} kWh/año</td><td>${fmt(d.co2Solar80)} t CO₂e/año</td></tr>
+        </tbody>
+      </table>
+
+      <h3>5. Acciones recomendadas para minimizar el consumo eléctrico</h3>
+      <div class="actions-grid">
+        <div><strong>Diagnóstico y línea base</strong><p>Revisar facturas mensuales, validar medidores, construir tendencia kWh/mes y detectar meses atípicos.</p></div>
+        <div><strong>Iluminación eficiente</strong><p>Sustituir luminarias fluorescentes o incandescentes por LED y priorizar zonas de mayor permanencia.</p></div>
+        <div><strong>Sensores y control horario</strong><p>Instalar sensores de movimiento en baños, corredores, oficinas y espacios de uso intermitente.</p></div>
+        <div><strong>Gestión de computadores</strong><p>Activar suspensión automática, apagar equipos al finalizar jornada y renovar gradualmente equipos ineficientes.</p></div>
+        <div><strong>Monitoreo energético</strong><p>Implementar lectura mensual y, si es posible, medidores inteligentes para seguimiento por bloques o circuitos.</p></div>
+        <div><strong>Energía solar fotovoltaica</strong><p>Realizar prefactibilidad técnica para autoconsumo solar, estimando potencia requerida y retorno ambiental.</p></div>
+      </div>
+
+      <h3>6. Cronograma operativo sugerido</h3>
+      <table class="plan-table compact">
+        <thead><tr><th>Fase</th><th>Actividad</th><th>Meses sugeridos</th><th>Evidencia</th></tr></thead>
+        <tbody>
+          <tr><td>Fase 1</td><td>Diagnóstico y línea base de consumo eléctrico.</td><td>Enero · Febrero · Marzo</td><td>Facturas, matriz kWh, reporte SiMeCO₂.</td></tr>
+          <tr><td>Fase 2</td><td>Diseño de estrategias LED, sensores, control de equipos y cultura energética.</td><td>Marzo · Abril · Mayo · Junio</td><td>Plan de intervención, cotizaciones, actas.</td></tr>
+          <tr><td>Fase 3</td><td>Implementación de acciones de eficiencia y capacitación.</td><td>Julio · Agosto · Septiembre</td><td>Fotos, asistencia, registros de instalación.</td></tr>
+          <tr><td>Fase 4</td><td>Seguimiento, comparación de consumos y ajuste de estrategias.</td><td>Octubre · Noviembre · Diciembre</td><td>Informe final, dashboard, indicadores.</td></tr>
+        </tbody>
+      </table>
+
+      <h3>7. Indicadores de seguimiento</h3>
+      <table class="plan-table compact">
+        <thead><tr><th>Indicador</th><th>Fórmula</th><th>Frecuencia</th><th>Meta</th></tr></thead>
+        <tbody>
+          <tr><td>Consumo eléctrico mensual</td><td>kWh facturados por mes</td><td>Mensual</td><td>Disminución progresiva</td></tr>
+          <tr><td>Emisiones alcance 2</td><td>kWh × ${fmt(FACTOR_CO2_KG_KWH)} kg CO₂e/kWh</td><td>Mensual</td><td>Reducir 15% en un año</td></tr>
+          <tr><td>Árboles equivalentes</td><td>kg CO₂e ÷ ${fmt(TREE_CO2_KG_YEAR)} kg/árbol/año</td><td>Semestral</td><td>Disminuir necesidad de compensación</td></tr>
+          <tr><td>Cultura energética</td><td>Personas capacitadas ÷ población objetivo × 100</td><td>Semestral</td><td>Capacitar mínimo 80%</td></tr>
+        </tbody>
+      </table>
+
+      <h3>8. Registros mensuales usados por el plan</h3>
+      <table class="plan-table compact">
+        <thead><tr><th>Periodo</th><th>Energía</th><th>CO₂e</th><th>Árboles</th><th>Fuente</th></tr></thead>
+        <tbody>${monthlyRows}</tbody>
+      </table>
+
+      <h3>9. Responsable y seguimiento</h3>
+      <p><strong>Responsable sugerido:</strong> líder ambiental de la sede, comité escolar ambiental, directivos docentes y equipo de apoyo técnico. <strong>Frecuencia:</strong> mensual para carga de facturas, semestral para revisión del plan y anual para informe de resultados.</p>
+    </article>`;
+}
+
+function printCurrentPlan(){
+  if(!CURRENT_PLAN_HTML) return;
+  const w = window.open('', '_blank');
+  const css = document.querySelector('style')?.innerHTML || '';
+  const linkCss = '<link rel="stylesheet" href="styles.css">';
+  w.document.write(`<!doctype html><html lang="es"><head><meta charset="utf-8"><title>${escapeHtml(CURRENT_PLAN_FILENAME)}</title>${linkCss}<style>${css}body{background:white}.plan-document{box-shadow:none}.plan-actions,.hero,footer{display:none}</style></head><body><main><section class="panel plan-panel">${CURRENT_PLAN_HTML}</section></main><script>window.onload=()=>window.print()</script></body></html>`);
+  w.document.close();
+}
+
+function downloadCurrentPlan(){
+  if(!CURRENT_PLAN_HTML) return;
+  const html = `<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${escapeHtml(CURRENT_PLAN_FILENAME)}</title><link rel="stylesheet" href="styles.css"></head><body><main><section class="panel plan-panel">${CURRENT_PLAN_HTML}</section></main></body></html>`;
+  downloadBlob(html, CURRENT_PLAN_FILENAME, 'text/html;charset=utf-8');
 }
