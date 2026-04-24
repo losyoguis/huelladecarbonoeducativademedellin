@@ -17,38 +17,7 @@
   </header>
 
   <main>
-    <section class="panel grid-2">
-      <div>
-        <h2>1. Importación</h2>
-        <p class="muted">Sube manualmente los PDF a <code>/data</code> en GitHub. Luego presiona el botón para buscar nuevos archivos e importarlos.</p>
-        <div class="actions">
-          <button class="primary" id="scanDataBtn">Buscar nuevos PDF en /data</button>
-          <label class="secondary file-label">
-            Cargar PDF local
-            <input type="file" id="localPdfInput" accept="application/pdf" hidden />
-          </label>
-          <button class="secondary" id="clearBtn">Reiniciar datos</button>
-        </div>
-        <div class="mini-form">
-          <label>Owner GitHub
-            <input id="repoOwner" placeholder="Ej. losyoguis" />
-          </label>
-          <label>Repositorio
-            <input id="repoName" placeholder="Ej. simeco2" />
-          </label>
-          <label>Rama
-            <input id="repoBranch" placeholder="main" />
-          </label>
-          <button id="saveRepoBtn" class="secondary">Guardar configuración</button>
-        </div>
-        <p class="hint">Si el sitio está en GitHub Pages, el sistema intenta detectar owner/repositorio automáticamente. En repositorios privados se requiere publicar los PDF o usar manifest.</p>
-      </div>
-      <div>
-        <h2>Diagnóstico</h2>
-        <pre id="logBox" class="log"></pre>
-      </div>
-    </section>
-
+    <!-- Orden v9: indicadores, dashboard ambiental y comparación mensual arriba. -->
     <section class="cards" id="cards">
       <article><span>Periodos</span><strong id="kPeriods">0</strong></article>
       <article><span>Sedes</span><strong id="kSites">0</strong></article>
@@ -58,6 +27,8 @@
       <article><span>Agua</span><strong id="kWater">0 m³</strong></article>
       <article><span>Aseo/Residuos</span><strong id="kWaste">0 t</strong></article>
     </section>
+
+
 
 
     <section class="panel dashboard-panel">
@@ -110,6 +81,49 @@
       <canvas id="siteChart" width="1100" height="460" aria-label="Ranking de sedes por consumo eléctrico"></canvas>
     </section>
     <section class="panel">
+      <h2>Comparar meses</h2>
+      <div class="compare-controls">
+        <label>Periodo A <select id="compareA"></select></label>
+        <label>Periodo B <select id="compareB"></select></label>
+        <button id="compareBtn" class="primary">Comparar</button>
+      </div>
+      <div id="compareResult" class="compare-result"></div>
+      <canvas id="chart" width="1100" height="420" aria-label="Gráfico comparativo"></canvas>
+    </section>
+
+    <section class="panel grid-2">
+      <div>
+        <h2>1. Importación</h2>
+        <p class="muted">Sube manualmente los PDF a <code>/data</code> en GitHub. Luego presiona el botón para buscar nuevos archivos e importarlos.</p>
+        <div class="actions">
+          <button class="primary" id="scanDataBtn">Buscar nuevos PDF en /data</button>
+          <label class="secondary file-label">
+            Cargar PDF local
+            <input type="file" id="localPdfInput" accept="application/pdf" hidden />
+          </label>
+          <button class="secondary" id="clearBtn">Reiniciar datos</button>
+        </div>
+        <div class="mini-form">
+          <label>Owner GitHub
+            <input id="repoOwner" placeholder="Ej. losyoguis" />
+          </label>
+          <label>Repositorio
+            <input id="repoName" placeholder="Ej. simeco2" />
+          </label>
+          <label>Rama
+            <input id="repoBranch" placeholder="main" />
+          </label>
+          <button id="saveRepoBtn" class="secondary">Guardar configuración</button>
+        </div>
+        <p class="hint">Si el sitio está en GitHub Pages, el sistema intenta detectar owner/repositorio automáticamente. En repositorios privados se requiere publicar los PDF o usar manifest.</p>
+      </div>
+      <div>
+        <h2>Diagnóstico</h2>
+        <pre id="logBox" class="log"></pre>
+      </div>
+    </section>
+
+    <section class="panel">
       <div class="toolbar">
         <div>
           <label>Buscar sede</label>
@@ -149,16 +163,6 @@
       </div>
     </section>
 
-    <section class="panel">
-      <h2>Comparar meses</h2>
-      <div class="compare-controls">
-        <label>Periodo A <select id="compareA"></select></label>
-        <label>Periodo B <select id="compareB"></select></label>
-        <button id="compareBtn" class="primary">Comparar</button>
-      </div>
-      <div id="compareResult" class="compare-result"></div>
-      <canvas id="chart" width="1100" height="420" aria-label="Gráfico comparativo"></canvas>
-    </section>
   </main>
 
   <footer>

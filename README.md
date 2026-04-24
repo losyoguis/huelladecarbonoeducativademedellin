@@ -62,3 +62,9 @@ Si un archivo se llama `Mayo2025.pdf`, pero internamente dice `Resumen de factur
 - `styles.css`: diseño responsive tipo dashboard.
 - `app.js`: lectura PDF, cálculos, dashboard, filtros, comparación y exportación.
 - `data/manifest.json`: listado de PDF disponibles en la carpeta `data/`.
+
+
+## Actualización v9
+
+- Se reorganizó la interfaz para ubicar en la parte superior los indicadores generales, el dashboard ambiental por sede y la sección de comparación mensual.
+- La importación, diagnóstico y tabla detallada quedan debajo para priorizar la lectura ejecutiva de resultados.
