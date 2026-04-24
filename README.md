@@ -77,7 +77,7 @@ Si un archivo se llama `Mayo2025.pdf`, pero internamente dice `Resumen de factur
 - En pantallas pequeñas, la gráfica permite desplazamiento horizontal para evitar cortes de texto.
 
 
-## Actualización v11
+## Actualización v12
 
 Se reorganizó la interfaz según el orden solicitado:
 
@@ -87,3 +87,8 @@ Se reorganizó la interfaz según el orden solicitado:
 4. Comparador mensual, filtros y tabla detallada.
 
 También se ajustó la gráfica de ranking para usar barras más cortas y una columna fija de resultados, evitando que se oculten los árboles requeridos.
+
+
+## Ajuste v12
+
+Se reorganizó la pantalla principal para ubicar la sección **Comparar meses** inmediatamente después de **Importación y Diagnóstico** y antes del **Ranking de sedes por consumo eléctrico total (kWh)**.

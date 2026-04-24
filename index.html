@@ -17,7 +17,7 @@
   </header>
 
   <main>
-    <!-- Orden v11: importación/diagnóstico primero, luego ranking, indicadores, dashboard ambiental y resto del sistema. -->
+    <!-- Orden v12: importación/diagnóstico primero, luego comparador mensual, ranking, indicadores, dashboard ambiental y resto del sistema. -->
     <section class="panel grid-2">
       <div>
         <h2>1. Importación</h2>
@@ -49,6 +49,19 @@
         <pre id="logBox" class="log"></pre>
       </div>
     </section>
+
+
+    <section class="panel">
+      <h2>Comparar meses</h2>
+      <div class="compare-controls">
+        <label>Periodo A <select id="compareA"></select></label>
+        <label>Periodo B <select id="compareB"></select></label>
+        <button id="compareBtn" class="primary">Comparar</button>
+      </div>
+      <div id="compareResult" class="compare-result"></div>
+      <canvas id="chart" width="1100" height="420" aria-label="Gráfico comparativo"></canvas>
+    </section>
+
 
 
     <section class="panel ranking-panel">
@@ -121,18 +134,6 @@
         </table>
       </div>
     </section>
-
-    <section class="panel">
-      <h2>Comparar meses</h2>
-      <div class="compare-controls">
-        <label>Periodo A <select id="compareA"></select></label>
-        <label>Periodo B <select id="compareB"></select></label>
-        <button id="compareBtn" class="primary">Comparar</button>
-      </div>
-      <div id="compareResult" class="compare-result"></div>
-      <canvas id="chart" width="1100" height="420" aria-label="Gráfico comparativo"></canvas>
-    </section>
-
 
     <section class="panel">
       <div class="toolbar">
