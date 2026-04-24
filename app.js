@@ -512,14 +512,15 @@ function drawSiteChart(rows){
   ctx.fillText('Dato visible por sede: kWh acumulados · t CO₂e · árboles requeridos.',24,54);
   if(!rows.length){ ctx.fillStyle='#13312d'; ctx.fillText('Sin datos para graficar',24,92); return; }
 
+  // v11: barras más cortas y columna fija para que siempre se vean kWh, CO₂e y árboles.
   const padL = 255;
-  const labelCol = 340;
   const padR = 28;
+  const valueX = Math.max(735, c.width - 330);
   const top = 82;
   const rowH = 32;
   const barH = 18;
   const max = Math.max(...rows.map(r=>r.energyKwh),1);
-  const maxBarW = Math.max(220, c.width - padL - labelCol - padR);
+  const maxBarW = Math.max(180, valueX - padL - 18);
 
   ctx.font='12px Arial';
   rows.forEach((r,i)=>{
@@ -537,7 +538,7 @@ function drawSiteChart(rows){
     ctx.fillStyle=grad;
     roundRect(ctx,padL,y,bw,barH,8); ctx.fill();
 
-    const textX = padL + bw + 10;
+    const textX = valueX;
     const available = c.width - textX - padR;
     const fullLabel = `${fmt(r.energyKwh)} kWh · ${fmt(r.co2kg/1000)} t CO₂e · ${fmt(r.trees)} árboles`;
     ctx.fillStyle='#13312d';

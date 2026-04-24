@@ -75,3 +75,15 @@ Si un archivo se llama `Mayo2025.pdf`, pero internamente dice `Resumen de factur
 - La gráfica **Ranking de sedes por consumo eléctrico total (kWh)** quedó ubicada inmediatamente debajo de los indicadores del **Dashboard ambiental por sede**.
 - Las barras fueron ajustadas para no ocupar todo el ancho del panel, reservando espacio a la derecha para visualizar claramente: **kWh**, **t CO₂e** y **árboles requeridos**.
 - En pantallas pequeñas, la gráfica permite desplazamiento horizontal para evitar cortes de texto.
+
+
+## Actualización v11
+
+Se reorganizó la interfaz según el orden solicitado:
+
+1. Importación y Diagnóstico.
+2. Ranking de sedes por consumo eléctrico total, con kWh, t CO₂e y árboles visibles.
+3. Indicadores generales y Dashboard ambiental por sede.
+4. Comparador mensual, filtros y tabla detallada.
+
+También se ajustó la gráfica de ranking para usar barras más cortas y una columna fija de resultados, evitando que se oculten los árboles requeridos.
