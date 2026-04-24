@@ -734,9 +734,191 @@ function classifyEnergyIntensity(avgMonth){
   return {level:'Prioridad preventiva', cls:'low', text:'La sede presenta un consumo eléctrico bajo o moderado. Se recomienda mantener monitoreo, formación ambiental y acciones preventivas de eficiencia.'};
 }
 
+
+function buildPlanMetricSeries(recs){
+  return [...recs]
+    .map(r=>({
+      period:String(r.period||''),
+      energy:Number(r.energyKwh)||0,
+      water:Number(r.waterM3)||0,
+      waste:Number(r.wasteTon)||0,
+      co2:((Number(r.energyKwh)||0)*FACTOR_CO2_KG_KWH)/1000,
+      trees:Math.ceil(((Number(r.energyKwh)||0)*FACTOR_CO2_KG_KWH)/TREE_CO2_KG_YEAR),
+      source:r.source||'PDF'
+    }))
+    .sort((a,b)=>a.period.localeCompare(b.period));
+}
+
+function buildPlanBarChartSvg(rows, cfg={}){
+  if(!rows || !rows.length) return `<div class="plan-chart-empty">No hay datos suficientes para graficar ${escapeHtml(cfg.title||'este indicador')}.</div>`;
+  const width = cfg.width || 980;
+  const height = cfg.height || 350;
+  const padL = 74, padR = 28, padT = 28, padB = 62;
+  const chartW = width - padL - padR;
+  const chartH = height - padT - padB;
+  const values = rows.map(r => Number(cfg.getValue ? cfg.getValue(r) : r.value) || 0);
+  const max = Math.max(...values, 1);
+  const step = chartW / rows.length;
+  const barW = Math.max(22, Math.min(56, step * 0.52));
+  const gradId = cfg.gradId || `grad-${Math.random().toString(36).slice(2,8)}`;
+  const fmtValue = cfg.formatValue || ((v)=>fmt(v));
+  const fmtLabel = cfg.formatLabel || ((r)=>escapeHtml(String(r.label || r.period || '')));
+  const subtitle = cfg.subtitle ? `<p>${escapeHtml(cfg.subtitle)}</p>` : '';
+
+  let grid = '';
+  [0, .25, .5, .75, 1].forEach(ratio => {
+    const y = padT + chartH - chartH * ratio;
+    const value = max * ratio;
+    grid += `<line x1="${padL}" y1="${y.toFixed(1)}" x2="${(padL+chartW).toFixed(1)}" y2="${y.toFixed(1)}" stroke="#dcebe6" stroke-width="1" />`;
+    grid += `<text x="${padL-10}" y="${(y+4).toFixed(1)}" text-anchor="end" font-size="11" fill="#68817b">${escapeHtml(fmtValue(value))}</text>`;
+  });
+
+  let bars = '';
+  rows.forEach((row, i) => {
+    const value = values[i];
+    const h = (value / max) * chartH;
+    const x = padL + i * step + (step / 2) - (barW / 2);
+    const y = padT + chartH - h;
+    const label = fmtLabel(row);
+    const valueText = escapeHtml(fmtValue(value));
+    bars += `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${Math.max(h,2).toFixed(1)}" rx="10" fill="url(#${gradId})" />`;
+    bars += `<text x="${(x+barW/2).toFixed(1)}" y="${Math.max(y-8,padT+14).toFixed(1)}" text-anchor="middle" font-size="11.5" font-weight="800" fill="#183c35">${valueText}</text>`;
+    bars += `<text x="${(x+barW/2).toFixed(1)}" y="${(padT+chartH+22).toFixed(1)}" text-anchor="middle" font-size="11.5" font-weight="800" fill="#36524d">${label}</text>`;
+  });
+
+  return `
+    <section class="plan-chart-card">
+      <div class="plan-chart-head">
+        <h4>${escapeHtml(cfg.title || 'Gráfico')}</h4>
+        ${subtitle}
+      </div>
+      <div class="plan-chart-wrap">
+        <svg class="plan-chart-svg" viewBox="0 0 ${width} ${height}" role="img" aria-label="${escapeHtml(cfg.title || 'Gráfico')}" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="${gradId}" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="${cfg.colorA || '#18c6a0'}"></stop>
+              <stop offset="100%" stop-color="${cfg.colorB || '#0b9878'}"></stop>
+            </linearGradient>
+          </defs>
+          <rect x="0" y="0" width="${width}" height="${height}" rx="18" fill="#ffffff" />
+          ${grid}
+          <line x1="${padL}" y1="${padT+chartH}" x2="${padL+chartW}" y2="${padT+chartH}" stroke="#b8d8ce" stroke-width="1.5" />
+          ${bars}
+        </svg>
+      </div>
+    </section>`;
+}
+
+function buildPlanReductionCharts(d){
+  const energyRows = [
+    {period:'Base', value:d.annualProjection},
+    {period:'Meta 15%', value:d.target15},
+    {period:'Meta 40%', value:d.target40},
+    {period:'Solar 80%', value:d.solar80}
+  ];
+  const co2Rows = [
+    {period:'Meta 15%', value:d.co2Target15},
+    {period:'Meta 40%', value:d.co2Target40},
+    {period:'Solar 80%', value:d.co2Solar80}
+  ];
+  return `
+    <div class="plan-visual-grid two-col">
+      ${buildPlanBarChartSvg(energyRows, {
+        title:'Comparación de escenarios de reducción (kWh/año)',
+        subtitle:'Compara la línea base anual proyectada frente al potencial de reducción por gestión, eficiencia y energía solar.',
+        gradId:'planScenarioEnergy',
+        colorA:'#26c6a6', colorB:'#109677',
+        getValue:(r)=>r.value,
+        formatValue:(v)=>fmt(v),
+        formatLabel:(r)=>escapeHtml(r.period)
+      })}
+      ${buildPlanBarChartSvg(co2Rows, {
+        title:'CO₂e evitado estimado por escenario (t/año)',
+        subtitle:'Reducción potencial anual de emisiones indirectas asociadas al consumo eléctrico.',
+        gradId:'planScenarioCo2',
+        colorA:'#5bbdff', colorB:'#1877cf',
+        getValue:(r)=>r.value,
+        formatValue:(v)=>fmt(v),
+        formatLabel:(r)=>escapeHtml(r.period)
+      })}
+    </div>`;
+}
+
+function buildPlanMonthlyCharts(d){
+  const rows = buildPlanMetricSeries(d.recs);
+  const cards = [];
+  cards.push(buildPlanBarChartSvg(rows, {
+    title:'Consumo de energía eléctrica por periodo',
+    subtitle:`Histórico de consumo facturado en kWh para la sede ${d.site}.`,
+    gradId:'planEnergyPeriods',
+    colorA:'#19caa4', colorB:'#0a9978',
+    getValue:(r)=>r.energy,
+    formatValue:(v)=>fmt(v),
+    formatLabel:(r)=>escapeHtml(r.period)
+  }));
+  cards.push(buildPlanBarChartSvg(rows, {
+    title:'Consumo de agua por periodo (m³)',
+    subtitle:'Permite identificar periodos de mayor demanda hídrica y posibles oportunidades de ahorro.',
+    gradId:'planWaterPeriods',
+    colorA:'#8ed0ff', colorB:'#2f84d6',
+    getValue:(r)=>r.water,
+    formatValue:(v)=>fmt(v),
+    formatLabel:(r)=>escapeHtml(r.period)
+  }));
+  cards.push(buildPlanBarChartSvg(rows, {
+    title:'Emisiones estimadas de CO₂e por periodo (t)',
+    subtitle:`Calculadas a partir del factor ${fmt(FACTOR_CO2_KG_KWH)} kg CO₂e/kWh.`,
+    gradId:'planCo2Periods',
+    colorA:'#66c2ff', colorB:'#1c77d3',
+    getValue:(r)=>r.co2,
+    formatValue:(v)=>fmt(v),
+    formatLabel:(r)=>escapeHtml(r.period)
+  }));
+  cards.push(buildPlanBarChartSvg(rows, {
+    title:'Árboles equivalentes requeridos por periodo',
+    subtitle:'Estimación de árboles necesarios para compensar las emisiones asociadas al consumo del periodo.',
+    gradId:'planTreesPeriods',
+    colorA:'#acd95c', colorB:'#5ca61c',
+    getValue:(r)=>r.trees,
+    formatValue:(v)=>fmt(v),
+    formatLabel:(r)=>escapeHtml(r.period)
+  }));
+  if(rows.some(r => r.waste > 0)){
+    cards.push(buildPlanBarChartSvg(rows, {
+      title:'Residuos / aseo por periodo (t)',
+      subtitle:'Comportamiento mensual del componente de residuos identificado en la factura consolidada.',
+      gradId:'planWastePeriods',
+      colorA:'#ffcf70', colorB:'#d58d12',
+      getValue:(r)=>r.waste,
+      formatValue:(v)=>fmt(v),
+      formatLabel:(r)=>escapeHtml(r.period)
+    }));
+  }
+  return `<div class="plan-visual-grid">${cards.join('')}</div>`;
+}
+
+function buildPlanSummaryCards(d){
+  const rows = buildPlanMetricSeries(d.recs);
+  if(!rows.length) return '';
+  const maxEnergy = rows.reduce((a,b)=>a.energy>=b.energy?a:b);
+  const maxWater = rows.reduce((a,b)=>a.water>=b.water?a:b);
+  const maxCo2 = rows.reduce((a,b)=>a.co2>=b.co2?a:b);
+  const avgEnergy = rows.reduce((s,r)=>s+r.energy,0) / rows.length;
+  return `
+    <div class="plan-summary-grid">
+      <div><span>Periodo de mayor consumo eléctrico</span><strong>${escapeHtml(maxEnergy.period)}</strong><small>${fmt(maxEnergy.energy)} kWh</small></div>
+      <div><span>Promedio mensual de energía</span><strong>${fmt(avgEnergy)} kWh</strong><small>${rows.length} periodo(s) analizado(s)</small></div>
+      <div><span>Periodo de mayor consumo de agua</span><strong>${escapeHtml(maxWater.period)}</strong><small>${fmt(maxWater.water)} m³</small></div>
+      <div><span>Mayor impacto en CO₂e</span><strong>${escapeHtml(maxCo2.period)}</strong><small>${fmt(maxCo2.co2)} t CO₂e</small></div>
+    </div>`;
+}
+
 function buildPlanHtml(d){
   const periodText = d.periods.length ? `${d.periods[0]} a ${d.periods[d.periods.length-1]} (${d.periods.length} periodo(s) importado(s))` : 'Sin periodo';
-  const monthlyRows = d.recs.map(r=>`<tr><td>${escapeHtml(r.period)}</td><td>${fmt(r.energyKwh)} kWh</td><td>${fmt((Number(r.energyKwh)||0)*FACTOR_CO2_KG_KWH/1000)} t CO₂e</td><td>${fmt(Math.ceil(((Number(r.energyKwh)||0)*FACTOR_CO2_KG_KWH)/TREE_CO2_KG_YEAR))}</td><td>${escapeHtml(r.source||'PDF')}</td></tr>`).join('');
+  const monthlyRows = d.recs.map(r=>`<tr><td>${escapeHtml(r.period)}</td><td>${fmt(r.energyKwh)} kWh</td><td>${fmt(Number(r.waterM3)||0)} m³</td><td>${fmt((Number(r.energyKwh)||0)*FACTOR_CO2_KG_KWH/1000)} t CO₂e</td><td>${fmt(Math.ceil(((Number(r.energyKwh)||0)*FACTOR_CO2_KG_KWH)/TREE_CO2_KG_YEAR))}</td><td>${fmt(Number(r.wasteTon)||0)} t</td><td>${escapeHtml(r.source||'PDF')}</td></tr>`).join('');
+  const summaryCards = buildPlanSummaryCards(d);
+  const monthlyCharts = buildPlanMonthlyCharts(d);
+  const reductionCharts = buildPlanReductionCharts(d);
   return `
     <article class="plan-document">
       <div class="plan-cover">
@@ -767,6 +949,10 @@ function buildPlanHtml(d){
         <div><span>Agua registrada</span><strong>${fmt(d.water)} m³</strong></div>
       </div>
       <p class="plan-note"><strong>Lectura técnica:</strong> ${escapeHtml(d.intensity.text)}</p>
+      <h3>1.1 Panel gráfico del diagnóstico</h3>
+      <p>Las siguientes gráficas presentan los principales indicadores medibles y comparables de la sede: energía, agua, CO₂e, árboles equivalentes y, cuando aplica, residuos/aseo. Estas visualizaciones también quedan integradas en el informe generado para consulta, impresión o descarga.</p>
+      ${summaryCards}
+      ${monthlyCharts}
 
       <h3>2. Declaración de compromiso institucional</h3>
       <p>La sede educativa <strong>${escapeHtml(d.site)}</strong> se compromete a promover una gestión responsable de la energía eléctrica, asignando capacidades humanas, pedagógicas y técnicas para reducir progresivamente su huella de carbono y fortalecer una cultura ambiental escolar.</p>
@@ -783,6 +969,7 @@ function buildPlanHtml(d){
           <tr><td>Escenario solar</td><td>Reducir hasta 80% de compra a la red, sujeto a cubierta disponible, radiación y dimensionamiento.</td><td>${fmt(d.solar80)} kWh/año</td><td>${fmt(d.co2Solar80)} t CO₂e/año</td></tr>
         </tbody>
       </table>
+      ${reductionCharts}
 
       <h3>5. Acciones recomendadas para minimizar el consumo eléctrico</h3>
       <div class="actions-grid">
@@ -817,8 +1004,9 @@ function buildPlanHtml(d){
       </table>
 
       <h3>8. Registros mensuales usados por el plan</h3>
+      <p>La siguiente tabla resume los datos importados que soportan el diagnóstico y las comparaciones del plan de gestión. Se incluyen los principales indicadores mensuales medibles para la sede.</p>
       <table class="plan-table compact">
-        <thead><tr><th>Periodo</th><th>Energía</th><th>CO₂e</th><th>Árboles</th><th>Fuente</th></tr></thead>
+        <thead><tr><th>Periodo</th><th>Energía</th><th>Agua</th><th>CO₂e</th><th>Árboles</th><th>Residuos</th><th>Fuente</th></tr></thead>
         <tbody>${monthlyRows}</tbody>
       </table>
 

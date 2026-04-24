@@ -146,3 +146,12 @@ main{width:100%;max-width:1760px}
   .mjb-title-card h1{font-size:1.35rem;line-height:1.35}
   .mjb-title-card h2{font-size:1.12rem;line-height:1.35}
 }
+
+
+/* v21: ampliación gráfica del plan de gestión */
+.plan-summary-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin:12px 24px 0}.plan-summary-grid div{border:1px solid var(--line);border-radius:16px;background:#f8fffc;padding:14px}.plan-summary-grid span{display:block;color:var(--muted);font-weight:900;font-size:.82rem}.plan-summary-grid strong{display:block;margin-top:6px;font-size:1.1rem;color:var(--ink)}.plan-summary-grid small{display:block;margin-top:6px;color:#58706a;font-weight:800}
+.plan-visual-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px;margin:14px 24px 0}.plan-visual-grid.two-col{grid-template-columns:repeat(auto-fit,minmax(360px,1fr))}
+.plan-chart-card{border:1px solid var(--line);border-radius:18px;background:#f8fffc;padding:14px;overflow:hidden}.plan-chart-head h4{margin:0 0 4px;color:var(--ink);font-size:1.02rem}.plan-chart-head p{margin:0;color:#59716b;line-height:1.45}.plan-chart-wrap{margin-top:10px;overflow-x:auto;border:1px solid #dcebe6;border-radius:16px;background:white;padding:8px;-webkit-overflow-scrolling:touch}.plan-chart-svg{display:block;width:100%;min-width:760px;height:auto}.plan-chart-empty{margin-top:10px;padding:18px;border:1px dashed var(--line);border-radius:14px;background:#fff;color:var(--muted);text-align:center}
+@media(max-width:900px){.plan-summary-grid,.plan-visual-grid{margin-left:14px;margin-right:14px}.plan-chart-svg{min-width:680px}}
+@media(max-width:520px){.plan-chart-svg{min-width:620px}}
+@media print{.plan-summary-grid,.plan-visual-grid,.plan-chart-card{break-inside:avoid-page}}
