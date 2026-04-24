@@ -50,3 +50,16 @@
 .plan-chart-empty{margin-top:12px;padding:18px;border:1px dashed var(--line);border-radius:14px;background:#fff;color:var(--muted);text-align:center}
 @media(max-width:760px){.plan-chart-card{margin-left:14px;margin-right:14px}}
 @media print{.plan-chart-card{break-inside:avoid-page}}
+
+
+.plan-monthly-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin:12px 24px 0}
+.plan-monthly-summary div{border:1px solid var(--line);border-radius:16px;background:#f8fffc;padding:14px}
+.plan-monthly-summary span{display:block;color:var(--muted);font-weight:900;font-size:.82rem}
+.plan-monthly-summary strong{display:block;margin-top:6px;color:var(--ink);font-size:1.1rem}
+.plan-monthly-summary small{display:block;margin-top:6px;color:#58706a;font-weight:700}
+.plan-monthly-visual-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin:14px 24px 0}
+.plan-mini-chart-wrap{border:1px solid var(--line);border-radius:16px;background:#f8fffc;padding:12px}
+.plan-mini-chart-title{font-weight:900;color:var(--ink);margin-bottom:8px}
+.plan-mini-chart-svg{display:block;width:100%;min-width:360px;height:auto}
+@media(max-width:760px){.plan-monthly-summary,.plan-monthly-visual-grid{margin-left:14px;margin-right:14px}.plan-mini-chart-svg{min-width:330px}}
+@media print{.plan-monthly-summary,.plan-monthly-visual-grid,.plan-chart-card{break-inside:avoid-page}}
