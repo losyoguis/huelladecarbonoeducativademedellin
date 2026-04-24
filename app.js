@@ -19,12 +19,13 @@ window.addEventListener('load', () => {
 });
 
 function initPdfJs(){
+  const pdfStatus = $('pdfStatus');
   if(window.pdfjsLib){
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-    $('pdfStatus').textContent = 'PDF.js activo';
-  } else {
-    $('pdfStatus').textContent = 'PDF.js no cargó';
-    $('pdfStatus').classList.add('bad');
+    if(pdfStatus) pdfStatus.textContent = 'PDF.js activo';
+  } else if(pdfStatus) {
+    pdfStatus.textContent = 'PDF.js no cargó';
+    pdfStatus.classList.add('bad');
   }
 }
 function bindEvents(){

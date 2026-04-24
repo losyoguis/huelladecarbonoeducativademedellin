@@ -16,12 +16,18 @@
       </div>
       <p class="lead">Carga, lee y compara automáticamente las facturas PDF guardadas en la carpeta <strong>data/</strong> del repositorio.</p>
     </div>
-    <div class="status-pill" id="pdfStatus">PDF.js cargando…</div>
+    <nav class="main-nav" aria-label="Menú de navegación principal">
+      <a class="nav-btn" href="#importacion">SiMeCO₂</a>
+      <a class="nav-btn" href="#comparar-periodos">Comparar</a>
+      <a class="nav-btn" href="#dashboard-ambiental">Dashboard</a>
+      <a class="nav-btn nav-btn-external" href="https://losyoguis.github.io/pluvi-metro-mjb/" target="_blank" rel="noopener noreferrer">Pluviómetro MJB</a>
+      <a class="nav-btn nav-btn-external" href="https://sites.google.com/iemanueljbetancur.edu.co/huelladecarbonoeducativo/huella-de-carbono-educativa" target="_blank" rel="noopener noreferrer">Proyecto HCEM</a>
+    </nav>
   </header>
 
   <main>
     <!-- v18: interfaz responsive para pantallas grandes, medianas y pequeñas. -->
-    <section class="panel grid-2">
+    <section class="panel grid-2" id="importacion">
       <div>
         <h2>1. Importación</h2>
         <p class="muted">Sube manualmente los PDF a <code>/data</code> en GitHub. Luego presiona el botón para buscar nuevos archivos e importarlos.</p>
@@ -41,7 +47,7 @@
     </section>
 
 
-    <section class="panel">
+    <section class="panel" id="comparar-periodos">
       <h2>Comparar periodos</h2>
       <p class="muted">Compara el consumo y la huella ambiental por mes, trimestre, semestre o año. También puedes filtrar la comparación por una sede específica.</p>
       <div class="compare-controls compare-controls-advanced">
@@ -90,7 +96,7 @@
 
 
 
-    <section class="panel dashboard-panel">
+    <section class="panel dashboard-panel" id="dashboard-ambiental">
       <div class="section-head">
         <div>
           <h2>Dashboard ambiental por sede</h2>
