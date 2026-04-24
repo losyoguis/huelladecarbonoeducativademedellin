@@ -109,3 +109,11 @@ Esta versión agrega un informe personalizado para cada sede educativa. En el **
 - opción para imprimir/guardar en PDF y descargar el plan en HTML.
 
 El plan se construye a partir de los datos reales importados desde las facturas PDF y de la estructura base del Plan de Reducciones GEI-R-001.
+
+
+## Versión v14
+
+- Se corrigió la visibilidad del botón por sede en la columna **Plan de gestión**.
+- Cada fila muestra el botón **📄 Generar informe / Plan de Gestión**.
+- Al presionarlo, el sistema visualiza el informe personalizado y habilita las opciones **PDF/Imprimir plan** y **Descargar HTML**.
+- Se agregó parámetro de versión en `app.js?v=14-plan-boton-visible` para evitar caché del navegador en GitHub Pages.

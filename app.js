@@ -40,6 +40,7 @@ function bindEvents(){
   if($("printPlanBtn")) $("printPlanBtn").addEventListener("click", printCurrentPlan);
   if($("downloadPlanBtn")) $("downloadPlanBtn").addEventListener("click", downloadCurrentPlan);
   if($("environmentBody")) $("environmentBody").addEventListener("click", handlePlanButtonClick);
+  document.addEventListener("click", handlePlanButtonClick);
 }
 function initConfig(){
   const cfg = loadConfig();
@@ -496,7 +497,7 @@ function renderDashboard(){
     <td>${fmt(r.co2kg/1000)}</td>
     <td><strong>${fmt(r.trees)}</strong></td>
     <td>${fmt(r.avgKwhMonth)}</td>
-    <td><button class="plan-btn secondary" data-site-key="${escapeHtml(siteKey(r.site,r.address))}">Plan de Gestión<br><small>${escapeHtml(shortSiteName(r.site))}</small></button></td>
+    <td class="plan-cell"><button type="button" class="plan-btn primary" data-site-key="${escapeHtml(siteKey(r.site,r.address))}" title="Generar, visualizar y descargar el Plan de Gestión de ${escapeHtml(r.site)}">📄 Generar informe<br><small>Plan de Gestión</small></button></td>
   </tr>`).join('');
   const totalRow = `<tr class="total-row"><td colspan="4">TOTAL</td><td>${fmt(totalKwh)}</td><td>${fmt(totalCo2kg/1000)}</td><td>${fmt(totalTrees)}</td><td>—</td><td>—</td></tr>`;
   $('environmentBody').innerHTML = totalRow + body;
@@ -579,8 +580,16 @@ function slugify(s){
 function handlePlanButtonClick(ev){
   const btn = ev.target.closest('.plan-btn');
   if(!btn) return;
+  ev.preventDefault();
+  ev.stopPropagation();
   const key = btn.getAttribute('data-site-key');
-  generateManagementPlan(key);
+  btn.classList.add('is-generating');
+  btn.innerHTML = 'Generando…';
+  setTimeout(()=>{
+    generateManagementPlan(key);
+    btn.classList.remove('is-generating');
+    btn.innerHTML = '📄 Generar informe<br><small>Plan de Gestión</small>';
+  }, 30);
 }
 
 function recordsForSiteKey(key){
@@ -591,6 +600,7 @@ function generateManagementPlan(key){
   const recs = recordsForSiteKey(key);
   if(!recs.length){
     log('No se encontraron registros para generar el plan de gestión.');
+    alert('No se encontraron registros para generar el plan de gestión de esta sede.');
     return;
   }
   const site = recs[0].site || 'Sede educativa';
