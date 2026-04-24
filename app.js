@@ -640,9 +640,67 @@ function classifyEnergyIntensity(avgMonth){
   return {level:'Prioridad preventiva', cls:'low', text:'La sede presenta un consumo eléctrico bajo o moderado. Se recomienda mantener monitoreo, formación ambiental y acciones preventivas de eficiencia.'};
 }
 
+
+function buildPlanEnergyChartSvg(recs, site){
+  const rows = [...recs].sort((a,b)=>String(a.period).localeCompare(String(b.period)));
+  if(!rows.length){
+    return `<div class="plan-chart-empty">No hay datos suficientes para graficar el consumo de energía por periodo.</div>`;
+  }
+  const width = 980;
+  const height = 360;
+  const padL = 72;
+  const padR = 24;
+  const padT = 28;
+  const padB = 54;
+  const chartW = width - padL - padR;
+  const chartH = height - padT - padB;
+  const max = Math.max(...rows.map(r=>Number(r.energyKwh)||0), 1);
+  const step = chartW / rows.length;
+  const barW = Math.max(30, Math.min(66, step * 0.56));
+
+  let grid = '';
+  [0,0.25,0.5,0.75,1].forEach(ratio=>{
+    const y = padT + chartH - chartH*ratio;
+    const value = max * ratio;
+    grid += `<line x1="${padL}" y1="${y.toFixed(1)}" x2="${(padL+chartW).toFixed(1)}" y2="${y.toFixed(1)}" stroke="#d9ebe5" stroke-width="1" />`;
+    grid += `<text x="${padL-10}" y="${(y+4).toFixed(1)}" text-anchor="end" font-size="11" fill="#6a7d78">${escapeHtml(fmt(value))}</text>`;
+  });
+
+  let bars = '';
+  rows.forEach((r,i)=>{
+    const value = Number(r.energyKwh)||0;
+    const bh = (value / max) * chartH;
+    const x = padL + i*step + step/2 - barW/2;
+    const y = padT + chartH - bh;
+    const label = escapeHtml(String(r.period||''));
+    const valueLabel = escapeHtml(fmt(value));
+    bars += `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${Math.max(bh,2).toFixed(1)}" rx="12" fill="url(#planBarGradient)" />`;
+    bars += `<text x="${(x+barW/2).toFixed(1)}" y="${Math.max(y-8, padT+14).toFixed(1)}" text-anchor="middle" font-size="12" font-weight="700" fill="#173b35">${valueLabel}</text>`;
+    bars += `<text x="${(x+barW/2).toFixed(1)}" y="${(padT+chartH+24).toFixed(1)}" text-anchor="middle" font-size="12" font-weight="700" fill="#315650">${label}</text>`;
+  });
+
+  return `
+  <div class="plan-chart-wrap">
+    <svg class="plan-chart-svg" viewBox="0 0 ${width} ${height}" role="img" aria-label="Gráfica del consumo de energía eléctrica por periodo de la sede ${escapeHtml(site||'')}" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="planBarGradient" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#18c6a0"></stop>
+          <stop offset="100%" stop-color="#0b9878"></stop>
+        </linearGradient>
+      </defs>
+      <rect x="0" y="0" width="${width}" height="${height}" rx="18" fill="#fbfffd"></rect>
+      ${grid}
+      <line x1="${padL}" y1="${padT+chartH}" x2="${padL+chartW}" y2="${padT+chartH}" stroke="#adcfc5" stroke-width="1.5" />
+      ${bars}
+      <text x="${padL}" y="18" font-size="13" font-weight="700" fill="#173b35">kWh por periodo</text>
+    </svg>
+  </div>`;
+}
+
 function buildPlanHtml(d){
   const periodText = d.periods.length ? `${d.periods[0]} a ${d.periods[d.periods.length-1]} (${d.periods.length} periodo(s) importado(s))` : 'Sin periodo';
   const monthlyRows = d.recs.map(r=>`<tr><td>${escapeHtml(r.period)}</td><td>${fmt(r.energyKwh)} kWh</td><td>${fmt((Number(r.energyKwh)||0)*FACTOR_CO2_KG_KWH/1000)} t CO₂e</td><td>${fmt(Math.ceil(((Number(r.energyKwh)||0)*FACTOR_CO2_KG_KWH)/TREE_CO2_KG_YEAR))}</td><td>${escapeHtml(r.source||'PDF')}</td></tr>`).join('');
+  const energyChartSvg = buildPlanEnergyChartSvg(d.recs, d.site);
   return `
     <article class="plan-document">
       <div class="plan-cover">
@@ -671,6 +729,13 @@ function buildPlanHtml(d){
         <div><span>CO₂e estimado</span><strong>${fmt(d.co2t)} t CO₂e</strong></div>
         <div><span>Árboles equivalentes</span><strong>${fmt(d.trees)} árboles/año</strong></div>
         <div><span>Agua registrada</span><strong>${fmt(d.water)} m³</strong></div>
+      </div>
+      <div class="plan-chart-card">
+        <div class="plan-chart-head">
+          <h4>Consumo de energía eléctrica por periodo</h4>
+          <p>Visualización del consumo facturado en cada periodo importado para la sede ${escapeHtml(d.site)}.</p>
+        </div>
+        ${energyChartSvg}
       </div>
       <p class="plan-note"><strong>Lectura técnica:</strong> ${escapeHtml(d.intensity.text)}</p>
 

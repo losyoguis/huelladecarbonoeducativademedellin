@@ -40,3 +40,13 @@
 #planReport.plan-report{animation:planIn .25s ease-out}
 @keyframes planIn{from{opacity:.2;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 @media(max-width:760px){.dashboard-table-wrap th:last-child,.dashboard-table-wrap td:last-child{min-width:180px}.plan-btn{min-width:155px}}
+
+
+.plan-chart-card{margin:8px 24px 0;border:1px solid var(--line);border-radius:18px;background:#f8fffc;padding:16px}
+.plan-chart-head h4{margin:0 0 4px;color:var(--ink);font-size:1.05rem}
+.plan-chart-head p{margin:0;color:#58706a;line-height:1.45}
+.plan-chart-wrap{margin-top:12px;overflow-x:auto;border:1px solid #dcede7;border-radius:16px;background:white;padding:8px}
+.plan-chart-svg{display:block;width:100%;min-width:820px;height:auto}
+.plan-chart-empty{margin-top:12px;padding:18px;border:1px dashed var(--line);border-radius:14px;background:#fff;color:var(--muted);text-align:center}
+@media(max-width:760px){.plan-chart-card{margin-left:14px;margin-right:14px}}
+@media print{.plan-chart-card{break-inside:avoid-page}}
