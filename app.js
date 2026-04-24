@@ -1,4 +1,4 @@
-/* SiMeCO2 Servicios Públicos - v7 data/PDF scanner */
+/* SiMeCO2 Servicios Públicos - v20 sin bloque de configuración GitHub visible */
 let FACTOR_CO2_KG_KWH = 0.126; // kg CO2e/kWh. Ajustable desde el dashboard.
 let TREE_CO2_KG_YEAR = 22; // kg CO2e capturados por árbol al año. Ajustable desde el dashboard.
 const FACTOR_KEY = 'simeco2_factores_ambientales_v8';
@@ -31,7 +31,7 @@ function bindEvents(){
   $("scanDataBtn").addEventListener("click", scanDataFolder);
   $("localPdfInput").addEventListener("change", handleLocalPdf);
   $("clearBtn").addEventListener("click", ()=>{ if(confirm("¿Reiniciar todos los datos importados?")){ localStorage.removeItem(STORE_KEY); location.reload(); }});
-  $("saveRepoBtn").addEventListener("click", saveConfig);
+  if($("saveRepoBtn")) $("saveRepoBtn").addEventListener("click", saveConfig);
   if($("updateFactorsBtn")) $("updateFactorsBtn").addEventListener("click", updateFactors);
   ["siteSearch","periodFilter","serviceFilter"].forEach(id=>$(id).addEventListener("input", ()=>{ renderTable(); renderDashboard(); }));
   $("exportCsvBtn").addEventListener("click", exportCsv);
@@ -45,11 +45,10 @@ function bindEvents(){
   document.addEventListener("click", handlePlanButtonClick);
 }
 function initConfig(){
-  const cfg = loadConfig();
-  const detected = detectGitHubRepo();
-  $('repoOwner').value = cfg.owner || detected.owner || '';
-  $('repoName').value = cfg.repo || detected.repo || '';
-  $('repoBranch').value = cfg.branch || 'main';
+  const cfg = getRepoConfig();
+  if($('repoOwner')) $('repoOwner').value = cfg.owner || '';
+  if($('repoName')) $('repoName').value = cfg.repo || '';
+  if($('repoBranch')) $('repoBranch').value = cfg.branch || 'main';
 }
 function detectGitHubRepo(){
   const host = location.hostname;
@@ -60,6 +59,18 @@ function detectGitHubRepo(){
   return {};
 }
 function loadConfig(){ try{return JSON.parse(localStorage.getItem(CONFIG_KEY)||'{}')}catch{return {}} }
+function getRepoConfig(){
+  const saved = loadConfig();
+  const detected = detectGitHubRepo();
+  const ownerFromInput = $('repoOwner') ? $('repoOwner').value.trim() : '';
+  const repoFromInput = $('repoName') ? $('repoName').value.trim() : '';
+  const branchFromInput = $('repoBranch') ? $('repoBranch').value.trim() : '';
+  return {
+    owner: ownerFromInput || saved.owner || detected.owner || '',
+    repo: repoFromInput || saved.repo || detected.repo || '',
+    branch: branchFromInput || saved.branch || 'main'
+  };
+}
 function initFactors(){
   try{
     const saved = JSON.parse(localStorage.getItem(FACTOR_KEY)||"{}");
@@ -83,7 +94,7 @@ function recalculateCo2(){
   state.records.forEach(r=>{ r.co2kg = round((Number(r.energyKwh)||0)*FACTOR_CO2_KG_KWH,2); });
 }
 function saveConfig(){
-  const cfg = { owner:$('repoOwner').value.trim(), repo:$('repoName').value.trim(), branch:$('repoBranch').value.trim()||'main' };
+  const cfg = getRepoConfig();
   localStorage.setItem(CONFIG_KEY, JSON.stringify(cfg));
   log(`Configuración guardada: ${cfg.owner}/${cfg.repo}@${cfg.branch}`);
 }
@@ -100,7 +111,7 @@ function log(msg){
 
 async function scanDataFolder(){
   log('Buscando PDFs nuevos en carpeta /data...');
-  const cfg = { owner:$('repoOwner').value.trim(), repo:$('repoName').value.trim(), branch:$('repoBranch').value.trim()||'main' };
+  const cfg = getRepoConfig();
   let files = [];
   if(cfg.owner && cfg.repo){
     try{
