@@ -1,136 +1,137 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>SiMeCO₂ | Servicios Públicos Educativos</title>
-  <link rel="stylesheet" href="css/styles.css" />
+  <link rel="stylesheet" href="styles.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-  <header class="app-header">
-    <div class="brand">
-      <div class="brand-icon">CO₂</div>
-      <div>
-        <h1>SiMeCO₂</h1>
-        <p>Sistema mensual de medición de servicios públicos educativos</p>
-      </div>
+  <header class="hero">
+    <div>
+      <p class="eyebrow">SiMeCO₂ · Huella de Carbono Educativa</p>
+      <h1>Sistema mensual de servicios públicos</h1>
+      <p>Importa facturas consolidadas de EPM, identifica mes y año, acumula sedes y compara consumos entre periodos.</p>
     </div>
-    <nav class="top-actions">
-      <button class="ghost" id="btnDemo" type="button">Cargar ejemplo</button>
-      <button class="danger-outline" id="btnReset" type="button">Reiniciar</button>
-    </nav>
+    <div class="hero-card">
+      <strong>Almacenamiento</strong>
+      <span>Local + exportación a <code>/data</code> para GitHub</span>
+    </div>
   </header>
 
-  <main class="layout">
-    <section class="hero card">
-      <div>
-        <span class="eyebrow">Importador mensual</span>
-        <h2>Sube la factura consolidada de EPM y alimenta el sistema automáticamente</h2>
-        <p>
-          El sistema lee el PDF mensual, extrae consumos de acueducto, alcantarillado,
-          energía, gas y aseo, y guarda la información en este navegador para construir
-          la serie histórica de cada sede educativa.
-        </p>
-        <div class="status-strip" id="libraryStatus">Verificando librerías...</div>
+  <main class="container">
+    <section class="panel upload-panel">
+      <div class="upload-actions">
+        <label class="file-btn" for="pdfInput">Seleccionar PDF</label>
+        <input type="file" id="pdfInput" accept="application/pdf" />
+        <button id="btnClear" class="btn ghost">Reiniciar datos locales</button>
       </div>
-
-      <div class="upload-box" id="dropZone">
-        <input type="file" id="pdfFile" accept="application/pdf,.pdf" />
-        <button class="primary" id="btnSelect" type="button">Seleccionar PDF</button>
-        <p>o arrastra aquí el documento mensual</p>
-        <small>Formato esperado: factura consolidada EPM de sedes educativas.</small>
+      <div class="meta-grid">
+        <label>Mes detectado
+          <input id="detectedMonth" readonly placeholder="Pendiente" />
+        </label>
+        <label>Año detectado
+          <input id="detectedYear" readonly placeholder="Pendiente" />
+        </label>
+        <label>Factor CO₂ kg/kWh
+          <input id="factorCO2" type="number" step="0.0001" value="0.126" />
+        </label>
       </div>
+      <div class="progress"><div id="progressBar"></div></div>
+      <pre id="logBox" class="log">Sistema listo. Cargue una factura PDF.</pre>
     </section>
 
-    <section class="controls card">
-      <div class="field">
-        <label for="periodo">Mes de análisis</label>
-        <input type="month" id="periodo" />
+    <section class="panel github-panel">
+      <div class="section-title">
+        <h2>Guardado en carpeta <code>data</code></h2>
+        <p>En GitHub Pages no se puede escribir físicamente en el repositorio sin API. Este sistema deja el JSON listo para guardar en <code>/data</code> y además ofrece guardado directo por API de GitHub.</p>
       </div>
-      <div class="field">
-        <label for="factorCo2">Factor de emisión CO₂</label>
-        <div class="suffix-input">
-          <input type="number" id="factorCo2" step="0.0001" value="0.126" />
-          <span>kg CO₂/kWh</span>
+      <div class="github-grid">
+        <label>Owner / usuario GitHub <input id="ghOwner" placeholder="losyoguis" /></label>
+        <label>Repositorio <input id="ghRepo" placeholder="simeco2" /></label>
+        <label>Rama <input id="ghBranch" placeholder="main" value="main" /></label>
+        <label>Token GitHub <input id="ghToken" type="password" placeholder="github_pat_..." /></label>
+      </div>
+      <div class="row-actions">
+        <button id="btnDownloadData" class="btn">Descargar JSON para /data</button>
+        <button id="btnSaveGitHub" class="btn primary">Guardar directamente en GitHub /data</button>
+        <button id="btnImportJson" class="btn ghost">Importar JSON histórico</button>
+        <input type="file" id="jsonInput" accept="application/json" hidden />
+      </div>
+      <small>Recomendación: para producción use GitHub Actions o un backend. No publique tokens en repositorios públicos.</small>
+    </section>
+
+    <section class="stats-grid">
+      <article class="stat"><span>Periodos cargados</span><strong id="statPeriods">0</strong></article>
+      <article class="stat"><span>Sedes registradas</span><strong id="statSites">0</strong></article>
+      <article class="stat"><span>Energía total</span><strong id="statEnergy">0 kWh</strong></article>
+      <article class="stat"><span>CO₂ estimado</span><strong id="statCo2">0 kg</strong></article>
+      <article class="stat"><span>Agua total</span><strong id="statWater">0 m³</strong></article>
+      <article class="stat"><span>Aseo total</span><strong id="statWaste">$0</strong></article>
+    </section>
+
+    <section class="panel filters">
+      <div class="section-title">
+        <h2>Consulta y comparación mensual</h2>
+        <p>Seleccione una sede y compare dos periodos cargados.</p>
+      </div>
+      <div class="filter-grid">
+        <label>Buscar sede
+          <input id="siteSearch" list="siteList" placeholder="Ej. Manuel J. Betancur" />
+          <datalist id="siteList"></datalist>
+        </label>
+        <label>Periodo A
+          <select id="periodA"></select>
+        </label>
+        <label>Periodo B
+          <select id="periodB"></select>
+        </label>
+        <label>Servicio
+          <select id="serviceFilter">
+            <option value="todos">Todos</option>
+            <option value="energia">Energía</option>
+            <option value="agua">Agua</option>
+            <option value="alcantarillado">Alcantarillado</option>
+            <option value="gas">Gas</option>
+            <option value="aseo">Aseo</option>
+          </select>
+        </label>
+      </div>
+      <div id="comparisonBox" class="comparison"></div>
+    </section>
+
+    <section class="charts-grid">
+      <div class="panel"><h3>Energía mensual por periodo</h3><canvas id="energyChart"></canvas></div>
+      <div class="panel"><h3>Servicios públicos por periodo</h3><canvas id="servicesChart"></canvas></div>
+    </section>
+
+    <section class="panel table-panel">
+      <div class="section-title row-title">
+        <div>
+          <h2>Registros por sede</h2>
+          <p>Los registros nuevos se agregan automáticamente al catálogo de sedes.</p>
         </div>
-      </div>
-      <div class="field">
-        <label for="searchInput">Buscar sede</label>
-        <input type="search" id="searchInput" placeholder="Ej. Manuel J. Betancur" />
-      </div>
-      <div class="field">
-        <label for="serviceFilter">Servicio</label>
-        <select id="serviceFilter">
-          <option value="all">Todos</option>
-          <option value="energia">Energía</option>
-          <option value="agua">Acueducto</option>
-          <option value="alcantarillado">Alcantarillado</option>
-          <option value="gas">Gas</option>
-          <option value="aseo">Aseo</option>
-        </select>
-      </div>
-    </section>
-
-    <section class="progress-panel card hidden" id="progressPanel">
-      <div class="progress-head">
-        <strong id="progressTitle">Procesando PDF...</strong>
-        <span id="progressText">0%</span>
-      </div>
-      <div class="progress-bar"><span id="progressBar"></span></div>
-      <pre id="logBox"></pre>
-    </section>
-
-    <section class="kpis">
-      <article class="kpi card"><span>Consumo energía</span><strong id="kpiKwh">0 kWh</strong><small>Base para alcance 2</small></article>
-      <article class="kpi card"><span>Emisiones estimadas</span><strong id="kpiCo2">0 kg CO₂</strong><small>Según factor configurado</small></article>
-      <article class="kpi card"><span>Costo energía</span><strong id="kpiEnergyCost">$0</strong><small>Valor facturado</small></article>
-      <article class="kpi card"><span>Sedes registradas</span><strong id="kpiSites">0</strong><small>Registros consolidados</small></article>
-      <article class="kpi card"><span>Agua</span><strong id="kpiWater">0 m³</strong><small>Acueducto</small></article>
-      <article class="kpi card"><span>Aseo / residuos</span><strong id="kpiWaste">$0</strong><small>Otras entidades</small></article>
-    </section>
-
-    <section class="grid-2">
-      <article class="card chart-card">
-        <div class="section-title"><h3>Consumo energético por mes</h3><p>Serie histórica acumulada por cargas mensuales.</p></div>
-        <canvas id="monthlyChart"></canvas>
-      </article>
-      <article class="card chart-card">
-        <div class="section-title"><h3>Distribución por servicio</h3><p>Valores facturados del periodo seleccionado.</p></div>
-        <canvas id="serviceChart"></canvas>
-      </article>
-    </section>
-
-    <section class="card table-card">
-      <div class="table-toolbar">
-        <div class="section-title"><h3>Detalle por sede</h3><p>Lectura automática desde cada bloque de prestación del servicio.</p></div>
-        <div class="toolbar-buttons">
-          <button class="ghost" id="btnExportCsv" type="button">Exportar CSV</button>
-          <button class="ghost" id="btnExportJson" type="button">Exportar JSON</button>
-          <button class="ghost" id="btnPrint" type="button">Imprimir/PDF</button>
+        <div class="row-actions">
+          <button id="btnCsv" class="btn">Exportar CSV</button>
+          <button id="btnPrint" class="btn ghost">Imprimir / PDF</button>
         </div>
       </div>
       <div class="table-wrap">
         <table>
           <thead>
             <tr>
-              <th>Sede</th><th>Dirección</th><th>Periodo</th><th>Agua m³</th><th>Alc. m³</th>
-              <th>Energía kWh</th><th>CO₂ kg</th><th>Valor energía</th><th>Aseo</th><th>Alertas</th>
+              <th>Periodo</th><th>Sede</th><th>Dirección</th><th>Energía kWh</th><th>Agua m³</th><th>Alcant. m³</th><th>Gas m³</th><th>Aseo $</th><th>CO₂ kg</th>
             </tr>
           </thead>
-          <tbody id="recordsTable"></tbody>
+          <tbody id="recordsBody"></tbody>
         </table>
       </div>
     </section>
   </main>
 
-  <footer><strong>SiMeCO₂</strong> · Proyecto Huella de Carbono Educativa · Datos almacenados localmente en este navegador.</footer>
-
-  <template id="emptyRow">
-    <tr><td colspan="10" class="empty">No hay datos cargados. Sube un PDF mensual o carga el ejemplo.</td></tr>
-  </template>
-
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
-  <script src="js/app.js"></script>
+  <footer>SiMeCO₂ · Sistema de medición educativa · HTML/CSS/JS estático</footer>
+  <script src="app.js"></script>
 </body>
 </html>

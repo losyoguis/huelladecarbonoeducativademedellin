@@ -1,32 +1,52 @@
-# SiMeCO₂ Servicios Públicos Educativos
+# SiMeCO₂ Servicios Públicos v6
 
-Sistema web estático en HTML, CSS y JavaScript para importar mensualmente facturas consolidadas de EPM en PDF y alimentar una base histórica local de servicios públicos por sede educativa.
+Sistema web estático en HTML, CSS y JavaScript para importar facturas consolidadas de EPM de sedes educativas, detectar automáticamente mes y año, acumular registros históricos y comparar periodos.
 
 ## Archivos
 
 - `index.html`: interfaz principal.
-- `css/styles.css`: estilos responsivos tipo aplicación.
-- `js/app.js`: lectura del PDF, extracción de datos, almacenamiento local, dashboard y exportaciones.
+- `styles.css`: estilos responsive tipo app.
+- `app.js`: lectura PDF, extracción de datos, almacenamiento y comparación.
+- `data/`: carpeta sugerida para guardar los JSON mensuales en GitHub.
 
-## Uso
+## Instalación en GitHub Pages
 
-1. Abre `index.html` en el navegador o publícalo en GitHub Pages.
-2. Selecciona el mes de análisis.
-3. Haz clic en **Seleccionar PDF** y carga la factura consolidada mensual.
-4. El sistema leerá el PDF, buscará los bloques `Prestación del servicio` y extraerá consumos y valores de agua, alcantarillado, energía, gas y aseo.
-5. Cada nueva carga mensual se guarda en el navegador mediante `localStorage`.
-6. Exporta los datos en CSV o JSON para respaldo o análisis en Excel.
+1. Descomprime el ZIP.
+2. Sube todos los archivos al repositorio de GitHub.
+3. Verifica que exista la carpeta `data`.
+4. Activa GitHub Pages desde Settings > Pages.
+5. Abre la URL publicada.
 
-## Corrección aplicada en esta versión
+## Uso mensual
 
-La versión anterior podía mostrar el mensaje “No se identificaron registros” porque algunos navegadores entregan el texto del PDF en un orden visual diferente. Esta versión incorpora:
+1. Clic en **Seleccionar PDF**.
+2. Sube la factura consolidada de EPM.
+3. El sistema identifica el mes y año desde el texto: `Resumen de facturación [Mes] de [Año]`.
+4. Los datos quedan guardados en el navegador.
+5. Clic en **Descargar JSON para /data**.
+6. Sube el archivo generado, por ejemplo `2025-01.json`, a la carpeta `data` del repositorio.
 
-- Lectura profunda del PDF por coordenadas de texto.
-- Fallback de lectura plana si la lectura por líneas falla.
-- Búsqueda flexible de `Prestación del servicio` con y sin acento.
-- Diagnóstico visible con número de marcadores encontrados.
-- Parser más tolerante para valores de agua, alcantarillado, energía, gas y aseo.
+## Guardado directo en GitHub
 
-## Recomendación
+El sistema incluye guardado directo usando la API de GitHub. Para usarlo necesitas:
 
-Para un funcionamiento estable, publícalo en GitHub Pages. Si lo abres directamente desde el computador, debe existir conexión a internet para cargar PDF.js y Chart.js desde CDN.
+- Usuario/owner.
+- Nombre del repositorio.
+- Rama, normalmente `main`.
+- Token personal de GitHub con permisos de escritura sobre el repositorio.
+
+Advertencia: no guardes tokens dentro del código ni los publiques. Para un sistema institucional se recomienda usar backend o GitHub Actions.
+
+## Comparación mensual
+
+Después de cargar dos o más facturas puedes seleccionar Periodo A y Periodo B para comparar:
+
+- Energía kWh.
+- Agua m³.
+- Alcantarillado m³.
+- Gas m³.
+- CO₂ kg.
+
+## Nota técnica
+
+GitHub Pages es un hosting estático. Por seguridad, una página HTML no puede escribir archivos directamente dentro del repositorio sin usar API, token, backend o flujo de carga manual. Por eso el sistema ofrece dos opciones: descarga JSON para subir a `/data` o guardado directo mediante API de GitHub.
