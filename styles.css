@@ -235,3 +235,12 @@ main{width:100%;max-width:1760px}
   .main-nav-cta .nav-btn strong{font-size:1.08rem;}
 }
 @media print{.main-nav-cta{display:none!important}}
+
+/* v25: tercer acceso al universo Guardianes Climáticos */
+@media(min-width:901px){
+  .nav-cta-list{width:100%;}
+  .main-nav-cta .nav-btn{flex:1 1 280px;min-width:260px;}
+}
+.nav-btn-guardianes{
+  background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.025));
+}
