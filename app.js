@@ -36,6 +36,8 @@ function bindEvents(){
   ["siteSearch","periodFilter","serviceFilter"].forEach(id=>$(id).addEventListener("input", ()=>{ renderTable(); renderDashboard(); }));
   $("exportCsvBtn").addEventListener("click", exportCsv);
   $("exportJsonBtn").addEventListener("click", exportJson);
+  if($("compareMode")) $("compareMode").addEventListener("change", ()=>{ renderCompareControls(); comparePeriods(); });
+  if($("compareSite")) $("compareSite").addEventListener("change", ()=>{ renderCompareControls({keepSite:true}); comparePeriods(); });
   $("compareBtn").addEventListener("click", comparePeriods);
   if($("printPlanBtn")) $("printPlanBtn").addEventListener("click", printCurrentPlan);
   if($("downloadPlanBtn")) $("downloadPlanBtn").addEventListener("click", downloadCurrentPlan);
@@ -371,10 +373,9 @@ function renderControls(){
   const options = '<option value="">Todos</option>'+periods.map(p=>`<option value="${p}">${p}</option>`).join('');
   const current = $('periodFilter').value;
   $('periodFilter').innerHTML = options; $('periodFilter').value = current;
-  ['compareA','compareB'].forEach(id=>$(id).innerHTML = periods.map(p=>`<option value="${p}">${p}</option>`).join(''));
-  if(periods.length){ $('compareA').value=periods[Math.max(0,periods.length-2)]; $('compareB').value=periods[periods.length-1]; }
   const siteValues = Object.values(state.sites).sort((a,b)=>a.site.localeCompare(b.site));
   $('siteList').innerHTML = siteValues.map(s=>`<option value="${escapeHtml(s.site)}${s.address?' · '+escapeHtml(s.address):''}"></option>`).join('');
+  renderCompareControls();
 }
 function renderCards(){
   const recs = state.records;
@@ -404,17 +405,99 @@ function aggregateByPeriod(records){
   }
   return Object.values(map).sort((a,b)=>a.period.localeCompare(b.period));
 }
+function getSiteOptions(){
+  return Object.values(state.sites).sort((a,b)=>String(a.site).localeCompare(String(b.site)));
+}
+function periodToParts(period){
+  const m = String(period||'').match(/^(20\d{2})-(\d{2})$/);
+  if(!m) return null;
+  const year = Number(m[1]);
+  const month = Number(m[2]);
+  if(!year || month<1 || month>12) return null;
+  return {year, month};
+}
+function groupKeyForPeriod(period, mode){
+  const p = periodToParts(period);
+  if(!p) return null;
+  if(mode === 'year') return `${p.year}`;
+  if(mode === 'semester') return `${p.year}-S${p.month<=6?1:2}`;
+  if(mode === 'quarter') return `${p.year}-Q${Math.ceil(p.month/3)}`;
+  return `${p.year}-${String(p.month).padStart(2,'0')}`;
+}
+function groupLabel(key, mode){
+  const k = String(key||'');
+  if(mode === 'quarter'){
+    const m = k.match(/^(20\d{2})-Q([1-4])$/);
+    return m ? `${m[1]} · Trimestre ${m[2]}` : k;
+  }
+  if(mode === 'semester'){
+    const m = k.match(/^(20\d{2})-S([1-2])$/);
+    return m ? `${m[1]} · Semestre ${m[2]}` : k;
+  }
+  if(mode === 'year') return k;
+  return k;
+}
+function compareModeLabel(mode){
+  return {month:'Mes vs mes', quarter:'Trimestre vs trimestre', semester:'Semestre vs semestre', year:'Año vs año'}[mode] || 'Mes vs mes';
+}
+function recordsForCompareScope(){
+  const site = $('compareSite') ? $('compareSite').value : '';
+  return state.records.filter(r=>!site || siteKey(r.site,r.address) === site);
+}
+function aggregateByComparison(records, mode){
+  const map = {};
+  for(const r of records){
+    const key = groupKeyForPeriod(r.period, mode);
+    if(!key) continue;
+    map[key] ||= {key, period:groupLabel(key, mode), energyKwh:0, waterM3:0, alcM3:0, gasM3:0, wasteTon:0, co2kg:0, records:0};
+    ['energyKwh','waterM3','alcM3','gasM3','wasteTon','co2kg'].forEach(k=>map[key][k]+=Number(r[k])||0);
+    map[key].records += 1;
+  }
+  return Object.values(map).sort((a,b)=>a.key.localeCompare(b.key));
+}
+function renderCompareControls(opts={}){
+  if(!$('compareA') || !$('compareB')) return;
+  const currentSite = opts.keepSite && $('compareSite') ? $('compareSite').value : ($('compareSite') ? $('compareSite').value : '');
+  if($('compareSite')){
+    const siteOptions = getSiteOptions();
+    $('compareSite').innerHTML = '<option value="">Todas las sedes</option>' + siteOptions.map(s=>{
+      const key = siteKey(s.site,s.address);
+      const label = `${s.site}${s.address ? ' · '+s.address : ''}`;
+      return `<option value="${escapeHtml(key)}">${escapeHtml(label)}</option>`;
+    }).join('');
+    if([...$('compareSite').options].some(o=>o.value===currentSite)) $('compareSite').value = currentSite;
+  }
+  const mode = $('compareMode') ? $('compareMode').value : 'month';
+  const currentA = $('compareA').value;
+  const currentB = $('compareB').value;
+  const groups = aggregateByComparison(recordsForCompareScope(), mode);
+  const options = groups.map(g=>`<option value="${escapeHtml(g.key)}">${escapeHtml(g.period)}</option>`).join('');
+  $('compareA').innerHTML = options;
+  $('compareB').innerHTML = options;
+  if(groups.some(g=>g.key===currentA)) $('compareA').value = currentA;
+  else if(groups.length) $('compareA').value = groups[Math.max(0, groups.length-2)].key;
+  if(groups.some(g=>g.key===currentB)) $('compareB').value = currentB;
+  else if(groups.length) $('compareB').value = groups[groups.length-1].key;
+}
 function comparePeriods(){
+  const mode = $('compareMode') ? $('compareMode').value : 'month';
+  const site = $('compareSite') ? $('compareSite').value : '';
   const a=$('compareA').value, b=$('compareB').value;
-  const agg = aggregateByPeriod(state.records);
-  const A = agg.find(x=>x.period===a), B = agg.find(x=>x.period===b);
-  if(!A||!B){ $('compareResult').innerHTML='<p class="bad">Se requieren dos periodos importados para comparar.</p>'; return; }
+  const agg = aggregateByComparison(recordsForCompareScope(), mode);
+  const A = agg.find(x=>x.key===a), B = agg.find(x=>x.key===b);
+  if(!A||!B){
+    $('compareResult').innerHTML='<p class="bad">Se requieren al menos dos periodos equivalentes para comparar con el filtro seleccionado.</p>';
+    drawChart(agg);
+    return;
+  }
+  const siteText = site ? (($('compareSite').selectedOptions[0]||{}).textContent || 'Sede seleccionada') : 'Todas las sedes';
   const metrics=[['energyKwh','Energía','kWh'],['waterM3','Agua','m³'],['co2kg','CO₂','kg'],['wasteTon','Residuos','t']];
-  $('compareResult').innerHTML = metrics.map(([k,label,unit])=>{
+  const summary = `<div class="compare-summary"><strong>${escapeHtml(compareModeLabel(mode))}</strong><span>${escapeHtml(siteText)}</span><small>${escapeHtml(A.period)} vs ${escapeHtml(B.period)}</small></div>`;
+  $('compareResult').innerHTML = summary + metrics.map(([k,label,unit])=>{
     const diff=(B[k]||0)-(A[k]||0); const pct=(A[k]||0)? diff/A[k]*100 : 0;
-    return `<div class="metric"><span>${label}</span><strong>${fmt(diff)} ${unit}</strong><small>${a}: ${fmt(A[k])} · ${b}: ${fmt(B[k])} · ${pct>=0?'+':''}${fmt(pct)}%</small></div>`;
+    return `<div class="metric"><span>${label}</span><strong>${fmt(diff)} ${unit}</strong><small>${escapeHtml(A.period)}: ${fmt(A[k])} · ${escapeHtml(B.period)}: ${fmt(B[k])} · ${pct>=0?'+':''}${fmt(pct)}%</small></div>`;
   }).join('');
-  drawChart([A,B]);
+  drawChart(agg);
 }
 function drawChart(data){
   chartData=data;
@@ -640,150 +723,9 @@ function classifyEnergyIntensity(avgMonth){
   return {level:'Prioridad preventiva', cls:'low', text:'La sede presenta un consumo eléctrico bajo o moderado. Se recomienda mantener monitoreo, formación ambiental y acciones preventivas de eficiencia.'};
 }
 
-
-function buildPlanEnergyChartSvg(recs, site){
-  const rows = [...recs].sort((a,b)=>String(a.period).localeCompare(String(b.period)));
-  if(!rows.length){
-    return `<div class="plan-chart-empty">No hay datos suficientes para graficar el consumo de energía por periodo.</div>`;
-  }
-  const width = 980;
-  const height = 360;
-  const padL = 72;
-  const padR = 24;
-  const padT = 28;
-  const padB = 54;
-  const chartW = width - padL - padR;
-  const chartH = height - padT - padB;
-  const max = Math.max(...rows.map(r=>Number(r.energyKwh)||0), 1);
-  const step = chartW / rows.length;
-  const barW = Math.max(30, Math.min(66, step * 0.56));
-
-  let grid = '';
-  [0,0.25,0.5,0.75,1].forEach(ratio=>{
-    const y = padT + chartH - chartH*ratio;
-    const value = max * ratio;
-    grid += `<line x1="${padL}" y1="${y.toFixed(1)}" x2="${(padL+chartW).toFixed(1)}" y2="${y.toFixed(1)}" stroke="#d9ebe5" stroke-width="1" />`;
-    grid += `<text x="${padL-10}" y="${(y+4).toFixed(1)}" text-anchor="end" font-size="11" fill="#6a7d78">${escapeHtml(fmt(value))}</text>`;
-  });
-
-  let bars = '';
-  rows.forEach((r,i)=>{
-    const value = Number(r.energyKwh)||0;
-    const bh = (value / max) * chartH;
-    const x = padL + i*step + step/2 - barW/2;
-    const y = padT + chartH - bh;
-    const label = escapeHtml(String(r.period||''));
-    const valueLabel = escapeHtml(fmt(value));
-    bars += `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${Math.max(bh,2).toFixed(1)}" rx="12" fill="url(#planBarGradient)" />`;
-    bars += `<text x="${(x+barW/2).toFixed(1)}" y="${Math.max(y-8, padT+14).toFixed(1)}" text-anchor="middle" font-size="12" font-weight="700" fill="#173b35">${valueLabel}</text>`;
-    bars += `<text x="${(x+barW/2).toFixed(1)}" y="${(padT+chartH+24).toFixed(1)}" text-anchor="middle" font-size="12" font-weight="700" fill="#315650">${label}</text>`;
-  });
-
-  return `
-  <div class="plan-chart-wrap">
-    <svg class="plan-chart-svg" viewBox="0 0 ${width} ${height}" role="img" aria-label="Gráfica del consumo de energía eléctrica por periodo de la sede ${escapeHtml(site||'')}" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <linearGradient id="planBarGradient" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="#18c6a0"></stop>
-          <stop offset="100%" stop-color="#0b9878"></stop>
-        </linearGradient>
-      </defs>
-      <rect x="0" y="0" width="${width}" height="${height}" rx="18" fill="#fbfffd"></rect>
-      ${grid}
-      <line x1="${padL}" y1="${padT+chartH}" x2="${padL+chartW}" y2="${padT+chartH}" stroke="#adcfc5" stroke-width="1.5" />
-      ${bars}
-      <text x="${padL}" y="18" font-size="13" font-weight="700" fill="#173b35">kWh por periodo</text>
-    </svg>
-  </div>`;
-}
-
-
-function buildMiniBarChartSvg(rows, config){
-  if(!rows.length){
-    return `<div class="plan-chart-empty">No hay datos suficientes para construir esta gráfica.</div>`;
-  }
-  const width = 420;
-  const height = 250;
-  const padL = 48;
-  const padR = 16;
-  const padT = 18;
-  const padB = 46;
-  const chartW = width - padL - padR;
-  const chartH = height - padT - padB;
-  const values = rows.map(r=>Number(config.getValue(r))||0);
-  const max = Math.max(...values, 1);
-  const step = chartW / rows.length;
-  const barW = Math.max(18, Math.min(34, step*0.5));
-  const colorA = config.colorA || '#18c6a0';
-  const colorB = config.colorB || '#0b9878';
-  let grid = '';
-  [0,0.5,1].forEach(ratio=>{
-    const y = padT + chartH - chartH*ratio;
-    grid += `<line x1="${padL}" y1="${y.toFixed(1)}" x2="${(padL+chartW).toFixed(1)}" y2="${y.toFixed(1)}" stroke="#e3f0eb" stroke-width="1" />`;
-  });
-
-  let bars = '';
-  rows.forEach((r,i)=>{
-    const value = values[i];
-    const bh = (value/max) * chartH;
-    const x = padL + i*step + step/2 - barW/2;
-    const y = padT + chartH - bh;
-    const period = escapeHtml(String(r.period||'')).replace('2025-','25-').replace('2026-','26-');
-    const valueLabel = escapeHtml(config.format(value));
-    bars += `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${Math.max(bh,2).toFixed(1)}" rx="10" fill="url(#${config.gradId})"></rect>`;
-    bars += `<text x="${(x+barW/2).toFixed(1)}" y="${Math.max(y-6,padT+12).toFixed(1)}" text-anchor="middle" font-size="10.5" font-weight="700" fill="#173b35">${valueLabel}</text>`;
-    bars += `<text x="${(x+barW/2).toFixed(1)}" y="${(padT+chartH+18).toFixed(1)}" text-anchor="middle" font-size="10.5" font-weight="700" fill="#4c6761">${period}</text>`;
-  });
-
-  return `
-    <div class="plan-mini-chart-wrap">
-      <div class="plan-mini-chart-title">${escapeHtml(config.title)}</div>
-      <svg class="plan-mini-chart-svg" viewBox="0 0 ${width} ${height}" role="img" aria-label="${escapeHtml(config.title)}" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <linearGradient id="${config.gradId}" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="${colorA}"></stop>
-            <stop offset="100%" stop-color="${colorB}"></stop>
-          </linearGradient>
-        </defs>
-        <rect x="0" y="0" width="${width}" height="${height}" rx="18" fill="#ffffff"></rect>
-        ${grid}
-        <line x1="${padL}" y1="${padT+chartH}" x2="${padL+chartW}" y2="${padT+chartH}" stroke="#bfdcd3" stroke-width="1.25" />
-        ${bars}
-      </svg>
-    </div>`;
-}
-
-function buildPlanMonthlyVisuals(recs){
-  const rows = [...recs].sort((a,b)=>String(a.period).localeCompare(String(b.period))).map(r=>({
-    period:r.period,
-    energyKwh:Number(r.energyKwh)||0,
-    co2t:((Number(r.energyKwh)||0)*FACTOR_CO2_KG_KWH)/1000,
-    trees:Math.ceil(((Number(r.energyKwh)||0)*FACTOR_CO2_KG_KWH)/TREE_CO2_KG_YEAR)
-  }));
-  if(!rows.length){
-    return `<div class="plan-chart-empty">No hay registros mensuales suficientes para graficar esta sección.</div>`;
-  }
-  const peak = rows.reduce((a,b)=>a.energyKwh>=b.energyKwh?a:b);
-  const avg = rows.reduce((a,r)=>a+r.energyKwh,0)/rows.length;
-  const peakCo2 = rows.reduce((a,b)=>a.co2t>=b.co2t?a:b);
-  return `
-    <div class="plan-monthly-summary">
-      <div><span>Periodo de mayor consumo</span><strong>${escapeHtml(peak.period)}</strong><small>${fmt(peak.energyKwh)} kWh</small></div>
-      <div><span>Promedio mensual</span><strong>${fmt(avg)} kWh</strong><small>${rows.length} periodo(s) analizado(s)</small></div>
-      <div><span>Mayor impacto CO₂e</span><strong>${escapeHtml(peakCo2.period)}</strong><small>${fmt(peakCo2.co2t)} t CO₂e</small></div>
-    </div>
-    <div class="plan-monthly-visual-grid">
-      ${buildMiniBarChartSvg(rows, {title:'Energía por periodo (kWh)', gradId:'planGradEnergy', colorA:'#18c6a0', colorB:'#0b9878', getValue:(r)=>r.energyKwh, format:(v)=>fmt(v)})}
-      ${buildMiniBarChartSvg(rows, {title:'CO₂e por periodo (t)', gradId:'planGradCo2', colorA:'#52b7ff', colorB:'#1873c8', getValue:(r)=>r.co2t, format:(v)=>fmt(v)})}
-      ${buildMiniBarChartSvg(rows, {title:'Árboles equivalentes por periodo', gradId:'planGradTrees', colorA:'#9bd74f', colorB:'#4f9f1a', getValue:(r)=>r.trees, format:(v)=>fmt(v)})}
-    </div>`;
-}
-
 function buildPlanHtml(d){
   const periodText = d.periods.length ? `${d.periods[0]} a ${d.periods[d.periods.length-1]} (${d.periods.length} periodo(s) importado(s))` : 'Sin periodo';
   const monthlyRows = d.recs.map(r=>`<tr><td>${escapeHtml(r.period)}</td><td>${fmt(r.energyKwh)} kWh</td><td>${fmt((Number(r.energyKwh)||0)*FACTOR_CO2_KG_KWH/1000)} t CO₂e</td><td>${fmt(Math.ceil(((Number(r.energyKwh)||0)*FACTOR_CO2_KG_KWH)/TREE_CO2_KG_YEAR))}</td><td>${escapeHtml(r.source||'PDF')}</td></tr>`).join('');
-  const energyChartSvg = buildPlanEnergyChartSvg(d.recs, d.site);
-  const monthlyVisuals = buildPlanMonthlyVisuals(d.recs);
   return `
     <article class="plan-document">
       <div class="plan-cover">
@@ -812,13 +754,6 @@ function buildPlanHtml(d){
         <div><span>CO₂e estimado</span><strong>${fmt(d.co2t)} t CO₂e</strong></div>
         <div><span>Árboles equivalentes</span><strong>${fmt(d.trees)} árboles/año</strong></div>
         <div><span>Agua registrada</span><strong>${fmt(d.water)} m³</strong></div>
-      </div>
-      <div class="plan-chart-card">
-        <div class="plan-chart-head">
-          <h4>Consumo de energía eléctrica por periodo</h4>
-          <p>Visualización del consumo facturado en cada periodo importado para la sede ${escapeHtml(d.site)}.</p>
-        </div>
-        ${energyChartSvg}
       </div>
       <p class="plan-note"><strong>Lectura técnica:</strong> ${escapeHtml(d.intensity.text)}</p>
 
@@ -871,8 +806,6 @@ function buildPlanHtml(d){
       </table>
 
       <h3>8. Registros mensuales usados por el plan</h3>
-      <p>La siguiente visualización resume los registros mensuales que soportan el plan. Permite identificar periodos críticos, comparar el impacto en CO₂e y estimar la necesidad de compensación arbórea.</p>
-      ${monthlyVisuals}
       <table class="plan-table compact">
         <thead><tr><th>Periodo</th><th>Energía</th><th>CO₂e</th><th>Árboles</th><th>Fuente</th></tr></thead>
         <tbody>${monthlyRows}</tbody>

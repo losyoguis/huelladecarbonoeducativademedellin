@@ -52,8 +52,22 @@
 
 
     <section class="panel">
-      <h2>Comparar meses</h2>
-      <div class="compare-controls">
+      <h2>Comparar periodos</h2>
+      <p class="muted">Compara el consumo y la huella ambiental por mes, trimestre, semestre o año. También puedes filtrar la comparación por una sede específica.</p>
+      <div class="compare-controls compare-controls-advanced">
+        <label>Tipo de comparación
+          <select id="compareMode">
+            <option value="month">Mes vs mes</option>
+            <option value="quarter">Trimestre vs trimestre</option>
+            <option value="semester">Semestre vs semestre</option>
+            <option value="year">Año vs año</option>
+          </select>
+        </label>
+        <label class="compare-site-field">Sede
+          <select id="compareSite">
+            <option value="">Todas las sedes</option>
+          </select>
+        </label>
         <label>Periodo A <select id="compareA"></select></label>
         <label>Periodo B <select id="compareB"></select></label>
         <button id="compareBtn" class="primary">Comparar</button>
