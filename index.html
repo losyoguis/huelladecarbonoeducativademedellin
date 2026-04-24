@@ -3,135 +3,118 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>SiMeCO₂ | Servicios Públicos Educativos</title>
+  <title>SiMeCO₂ · Servicios Públicos Educativos</title>
   <link rel="stylesheet" href="styles.css" />
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
   <header class="hero">
     <div>
-      <p class="eyebrow">SiMeCO₂ · Huella de Carbono Educativa</p>
-      <h1>Sistema mensual de servicios públicos</h1>
-      <p>Importa facturas consolidadas de EPM, identifica mes y año, acumula sedes y compara consumos entre periodos.</p>
+      <p class="eyebrow">Sistema de Medición y Comparación de Servicios Públicos</p>
+      <h1>SiMeCO₂ · Facturas EPM</h1>
+      <p class="lead">Carga, lee y compara automáticamente las facturas PDF guardadas en la carpeta <strong>data/</strong> del repositorio.</p>
     </div>
-    <div class="hero-card">
-      <strong>Almacenamiento</strong>
-      <span>Local + exportación a <code>/data</code> para GitHub</span>
-    </div>
+    <div class="status-pill" id="pdfStatus">PDF.js cargando…</div>
   </header>
 
-  <main class="container">
-    <section class="panel upload-panel">
-      <div class="upload-actions">
-        <label class="file-btn" for="pdfInput">Seleccionar PDF</label>
-        <input type="file" id="pdfInput" accept="application/pdf" />
-        <button id="btnClear" class="btn ghost">Reiniciar datos locales</button>
+  <main>
+    <section class="panel grid-2">
+      <div>
+        <h2>1. Importación</h2>
+        <p class="muted">Sube manualmente los PDF a <code>/data</code> en GitHub. Luego presiona el botón para buscar nuevos archivos e importarlos.</p>
+        <div class="actions">
+          <button class="primary" id="scanDataBtn">Buscar nuevos PDF en /data</button>
+          <label class="secondary file-label">
+            Cargar PDF local
+            <input type="file" id="localPdfInput" accept="application/pdf" hidden />
+          </label>
+          <button class="secondary" id="clearBtn">Reiniciar datos</button>
+        </div>
+        <div class="mini-form">
+          <label>Owner GitHub
+            <input id="repoOwner" placeholder="Ej. losyoguis" />
+          </label>
+          <label>Repositorio
+            <input id="repoName" placeholder="Ej. simeco2" />
+          </label>
+          <label>Rama
+            <input id="repoBranch" placeholder="main" />
+          </label>
+          <button id="saveRepoBtn" class="secondary">Guardar configuración</button>
+        </div>
+        <p class="hint">Si el sitio está en GitHub Pages, el sistema intenta detectar owner/repositorio automáticamente. En repositorios privados se requiere publicar los PDF o usar manifest.</p>
       </div>
-      <div class="meta-grid">
-        <label>Mes detectado
-          <input id="detectedMonth" readonly placeholder="Pendiente" />
-        </label>
-        <label>Año detectado
-          <input id="detectedYear" readonly placeholder="Pendiente" />
-        </label>
-        <label>Factor CO₂ kg/kWh
-          <input id="factorCO2" type="number" step="0.0001" value="0.126" />
-        </label>
+      <div>
+        <h2>Diagnóstico</h2>
+        <pre id="logBox" class="log"></pre>
       </div>
-      <div class="progress"><div id="progressBar"></div></div>
-      <pre id="logBox" class="log">Sistema listo. Cargue una factura PDF.</pre>
     </section>
 
-    <section class="panel github-panel">
-      <div class="section-title">
-        <h2>Guardado en carpeta <code>data</code></h2>
-        <p>En GitHub Pages no se puede escribir físicamente en el repositorio sin API. Este sistema deja el JSON listo para guardar en <code>/data</code> y además ofrece guardado directo por API de GitHub.</p>
-      </div>
-      <div class="github-grid">
-        <label>Owner / usuario GitHub <input id="ghOwner" placeholder="losyoguis" /></label>
-        <label>Repositorio <input id="ghRepo" placeholder="simeco2" /></label>
-        <label>Rama <input id="ghBranch" placeholder="main" value="main" /></label>
-        <label>Token GitHub <input id="ghToken" type="password" placeholder="github_pat_..." /></label>
-      </div>
-      <div class="row-actions">
-        <button id="btnDownloadData" class="btn">Descargar JSON para /data</button>
-        <button id="btnSaveGitHub" class="btn primary">Guardar directamente en GitHub /data</button>
-        <button id="btnImportJson" class="btn ghost">Importar JSON histórico</button>
-        <input type="file" id="jsonInput" accept="application/json" hidden />
-      </div>
-      <small>Recomendación: para producción use GitHub Actions o un backend. No publique tokens en repositorios públicos.</small>
+    <section class="cards" id="cards">
+      <article><span>Periodos</span><strong id="kPeriods">0</strong></article>
+      <article><span>Sedes</span><strong id="kSites">0</strong></article>
+      <article><span>Energía acumulada</span><strong id="kKwh">0 kWh</strong></article>
+      <article><span>CO₂ estimado</span><strong id="kCo2">0 t</strong></article>
+      <article><span>Agua</span><strong id="kWater">0 m³</strong></article>
+      <article><span>Aseo/Residuos</span><strong id="kWaste">0 t</strong></article>
     </section>
 
-    <section class="stats-grid">
-      <article class="stat"><span>Periodos cargados</span><strong id="statPeriods">0</strong></article>
-      <article class="stat"><span>Sedes registradas</span><strong id="statSites">0</strong></article>
-      <article class="stat"><span>Energía total</span><strong id="statEnergy">0 kWh</strong></article>
-      <article class="stat"><span>CO₂ estimado</span><strong id="statCo2">0 kg</strong></article>
-      <article class="stat"><span>Agua total</span><strong id="statWater">0 m³</strong></article>
-      <article class="stat"><span>Aseo total</span><strong id="statWaste">$0</strong></article>
-    </section>
-
-    <section class="panel filters">
-      <div class="section-title">
-        <h2>Consulta y comparación mensual</h2>
-        <p>Seleccione una sede y compare dos periodos cargados.</p>
-      </div>
-      <div class="filter-grid">
-        <label>Buscar sede
+    <section class="panel">
+      <div class="toolbar">
+        <div>
+          <label>Buscar sede</label>
           <input id="siteSearch" list="siteList" placeholder="Ej. Manuel J. Betancur" />
           <datalist id="siteList"></datalist>
-        </label>
-        <label>Periodo A
-          <select id="periodA"></select>
-        </label>
-        <label>Periodo B
-          <select id="periodB"></select>
-        </label>
-        <label>Servicio
+        </div>
+        <div>
+          <label>Periodo</label>
+          <select id="periodFilter"><option value="">Todos</option></select>
+        </div>
+        <div>
+          <label>Servicio</label>
           <select id="serviceFilter">
-            <option value="todos">Todos</option>
+            <option value="">Todos</option>
             <option value="energia">Energía</option>
             <option value="agua">Agua</option>
             <option value="alcantarillado">Alcantarillado</option>
             <option value="gas">Gas</option>
             <option value="aseo">Aseo</option>
           </select>
-        </label>
-      </div>
-      <div id="comparisonBox" class="comparison"></div>
-    </section>
-
-    <section class="charts-grid">
-      <div class="panel"><h3>Energía mensual por periodo</h3><canvas id="energyChart"></canvas></div>
-      <div class="panel"><h3>Servicios públicos por periodo</h3><canvas id="servicesChart"></canvas></div>
-    </section>
-
-    <section class="panel table-panel">
-      <div class="section-title row-title">
-        <div>
-          <h2>Registros por sede</h2>
-          <p>Los registros nuevos se agregan automáticamente al catálogo de sedes.</p>
         </div>
-        <div class="row-actions">
-          <button id="btnCsv" class="btn">Exportar CSV</button>
-          <button id="btnPrint" class="btn ghost">Imprimir / PDF</button>
+        <div class="toolbar-buttons">
+          <button id="exportCsvBtn" class="secondary">Exportar CSV</button>
+          <button id="exportJsonBtn" class="secondary">Exportar JSON</button>
+          <button onclick="window.print()" class="secondary">PDF/Imprimir</button>
         </div>
       </div>
       <div class="table-wrap">
         <table>
           <thead>
             <tr>
-              <th>Periodo</th><th>Sede</th><th>Dirección</th><th>Energía kWh</th><th>Agua m³</th><th>Alcant. m³</th><th>Gas m³</th><th>Aseo $</th><th>CO₂ kg</th>
+              <th>Periodo</th><th>Sede</th><th>Dirección</th><th>Agua m³</th><th>Alc. m³</th><th>Energía kWh</th><th>Gas m³</th><th>Aseo $</th><th>Residuos t</th><th>CO₂ kg</th><th>Fuente</th>
             </tr>
           </thead>
           <tbody id="recordsBody"></tbody>
         </table>
       </div>
     </section>
+
+    <section class="panel">
+      <h2>Comparar meses</h2>
+      <div class="compare-controls">
+        <label>Periodo A <select id="compareA"></select></label>
+        <label>Periodo B <select id="compareB"></select></label>
+        <button id="compareBtn" class="primary">Comparar</button>
+      </div>
+      <div id="compareResult" class="compare-result"></div>
+      <canvas id="chart" width="1100" height="420" aria-label="Gráfico comparativo"></canvas>
+    </section>
   </main>
 
-  <footer>SiMeCO₂ · Sistema de medición educativa · HTML/CSS/JS estático</footer>
+  <footer>
+    <strong>SiMeCO₂</strong> · Huella de Carbono Educativa · Alcance 2 a partir de consumo eléctrico.
+  </footer>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

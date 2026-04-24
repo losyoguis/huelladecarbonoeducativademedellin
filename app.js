@@ -1,387 +1,417 @@
-/* SiMeCO2 v6 - Sistema estático con comparación mensual y exportación a /data */
-const STORAGE_KEY = 'simeco2_servicios_publicos_v6';
-const MONTHS = {
-  enero:1, febrero:2, marzo:3, abril:4, mayo:5, junio:6,
-  julio:7, agosto:8, septiembre:9, setiembre:9, octubre:10, noviembre:11, diciembre:12,
-  ene:1, feb:2, mar:3, abr:4, may:5, jun:6, jul:7, ago:8, sep:9, oct:10, nov:11, dic:12
-};
-const BASE_SITES = [
-'Liceo Cristo Rey','Esc.j Acevedo Y Gome','Escuela Cristo Rey','Esc.republ.de Costa Rica','Esc.capilla Del Rosrio','Escuela La Colina','Esc. El Pradito','Escuela La Verde','Colegio Integrad','I.e Manuel J. Betancur','Liceo Mpal Prado','Inst Educ Monseñor Victor Wiedemann','Esc San Antonio','Esc. Carlos Betancur B','Institucion Educativa Fe Y Alegria El Limonar 1','Institucion Educativa Fe Y Alegria El Limonar 2','Escuela Ventanitas','Escuela Rural San Jose','Sec Esc Santa Catalina De Sena','Esc.guillermo Echavarria','Inem J F De Rpo','Colegio Octavio Calderon','Esc.urb.de La Presentac','Liceo Alcaldia De Med','Esc.antonio Jose Rtpo'
-];
+/* SiMeCO2 Servicios Públicos - v7 data/PDF scanner */
+const FACTOR_CO2_KG_KWH = 0.126; // editable: kg CO2e/kWh. Ajustar según factor oficial elegido.
+const STORE_KEY = 'simeco2_servicios_v7';
+const CONFIG_KEY = 'simeco2_repo_config_v7';
 
-let state = loadState();
-let lastImport = null;
-let charts = {};
+const $ = (id)=>document.getElementById(id);
+const state = loadStore();
+let chartData = [];
 
-const $ = id => document.getElementById(id);
-const logBox = $('logBox');
+window.addEventListener('load', () => {
+  initPdfJs();
+  initConfig();
+  bindEvents();
+  renderAll();
+  log('Sistema listo. Sube los PDF a /data y presiona “Buscar nuevos PDF en /data”.');
+});
 
-if (window.pdfjsLib) {
-  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+function initPdfJs(){
+  if(window.pdfjsLib){
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    $('pdfStatus').textContent = 'PDF.js activo';
+  } else {
+    $('pdfStatus').textContent = 'PDF.js no cargó';
+    $('pdfStatus').classList.add('bad');
+  }
+}
+function bindEvents(){
+  $('scanDataBtn').addEventListener('click', scanDataFolder);
+  $('localPdfInput').addEventListener('change', handleLocalPdf);
+  $('clearBtn').addEventListener('click', ()=>{ if(confirm('¿Reiniciar todos los datos importados?')){ localStorage.removeItem(STORE_KEY); location.reload(); }});
+  $('saveRepoBtn').addEventListener('click', saveConfig);
+  ['siteSearch','periodFilter','serviceFilter'].forEach(id=>$(id).addEventListener('input', renderTable));
+  $('exportCsvBtn').addEventListener('click', exportCsv);
+  $('exportJsonBtn').addEventListener('click', exportJson);
+  $('compareBtn').addEventListener('click', comparePeriods);
+}
+function initConfig(){
+  const cfg = loadConfig();
+  const detected = detectGitHubRepo();
+  $('repoOwner').value = cfg.owner || detected.owner || '';
+  $('repoName').value = cfg.repo || detected.repo || '';
+  $('repoBranch').value = cfg.branch || 'main';
+}
+function detectGitHubRepo(){
+  const host = location.hostname;
+  const parts = location.pathname.split('/').filter(Boolean);
+  if(host.endsWith('github.io') && parts[0]){
+    return {owner: host.replace('.github.io',''), repo: parts[0]};
+  }
+  return {};
+}
+function loadConfig(){ try{return JSON.parse(localStorage.getItem(CONFIG_KEY)||'{}')}catch{return {}} }
+function saveConfig(){
+  const cfg = { owner:$('repoOwner').value.trim(), repo:$('repoName').value.trim(), branch:$('repoBranch').value.trim()||'main' };
+  localStorage.setItem(CONFIG_KEY, JSON.stringify(cfg));
+  log(`Configuración guardada: ${cfg.owner}/${cfg.repo}@${cfg.branch}`);
+}
+function loadStore(){
+  try{ return JSON.parse(localStorage.getItem(STORE_KEY)) || {records:[], files:{}, sites:{}}; }
+  catch{ return {records:[], files:{}, sites:{}}; }
+}
+function saveStore(){ localStorage.setItem(STORE_KEY, JSON.stringify(state)); }
+function log(msg){
+  const t = new Date().toLocaleTimeString();
+  $('logBox').textContent += `[${t}] ${msg}\n`;
+  $('logBox').scrollTop = $('logBox').scrollHeight;
 }
 
-function loadState(){
-  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {records:[], sites: BASE_SITES, imports:[]}; }
-  catch { return {records:[], sites: BASE_SITES, imports:[]}; }
+async function scanDataFolder(){
+  log('Buscando PDFs nuevos en carpeta /data...');
+  const cfg = { owner:$('repoOwner').value.trim(), repo:$('repoName').value.trim(), branch:$('repoBranch').value.trim()||'main' };
+  let files = [];
+  if(cfg.owner && cfg.repo){
+    try{
+      const api = `https://api.github.com/repos/${encodeURIComponent(cfg.owner)}/${encodeURIComponent(cfg.repo)}/contents/data?ref=${encodeURIComponent(cfg.branch)}`;
+      const res = await fetch(api, {cache:'no-store'});
+      if(!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+      const json = await res.json();
+      files = json.filter(f=>f.type==='file' && f.name.toLowerCase().endsWith('.pdf')).map(f=>({name:f.name,url:f.download_url,sha:f.sha}));
+      log(`GitHub API: ${files.length} PDF encontrados en /data.`);
+    } catch(err){
+      log(`No se pudo leer GitHub API (${err.message}). Intentando data/manifest.json...`);
+    }
+  }
+  if(!files.length){
+    try{
+      const res = await fetch('data/manifest.json?ts='+Date.now(), {cache:'no-store'});
+      if(res.ok){
+        const manifest = await res.json();
+        const arr = Array.isArray(manifest) ? manifest : manifest.files || [];
+        files = arr.filter(x => String(typeof x==='string'?x:x.name).toLowerCase().endsWith('.pdf')).map(x=> typeof x==='string' ? {name:x,url:'data/'+encodeURIComponent(x)} : {name:x.name,url:x.url||('data/'+encodeURIComponent(x.name))});
+        log(`Manifest: ${files.length} PDF encontrados.`);
+      }
+    }catch(err){ log(`No se pudo leer manifest.json: ${err.message}`); }
+  }
+  if(!files.length){
+    log('No se encontraron PDF. En GitHub público basta subir los PDF a /data. En local usa data/manifest.json.');
+    return;
+  }
+  let imported=0, skipped=0, failed=0;
+  for(const file of files){
+    const fingerprint = file.sha || file.url || file.name;
+    if(state.files[fingerprint]){ skipped++; continue; }
+    try{
+      log(`Importando ${file.name}...`);
+      const buf = await (await fetch(file.url, {cache:'no-store'})).arrayBuffer();
+      const result = await parsePdfArrayBuffer(buf, file.name, file.url);
+      if(result.records.length){
+        addImport(result, fingerprint);
+        imported++;
+        log(`OK ${file.name}: ${result.records.length} registros, periodo ${result.period}.`);
+      }else{
+        failed++;
+        log(`Sin registros estructurados en ${file.name}. Muestra: ${result.sample.slice(0,500).replace(/\s+/g,' ')}`);
+      }
+    }catch(err){ failed++; log(`Error importando ${file.name}: ${err.message}`); }
+  }
+  log(`Proceso terminado. Importados: ${imported}. Omitidos ya existentes: ${skipped}. Fallidos: ${failed}.`);
+  saveStore(); renderAll();
 }
-function saveState(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
-function log(msg){ const time = new Date().toLocaleTimeString(); logBox.textContent += `\n[${time}] ${msg}`; logBox.scrollTop = logBox.scrollHeight; }
-function setProgress(p){ $('progressBar').style.width = `${Math.max(0, Math.min(100, p))}%`; }
-function fmt(n,dec=0){ return Number(n||0).toLocaleString('es-CO',{maximumFractionDigits:dec,minimumFractionDigits:dec}); }
-function money(n){ return '$' + Number(n||0).toLocaleString('es-CO',{maximumFractionDigits:0}); }
-function parseCoNumber(v){
-  if(v===undefined || v===null) return 0;
-  let s = String(v).trim().replace(/\s/g,'');
-  if(!s || s==='-') return 0;
-  s = s.replace(/[^0-9,.-]/g,'');
-  const lastComma = s.lastIndexOf(','), lastDot = s.lastIndexOf('.');
-  if(lastComma > lastDot) s = s.replace(/\./g,'').replace(',','.');
-  else if(lastDot > lastComma) s = s.replace(/,/g,'');
-  else s = s.replace(',','.');
-  const n = Number(s);
-  return Number.isFinite(n) ? n : 0;
+async function handleLocalPdf(ev){
+  const file = ev.target.files[0]; if(!file) return;
+  log(`Leyendo PDF local: ${file.name}`);
+  const buf = await file.arrayBuffer();
+  const result = await parsePdfArrayBuffer(buf, file.name, 'local');
+  if(result.records.length){
+    const fingerprint = 'local-'+file.name+'-'+file.size+'-'+file.lastModified;
+    addImport(result, fingerprint);
+    saveStore(); renderAll();
+    log(`PDF local importado: ${result.records.length} registros, periodo ${result.period}.`);
+  } else {
+    log(`PDF abierto, pero no se estructuraron registros. Muestra: ${result.sample.slice(0,1000).replace(/\s+/g,' ')}`);
+    alert('El PDF fue abierto, pero no se pudieron estructurar registros. Revisa el diagnóstico.');
+  }
+  ev.target.value='';
 }
-function normalizeText(s){
-  return String(s||'')
-    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
-    .replace(/\bPrestaci\s+o\s+n\b/gi,'Prestacion')
-    .replace(/\bEnerg\s+i\s+a\b/gi,'Energia')
-    .replace(/\bfacturaci\s+o\s+n\b/gi,'facturacion')
-    .replace(/\bconexi\s+o\s+n\b/gi,'conexion')
-    .replace(/\bcontribuci\s+o\s+n\b/gi,'contribucion')
-    .replace(/\s+/g,' ')
-    .trim();
+function addImport(result, fingerprint){
+  const existingKeys = new Set(state.records.map(r=>r.key));
+  for(const r of result.records){
+    if(!existingKeys.has(r.key)) state.records.push(r);
+    if(r.site) state.sites[siteKey(r.site,r.address)] = {site:r.site,address:r.address};
+  }
+  state.files[fingerprint] = {name:result.fileName, period:result.period, importedAt:new Date().toISOString(), count:result.records.length};
 }
-function compact(s){ return normalizeText(s).toLowerCase().replace(/[^a-z0-9]/g,''); }
-function periodKey(year, month){ return `${year}-${String(month).padStart(2,'0')}`; }
-function periodLabel(key){
-  if(!key) return 'Sin periodo';
-  const [y,m] = key.split('-');
-  const name = Object.keys(MONTHS).find(k => MONTHS[k] === Number(m) && k.length>3) || m;
-  return `${name.charAt(0).toUpperCase()+name.slice(1)} ${y}`;
-}
-function safeFileName(s){ return String(s).normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9_-]+/g,'_').replace(/^_+|_+$/g,''); }
 
-async function readPdf(file){
-  if(!window.pdfjsLib) throw new Error('PDF.js no está disponible. Revisa la conexión a internet o sube el sistema a GitHub Pages.');
-  const buffer = await file.arrayBuffer();
-  const pdf = await pdfjsLib.getDocument({data: buffer}).promise;
-  log(`PDF cargado correctamente: ${pdf.numPages} páginas.`);
-  let pages = [];
-  let full = '';
-  for(let p=1; p<=pdf.numPages; p++){
+async function parsePdfArrayBuffer(arrayBuffer, fileName, sourceUrl){
+  if(!window.pdfjsLib) throw new Error('PDF.js no está cargado.');
+  const pdf = await pdfjsLib.getDocument({data:arrayBuffer}).promise;
+  log(`PDF cargado: ${fileName}, ${pdf.numPages} páginas.`);
+  let allText = '';
+  const allLines = [];
+  for(let p=1;p<=pdf.numPages;p++){
     const page = await pdf.getPage(p);
     const content = await page.getTextContent();
-    const items = content.items.map(it => ({str: it.str, x: it.transform[4], y: it.transform[5]}));
-    items.sort((a,b)=> Math.abs(b.y-a.y)>3 ? b.y-a.y : a.x-b.x);
-    const lines = [];
-    let currentY = null, line = [];
-    for(const it of items){
-      if(currentY===null || Math.abs(currentY-it.y)<=3){ line.push(it.str); currentY = currentY ?? it.y; }
-      else { lines.push(line.join(' ')); line=[it.str]; currentY=it.y; }
-    }
-    if(line.length) lines.push(line.join(' '));
-    const pageText = lines.join('\n');
-    pages.push({page:p, text:pageText});
-    full += `\nPÁGINA ${p}\n${pageText}\n`;
-    if(p % 10 === 0 || p === pdf.numPages) setProgress(10 + (p/pdf.numPages)*55);
+    const items = content.items.map(it=>({str:it.str||'', x:it.transform[4]||0, y:it.transform[5]||0})).filter(i=>i.str.trim());
+    const lines = groupTextItemsIntoLines(items);
+    allLines.push(...lines.map(line=>({page:p, text:line})));
+    allText += `\nPÁGINA ${p}\n` + lines.join('\n');
+    if(p%40===0) log(`Leídas ${p}/${pdf.numPages} páginas...`);
   }
-  return {pages, fullText: full};
+  const period = detectPeriod(allText, fileName);
+  const blocks = makeBlocks(allLines);
+  log(`Marcadores de sede encontrados: ${blocks.length}. Periodo detectado: ${period}.`);
+  const summary = parseSummary(allText);
+  const records = [];
+  blocks.forEach((block, idx)=>{
+    const rec = parseBlock(block, period, fileName, sourceUrl, idx);
+    if(rec && hasAnyMeasure(rec)) records.push(rec);
+  });
+  // Si no estructura bloques, por lo menos importa resumen consolidado página 1.
+  if(!records.length && (summary.energyKwh || summary.waterM3 || summary.alcM3 || summary.gasM3)){
+    records.push({
+      key:`${period}|RESUMEN CONSOLIDADO|${fileName}`,
+      period, site:'RESUMEN CONSOLIDADO MUNICIPIO DE MEDELLÍN - EDUCACIÓN', address:'Contrato 1538220',
+      waterM3:summary.waterM3, alcM3:summary.alcM3, energyKwh:summary.energyKwh, gasM3:summary.gasM3,
+      waterValue:summary.waterValue, alcValue:summary.alcValue, energyValue:summary.energyValue, gasValue:summary.gasValue,
+      wasteValue:summary.wasteValue, wasteTon:null, co2kg:round((summary.energyKwh||0)*FACTOR_CO2_KG_KWH,2),
+      source:fileName, page:1, sourceUrl, type:'resumen'
+    });
+  }
+  return {fileName, period, records, sample:allText.slice(0,3000)};
 }
-
-function detectPeriod(text, fileName=''){
-  const n = normalizeText(text);
-  let m = n.match(/Resumen de facturacion\s+([A-Za-z]+)\s+de\s+(20\d{2})/i);
-  if(!m) m = n.match(/facturacion\s+([A-Za-z]+)\s+de\s+(20\d{2})/i);
-  if(!m) m = normalizeText(fileName).match(/(enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|setiembre|octubre|noviembre|diciembre|ene|feb|mar|abr|may|jun|jul|ago|sep|oct|nov|dic)[-_\s]*(20\d{2})/i);
-  if(m){
-    const monthName = m[1].toLowerCase();
-    const year = Number(m[2]);
-    return {month: MONTHS[monthName] || 0, year, label: `${monthName} ${year}`};
+function groupTextItemsIntoLines(items){
+  items.sort((a,b)=> Math.abs(b.y-a.y)>3 ? b.y-a.y : a.x-b.x);
+  const lines=[];
+  let current=[], cy=null;
+  for(const it of items){
+    if(cy===null || Math.abs(it.y-cy)<=3){ current.push(it); cy = cy===null ? it.y : (cy+it.y)/2; }
+    else { lines.push(current.sort((a,b)=>a.x-b.x).map(i=>i.str).join(' ')); current=[it]; cy=it.y; }
   }
-  const today = new Date();
-  return {month: today.getMonth()+1, year: today.getFullYear(), label: 'Periodo asignado por fecha actual'};
+  if(current.length) lines.push(current.sort((a,b)=>a.x-b.x).map(i=>i.str).join(' '));
+  return lines.map(cleanPdfText).filter(Boolean);
 }
-
-function splitServiceBlocks(text){
-  // PDF.js puede extraer "Prestaci ó n". El patrón reconoce ambas formas.
-  const marker = /Prestaci\s*(?:ó|o|\u00f3)?\s*n\s+del\s+servicio\s*:/gi;
-  const matches = [...text.matchAll(marker)];
-  log(`Marcadores encontrados por patrón flexible: ${matches.length}.`);
-  const blocks = [];
-  for(let i=0;i<matches.length;i++){
-    const start = matches[i].index;
-    const end = i+1<matches.length ? matches[i+1].index : Math.min(text.length, start+6500);
-    blocks.push(text.slice(start,end));
-  }
-  // Fallback: buscar por texto compactado en páginas y usar aproximación por líneas.
-  if(blocks.length===0){
-    const lines = text.split(/\n+/);
-    let current = [];
-    for(const line of lines){
-      if(compact(line).includes('prestaciondelservicio')){
-        if(current.length) blocks.push(current.join('\n'));
-        current = [line];
-      } else if(current.length) current.push(line);
+function cleanPdfText(s){ return String(s).replace(/\s+/g,' ').replace(/\s+([,.;:])/g,'$1').trim(); }
+function loose(s){ return cleanPdfText(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9$.,%#/-]+/g,' ').trim(); }
+function compact(s){ return loose(s).replace(/\s+/g,''); }
+function isServiceMarker(line){
+  const c = compact(line);
+  return c.includes('prestaciondelservicio') || c.includes('prestaci ondelservicio') || c.includes('prestacio ndelservicio');
+}
+function makeBlocks(lines){
+  const blocks=[]; let current=null;
+  for(const row of lines){
+    if(isServiceMarker(row.text)){
+      if(current) blocks.push(current);
+      current = {page:row.page, lines:[row.text]};
+    } else if(current){
+      current.lines.push(row.text);
+      if(current.lines.length>120){ blocks.push(current); current=null; }
     }
-    if(current.length) blocks.push(current.join('\n'));
-    log(`Marcadores encontrados por fallback compactado: ${blocks.length}.`);
   }
+  if(current) blocks.push(current);
   return blocks;
 }
-
-function headerFromBlock(block){
-  const clean = normalizeText(block);
-  const m = clean.match(/Prestacion\s+del\s+servicio\s*:\s*(.*?)\s+-\s*(.*?)\s+-\s*Municipio\s*:\s*(.*?)(?:\n|Lectura|Valores|Consumo|$)/i);
-  if(m){
-    return {
-      site: titleCase(m[1].trim()),
-      address: m[2].trim(),
-      municipality: m[3].replace(/Lectura.*$/i,'').trim()
-    };
-  }
-  const m2 = clean.match(/Prestacion\s+del\s+servicio\s*:\s*(.*?)(?:Lectura|Valores|Consumo|Producto|$)/i);
-  let raw = m2 ? m2[1].trim() : 'Sede sin identificar';
-  const parts = raw.split(/\s+-\s+/);
-  return {site: titleCase(parts[0] || raw), address: parts.slice(1,3).join(' - '), municipality:''};
+function detectPeriod(text, fileName){
+  const l = loose(text);
+  const m = l.match(/resumen de facturaci\s*o\s*n\s+([a-z]+)\s+de\s+(20\d{2})/i) || l.match(/facturacion\s+([a-z]+)\s+de\s+(20\d{2})/i);
+  const months = {enero:'01',febrero:'02',marzo:'03',abril:'04',mayo:'05',junio:'06',julio:'07',agosto:'08',septiembre:'09',setiembre:'09',octubre:'10',noviembre:'11',diciembre:'12'};
+  if(m && months[m[1]]) return `${m[2]}-${months[m[1]]}`;
+  const f = loose(fileName);
+  for(const [name,num] of Object.entries(months)){ if(f.includes(name)){ const y=(f.match(/20\d{2}/)||['2025'])[0]; return `${y}-${num}`; } }
+  return new Date().toISOString().slice(0,7);
 }
-function titleCase(s){
-  return String(s||'').toLowerCase().replace(/\b([a-záéíóúñü])/g, c => c.toUpperCase()).replace(/\bIe\b/g,'I.E.').replace(/\bEsc\b/g,'Esc.');
-}
-function extractSection(block, totalLabel){
-  const c = normalizeText(block);
-  const idx = c.toLowerCase().indexOf(totalLabel.toLowerCase());
-  if(idx<0) return '';
-  return c.slice(Math.max(0, idx-950), idx+220);
-}
-function extractConsumption(section, unit, service){
-  let s = normalizeText(section);
-  let re;
-  if(service==='energia'){
-    re = /Energia\s+ene-\d{2}\s+([\d.,]+)\s*x/i;
-    let m = s.match(re); if(m) return parseCoNumber(m[1]);
-    m = s.match(/([\d.,]+)\s*kWh/i); if(m) return parseCoNumber(m[1]);
-  } else if(service==='gas'){
-    let m = s.match(/Consumo\s+ene-\d{2}\s+([\d.,]+)\s*x/i); if(m) return parseCoNumber(m[1]);
-    m = s.match(/([\d.,]+)\s*mt3/i); if(m) return parseCoNumber(m[1]);
-  } else {
-    let m = s.match(/Consumo\s+ene-\d{2}\s+([\d.,]+)\s*x/i); if(m) return parseCoNumber(m[1]);
-    m = s.match(/([\d.,]+)\s*mt3/i); if(m) return parseCoNumber(m[1]);
-  }
-  return 0;
-}
-function extractMoney(section, label){
-  const s = normalizeText(section);
-  const re = new RegExp(label.replace(/[.*+?^${}()|[\]\\]/g,'\\$&') + '\\s*\\$\\s*([\\d.,-]+)','i');
-  const m = s.match(re);
-  return m ? parseCoNumber(m[1]) : 0;
-}
-function parseBlock(block, period, factor){
-  const h = headerFromBlock(block);
-  const aguaSec = extractSection(block,'Total Agua');
-  const alcSec = extractSection(block,'Total Alcantarillado');
-  const eneSec = extractSection(block,'Total Energia');
-  const gasSec = extractSection(block,'Total Gas');
-  const aseoSec = extractSection(block,'Total Aseo');
-
-  const energiaKwh = extractConsumption(eneSec,'kWh','energia');
-  const aguaM3 = extractConsumption(aguaSec,'mt3','agua');
-  const alcantarilladoM3 = extractConsumption(alcSec,'mt3','alcantarillado');
-  const gasM3 = extractConsumption(gasSec,'mt3','gas');
-  const aseoValor = extractMoney(aseoSec,'Total Aseo');
-
-  const rec = {
-    id: `${period.key}_${safeFileName(h.site)}_${safeFileName(h.address)}`,
-    period: period.key, month: period.month, year: period.year,
-    sede: h.site, direccion: h.address, municipio: h.municipality,
-    energiaKwh, aguaM3, alcantarilladoM3, gasM3, aseoValor,
-    co2Kg: +(energiaKwh * factor).toFixed(3),
-    valorEnergia: extractMoney(eneSec,'Total Energia'),
-    valorAgua: extractMoney(aguaSec,'Total Agua'),
-    valorAlcantarillado: extractMoney(alcSec,'Total Alcantarillado'),
-    valorGas: extractMoney(gasSec,'Total Gas')
+function parseSummary(text){
+  const head = text.slice(0,8000);
+  return {
+    waterM3: extractAfter(head, /ACTUAL\s+([\d.,]+)\s*m3[\s\S]{0,200}?Acueducto/i),
+    alcM3: nthNumberByLabel(head, 'ACTUAL', 2, 'm3'),
+    energyKwh: extractAfter(head, /ACTUAL\s+([\d.,]+)\s*kwh/i),
+    gasM3: nthNumberByLabel(head, 'ACTUAL', 3, 'm3'),
+    waterValue: valueAfter(head,'Total Acueducto'),
+    alcValue: valueAfter(head,'Total Alcantarillado'),
+    energyValue: valueAfter(head,'Total Energ'),
+    gasValue: valueAfter(head,'Total Gas Natural'),
+    wasteValue: valueAfter(text.slice(0,12000),'Total Otras Entidades')
   };
-  const valid = rec.energiaKwh || rec.aguaM3 || rec.alcantarilladoM3 || rec.gasM3 || rec.aseoValor;
-  return valid ? rec : null;
 }
-
-function addRecords(records, importInfo){
-  const map = new Map(state.records.map(r => [r.id, r]));
-  records.forEach(r => map.set(r.id, r));
-  state.records = [...map.values()].sort((a,b)=> a.period.localeCompare(b.period) || a.sede.localeCompare(b.sede));
-  const siteSet = new Set([...(state.sites||[]), ...records.map(r => r.sede).filter(Boolean)]);
-  state.sites = [...siteSet].sort((a,b)=>a.localeCompare(b));
-  const imports = new Map((state.imports||[]).map(i => [i.period, i]));
-  imports.set(importInfo.period, importInfo);
-  state.imports = [...imports.values()].sort((a,b)=>a.period.localeCompare(b.period));
-  saveState(); render();
+function nthNumberByLabel(text,label,n,unit){
+  const re = new RegExp(label+'\\s+([\\d.,]+)\\s*'+unit,'gi'); let m, i=0;
+  while((m=re.exec(text))){ i++; if(i===n) return parseNumber(m[1]); }
+  return null;
 }
-
-async function handlePdf(file){
-  logBox.textContent = 'Sistema listo.';
-  log('Iniciando lectura profunda del PDF...');
-  setProgress(5);
-  const factor = Number($('factorCO2').value || 0.126);
-  const {fullText} = await readPdf(file);
-  const periodRaw = detectPeriod(fullText, file.name);
-  const period = { ...periodRaw, key: periodKey(periodRaw.year, periodRaw.month) };
-  $('detectedMonth').value = String(period.month).padStart(2,'0');
-  $('detectedYear').value = period.year;
-  log(`Periodo identificado: ${periodLabel(period.key)}.`);
-  setProgress(70);
-  const blocks = splitServiceBlocks(fullText);
-  const records = blocks.map(b => parseBlock(b, period, factor)).filter(Boolean);
-  log(`Bloques leídos: ${blocks.length}. Registros válidos identificados: ${records.length}.`);
-  if(records.length === 0){
-    log('No se importaron registros. Muestra de texto leído:');
-    log(fullText.slice(0,3500));
-    alert('El PDF fue abierto, pero no se pudieron estructurar registros. Revisa el diagnóstico inferior.');
-    setProgress(0); return;
-  }
-  const importInfo = {period: period.key, label: periodLabel(period.key), fileName:file.name, importedAt:new Date().toISOString(), records:records.length};
-  addRecords(records, importInfo);
-  lastImport = {period: period.key, records, importInfo};
-  setProgress(100);
-  log(`Importación completada. Se cargaron ${records.length} registros para ${periodLabel(period.key)}.`);
-  log(`Archivo sugerido para GitHub: data/${period.key}.json`);
+function parseBlock(block, period, fileName, sourceUrl, idx){
+  const text = block.lines.join('\n');
+  const header = extractHeader(block.lines[0], block.lines[1]||'');
+  if(!header.site) return null;
+  const energyKwh = extractEnergyKwh(text);
+  const waterM3 = extractServiceConsumption(text, 'agua') ?? extractBeforeTotal(text,'Total Agua','m3');
+  const alcM3 = extractServiceConsumption(text, 'alcantarillado') ?? extractBeforeTotal(text,'Total Alcantarillado','m3');
+  const gasM3 = extractServiceConsumption(text, 'gas') ?? extractBeforeTotal(text,'Total Gas','m3');
+  const wasteTon = extractWasteTon(text);
+  const rec = {
+    key:`${period}|${siteKey(header.site,header.address)}|${block.page}|${idx}|${fileName}`,
+    period, site:header.site, address:header.address,
+    waterM3, alcM3, energyKwh, gasM3,
+    waterValue:valueAfter(text,'Total Agua'), alcValue:valueAfter(text,'Total Alcantarillado'), energyValue:valueAfter(text,'Total Energ'), gasValue:valueAfter(text,'Total Gas'),
+    wasteValue:valueAfter(text,'Total Aseo'), wasteTon,
+    co2kg: round((energyKwh||0)*FACTOR_CO2_KG_KWH,2),
+    source:fileName, sourceUrl, page:block.page, type:'sede'
+  };
+  return rec;
 }
+function extractHeader(line, nextLine){
+  let raw = line;
+  if(!/servicio\s*:/i.test(raw) && nextLine) raw += ' ' + nextLine;
+  const m = raw.match(/servicio\s*:\s*(.+)$/i);
+  let h = m ? m[1] : raw.replace(/.*servicio/i,'');
+  h = cleanPdfText(h).replace(/\s*-\s*Municipio:.*$/i,'');
+  const parts = h.split(/\s+-\s+/);
+  const site = (parts.shift()||'').replace(/[.*]+$/,'').trim();
+  const address = parts.join(' - ').trim();
+  return {site, address};
+}
+function extractServiceConsumption(text, service){
+  const lower = loose(text);
+  let start = 0;
+  if(service==='agua') start = Math.max(0, lower.indexOf('total agua')-900);
+  if(service==='alcantarillado') start = Math.max(0, lower.indexOf('total alcantarillado')-900);
+  if(service==='gas') start = Math.max(0, lower.indexOf('total gas')-900);
+  const fragment = text.slice(start, start+1100);
+  const m = fragment.match(/Lectura actual[\s\S]{0,150}?([\d.,]+)\s*m(?:t3|3|³)/i) || fragment.match(/Consumo\s+\w+-\d{2}\s+([\d.,]+)\s*x/i);
+  return m ? parseNumber(m[1]) : null;
+}
+function extractBeforeTotal(text,totalLabel,unit){
+  const idx = loose(text).indexOf(loose(totalLabel));
+  if(idx<0) return null;
+  const fragment = text.slice(Math.max(0,idx-800), idx+80);
+  const matches = [...fragment.matchAll(new RegExp('([\\d.,]+)\\s*m(?:t3|3|³)','gi'))];
+  if(matches.length) return parseNumber(matches[matches.length-1][1]);
+  return null;
+}
+function extractEnergyKwh(text){
+  const matches = [...text.matchAll(/([\d.,]+)\s*kWh/gi)].map(m=>parseNumber(m[1])).filter(n=>Number.isFinite(n));
+  if(!matches.length) return null;
+  // En el bloque los kWh principales suelen estar junto a Lectura actual. Evitar valores de histórico muy altos si aparecen.
+  return matches[0];
+}
+function extractWasteTon(text){
+  const m = text.match(/No Aprov-Ordinarios\s+([\d.,]+)/i) || text.match(/No aprovechables\s+([\d.,]+)/i);
+  return m ? parseNumber(m[1]) : null;
+}
+function valueAfter(text,label){
+  const idx = loose(text).indexOf(loose(label));
+  if(idx<0) return null;
+  const fragment = text.slice(idx, idx+220);
+  const m = fragment.match(/\$\s*-?\s*([\d.,]+)/);
+  return m ? parseMoney(m[1]) : null;
+}
+function extractAfter(text,re){ const m = text.match(re); return m ? parseNumber(m[1]) : null; }
+function parseNumber(v){
+  if(v==null) return null;
+  let s=String(v).trim().replace(/\s/g,'');
+  if(!s) return null;
+  if(s.includes(',') && s.includes('.')) s=s.replace(/\./g,'').replace(',','.');
+  else if(s.includes(',')) s=s.replace(',','.');
+  const n=parseFloat(s); return Number.isFinite(n)?n:null;
+}
+function parseMoney(v){ return parseNumber(v); }
+function round(n,d=2){ return Number.isFinite(n) ? Math.round(n*Math.pow(10,d))/Math.pow(10,d) : 0; }
+function hasAnyMeasure(r){ return [r.waterM3,r.alcM3,r.energyKwh,r.gasM3,r.wasteValue,r.wasteTon].some(v=>v!==null && v!==undefined && v!==0); }
+function siteKey(site,address=''){ return `${loose(site)}|${loose(address)}`; }
 
-function getPeriods(){ return [...new Set(state.records.map(r=>r.period))].sort(); }
 function filteredRecords(){
-  const q = normalizeText($('siteSearch').value).toLowerCase();
-  const service = $('serviceFilter').value;
-  return state.records.filter(r => {
-    const siteOk = !q || normalizeText(`${r.sede} ${r.direccion}`).toLowerCase().includes(q);
-    let servOk = true;
-    if(service==='energia') servOk = r.energiaKwh>0;
-    if(service==='agua') servOk = r.aguaM3>0;
-    if(service==='alcantarillado') servOk = r.alcantarilladoM3>0;
-    if(service==='gas') servOk = r.gasM3>0;
-    if(service==='aseo') servOk = r.aseoValor>0;
-    return siteOk && servOk;
+  const q = loose($('siteSearch').value||'');
+  const p = $('periodFilter').value;
+  const s = $('serviceFilter').value;
+  return state.records.filter(r=>{
+    if(q && !(`${loose(r.site)} ${loose(r.address)}`.includes(q))) return false;
+    if(p && r.period!==p) return false;
+    if(s==='energia' && !r.energyKwh) return false;
+    if(s==='agua' && !r.waterM3) return false;
+    if(s==='alcantarillado' && !r.alcM3) return false;
+    if(s==='gas' && !r.gasM3) return false;
+    if(s==='aseo' && !(r.wasteValue||r.wasteTon)) return false;
+    return true;
   });
 }
-function render(){
-  renderSiteList(); renderPeriods(); renderStats(); renderTable(); renderComparison(); renderCharts();
+function renderAll(){ renderControls(); renderCards(); renderTable(); drawChart(aggregateByPeriod(state.records)); }
+function renderControls(){
+  const periods = [...new Set(state.records.map(r=>r.period))].sort();
+  const options = '<option value="">Todos</option>'+periods.map(p=>`<option value="${p}">${p}</option>`).join('');
+  const current = $('periodFilter').value;
+  $('periodFilter').innerHTML = options; $('periodFilter').value = current;
+  ['compareA','compareB'].forEach(id=>$(id).innerHTML = periods.map(p=>`<option value="${p}">${p}</option>`).join(''));
+  if(periods.length){ $('compareA').value=periods[Math.max(0,periods.length-2)]; $('compareB').value=periods[periods.length-1]; }
+  const siteValues = Object.values(state.sites).sort((a,b)=>a.site.localeCompare(b.site));
+  $('siteList').innerHTML = siteValues.map(s=>`<option value="${escapeHtml(s.site)}${s.address?' · '+escapeHtml(s.address):''}"></option>`).join('');
 }
-function renderSiteList(){
-  $('siteList').innerHTML = (state.sites||[]).map(s=>`<option value="${escapeHtml(s)}"></option>`).join('');
-}
-function renderPeriods(){
-  const periods = getPeriods();
-  for(const id of ['periodA','periodB']){
-    const current = $(id).value;
-    $(id).innerHTML = periods.map(p=>`<option value="${p}">${periodLabel(p)}</option>`).join('');
-    if(periods.includes(current)) $(id).value = current;
-  }
-  if(periods.length){ $('periodA').value = $('periodA').value || periods[0]; $('periodB').value = $('periodB').value || periods[periods.length-1]; }
-}
-function sum(records, key){ return records.reduce((a,r)=>a+Number(r[key]||0),0); }
-function renderStats(){
-  $('statPeriods').textContent = getPeriods().length;
-  $('statSites').textContent = (state.sites||[]).length;
-  $('statEnergy').textContent = `${fmt(sum(state.records,'energiaKwh'),0)} kWh`;
-  $('statCo2').textContent = `${fmt(sum(state.records,'co2Kg'),1)} kg`;
-  $('statWater').textContent = `${fmt(sum(state.records,'aguaM3'),0)} m³`;
-  $('statWaste').textContent = money(sum(state.records,'aseoValor'));
+function renderCards(){
+  const recs = state.records;
+  const periods = new Set(recs.map(r=>r.period)).size;
+  const sites = new Set(recs.map(r=>siteKey(r.site,r.address))).size;
+  const sum = (field)=>recs.reduce((a,r)=>a+(Number(r[field])||0),0);
+  $('kPeriods').textContent = periods;
+  $('kSites').textContent = sites;
+  $('kKwh').textContent = fmt(sum('energyKwh'))+' kWh';
+  $('kCo2').textContent = fmt(sum('co2kg')/1000)+' t';
+  $('kWater').textContent = fmt(sum('waterM3'))+' m³';
+  $('kWaste').textContent = fmt(sum('wasteTon'))+' t';
 }
 function renderTable(){
-  const rows = filteredRecords();
-  $('recordsBody').innerHTML = rows.map(r=>`<tr>
-    <td>${periodLabel(r.period)}</td><td>${escapeHtml(r.sede)}</td><td>${escapeHtml(r.direccion||'')}</td>
-    <td>${fmt(r.energiaKwh,1)}</td><td>${fmt(r.aguaM3,1)}</td><td>${fmt(r.alcantarilladoM3,1)}</td><td>${fmt(r.gasM3,1)}</td><td>${money(r.aseoValor)}</td><td>${fmt(r.co2Kg,1)}</td>
-  </tr>`).join('');
+  const recs = filteredRecords();
+  $('recordsBody').innerHTML = recs.map(r=>`<tr>
+    <td>${r.period}</td><td>${escapeHtml(r.site)}</td><td>${escapeHtml(r.address||'')}</td>
+    <td>${num(r.waterM3)}</td><td>${num(r.alcM3)}</td><td>${num(r.energyKwh)}</td><td>${num(r.gasM3)}</td><td>${money(r.wasteValue)}</td><td>${num(r.wasteTon)}</td><td>${num(r.co2kg)}</td><td>${escapeHtml(r.source||'')}</td>
+  </tr>`).join('') || `<tr><td colspan="11">No hay registros para los filtros seleccionados.</td></tr>`;
 }
-function renderComparison(){
-  const a = $('periodA').value, b = $('periodB').value;
-  const q = normalizeText($('siteSearch').value).toLowerCase();
-  const rows = state.records.filter(r => !q || normalizeText(`${r.sede} ${r.direccion}`).toLowerCase().includes(q));
-  const A = rows.filter(r=>r.period===a), B = rows.filter(r=>r.period===b);
-  const metrics = [
-    ['energiaKwh','Energía kWh','kWh'], ['aguaM3','Agua m³','m³'], ['alcantarilladoM3','Alcantarillado m³','m³'], ['gasM3','Gas m³','m³'], ['co2Kg','CO₂ kg','kg']
-  ];
-  $('comparisonBox').innerHTML = metrics.map(([key,label,unit])=>{
-    const va=sum(A,key), vb=sum(B,key), diff=vb-va, pct=va?diff/va*100:0;
-    return `<div class="mini"><span>${label}</span><strong>${fmt(va,1)} → ${fmt(vb,1)} ${unit}</strong><small>${diff>=0?'+':''}${fmt(diff,1)} · ${va?fmt(pct,1)+'%':'sin base'}</small></div>`;
+function aggregateByPeriod(records){
+  const map = {};
+  for(const r of records){
+    map[r.period] ||= {period:r.period, energyKwh:0, waterM3:0, alcM3:0, gasM3:0, wasteTon:0, co2kg:0};
+    ['energyKwh','waterM3','alcM3','gasM3','wasteTon','co2kg'].forEach(k=>map[r.period][k]+=Number(r[k])||0);
+  }
+  return Object.values(map).sort((a,b)=>a.period.localeCompare(b.period));
+}
+function comparePeriods(){
+  const a=$('compareA').value, b=$('compareB').value;
+  const agg = aggregateByPeriod(state.records);
+  const A = agg.find(x=>x.period===a), B = agg.find(x=>x.period===b);
+  if(!A||!B){ $('compareResult').innerHTML='<p class="bad">Se requieren dos periodos importados para comparar.</p>'; return; }
+  const metrics=[['energyKwh','Energía','kWh'],['waterM3','Agua','m³'],['co2kg','CO₂','kg'],['wasteTon','Residuos','t']];
+  $('compareResult').innerHTML = metrics.map(([k,label,unit])=>{
+    const diff=(B[k]||0)-(A[k]||0); const pct=(A[k]||0)? diff/A[k]*100 : 0;
+    return `<div class="metric"><span>${label}</span><strong>${fmt(diff)} ${unit}</strong><small>${a}: ${fmt(A[k])} · ${b}: ${fmt(B[k])} · ${pct>=0?'+':''}${fmt(pct)}%</small></div>`;
   }).join('');
+  drawChart([A,B]);
 }
-function renderCharts(){
-  const periods = getPeriods();
-  const energy = periods.map(p=>sum(state.records.filter(r=>r.period===p),'energiaKwh'));
-  const water = periods.map(p=>sum(state.records.filter(r=>r.period===p),'aguaM3'));
-  const sewer = periods.map(p=>sum(state.records.filter(r=>r.period===p),'alcantarilladoM3'));
-  const gas = periods.map(p=>sum(state.records.filter(r=>r.period===p),'gasM3'));
-  const labels = periods.map(periodLabel);
-  drawChart('energyChart','bar',labels,[{label:'Energía kWh',data:energy}]);
-  drawChart('servicesChart','line',labels,[{label:'Agua m³',data:water},{label:'Alcantarillado m³',data:sewer},{label:'Gas m³',data:gas}]);
+function drawChart(data){
+  chartData=data;
+  const c=$('chart'), ctx=c.getContext('2d'); ctx.clearRect(0,0,c.width,c.height);
+  ctx.font='16px Arial'; ctx.fillStyle='#13312d'; ctx.fillText('Comparativo de energía por periodo (kWh)',24,34);
+  if(!data.length){ ctx.fillText('Sin datos importados',24,80); return; }
+  const pad=70, w=c.width-pad*2, h=c.height-110; const max=Math.max(...data.map(d=>d.energyKwh),1);
+  ctx.strokeStyle='#d7e6e2'; ctx.beginPath(); ctx.moveTo(pad,55); ctx.lineTo(pad,55+h); ctx.lineTo(pad+w,55+h); ctx.stroke();
+  const bw=Math.max(24,w/data.length*.55); const gap=w/data.length;
+  data.forEach((d,i)=>{
+    const x=pad+i*gap+gap/2-bw/2; const bh=(d.energyKwh/max)*h; const y=55+h-bh;
+    const grad=ctx.createLinearGradient(0,y,0,55+h); grad.addColorStop(0,'#0fc39a'); grad.addColorStop(1,'#0b9878');
+    ctx.fillStyle=grad; roundRect(ctx,x,y,bw,bh,10); ctx.fill();
+    ctx.fillStyle='#13312d'; ctx.textAlign='center'; ctx.fillText(d.period,x+bw/2,55+h+28); ctx.fillText(fmt(d.energyKwh),x+bw/2,Math.max(72,y-8));
+  });
+  ctx.textAlign='left';
 }
-function drawChart(id,type,labels,datasets){
-  if(charts[id]) charts[id].destroy();
-  charts[id] = new Chart($(id), {type, data:{labels,datasets}, options:{responsive:true,plugins:{legend:{position:'bottom'}},scales:{y:{beginAtZero:true}}}});
-}
-function escapeHtml(s){ return String(s).replace(/[&<>"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m])); }
-
-function makeExportObject(period=null){
-  const records = period ? state.records.filter(r=>r.period===period) : state.records;
-  return {system:'SiMeCO2 Servicios Publicos', version:'6.0', exportedAt:new Date().toISOString(), period, records, sites:state.sites, imports:state.imports};
-}
-function downloadBlob(name, content, type='application/json'){
-  const blob = new Blob([content], {type});
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob); a.download = name; a.click(); URL.revokeObjectURL(a.href);
-}
-function downloadDataJson(){
-  const period = lastImport?.period || $('periodB').value || null;
-  const obj = makeExportObject(period);
-  const name = period ? `${period}.json` : 'simeco2_historico.json';
-  downloadBlob(name, JSON.stringify(obj,null,2));
-  log(`JSON descargado. Súbelo a la carpeta data/${name} de GitHub.`);
-}
+function roundRect(ctx,x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
 function exportCsv(){
-  const headers = ['periodo','sede','direccion','energia_kwh','agua_m3','alcantarillado_m3','gas_m3','aseo_valor','co2_kg','valor_energia','valor_agua','valor_alcantarillado','valor_gas'];
-  const lines = [headers.join(';')];
-  filteredRecords().forEach(r=>lines.push(headers.map(h=>`"${String(mapCsv(r,h)).replace(/"/g,'""')}"`).join(';')));
-  downloadBlob('simeco2_registros.csv', lines.join('\n'), 'text/csv;charset=utf-8');
+  const recs=filteredRecords();
+  const headers=['periodo','sede','direccion','agua_m3','alcantarillado_m3','energia_kwh','gas_m3','aseo_valor','residuos_t','co2_kg','fuente'];
+  const rows=recs.map(r=>[r.period,r.site,r.address,r.waterM3,r.alcM3,r.energyKwh,r.gasM3,r.wasteValue,r.wasteTon,r.co2kg,r.source]);
+  downloadBlob([headers,...rows].map(row=>row.map(csvCell).join(',')).join('\n'),'simeco2_servicios.csv','text/csv;charset=utf-8');
 }
-function mapCsv(r,h){ return ({periodo:r.period,sede:r.sede,direccion:r.direccion,energia_kwh:r.energiaKwh,agua_m3:r.aguaM3,alcantarillado_m3:r.alcantarilladoM3,gas_m3:r.gasM3,aseo_valor:r.aseoValor,co2_kg:r.co2Kg,valor_energia:r.valorEnergia,valor_agua:r.valorAgua,valor_alcantarillado:r.valorAlcantarillado,valor_gas:r.valorGas})[h] ?? ''; }
-async function saveToGitHub(){
-  const owner=$('ghOwner').value.trim(), repo=$('ghRepo').value.trim(), branch=$('ghBranch').value.trim()||'main', token=$('ghToken').value.trim();
-  const period = lastImport?.period || $('periodB').value;
-  if(!owner || !repo || !token || !period){ alert('Completa owner, repo, token y carga o selecciona un periodo.'); return; }
-  const path = `data/${period}.json`;
-  const content = btoa(unescape(encodeURIComponent(JSON.stringify(makeExportObject(period),null,2))));
-  const api = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
-  let sha;
-  try{
-    const existing = await fetch(`${api}?ref=${encodeURIComponent(branch)}`, {headers:{Authorization:`Bearer ${token}`, Accept:'application/vnd.github+json'}});
-    if(existing.ok){ const j = await existing.json(); sha = j.sha; }
-  }catch(e){ console.warn(e); }
-  const res = await fetch(api, {method:'PUT', headers:{Authorization:`Bearer ${token}`, Accept:'application/vnd.github+json'}, body:JSON.stringify({message:`SiMeCO2: guardar factura ${period}`, content, branch, ...(sha?{sha}:{})})});
-  if(!res.ok){ const txt = await res.text(); log(`Error GitHub: ${txt}`); alert('No se pudo guardar en GitHub. Revisa token/permisos.'); return; }
-  log(`Guardado correctamente en GitHub: ${path}`); alert(`Guardado en GitHub: ${path}`);
-}
-function importJson(file){
-  const reader = new FileReader();
-  reader.onload = () => {
-    try{
-      const obj = JSON.parse(reader.result);
-      const records = Array.isArray(obj.records) ? obj.records : [];
-      addRecords(records, {period: obj.period || 'historico', label: obj.period || 'Histórico', fileName:file.name, importedAt:new Date().toISOString(), records:records.length});
-      log(`JSON histórico importado: ${records.length} registros.`);
-    }catch(e){ alert('JSON inválido.'); }
-  };
-  reader.readAsText(file);
-}
-
-$('pdfInput').addEventListener('change', e => { const f=e.target.files[0]; if(f) handlePdf(f).catch(err=>{log('Error: '+err.message); alert(err.message);}); });
-$('btnClear').addEventListener('click',()=>{ if(confirm('¿Reiniciar todos los datos locales?')){ state={records:[], sites:BASE_SITES, imports:[]}; saveState(); render(); logBox.textContent='Datos locales reiniciados.'; }});
-$('btnDownloadData').addEventListener('click', downloadDataJson);
-$('btnSaveGitHub').addEventListener('click', saveToGitHub);
-$('btnCsv').addEventListener('click', exportCsv);
-$('btnPrint').addEventListener('click', ()=>window.print());
-$('btnImportJson').addEventListener('click', ()=>$('jsonInput').click());
-$('jsonInput').addEventListener('change', e=>{ const f=e.target.files[0]; if(f) importJson(f); });
-['siteSearch','periodA','periodB','serviceFilter'].forEach(id=>$(id).addEventListener('input',()=>{renderTable();renderComparison();}));
-$('factorCO2').addEventListener('change',()=>{ const factor=Number($('factorCO2').value||0.126); state.records.forEach(r=>r.co2Kg=+(Number(r.energiaKwh||0)*factor).toFixed(3)); saveState(); render(); });
-
-render();
+function exportJson(){ downloadBlob(JSON.stringify(state,null,2),'simeco2_servicios.json','application/json'); }
+function downloadBlob(content,name,type){ const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([content],{type})); a.download=name; a.click(); URL.revokeObjectURL(a.href); }
+function csvCell(v){ const s=(v??'').toString(); return '"'+s.replace(/"/g,'""')+'"'; }
+function escapeHtml(s){ return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+function fmt(n){ return new Intl.NumberFormat('es-CO',{maximumFractionDigits:2}).format(Number(n)||0); }
+function num(n){ return n==null||n==='' ? '—' : fmt(n); }
+function money(n){ return n==null||n==='' ? '—' : '$ '+fmt(n); }
