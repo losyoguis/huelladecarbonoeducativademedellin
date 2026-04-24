@@ -1,0 +1,4 @@
+{
+  "description": "Opcional para pruebas locales. En GitHub Pages el sistema usa la API pública para listar todos los PDF dentro de /data. Si trabajas localmente, agrega aquí los nombres de los PDF.",
+  "files": []
+}
