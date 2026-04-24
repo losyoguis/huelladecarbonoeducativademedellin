@@ -1,119 +1,55 @@
-# SiMeCO₂ · Dashboard de Servicios Públicos Educativos
+# SiMeCO₂ · Plataforma de Huella de Carbono Educativa v26
 
-Versión v8 con dashboard ambiental por sede.
+Sistema web en HTML, CSS y JavaScript para medir, visualizar e interpretar la huella de carbono educativa a partir del consumo de servicios públicos de sedes educativas.
 
-## Qué hace
+## Propósito
 
-- Lee facturas PDF consolidadas de EPM ubicadas en la carpeta `data/`.
-- Identifica automáticamente el periodo real desde el texto de la factura, por ejemplo: `Resumen de facturación Abril de 2025`.
-- Importa sedes nuevas automáticamente cuando aparecen en futuros PDF.
-- Calcula por sede:
-  - Consumo total de energía eléctrica en kWh.
-  - Toneladas de dióxido de carbono equivalente, t CO₂e.
-  - Número estimado de árboles requeridos para mitigar ese CO₂e.
-  - Promedio mensual de consumo en kWh.
-- Muestra el total general del sistema.
-- Permite comparar meses cargados.
-- Exporta CSV y JSON.
+SiMeCO₂ transforma información de facturas en indicadores ambientales comprensibles para directivos, docentes, estudiantes y aliados técnicos. La plataforma permite estimar emisiones de CO₂e en alcance 2, priorizar sedes con mayor consumo eléctrico y generar planes de gestión ambiental escolar.
 
-## Cómo usarlo en GitHub Pages
+## Mejoras incorporadas en v26
 
-1. Sube todos los archivos del ZIP al repositorio.
-2. Sube las facturas PDF a la carpeta `data/`.
-3. En `data/manifest.json`, registra los PDF que quieras leer, por ejemplo:
-
-```json
-{
-  "files": [
-    "Enero.pdf",
-    "Abril2025.pdf"
-  ]
-}
-```
-
-4. Abre la página publicada en GitHub Pages.
-5. Presiona **Buscar nuevos PDF en /data**.
-6. Revisa el dashboard ambiental por sede.
-
-## Factores ambientales editables
-
-El dashboard incluye dos campos ajustables:
-
-- **Factor CO₂ kg/kWh:** por defecto `0.126` kg CO₂e/kWh.
-- **kg CO₂ capturados por árbol/año:** por defecto `22` kg CO₂e/árbol/año.
-
-Estos valores son configurables desde la interfaz y se guardan en el navegador. Si la investigación define otro factor oficial, solo se cambia en el campo correspondiente y se presiona **Actualizar cálculos**.
-
-## Recomendación para nombres de PDF
-
-Aunque el sistema identifica el mes desde el contenido de la factura, se recomienda nombrar los archivos así:
-
-```text
-2025-01.pdf
-2025-04.pdf
-2025-05.pdf
-```
-
-Si un archivo se llama `Mayo2025.pdf`, pero internamente dice `Resumen de facturación Abril de 2025`, el sistema lo registra como `2025-04`, porque ese es el periodo oficial de la factura.
+- Portada institucional con enfoque de proyecto educativo ambiental.
+- Resumen ejecutivo automático con lectura interpretativa.
+- Indicadores de impacto del proyecto.
+- Alertas inteligentes sobre sedes prioritarias, aumentos o reducciones de consumo.
+- Comparación de periodos con interpretación automática.
+- Ranking de sedes con clasificación de prioridad: alta, media y preventiva.
+- Dashboard por sede con chips de prioridad.
+- Plan de Gestión fortalecido con matriz operativa, responsables, indicadores y evidencias.
+- Módulo pedagógico “Aula climática / Guardianes Climáticos”.
+- Modo presentación para socializar resultados ante directivos, estudiantes o aliados.
+- Mejoras responsive tipo app móvil: navegación inferior y tablas convertidas en tarjetas.
+- Textos institucionales más claros y orientados a toma de decisiones.
 
 ## Archivos principales
 
-- `index.html`: estructura de la aplicación.
-- `styles.css`: diseño responsive tipo dashboard.
-- `app.js`: lectura PDF, cálculos, dashboard, filtros, comparación y exportación.
-- `data/manifest.json`: listado de PDF disponibles en la carpeta `data/`.
+```text
+index.html        Estructura de la plataforma
+styles.css        Diseño visual, responsive, modo presentación y experiencia móvil
+app.js            Lógica de lectura, cálculos, visualizaciones, planes e interpretaciones
+data/             Carpeta con archivos de soporte y PDF existentes
+```
 
+## Uso básico
 
-## Actualización v9
+1. Publicar el proyecto en GitHub Pages o abrirlo en un servidor local.
+2. Entrar a la web.
+3. Presionar **Actualizar información del sistema** o usar **Cargar PDF local** para pruebas.
+4. Revisar el resumen ejecutivo, dashboard, ranking y comparación de periodos.
+5. En el dashboard por sede, presionar **Generar informe / Plan de Gestión**.
+6. Descargar o imprimir el informe institucional.
 
-- Se reorganizó la interfaz para ubicar en la parte superior los indicadores generales, el dashboard ambiental por sede y la sección de comparación mensual.
-- La importación, diagnóstico y tabla detallada quedan debajo para priorizar la lectura ejecutiva de resultados.
+## Metodología ambiental
 
+Las emisiones se calculan con la fórmula:
 
-## Actualización v10
+```text
+Emisiones CO₂e = consumo eléctrico en kWh × factor de emisión kg CO₂e/kWh
+```
 
-- La gráfica **Ranking de sedes por consumo eléctrico total (kWh)** quedó ubicada inmediatamente debajo de los indicadores del **Dashboard ambiental por sede**.
-- Las barras fueron ajustadas para no ocupar todo el ancho del panel, reservando espacio a la derecha para visualizar claramente: **kWh**, **t CO₂e** y **árboles requeridos**.
-- En pantallas pequeñas, la gráfica permite desplazamiento horizontal para evitar cortes de texto.
+El sistema permite modificar el factor de emisión y la equivalencia de captura anual por árbol desde el dashboard ambiental.
 
+## Recomendación de publicación
 
-## Actualización v12
+Para GitHub Pages, subir todos los archivos conservando esta estructura. El archivo principal debe llamarse `index.html`.
 
-Se reorganizó la interfaz según el orden solicitado:
-
-1. Importación y Diagnóstico.
-2. Ranking de sedes por consumo eléctrico total, con kWh, t CO₂e y árboles visibles.
-3. Indicadores generales y Dashboard ambiental por sede.
-4. Comparador mensual, filtros y tabla detallada.
-
-También se ajustó la gráfica de ranking para usar barras más cortas y una columna fija de resultados, evitando que se oculten los árboles requeridos.
-
-
-## Ajuste v12
-
-Se reorganizó la pantalla principal para ubicar la sección **Comparar meses** inmediatamente después de **Importación y Diagnóstico** y antes del **Ranking de sedes por consumo eléctrico total (kWh)**.
-
-## Versión v13 · Plan de Gestión por sede
-
-Esta versión agrega un informe personalizado para cada sede educativa. En el **Dashboard ambiental por sede**, cada registro incluye el botón **Plan de Gestión**, que genera automáticamente un documento con:
-
-- diagnóstico energético y ambiental de la sede;
-- consumo kWh acumulado, promedio mensual y proyección anual;
-- toneladas de CO₂e estimadas;
-- árboles equivalentes requeridos;
-- metas de reducción a 1 y 3 años;
-- escenario de energía solar fotovoltaica;
-- acciones para minimizar el consumo eléctrico;
-- cronograma operativo;
-- indicadores de seguimiento;
-- opción para imprimir/guardar en PDF y descargar el plan en HTML.
-
-El plan se construye a partir de los datos reales importados desde las facturas PDF y de la estructura base del Plan de Reducciones GEI-R-001.
-
-
-## Versión v14
-
-- Se corrigió la visibilidad del botón por sede en la columna **Plan de gestión**.
-- Cada fila muestra el botón **📄 Generar informe / Plan de Gestión**.
-- Al presionarlo, el sistema visualiza el informe personalizado y habilita las opciones **PDF/Imprimir plan** y **Descargar HTML**.
-- Se agregó parámetro de versión en `app.js?v=14-plan-boton-visible` para evitar caché del navegador en GitHub Pages.

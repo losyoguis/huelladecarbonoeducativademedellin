@@ -1,4 +1,4 @@
-/* SiMeCO2 Servicios Públicos - v20 sin bloque de configuración GitHub visible */
+/* SiMeCO2 Servicios Públicos - v26 plataforma educativa, institucional y responsive */
 let FACTOR_CO2_KG_KWH = 0.126; // kg CO2e/kWh. Ajustable desde el dashboard.
 let TREE_CO2_KG_YEAR = 22; // kg CO2e capturados por árbol al año. Ajustable desde el dashboard.
 const FACTOR_KEY = 'simeco2_factores_ambientales_v8';
@@ -15,7 +15,7 @@ window.addEventListener('load', () => {
   initFactors();
   bindEvents();
   renderAll();
-  log('Sistema listo. Sube los PDF a /data y presiona “Buscar nuevos PDF en /data”.');
+  log('Sistema listo. Actualiza la información del sistema o carga un PDF local para iniciar el análisis.');
 });
 
 function initPdfJs(){
@@ -43,6 +43,7 @@ function bindEvents(){
   if($("printPlanBtn")) $("printPlanBtn").addEventListener("click", printCurrentPlan);
   if($("downloadPlanBtn")) $("downloadPlanBtn").addEventListener("click", downloadCurrentPlan);
   if($("environmentBody")) $("environmentBody").addEventListener("click", handlePlanButtonClick);
+  if($("presentationModeBtn")) $("presentationModeBtn").addEventListener("click", togglePresentationMode);
   document.addEventListener("click", handlePlanButtonClick);
 }
 function initConfig(){
@@ -379,7 +380,7 @@ function filteredRecords(){
     return true;
   });
 }
-function renderAll(){ recalculateCo2(); renderControls(); renderCards(); renderDashboard(); renderTable(); drawChart(aggregateByPeriod(state.records)); }
+function renderAll(){ recalculateCo2(); renderControls(); renderCards(); renderExecutiveSummary(); renderProjectImpact(); renderDashboard(); renderTable(); drawChart(aggregateByPeriod(state.records)); }
 function renderControls(){
   const periods = [...new Set(state.records.map(r=>r.period))].sort();
   const options = '<option value="">Todos</option>'+periods.map(p=>`<option value="${p}">${p}</option>`).join('');
@@ -405,8 +406,17 @@ function renderCards(){
 function renderTable(){
   const recs = filteredRecords();
   $('recordsBody').innerHTML = recs.map(r=>`<tr>
-    <td>${r.period}</td><td>${escapeHtml(r.site)}</td><td>${escapeHtml(r.address||'')}</td>
-    <td>${num(r.waterM3)}</td><td>${num(r.alcM3)}</td><td>${num(r.energyKwh)}</td><td>${num(r.gasM3)}</td><td>${money(r.wasteValue)}</td><td>${num(r.wasteTon)}</td><td>${num(r.co2kg)}</td><td>${escapeHtml(r.source||'')}</td>
+    <td data-label="Periodo">${r.period}</td>
+    <td data-label="Sede">${escapeHtml(r.site)}</td>
+    <td data-label="Dirección">${escapeHtml(r.address||'')}</td>
+    <td data-label="Agua m³">${num(r.waterM3)}</td>
+    <td data-label="Alc. m³">${num(r.alcM3)}</td>
+    <td data-label="Energía kWh">${num(r.energyKwh)}</td>
+    <td data-label="Gas m³">${num(r.gasM3)}</td>
+    <td data-label="Aseo $">${money(r.wasteValue)}</td>
+    <td data-label="Residuos t">${num(r.wasteTon)}</td>
+    <td data-label="CO₂ kg">${num(r.co2kg)}</td>
+    <td data-label="Fuente">${escapeHtml(r.source||'')}</td>
   </tr>`).join('') || `<tr><td colspan="11">No hay registros para los filtros seleccionados.</td></tr>`;
 }
 function aggregateByPeriod(records){
@@ -499,6 +509,7 @@ function comparePeriods(){
   const A = agg.find(x=>x.key===a), B = agg.find(x=>x.key===b);
   if(!A||!B){
     $('compareResult').innerHTML='<p class="bad">Se requieren al menos dos periodos equivalentes para comparar con el filtro seleccionado.</p>';
+    if($('compareNarrative')) $('compareNarrative').textContent = 'Aún no hay suficientes datos comparables para generar una interpretación automática.';
     drawChart(agg);
     return;
   }
@@ -507,10 +518,13 @@ function comparePeriods(){
   const summary = `<div class="compare-summary"><strong>${escapeHtml(compareModeLabel(mode))}</strong><span>${escapeHtml(siteText)}</span><small>${escapeHtml(A.period)} vs ${escapeHtml(B.period)}</small></div>`;
   $('compareResult').innerHTML = summary + metrics.map(([k,label,unit])=>{
     const diff=(B[k]||0)-(A[k]||0); const pct=(A[k]||0)? diff/A[k]*100 : 0;
-    return `<div class="metric"><span>${label}</span><strong>${fmt(diff)} ${unit}</strong><small>${escapeHtml(A.period)}: ${fmt(A[k])} · ${escapeHtml(B.period)}: ${fmt(B[k])} · ${pct>=0?'+':''}${fmt(pct)}%</small></div>`;
+    const trendClass = diff > 0 ? 'up' : diff < 0 ? 'down' : 'flat';
+    return `<div class="metric ${trendClass}"><span>${label}</span><strong>${fmt(diff)} ${unit}</strong><small>${escapeHtml(A.period)}: ${fmt(A[k])} · ${escapeHtml(B.period)}: ${fmt(B[k])} · ${pct>=0?'+':''}${fmt(pct)}%</small></div>`;
   }).join('');
+  if($('compareNarrative')) $('compareNarrative').innerHTML = buildComparisonNarrative(A, B, mode, siteText);
   drawChart(agg);
 }
+
 function drawChart(data){
   chartData=data;
   const c=$('chart'), ctx=c.getContext('2d'); ctx.clearRect(0,0,c.width,c.height);
@@ -537,6 +551,93 @@ function exportCsv(){
 function exportJson(){ downloadBlob(JSON.stringify(state,null,2),'simeco2_servicios.json','application/json'); }
 function downloadBlob(content,name,type){ const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([content],{type})); a.download=name; a.click(); URL.revokeObjectURL(a.href); }
 function csvCell(v){ const s=(v??'').toString(); return '"'+s.replace(/"/g,'""')+'"'; }
+function togglePresentationMode(){
+  document.body.classList.toggle('presentation-mode');
+  const active = document.body.classList.contains('presentation-mode');
+  if($('presentationModeBtn')) $('presentationModeBtn').textContent = active ? 'Salir de presentación' : 'Modo presentación';
+}
+
+function getGlobalStats(){
+  const recs = state.records || [];
+  const periods = [...new Set(recs.map(r=>r.period).filter(Boolean))].sort();
+  const sites = aggregateBySite(recs.filter(r=>Number(r.energyKwh)>0));
+  const sum = (field)=>recs.reduce((a,r)=>a+(Number(r[field])||0),0);
+  const energy = sum('energyKwh');
+  const co2kg = sum('co2kg');
+  const water = sum('waterM3');
+  const waste = sum('wasteTon');
+  const trees = Math.ceil(co2kg / TREE_CO2_KG_YEAR);
+  const topSite = sites[0] || null;
+  return {recs, periods, sites, energy, co2kg, water, waste, trees, topSite};
+}
+
+function renderExecutiveSummary(){
+  if(!$('executiveText') || !$('executiveGrid')) return;
+  const s = getGlobalStats();
+  if(!s.recs.length){
+    $('executiveText').textContent = 'SiMeCO₂ convierte información de servicios públicos en indicadores comprensibles para la gestión ambiental escolar. Actualiza el sistema para generar diagnóstico, priorización e informes institucionales.';
+    $('executiveGrid').innerHTML = `<article><span>Estado</span><strong>Sin registros</strong><small>Actualiza información para iniciar el análisis.</small></article>`;
+    return;
+  }
+  const periodText = s.periods.length ? `${s.periods[0]} a ${s.periods[s.periods.length-1]}` : 'periodo no definido';
+  const topText = s.topSite ? ` La sede con mayor consumo acumulado es ${s.topSite.site}, con ${fmt(s.topSite.energyKwh)} kWh.` : '';
+  $('executiveText').innerHTML = `Durante el periodo <strong>${escapeHtml(periodText)}</strong>, el sistema registra <strong>${fmt(s.energy)} kWh</strong> de energía eléctrica, equivalentes a <strong>${fmt(s.co2kg/1000)} toneladas de CO₂e</strong>. Para compensar pedagógicamente estas emisiones se requerirían aproximadamente <strong>${fmt(s.trees)} árboles/año</strong>.${escapeHtml(topText)}`;
+  $('executiveGrid').innerHTML = `
+    <article><span>Cobertura</span><strong>${fmt(s.sites.length)} sedes</strong><small>${fmt(s.periods.length)} periodo(s) analizado(s)</small></article>
+    <article><span>Energía</span><strong>${fmt(s.energy)} kWh</strong><small>Consumo eléctrico acumulado</small></article>
+    <article><span>Huella</span><strong>${fmt(s.co2kg/1000)} t CO₂e</strong><small>Alcance 2 estimado</small></article>
+    <article><span>Compensación</span><strong>${fmt(s.trees)} árboles</strong><small>Equivalencia pedagógica anual</small></article>`;
+}
+
+function renderProjectImpact(){
+  if(!$('impactGrid') || !$('smartAlerts')) return;
+  const s = getGlobalStats();
+  const high = s.sites.filter(x=>classifyEnergyIntensity(x.avgKwhMonth).cls==='high').length;
+  const medium = s.sites.filter(x=>classifyEnergyIntensity(x.avgKwhMonth).cls==='medium').length;
+  const low = s.sites.filter(x=>classifyEnergyIntensity(x.avgKwhMonth).cls==='low').length;
+  $('impactGrid').innerHTML = `
+    <article><span>Sedes priorizadas</span><strong>${fmt(high)}</strong><small>Alta prioridad energética</small></article>
+    <article><span>Seguimiento medio</span><strong>${fmt(medium)}</strong><small>Requieren hábitos y control operativo</small></article>
+    <article><span>Prevención</span><strong>${fmt(low)}</strong><small>Monitoreo y educación ambiental</small></article>
+    <article><span>Planes potenciales</span><strong>${fmt(s.sites.length)}</strong><small>Informes de gestión generables</small></article>`;
+  const alerts = buildSmartAlerts(s);
+  $('smartAlerts').innerHTML = alerts.length ? alerts.join('') : `<div class="alert-card neutral"><strong>Sin alertas críticas.</strong><p>Cuando existan datos comparables, el sistema mostrará aumentos, reducciones y sedes prioritarias.</p></div>`;
+}
+
+function buildSmartAlerts(s){
+  const alerts = [];
+  if(!s.recs.length) return alerts;
+  if(s.topSite){
+    const p = classifyEnergyIntensity(s.topSite.avgKwhMonth);
+    alerts.push(`<div class="alert-card ${p.cls}"><strong>Sede con mayor prioridad</strong><p>${escapeHtml(s.topSite.site)} concentra ${fmt(s.topSite.energyKwh)} kWh acumulados. Clasificación: ${escapeHtml(p.level)}.</p></div>`);
+  }
+  const byPeriod = aggregateByPeriod(s.recs);
+  if(byPeriod.length >= 2){
+    const a = byPeriod[byPeriod.length-2], b = byPeriod[byPeriod.length-1];
+    const diff = b.energyKwh - a.energyKwh;
+    const pct = a.energyKwh ? diff/a.energyKwh*100 : 0;
+    if(diff > 0) alerts.push(`<div class="alert-card high"><strong>Aumento reciente de consumo</strong><p>Entre ${escapeHtml(a.period)} y ${escapeHtml(b.period)} la energía aumentó ${fmt(diff)} kWh (${fmt(pct)}%). Se recomienda revisar horarios, iluminación y equipos de alto consumo.</p></div>`);
+    if(diff < 0) alerts.push(`<div class="alert-card low"><strong>Reducción reciente</strong><p>Entre ${escapeHtml(a.period)} y ${escapeHtml(b.period)} la energía disminuyó ${fmt(Math.abs(diff))} kWh (${fmt(Math.abs(pct))}%). Conviene documentar las buenas prácticas y replicarlas.</p></div>`);
+  }
+  const highSites = s.sites.filter(x=>classifyEnergyIntensity(x.avgKwhMonth).cls==='high');
+  if(highSites.length) alerts.push(`<div class="alert-card medium"><strong>Ruta de intervención sugerida</strong><p>Iniciar diagnóstico técnico en ${fmt(highSites.length)} sede(s) de alta prioridad, validar iluminación LED, sensores, hábitos de apagado y prefactibilidad solar.</p></div>`);
+  return alerts.slice(0,4);
+}
+
+function buildComparisonNarrative(A, B, mode, siteText){
+  const diff = (B.energyKwh||0) - (A.energyKwh||0);
+  const pct = (A.energyKwh||0) ? diff/A.energyKwh*100 : 0;
+  const co2Diff = diff * FACTOR_CO2_KG_KWH / 1000;
+  const scope = escapeHtml(siteText || 'Todas las sedes');
+  if(diff > 0){
+    return `<strong>Interpretación automática:</strong> En ${scope}, el consumo eléctrico aumentó <strong>${fmt(diff)} kWh</strong> frente al periodo base (${fmt(pct)}%). Este incremento representa aproximadamente <strong>${fmt(co2Diff)} t CO₂e adicionales</strong>. Se recomienda revisar cambios de jornada, uso de iluminación, equipos tecnológicos, ventilación y posibles consumos atípicos.`;
+  }
+  if(diff < 0){
+    return `<strong>Interpretación automática:</strong> En ${scope}, el consumo eléctrico disminuyó <strong>${fmt(Math.abs(diff))} kWh</strong> frente al periodo base (${fmt(Math.abs(pct))}%). Esta reducción evita aproximadamente <strong>${fmt(Math.abs(co2Diff))} t CO₂e</strong>. Se recomienda identificar y documentar las prácticas que explican la disminución para replicarlas en otras sedes.`;
+  }
+  return `<strong>Interpretación automática:</strong> En ${scope}, el consumo eléctrico se mantuvo estable entre los periodos comparados. Se recomienda sostener el monitoreo mensual y definir una meta de reducción gradual.`;
+}
+
 function escapeHtml(s){ return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
 function fmt(n){ return new Intl.NumberFormat('es-CO',{maximumFractionDigits:2}).format(Number(n)||0); }
 function num(n){ return n==null||n==='' ? '—' : fmt(n); }
@@ -579,25 +680,30 @@ function renderDashboard(){
   $('dashTotalCo2').textContent = fmt(totalCo2kg/1000) + ' t CO₂e';
   $('dashTotalTrees').textContent = fmt(totalTrees) + ' árboles';
   if(!rows.length){
-    $('environmentBody').innerHTML = '<tr><td colspan="9">No hay registros de energía eléctrica para mostrar. Importa una factura PDF o revisa los filtros.</td></tr>';
+    $('environmentBody').innerHTML = '<tr><td colspan="10">No hay registros de energía eléctrica para mostrar. Importa una factura PDF o revisa los filtros.</td></tr>';
     drawSiteChart([]);
     return;
   }
-  const body = rows.map((r,i)=>`<tr>
-    <td>${i+1}</td>
-    <td>${escapeHtml(r.site)}</td>
-    <td>${escapeHtml(r.address)}</td>
-    <td>${fmt(r.periodCount)}</td>
-    <td><strong>${fmt(r.energyKwh)}</strong></td>
-    <td>${fmt(r.co2kg/1000)}</td>
-    <td><strong>${fmt(r.trees)}</strong></td>
-    <td>${fmt(r.avgKwhMonth)}</td>
-    <td class="plan-cell"><button type="button" class="plan-btn primary" data-site-key="${escapeHtml(siteKey(r.site,r.address))}" title="Generar, visualizar y descargar el Plan de Gestión de ${escapeHtml(r.site)}">📄 Generar informe<br><small>Plan de Gestión</small></button></td>
-  </tr>`).join('');
-  const totalRow = `<tr class="total-row"><td colspan="4">TOTAL</td><td>${fmt(totalKwh)}</td><td>${fmt(totalCo2kg/1000)}</td><td>${fmt(totalTrees)}</td><td>—</td><td>—</td></tr>`;
+  const body = rows.map((r,i)=>{
+    const priority = classifyEnergyIntensity(r.avgKwhMonth);
+    return `<tr>
+    <td data-label="#">${i+1}</td>
+    <td data-label="Sede">${escapeHtml(r.site)}</td>
+    <td data-label="Dirección">${escapeHtml(r.address)}</td>
+    <td data-label="Periodos">${fmt(r.periodCount)}</td>
+    <td data-label="Energía total kWh"><strong>${fmt(r.energyKwh)}</strong></td>
+    <td data-label="CO₂e t">${fmt(r.co2kg/1000)}</td>
+    <td data-label="Árboles requeridos"><strong>${fmt(r.trees)}</strong></td>
+    <td data-label="Promedio kWh/mes">${fmt(r.avgKwhMonth)}</td>
+    <td data-label="Prioridad"><span class="priority-chip ${priority.cls}">${escapeHtml(priority.level)}</span></td>
+    <td data-label="Plan" class="plan-cell"><button type="button" class="plan-btn primary" data-site-key="${escapeHtml(siteKey(r.site,r.address))}" title="Generar, visualizar y descargar el Plan de Gestión de ${escapeHtml(r.site)}">📄 Generar informe<br><small>Plan de Gestión</small></button></td>
+  </tr>`;
+  }).join('');
+  const totalRow = `<tr class="total-row"><td colspan="4">TOTAL</td><td>${fmt(totalKwh)}</td><td>${fmt(totalCo2kg/1000)}</td><td>${fmt(totalTrees)}</td><td>—</td><td>—</td><td>—</td></tr>`;
   $('environmentBody').innerHTML = totalRow + body;
   drawSiteChart(rows.slice(0,12));
 }
+
 function drawSiteChart(rows){
   const c = $('siteChart');
   if(!c) return;
@@ -981,6 +1087,17 @@ function buildPlanHtml(d){
         <div><strong>Monitoreo energético</strong><p>Implementar lectura mensual y, si es posible, medidores inteligentes para seguimiento por bloques o circuitos.</p></div>
         <div><strong>Energía solar fotovoltaica</strong><p>Realizar prefactibilidad técnica para autoconsumo solar, estimando potencia requerida y retorno ambiental.</p></div>
       </div>
+
+      <h3>5.1 Matriz operativa de intervención</h3>
+      <table class="plan-table compact">
+        <thead><tr><th>Acción</th><th>Responsable sugerido</th><th>Tiempo</th><th>Indicador</th><th>Evidencia</th></tr></thead>
+        <tbody>
+          <tr><td>Inventario de luminarias y equipos</td><td>Comité ambiental escolar / servicios generales</td><td>Primer mes</td><td>% de espacios caracterizados</td><td>Formato de inventario y fotografías</td></tr>
+          <tr><td>Campaña de apagado y uso eficiente</td><td>Docentes líderes y Guardianes Climáticos</td><td>Mensual</td><td>Número de grupos participantes</td><td>Actas, piezas gráficas y registro fotográfico</td></tr>
+          <tr><td>Sustitución progresiva a tecnología LED</td><td>Rectoría / infraestructura / aliado técnico</td><td>3 a 6 meses</td><td>kWh reducidos frente a línea base</td><td>Cotizaciones, facturas e informe de instalación</td></tr>
+          <tr><td>Evaluación de sistema solar FV</td><td>Aliado técnico especializado</td><td>6 meses</td><td>Potencia estimada y % de cobertura</td><td>Informe de prefactibilidad</td></tr>
+        </tbody>
+      </table>
 
       <h3>6. Cronograma operativo sugerido</h3>
       <table class="plan-table compact">
