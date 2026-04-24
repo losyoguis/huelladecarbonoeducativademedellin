@@ -53,3 +53,14 @@ El sistema permite modificar el factor de emisión y la equivalencia de captura 
 
 Para GitHub Pages, subir todos los archivos conservando esta estructura. El archivo principal debe llamarse `index.html`.
 
+
+
+## Actualización v27 · Footer institucional Los Yoguis
+
+Esta versión incorpora un pie de página institucional con la imagen oficial de Los Yoguis y el enlace central a `www.losyoguis.com`.
+
+Archivos actualizados:
+
+- `index.html`
+- `styles.css`
+- `assets/los-yoguis-footer.png`
