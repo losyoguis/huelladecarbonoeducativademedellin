@@ -1,5 +1,7 @@
 /* SiMeCO2 Servicios Públicos - v7 data/PDF scanner */
-const FACTOR_CO2_KG_KWH = 0.126; // editable: kg CO2e/kWh. Ajustar según factor oficial elegido.
+let FACTOR_CO2_KG_KWH = 0.126; // kg CO2e/kWh. Ajustable desde el dashboard.
+let TREE_CO2_KG_YEAR = 22; // kg CO2e capturados por árbol al año. Ajustable desde el dashboard.
+const FACTOR_KEY = 'simeco2_factores_ambientales_v8';
 const STORE_KEY = 'simeco2_servicios_v7';
 const CONFIG_KEY = 'simeco2_repo_config_v7';
 
@@ -10,6 +12,7 @@ let chartData = [];
 window.addEventListener('load', () => {
   initPdfJs();
   initConfig();
+  initFactors();
   bindEvents();
   renderAll();
   log('Sistema listo. Sube los PDF a /data y presiona “Buscar nuevos PDF en /data”.');
@@ -25,14 +28,15 @@ function initPdfJs(){
   }
 }
 function bindEvents(){
-  $('scanDataBtn').addEventListener('click', scanDataFolder);
-  $('localPdfInput').addEventListener('change', handleLocalPdf);
-  $('clearBtn').addEventListener('click', ()=>{ if(confirm('¿Reiniciar todos los datos importados?')){ localStorage.removeItem(STORE_KEY); location.reload(); }});
-  $('saveRepoBtn').addEventListener('click', saveConfig);
-  ['siteSearch','periodFilter','serviceFilter'].forEach(id=>$(id).addEventListener('input', renderTable));
-  $('exportCsvBtn').addEventListener('click', exportCsv);
-  $('exportJsonBtn').addEventListener('click', exportJson);
-  $('compareBtn').addEventListener('click', comparePeriods);
+  $("scanDataBtn").addEventListener("click", scanDataFolder);
+  $("localPdfInput").addEventListener("change", handleLocalPdf);
+  $("clearBtn").addEventListener("click", ()=>{ if(confirm("¿Reiniciar todos los datos importados?")){ localStorage.removeItem(STORE_KEY); location.reload(); }});
+  $("saveRepoBtn").addEventListener("click", saveConfig);
+  if($("updateFactorsBtn")) $("updateFactorsBtn").addEventListener("click", updateFactors);
+  ["siteSearch","periodFilter","serviceFilter"].forEach(id=>$(id).addEventListener("input", ()=>{ renderTable(); renderDashboard(); }));
+  $("exportCsvBtn").addEventListener("click", exportCsv);
+  $("exportJsonBtn").addEventListener("click", exportJson);
+  $("compareBtn").addEventListener("click", comparePeriods);
 }
 function initConfig(){
   const cfg = loadConfig();
@@ -50,6 +54,28 @@ function detectGitHubRepo(){
   return {};
 }
 function loadConfig(){ try{return JSON.parse(localStorage.getItem(CONFIG_KEY)||'{}')}catch{return {}} }
+function initFactors(){
+  try{
+    const saved = JSON.parse(localStorage.getItem(FACTOR_KEY)||"{}");
+    FACTOR_CO2_KG_KWH = Number(saved.co2Factor) || FACTOR_CO2_KG_KWH;
+    TREE_CO2_KG_YEAR = Number(saved.treeFactor) || TREE_CO2_KG_YEAR;
+  }catch{}
+  if($("factorCo2Input")) $("factorCo2Input").value = FACTOR_CO2_KG_KWH;
+  if($("treeFactorInput")) $("treeFactorInput").value = TREE_CO2_KG_YEAR;
+  recalculateCo2();
+}
+function updateFactors(){
+  FACTOR_CO2_KG_KWH = Math.max(0, Number($("factorCo2Input").value) || 0.126);
+  TREE_CO2_KG_YEAR = Math.max(0.1, Number($("treeFactorInput").value) || 22);
+  localStorage.setItem(FACTOR_KEY, JSON.stringify({co2Factor:FACTOR_CO2_KG_KWH, treeFactor:TREE_CO2_KG_YEAR}));
+  recalculateCo2();
+  saveStore();
+  renderAll();
+  log("Factores actualizados: " + FACTOR_CO2_KG_KWH + " kg CO₂e/kWh y " + TREE_CO2_KG_YEAR + " kg CO₂e/árbol/año.");
+}
+function recalculateCo2(){
+  state.records.forEach(r=>{ r.co2kg = round((Number(r.energyKwh)||0)*FACTOR_CO2_KG_KWH,2); });
+}
 function saveConfig(){
   const cfg = { owner:$('repoOwner').value.trim(), repo:$('repoName').value.trim(), branch:$('repoBranch').value.trim()||'main' };
   localStorage.setItem(CONFIG_KEY, JSON.stringify(cfg));
@@ -335,7 +361,7 @@ function filteredRecords(){
     return true;
   });
 }
-function renderAll(){ renderControls(); renderCards(); renderTable(); drawChart(aggregateByPeriod(state.records)); }
+function renderAll(){ recalculateCo2(); renderControls(); renderCards(); renderDashboard(); renderTable(); drawChart(aggregateByPeriod(state.records)); }
 function renderControls(){
   const periods = [...new Set(state.records.map(r=>r.period))].sort();
   const options = '<option value="">Todos</option>'+periods.map(p=>`<option value="${p}">${p}</option>`).join('');
@@ -355,6 +381,7 @@ function renderCards(){
   $('kSites').textContent = sites;
   $('kKwh').textContent = fmt(sum('energyKwh'))+' kWh';
   $('kCo2').textContent = fmt(sum('co2kg')/1000)+' t';
+  if($('kTrees')) $('kTrees').textContent = fmt(Math.ceil(sum('co2kg')/TREE_CO2_KG_YEAR));
   $('kWater').textContent = fmt(sum('waterM3'))+' m³';
   $('kWaste').textContent = fmt(sum('wasteTon'))+' t';
 }
@@ -415,3 +442,89 @@ function escapeHtml(s){ return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;'
 function fmt(n){ return new Intl.NumberFormat('es-CO',{maximumFractionDigits:2}).format(Number(n)||0); }
 function num(n){ return n==null||n==='' ? '—' : fmt(n); }
 function money(n){ return n==null||n==='' ? '—' : '$ '+fmt(n); }
+
+/* Dashboard ambiental por sede - v8 */
+function dashboardRecords(){
+  const q = $('siteSearch') ? loose($('siteSearch').value||'') : '';
+  const p = $('periodFilter') ? $('periodFilter').value : '';
+  return state.records.filter(r=>{
+    if(q && !(`${loose(r.site)} ${loose(r.address)}`.includes(q))) return false;
+    if(p && r.period!==p) return false;
+    return Number(r.energyKwh) > 0;
+  });
+}
+function aggregateBySite(records){
+  const map = {};
+  for(const r of records){
+    const key = siteKey(r.site, r.address);
+    if(!map[key]) map[key] = {site:r.site, address:r.address||'', periods:new Set(), energyKwh:0, co2kg:0, count:0};
+    map[key].periods.add(r.period);
+    map[key].energyKwh += Number(r.energyKwh)||0;
+    map[key].co2kg += Number(r.co2kg)||0;
+    map[key].count += 1;
+  }
+  return Object.values(map).map(x=>({
+    ...x,
+    periodCount:x.periods.size,
+    trees: Math.ceil((x.co2kg||0) / TREE_CO2_KG_YEAR),
+    avgKwhMonth: x.periods.size ? x.energyKwh / x.periods.size : x.energyKwh
+  })).sort((a,b)=>b.energyKwh-a.energyKwh);
+}
+function renderDashboard(){
+  if(!$('environmentBody')) return;
+  const rows = aggregateBySite(dashboardRecords());
+  const totalKwh = rows.reduce((a,r)=>a+r.energyKwh,0);
+  const totalCo2kg = rows.reduce((a,r)=>a+r.co2kg,0);
+  const totalTrees = Math.ceil(totalCo2kg / TREE_CO2_KG_YEAR);
+  $('dashTotalKwh').textContent = fmt(totalKwh) + ' kWh';
+  $('dashTotalCo2').textContent = fmt(totalCo2kg/1000) + ' t CO₂e';
+  $('dashTotalTrees').textContent = fmt(totalTrees) + ' árboles';
+  if(!rows.length){
+    $('environmentBody').innerHTML = '<tr><td colspan="8">No hay registros de energía eléctrica para mostrar. Importa una factura PDF o revisa los filtros.</td></tr>';
+    drawSiteChart([]);
+    return;
+  }
+  const body = rows.map((r,i)=>`<tr>
+    <td>${i+1}</td>
+    <td>${escapeHtml(r.site)}</td>
+    <td>${escapeHtml(r.address)}</td>
+    <td>${fmt(r.periodCount)}</td>
+    <td><strong>${fmt(r.energyKwh)}</strong></td>
+    <td>${fmt(r.co2kg/1000)}</td>
+    <td><strong>${fmt(r.trees)}</strong></td>
+    <td>${fmt(r.avgKwhMonth)}</td>
+  </tr>`).join('');
+  const totalRow = `<tr class="total-row"><td colspan="4">TOTAL</td><td>${fmt(totalKwh)}</td><td>${fmt(totalCo2kg/1000)}</td><td>${fmt(totalTrees)}</td><td>—</td></tr>`;
+  $('environmentBody').innerHTML = totalRow + body;
+  drawSiteChart(rows.slice(0,12));
+}
+function drawSiteChart(rows){
+  const c = $('siteChart');
+  if(!c) return;
+  const ctx = c.getContext('2d');
+  ctx.clearRect(0,0,c.width,c.height);
+  ctx.fillStyle='#13312d';
+  ctx.font='16px Arial';
+  ctx.fillText('Ranking de sedes por consumo eléctrico total (kWh)',24,34);
+  if(!rows.length){ ctx.fillText('Sin datos para graficar',24,78); return; }
+  const padL=255, padR=40, top=60, rowH=30, barH=18;
+  const max = Math.max(...rows.map(r=>r.energyKwh),1);
+  const w = c.width - padL - padR;
+  ctx.font='12px Arial';
+  rows.forEach((r,i)=>{
+    const y = top + i*rowH;
+    const label = (r.site||'').length>34 ? r.site.slice(0,34)+'…' : r.site;
+    ctx.fillStyle='#13312d';
+    ctx.textAlign='right';
+    ctx.fillText(label, padL-10, y+14);
+    const bw = Math.max(2, (r.energyKwh/max)*w);
+    const grad = ctx.createLinearGradient(padL,0,padL+bw,0);
+    grad.addColorStop(0,'#0b9878');
+    grad.addColorStop(1,'#0fc39a');
+    ctx.fillStyle=grad;
+    roundRect(ctx,padL,y,bw,barH,8); ctx.fill();
+    ctx.fillStyle='#13312d'; ctx.textAlign='left';
+    ctx.fillText(fmt(r.energyKwh)+' kWh · '+fmt(r.co2kg/1000)+' t CO₂e · '+fmt(r.trees)+' árboles', padL+bw+8, y+14);
+  });
+  ctx.textAlign='left';
+}

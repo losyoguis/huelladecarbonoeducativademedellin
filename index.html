@@ -54,10 +54,61 @@
       <article><span>Sedes</span><strong id="kSites">0</strong></article>
       <article><span>Energía acumulada</span><strong id="kKwh">0 kWh</strong></article>
       <article><span>CO₂ estimado</span><strong id="kCo2">0 t</strong></article>
+      <article><span>Árboles requeridos</span><strong id="kTrees">0</strong></article>
       <article><span>Agua</span><strong id="kWater">0 m³</strong></article>
       <article><span>Aseo/Residuos</span><strong id="kWaste">0 t</strong></article>
     </section>
 
+
+    <section class="panel dashboard-panel">
+      <div class="section-head">
+        <div>
+          <h2>Dashboard ambiental por sede</h2>
+          <p class="muted">Consumo total de energía eléctrica, toneladas de CO₂ equivalente y árboles requeridos para compensación estimada.</p>
+        </div>
+        <div class="factor-box">
+          <label>Factor CO₂ kg/kWh
+            <input id="factorCo2Input" type="number" step="0.001" min="0" value="0.126" />
+          </label>
+          <label>kg CO₂ capturados por árbol/año
+            <input id="treeFactorInput" type="number" step="0.1" min="0.1" value="22" />
+          </label>
+          <button id="updateFactorsBtn" class="secondary">Actualizar cálculos</button>
+        </div>
+      </div>
+      <div class="dashboard-grid">
+        <article class="big-total">
+          <span>Total energía eléctrica</span>
+          <strong id="dashTotalKwh">0 kWh</strong>
+        </article>
+        <article class="big-total">
+          <span>Total CO₂ equivalente</span>
+          <strong id="dashTotalCo2">0 t CO₂e</strong>
+        </article>
+        <article class="big-total">
+          <span>Árboles necesarios</span>
+          <strong id="dashTotalTrees">0 árboles</strong>
+        </article>
+      </div>
+      <div class="table-wrap dashboard-table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Sede</th>
+              <th>Dirección</th>
+              <th>Periodos</th>
+              <th>Energía total kWh</th>
+              <th>CO₂e t</th>
+              <th>Árboles requeridos</th>
+              <th>Promedio kWh/mes</th>
+            </tr>
+          </thead>
+          <tbody id="environmentBody"></tbody>
+        </table>
+      </div>
+      <canvas id="siteChart" width="1100" height="460" aria-label="Ranking de sedes por consumo eléctrico"></canvas>
+    </section>
     <section class="panel">
       <div class="toolbar">
         <div>

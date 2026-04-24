@@ -1,41 +1,64 @@
-# SiMeCO₂ · Servicios públicos educativos v7
+# SiMeCO₂ · Dashboard de Servicios Públicos Educativos
+
+Versión v8 con dashboard ambiental por sede.
 
 ## Qué hace
-- Busca automáticamente nuevos PDF dentro de la carpeta `data/` del repositorio.
-- Identifica mes y año desde textos como `Resumen de facturación Enero de 2025`.
-- Extrae registros por sede cuando el PDF contiene bloques `Prestación del servicio`.
-- Calcula energía, agua, alcantarillado, gas, aseo/residuos y CO₂ estimado.
-- Permite comparar periodos.
-- Guarda el histórico en el navegador mediante `localStorage`.
 
-## Instalación en GitHub Pages
-1. Sube todos los archivos de este ZIP al repositorio.
-2. Crea o conserva la carpeta `data/`.
-3. Cada mes, sube manualmente la factura PDF dentro de `data/`, por ejemplo:
-   - `data/Enero-2025.pdf`
-   - `data/Febrero-2025.pdf`
-4. Publica el repositorio con GitHub Pages.
-5. Abre la web y presiona **Buscar nuevos PDF en /data**.
+- Lee facturas PDF consolidadas de EPM ubicadas en la carpeta `data/`.
+- Identifica automáticamente el periodo real desde el texto de la factura, por ejemplo: `Resumen de facturación Abril de 2025`.
+- Importa sedes nuevas automáticamente cuando aparecen en futuros PDF.
+- Calcula por sede:
+  - Consumo total de energía eléctrica en kWh.
+  - Toneladas de dióxido de carbono equivalente, t CO₂e.
+  - Número estimado de árboles requeridos para mitigar ese CO₂e.
+  - Promedio mensual de consumo en kWh.
+- Muestra el total general del sistema.
+- Permite comparar meses cargados.
+- Exporta CSV y JSON.
 
-## Configuración
-Si la web está publicada como `https://usuario.github.io/repositorio/`, el sistema detecta automáticamente:
-- owner = usuario
-- repo = repositorio
+## Cómo usarlo en GitHub Pages
 
-Si usas dominio personalizado o una ruta diferente, escribe manualmente:
-- Owner GitHub
-- Repositorio
-- Rama (`main` o `master`)
+1. Sube todos los archivos del ZIP al repositorio.
+2. Sube las facturas PDF a la carpeta `data/`.
+3. En `data/manifest.json`, registra los PDF que quieras leer, por ejemplo:
 
-## Importante
-GitHub Pages no permite que JavaScript escriba archivos nuevos en el repositorio sin API/token. Esta versión no necesita token porque solo **lee** los PDF que tú subes manualmente a `data/`.
+```json
+{
+  "files": [
+    "Enero.pdf",
+    "Abril2025.pdf"
+  ]
+}
+```
 
-## Pruebas locales
-Si abres `index.html` directamente desde el computador, el navegador puede bloquear la lectura de `data/`. Para pruebas locales puedes:
-- usar el botón **Cargar PDF local**, o
-- ejecutar un servidor local sencillo.
+4. Abre la página publicada en GitHub Pages.
+5. Presiona **Buscar nuevos PDF en /data**.
+6. Revisa el dashboard ambiental por sede.
 
-## Factor CO₂
-El factor usado está en `app.js`:
-`const FACTOR_CO2_KG_KWH = 0.126;`
-Puedes reemplazarlo por el factor oficial que defina el proyecto.
+## Factores ambientales editables
+
+El dashboard incluye dos campos ajustables:
+
+- **Factor CO₂ kg/kWh:** por defecto `0.126` kg CO₂e/kWh.
+- **kg CO₂ capturados por árbol/año:** por defecto `22` kg CO₂e/árbol/año.
+
+Estos valores son configurables desde la interfaz y se guardan en el navegador. Si la investigación define otro factor oficial, solo se cambia en el campo correspondiente y se presiona **Actualizar cálculos**.
+
+## Recomendación para nombres de PDF
+
+Aunque el sistema identifica el mes desde el contenido de la factura, se recomienda nombrar los archivos así:
+
+```text
+2025-01.pdf
+2025-04.pdf
+2025-05.pdf
+```
+
+Si un archivo se llama `Mayo2025.pdf`, pero internamente dice `Resumen de facturación Abril de 2025`, el sistema lo registra como `2025-04`, porque ese es el periodo oficial de la factura.
+
+## Archivos principales
+
+- `index.html`: estructura de la aplicación.
+- `styles.css`: diseño responsive tipo dashboard.
+- `app.js`: lectura PDF, cálculos, dashboard, filtros, comparación y exportación.
+- `data/manifest.json`: listado de PDF disponibles en la carpeta `data/`.
