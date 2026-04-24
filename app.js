@@ -504,27 +504,56 @@ function drawSiteChart(rows){
   const ctx = c.getContext('2d');
   ctx.clearRect(0,0,c.width,c.height);
   ctx.fillStyle='#13312d';
-  ctx.font='16px Arial';
+  ctx.font='bold 17px Arial';
+  ctx.textAlign='left';
   ctx.fillText('Ranking de sedes por consumo eléctrico total (kWh)',24,34);
-  if(!rows.length){ ctx.fillText('Sin datos para graficar',24,78); return; }
-  const padL=255, padR=40, top=60, rowH=30, barH=18;
+  ctx.font='12px Arial';
+  ctx.fillStyle='#637772';
+  ctx.fillText('Dato visible por sede: kWh acumulados · t CO₂e · árboles requeridos.',24,54);
+  if(!rows.length){ ctx.fillStyle='#13312d'; ctx.fillText('Sin datos para graficar',24,92); return; }
+
+  const padL = 255;
+  const labelCol = 340;
+  const padR = 28;
+  const top = 82;
+  const rowH = 32;
+  const barH = 18;
   const max = Math.max(...rows.map(r=>r.energyKwh),1);
-  const w = c.width - padL - padR;
+  const maxBarW = Math.max(220, c.width - padL - labelCol - padR);
+
   ctx.font='12px Arial';
   rows.forEach((r,i)=>{
     const y = top + i*rowH;
     const label = (r.site||'').length>34 ? r.site.slice(0,34)+'…' : r.site;
-    ctx.fillStyle='#13312d';
+
+    ctx.fillStyle='#315650';
     ctx.textAlign='right';
-    ctx.fillText(label, padL-10, y+14);
-    const bw = Math.max(2, (r.energyKwh/max)*w);
+    ctx.fillText(label, padL-12, y+14);
+
+    const bw = Math.max(8, (r.energyKwh/max)*maxBarW);
     const grad = ctx.createLinearGradient(padL,0,padL+bw,0);
     grad.addColorStop(0,'#0b9878');
     grad.addColorStop(1,'#0fc39a');
     ctx.fillStyle=grad;
     roundRect(ctx,padL,y,bw,barH,8); ctx.fill();
-    ctx.fillStyle='#13312d'; ctx.textAlign='left';
-    ctx.fillText(fmt(r.energyKwh)+' kWh · '+fmt(r.co2kg/1000)+' t CO₂e · '+fmt(r.trees)+' árboles', padL+bw+8, y+14);
+
+    const textX = padL + bw + 10;
+    const available = c.width - textX - padR;
+    const fullLabel = `${fmt(r.energyKwh)} kWh · ${fmt(r.co2kg/1000)} t CO₂e · ${fmt(r.trees)} árboles`;
+    ctx.fillStyle='#13312d';
+    ctx.textAlign='left';
+    ctx.font='bold 11.5px Arial';
+    ctx.fillText(fitCanvasText(ctx, fullLabel, available), textX, y+14);
   });
   ctx.textAlign='left';
+}
+
+function fitCanvasText(ctx, text, maxWidth){
+  if(maxWidth <= 30) return '';
+  if(ctx.measureText(text).width <= maxWidth) return text;
+  let t = text;
+  while(t.length > 3 && ctx.measureText(t + '…').width > maxWidth){
+    t = t.slice(0, -1);
+  }
+  return t + '…';
 }

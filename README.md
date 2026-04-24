@@ -68,3 +68,10 @@ Si un archivo se llama `Mayo2025.pdf`, pero internamente dice `Resumen de factur
 
 - Se reorganizó la interfaz para ubicar en la parte superior los indicadores generales, el dashboard ambiental por sede y la sección de comparación mensual.
 - La importación, diagnóstico y tabla detallada quedan debajo para priorizar la lectura ejecutiva de resultados.
+
+
+## Actualización v10
+
+- La gráfica **Ranking de sedes por consumo eléctrico total (kWh)** quedó ubicada inmediatamente debajo de los indicadores del **Dashboard ambiental por sede**.
+- Las barras fueron ajustadas para no ocupar todo el ancho del panel, reservando espacio a la derecha para visualizar claramente: **kWh**, **t CO₂e** y **árboles requeridos**.
+- En pantallas pequeñas, la gráfica permite desplazamiento horizontal para evitar cortes de texto.

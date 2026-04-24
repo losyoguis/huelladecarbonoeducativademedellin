@@ -2,3 +2,26 @@
 
 /* Dashboard ambiental v8 */
 .section-head{display:flex;justify-content:space-between;gap:18px;align-items:flex-start;margin-bottom:16px}.factor-box{display:grid;grid-template-columns:repeat(2,minmax(160px,1fr)) auto;gap:10px;align-items:end;min-width:min(100%,650px);background:#f7fffc;border:1px solid var(--line);border-radius:20px;padding:14px}.dashboard-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:12px 0 18px}.big-total{background:linear-gradient(135deg,#f5fffb,#eaf9f4);border:1px solid var(--line);border-radius:22px;padding:20px;box-shadow:var(--shadow)}.big-total span{display:block;color:var(--muted);font-weight:900;font-size:.9rem}.big-total strong{display:block;font-size:clamp(1.35rem,2.8vw,2.2rem);margin-top:8px;color:var(--brand)}.dashboard-table-wrap table{min-width:1050px}.total-row td{background:#12312d;color:white;font-weight:900;position:sticky;top:42px;z-index:1}.total-row td:first-child{text-align:right}#siteChart{margin-top:18px;max-height:460px}@media(max-width:1050px){.section-head,.factor-box{display:block}.factor-box label,.factor-box button{margin-top:10px}.dashboard-grid{grid-template-columns:1fr}}@media print{.factor-box{display:none}.total-row td{background:#eee!important;color:#111!important}}
+
+
+/* v10: gráfica ambiental ubicada justo debajo de los indicadores del dashboard.
+   Las barras reservan espacio a la derecha para mostrar kWh, t CO₂e y árboles. */
+.chart-card{
+  margin:18px 0 18px;
+  border:1px solid var(--line);
+  border-radius:20px;
+  background:white;
+  overflow:hidden;
+  padding:10px 8px 4px;
+}
+.environmental-ranking-chart canvas{
+  border:0;
+  border-radius:0;
+  max-height:520px;
+  width:100%;
+}
+.dashboard-table-wrap{margin-top:18px}
+@media(max-width:760px){
+  .chart-card{overflow-x:auto}
+  .environmental-ranking-chart canvas{min-width:980px}
+}
