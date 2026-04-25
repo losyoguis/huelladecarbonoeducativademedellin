@@ -1,4 +1,4 @@
-# SiMeCO₂ · Plataforma de Huella de Carbono Educativa v28
+# SiMeCO₂ · Plataforma de Huella de Carbono Educativa v29
 
 Sistema web en HTML, CSS y JavaScript para medir, visualizar e interpretar la huella de carbono educativa a partir del consumo de servicios públicos de sedes educativas.
 
@@ -6,7 +6,7 @@ Sistema web en HTML, CSS y JavaScript para medir, visualizar e interpretar la hu
 
 SiMeCO₂ transforma información de facturas en indicadores ambientales comprensibles para directivos, docentes, estudiantes y aliados técnicos. La plataforma permite estimar emisiones de CO₂e en alcance 2, priorizar sedes con mayor consumo eléctrico y generar planes de gestión ambiental escolar.
 
-## Mejoras incorporadas en v28
+## Mejoras incorporadas en v29
 
 - Portada institucional con enfoque de proyecto educativo ambiental.
 - Resumen ejecutivo automático con lectura interpretativa.
@@ -65,9 +65,15 @@ Archivos actualizados:
 - `styles.css`
 - `assets/los-yoguis-footer.png`
 
-## Mejoras incorporadas en v28
+## Mejoras incorporadas en v29
 
 - Se rediseñó el bloque **Actualizando los datos** con una apariencia más llamativa e institucional.
 - Se incorporó el mensaje: carga de facturas de servicios públicos de todas las Instituciones Educativas de Medellín desde el año 2025.
 - Se añadieron distintivos visuales de alcance: Medellín, Instituciones Educativas y Desde 2025.
 - Se conservaron los identificadores funcionales de botones y lectura PDF para mantener la compatibilidad del sistema.
+
+
+## Ajuste visual v29
+
+- Se resaltó la tarjeta principal de **Huella de Carbono Educativa de Medellín**.
+- La huella total en CO₂e ahora aparece como indicador protagonista en el resumen ejecutivo y en los KPI principales.

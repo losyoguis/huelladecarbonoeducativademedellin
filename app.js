@@ -398,7 +398,7 @@ function renderCards(){
   $('kPeriods').textContent = periods;
   $('kSites').textContent = sites;
   $('kKwh').textContent = fmt(sum('energyKwh'))+' kWh';
-  $('kCo2').textContent = fmt(sum('co2kg')/1000)+' t';
+  $('kCo2').textContent = fmt(sum('co2kg')/1000)+' t CO₂e';
   if($('kTrees')) $('kTrees').textContent = fmt(Math.ceil(sum('co2kg')/TREE_CO2_KG_YEAR));
   $('kWater').textContent = fmt(sum('waterM3'))+' m³';
   $('kWaste').textContent = fmt(sum('wasteTon'))+' t';
@@ -583,9 +583,9 @@ function renderExecutiveSummary(){
   const topText = s.topSite ? ` La sede con mayor consumo acumulado es ${s.topSite.site}, con ${fmt(s.topSite.energyKwh)} kWh.` : '';
   $('executiveText').innerHTML = `Durante el periodo <strong>${escapeHtml(periodText)}</strong>, el sistema registra <strong>${fmt(s.energy)} kWh</strong> de energía eléctrica, equivalentes a <strong>${fmt(s.co2kg/1000)} toneladas de CO₂e</strong>. Para compensar pedagógicamente estas emisiones se requerirían aproximadamente <strong>${fmt(s.trees)} árboles/año</strong>.${escapeHtml(topText)}`;
   $('executiveGrid').innerHTML = `
+    <article class="executive-highlight-card"><span>Huella de Carbono Educativa de Medellín</span><strong>${fmt(s.co2kg/1000)} t CO₂e</strong><small>Alcance 2 estimado a partir del consumo eléctrico institucional</small></article>
     <article><span>Cobertura</span><strong>${fmt(s.sites.length)} sedes</strong><small>${fmt(s.periods.length)} periodo(s) analizado(s)</small></article>
     <article><span>Energía</span><strong>${fmt(s.energy)} kWh</strong><small>Consumo eléctrico acumulado</small></article>
-    <article><span>Huella</span><strong>${fmt(s.co2kg/1000)} t CO₂e</strong><small>Alcance 2 estimado</small></article>
     <article><span>Compensación</span><strong>${fmt(s.trees)} árboles</strong><small>Equivalencia pedagógica anual</small></article>`;
 }
 
