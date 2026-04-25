@@ -74,22 +74,29 @@
       <article><span>Aseo/Residuos</span><strong id="kWaste">0 t</strong></article>
     </section>
 
-    <section class="panel grid-2 import-panel" id="importacion">
-      <div>
-        <span class="section-kicker">Actualización</span>
-        <h2>Información del sistema</h2>
-        <p class="muted">Usa esta zona para actualizar la plataforma, cargar una factura local de prueba o limpiar la información almacenada en este dispositivo.</p>
-        <div class="actions">
-          <button class="primary" id="scanDataBtn">Actualizar información del sistema</button>
+    <section class="panel grid-2 import-panel update-spotlight" id="importacion">
+      <div class="update-copy">
+        <span class="section-kicker">Actualizando los datos</span>
+        <h2>Carga las facturas de servicios públicos</h2>
+        <p class="update-lead">Actualiza la plataforma cargando las facturas de servicios públicos de todas las Instituciones Educativas de la ciudad de Medellín desde el año 2025.</p>
+        <div class="update-badges" aria-label="Alcance de actualización">
+          <span>Medellín</span>
+          <span>Instituciones Educativas</span>
+          <span>Desde 2025</span>
+        </div>
+        <div class="actions update-actions">
+          <button class="primary" id="scanDataBtn">Actualizar datos ahora</button>
           <label class="secondary file-label">
-            Cargar PDF local
+            Cargar factura PDF local
             <input type="file" id="localPdfInput" accept="application/pdf" hidden />
           </label>
           <button class="secondary" id="clearBtn">Limpiar este dispositivo</button>
         </div>
       </div>
-      <div>
-        <h2>Diagnóstico técnico</h2>
+      <div class="update-status-card">
+        <div class="update-icon" aria-hidden="true">⚡</div>
+        <h2>Seguimiento de actualización</h2>
+        <p class="muted">Aquí se registra el proceso de lectura, reconocimiento de sedes y consolidación ambiental de las facturas cargadas.</p>
         <pre id="logBox" class="log" aria-live="polite"></pre>
       </div>
     </section>
