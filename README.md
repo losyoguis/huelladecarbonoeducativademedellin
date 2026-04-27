@@ -1,4 +1,4 @@
-# SiMeCO₂ · Plataforma de Huella de Carbono Educativa v31
+# SiMeCO₂ · Plataforma de Huella de Carbono Educativa v32
 
 Sistema web en HTML, CSS y JavaScript para medir, visualizar e interpretar la huella de carbono educativa a partir del consumo de servicios públicos de sedes educativas.
 
@@ -6,7 +6,7 @@ Sistema web en HTML, CSS y JavaScript para medir, visualizar e interpretar la hu
 
 SiMeCO₂ transforma información de facturas en indicadores ambientales comprensibles para directivos, docentes, estudiantes y aliados técnicos. La plataforma permite estimar emisiones de CO₂e en alcance 2, priorizar sedes con mayor consumo eléctrico y generar planes de gestión ambiental escolar.
 
-## Mejoras incorporadas en v31
+## Mejoras incorporadas en v32
 
 - Portada institucional con enfoque de proyecto educativo ambiental.
 - Resumen ejecutivo automático con lectura interpretativa.
@@ -17,7 +17,7 @@ SiMeCO₂ transforma información de facturas en indicadores ambientales compren
 - Dashboard por sede con chips de prioridad.
 - Plan de Gestión fortalecido con matriz operativa, responsables, indicadores y evidencias.
 - Módulo pedagógico “Aula climática / Guardianes Climáticos”.
-- Modo presentación para socializar resultados ante directivos, estudiantes o aliados.
+- Se elimina el botón de modo presentación de la portada para una interfaz más limpia.
 - Mejoras responsive tipo app móvil: navegación inferior y tablas convertidas en tarjetas.
 - Textos institucionales más claros y orientados a toma de decisiones.
 
@@ -25,7 +25,7 @@ SiMeCO₂ transforma información de facturas en indicadores ambientales compren
 
 ```text
 index.html        Estructura de la plataforma
-styles.css        Diseño visual, responsive, modo presentación y experiencia móvil
+styles.css        Diseño visual, responsive y experiencia móvil
 app.js            Lógica de lectura, cálculos, visualizaciones, planes e interpretaciones
 data/             Carpeta con archivos de soporte y PDF existentes
 ```
@@ -65,7 +65,7 @@ Archivos actualizados:
 - `styles.css`
 - `assets/los-yoguis-footer.png`
 
-## Mejoras incorporadas en v31
+## Mejoras incorporadas en v32
 
 - Se rediseñó el bloque **Actualizando los datos** con una apariencia más llamativa e institucional.
 - Se incorporó el mensaje: carga de facturas de servicios públicos de todas las Instituciones Educativas de Medellín desde el año 2025.

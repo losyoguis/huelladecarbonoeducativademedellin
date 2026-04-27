@@ -1,4 +1,4 @@
-/* SiMeCO2 Servicios Públicos - v26 plataforma educativa, institucional y responsive */
+/* SiMeCO2 Servicios Públicos - v32 sin botón de modo presentación */
 let FACTOR_CO2_KG_KWH = 0.126; // kg CO2e/kWh. Ajustable desde el dashboard.
 let TREE_CO2_KG_YEAR = 22; // kg CO2e capturados por árbol al año. Ajustable desde el dashboard.
 const FACTOR_KEY = 'simeco2_factores_ambientales_v8';
@@ -43,7 +43,6 @@ function bindEvents(){
   if($("printPlanBtn")) $("printPlanBtn").addEventListener("click", printCurrentPlan);
   if($("downloadPlanBtn")) $("downloadPlanBtn").addEventListener("click", downloadCurrentPlan);
   if($("environmentBody")) $("environmentBody").addEventListener("click", handlePlanButtonClick);
-  if($("presentationModeBtn")) $("presentationModeBtn").addEventListener("click", togglePresentationMode);
   document.addEventListener("click", handlePlanButtonClick);
 }
 function initConfig(){
@@ -551,11 +550,6 @@ function exportCsv(){
 function exportJson(){ downloadBlob(JSON.stringify(state,null,2),'simeco2_servicios.json','application/json'); }
 function downloadBlob(content,name,type){ const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([content],{type})); a.download=name; a.click(); URL.revokeObjectURL(a.href); }
 function csvCell(v){ const s=(v??'').toString(); return '"'+s.replace(/"/g,'""')+'"'; }
-function togglePresentationMode(){
-  document.body.classList.toggle('presentation-mode');
-  const active = document.body.classList.contains('presentation-mode');
-  if($('presentationModeBtn')) $('presentationModeBtn').textContent = active ? 'Salir de presentación' : 'Modo presentación';
-}
 
 function getGlobalStats(){
   const recs = state.records || [];

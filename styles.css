@@ -300,15 +300,6 @@ main{max-width:1440px;margin:0 auto;padding:28px clamp(14px,3vw,44px) 56px;}
 canvas{max-width:100%;height:auto;border-radius:16px;}
 .table-wrap{overflow:auto;}
 .plan-actions .secondary:first-child{background:linear-gradient(135deg,var(--brand),var(--brand2));color:#fff;border-color:transparent;font-weight:900;}
-body.presentation-mode .import-panel,
-body.presentation-mode .data-panel,
-body.presentation-mode footer{display:none!important;}
-body.presentation-mode .sticky-nav{position:static;}
-body.presentation-mode .panel{box-shadow:0 24px 70px rgba(13,62,53,.14);}
-body.presentation-mode .hero{min-height:52vh;}
-body.presentation-mode .kpi-cards article strong,
-body.presentation-mode .executive-grid strong,
-body.presentation-mode .impact-grid strong{font-size:clamp(1.55rem,3vw,2.35rem);}
 
 @media(max-width:1050px){
   .hero-mjb{flex-direction:column;}
