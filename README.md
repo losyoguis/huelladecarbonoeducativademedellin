@@ -1,4 +1,4 @@
-# SiMeCO₂ · Plataforma de Huella de Carbono Educativa v29
+# SiMeCO₂ · Plataforma de Huella de Carbono Educativa v31
 
 Sistema web en HTML, CSS y JavaScript para medir, visualizar e interpretar la huella de carbono educativa a partir del consumo de servicios públicos de sedes educativas.
 
@@ -6,7 +6,7 @@ Sistema web en HTML, CSS y JavaScript para medir, visualizar e interpretar la hu
 
 SiMeCO₂ transforma información de facturas en indicadores ambientales comprensibles para directivos, docentes, estudiantes y aliados técnicos. La plataforma permite estimar emisiones de CO₂e en alcance 2, priorizar sedes con mayor consumo eléctrico y generar planes de gestión ambiental escolar.
 
-## Mejoras incorporadas en v29
+## Mejoras incorporadas en v31
 
 - Portada institucional con enfoque de proyecto educativo ambiental.
 - Resumen ejecutivo automático con lectura interpretativa.
@@ -55,7 +55,7 @@ Para GitHub Pages, subir todos los archivos conservando esta estructura. El arch
 
 
 
-## Actualización v27 · Footer institucional Los Yoguis
+## Actualización v31 · Footer institucional Los Yoguis
 
 Esta versión incorpora un pie de página institucional con la imagen oficial de Los Yoguis y el enlace central a `www.losyoguis.com`.
 
@@ -65,7 +65,7 @@ Archivos actualizados:
 - `styles.css`
 - `assets/los-yoguis-footer.png`
 
-## Mejoras incorporadas en v29
+## Mejoras incorporadas en v31
 
 - Se rediseñó el bloque **Actualizando los datos** con una apariencia más llamativa e institucional.
 - Se incorporó el mensaje: carga de facturas de servicios públicos de todas las Instituciones Educativas de Medellín desde el año 2025.
@@ -73,7 +73,15 @@ Archivos actualizados:
 - Se conservaron los identificadores funcionales de botones y lectura PDF para mantener la compatibilidad del sistema.
 
 
-## Ajuste visual v29
+## Cabecera Los Yoguis v31
 
-- Se resaltó la tarjeta principal de **Huella de Carbono Educativa de Medellín**.
-- La huella total en CO₂e ahora aparece como indicador protagonista en el resumen ejecutivo y en los KPI principales.
+- Cabecera adaptada al estilo visual Guardianes Climáticos / Los Yoguis.
+- Botón principal hacia **Red Escolar de Pluviómetros de Medellín**.
+- Logo Los Yoguis integrado en cabecera y favicon.
+- Se mantiene la tarjeta destacada de **Huella de Carbono Educativa de Medellín**.
+
+
+## Ajuste visual v31
+
+- Se agregó movimiento al botón principal **Actualizar datos ahora** mediante pulso, brillo, barrido luminoso e ícono de actualización animado.
+- El botón conserva accesibilidad con `aria-label` y respeta `prefers-reduced-motion`.

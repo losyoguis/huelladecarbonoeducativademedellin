@@ -5,30 +5,38 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>SiMeCO₂ · Plataforma de Huella de Carbono Educativa</title>
   <meta name="description" content="Sistema interactivo para medir, interpretar y gestionar la huella de carbono educativa a partir del consumo de servicios públicos." />
-  <link rel="stylesheet" href="styles.css?v=27-footer-yoguis" />
+  <link rel="icon" type="image/png" href="assets/los-yoguis-logo.png" />
+  <link rel="apple-touch-icon" href="assets/los-yoguis-logo.png" />
+  <link rel="stylesheet" href="styles.css?v=31-boton-animado" />
 </head>
 <body>
-  <header class="hero hero-mjb" id="inicio">
-    <div class="hero-title-block">
-      <p class="mjb-chip">SiMeCO₂ · Guardianes Climáticos MJB · Nivel Pro</p>
-      <div class="mjb-title-card">
-        <h1>Sistema de medición de la huella de carbono educativa de Medellín</h1>
-        <h2>Líder: Juan Carlos Blandón Vargas · Los Yoguis</h2>
+  <header class="hero hero-mjb hero-yoguis" id="inicio">
+    <nav class="hero-top-links" aria-label="Enlaces principales del ecosistema Los Yoguis">
+      <a class="hero-top-link hero-top-link-pluvio" href="https://losyoguis.github.io/Red-Escolar-de-Pluviometros-de-Medellin/" target="_blank" rel="noopener noreferrer">Red Escolar de Pluviómetros de Medellín</a>
+      <a class="hero-top-link hero-top-link-guardianes" href="https://losyoguis.github.io/guardianes-climaticos/#home" target="_blank" rel="noopener noreferrer">Guardianes Climáticos de Medellín</a>
+    </nav>
+
+    <div class="hero-showcase-card">
+      <div class="hero-logo-frame" aria-hidden="true">
+        <img src="assets/los-yoguis-logo.png" alt="" class="hero-yoguis-logo" />
       </div>
-      <p class="lead">Plataforma educativa e institucional para medir consumos, estimar emisiones de CO₂e, priorizar sedes y generar planes de gestión ambiental escolar.</p>
-      <div class="hero-actions">
-        <a class="hero-cta" href="#resumen-ejecutivo">Ver resumen ejecutivo</a>
-        <a class="hero-cta ghost" href="#aula-climatica">Entrar al aula climática</a>
-        <button class="hero-cta button-like ghost" id="presentationModeBtn" type="button">Modo presentación</button>
+      <div class="hero-title-block hero-yoguis-content">
+        <p class="mjb-chip">Ciencia escolar · energía · clima · territorio</p>
+        <div class="mjb-title-card hero-main-title-card">
+          <h1>Sistema de medición de la huella de carbono educativa de Medellín</h1>
+          <h2>SiMeCO₂ · Los Yoguis · Guardianes Climáticos</h2>
+        </div>
+        <p class="lead">Plataforma educativa e institucional para medir consumos, estimar emisiones de CO₂e, priorizar sedes y generar planes de gestión ambiental escolar.</p>
+        <div class="hero-purpose-box">
+          <strong>Propósito:</strong> convertir los datos de servicios públicos en decisiones pedagógicas, ambientales e institucionales para reducir la huella de carbono educativa de Medellín.
+        </div>
+        <div class="hero-actions">
+          <a class="hero-cta" href="#resumen-ejecutivo">Ver resumen ejecutivo</a>
+          <a class="hero-cta ghost" href="#aula-climatica">Entrar al aula climática</a>
+          <button class="hero-cta button-like ghost" id="presentationModeBtn" type="button">Modo presentación</button>
+        </div>
       </div>
     </div>
-    <nav class="main-nav main-nav-cta" aria-label="Enlaces externos del proyecto">
-      <div class="nav-cta-list">
-        <a class="nav-btn nav-btn-external nav-btn-pluvio" href="https://losyoguis.github.io/pluvi-metro-mjb/" target="_blank" rel="noopener noreferrer"><strong>Pluviómetro MJB</strong><span>Monitoreo ambiental escolar</span></a>
-        <a class="nav-btn nav-btn-external nav-btn-project" href="https://sites.google.com/iemanueljbetancur.edu.co/huelladecarbonoeducativo/huella-de-carbono-educativa" target="_blank" rel="noopener noreferrer"><strong>Proyecto HECM</strong><span>Investigación educativa</span></a>
-        <a class="nav-btn nav-btn-external nav-btn-guardianes" href="https://losyoguis.github.io/guardianes-climaticos/#home" target="_blank" rel="noopener noreferrer"><strong>Guardianes Climáticos</strong><span>Experiencia transmedia</span></a>
-      </div>
-    </nav>
   </header>
 
   <nav class="sticky-nav" aria-label="Menú interno de SiMeCO₂">
@@ -89,7 +97,7 @@
           <span>Desde 2025</span>
         </div>
         <div class="actions update-actions">
-          <button class="primary" id="scanDataBtn">Actualizar datos ahora</button>
+          <button class="primary update-cta" id="scanDataBtn" aria-label="Actualizar datos del sistema ahora"><span class="cta-icon" aria-hidden="true">↻</span><span>Actualizar datos ahora</span><span class="cta-pulse-dot" aria-hidden="true"></span></button>
           <label class="secondary file-label">
             Cargar factura PDF local
             <input type="file" id="localPdfInput" accept="application/pdf" hidden />
