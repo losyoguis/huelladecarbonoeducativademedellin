@@ -124,3 +124,6 @@ Todos incluyen un botón “Volver al inicio” que dirige a `index.html#inicio`
 - La búsqueda territorial usa exclusivamente registros extraídos de las facturas de energía.
 - Se incluye `data/registros.js` para carga inmediata incluso al abrir el proyecto localmente.
 - Se añadió una tabla visible de resultados y totales energéticos.
+
+## Búsqueda institucional
+El antiguo módulo territorial fue reemplazado por `busqueda-institucional.html`. La consulta usa como fuente principal `data/registros.js`, generado desde los PDF de servicios públicos. Permite seleccionar una I.E., ver su resumen mensual y abrir o extraer la página de la cuenta asociada a cada sede y periodo.

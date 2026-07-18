@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Búsqueda institucional · Facturas de servicios públicos · SiMeCO₂</title>
+<meta name="description" content="Consulta por institución educativa el resumen mensual de sus facturas de servicios públicos.">
+<link rel="icon" href="assets/los-yoguis-logo.png" type="image/png">
+<link rel="stylesheet" href="styles.css?v=60-institucional">
+</head>
+<body class="standalone-page institutional-page app-ready" data-page="institutional">
+<header class="module-page-header" id="module-top">
+  <a class="module-back-button" href="index.html#inicio">← Volver al inicio</a>
+  <div>
+    <span class="section-kicker">Búsqueda institucional</span>
+    <h1>Facturas de servicios públicos por I.E.</h1>
+    <p>Selecciona una institución educativa para consultar, mes a mes, sus consumos de energía, agua, alcantarillado, gas y aseo, y acceder a la cuenta asociada a cada sede.</p>
+  </div>
+  <div class="module-page-links">
+    <a href="dashboard.html">Dashboard</a>
+    <a aria-current="page" href="busqueda-institucional.html">Búsqueda institucional</a>
+    <a href="aula-climatica.html">Aula climática</a>
+  </div>
+</header>
+
+<main class="standalone-module-main institutional-main">
+  <section class="panel institutional-search-panel">
+    <div class="section-head">
+      <div>
+        <span class="section-kicker">Consulta por institución</span>
+        <h2>Busca una I.E. o sede educativa</h2>
+        <p class="muted">La base principal proviene de los PDF de servicios públicos incluidos en SiMeCO₂. Escribe parte del nombre o de la dirección y selecciona una coincidencia.</p>
+      </div>
+    </div>
+    <div class="institutional-search-grid">
+      <label class="institutional-search-field">Institución educativa o sede
+        <input id="institutionSearch" type="search" autocomplete="off" placeholder="Ejemplo: Manuel J. Betancur" aria-controls="institutionSuggestions">
+        <div id="institutionSuggestions" class="institution-suggestions" role="listbox" hidden></div>
+      </label>
+      <label>Año
+        <select id="institutionYear"><option value="">Todos</option></select>
+      </label>
+      <label>Periodo
+        <select id="institutionPeriod"><option value="">Todos los meses</option></select>
+      </label>
+      <button id="clearInstitutionBtn" class="secondary" type="button">Limpiar consulta</button>
+    </div>
+    <div id="institutionSearchStatus" class="filter-summary">Cargando base de facturas…</div>
+  </section>
+
+  <section id="institutionEmpty" class="panel institutional-empty">
+    <span aria-hidden="true">🏫</span>
+    <h2>Selecciona una institución educativa</h2>
+    <p>Al elegir una sede se mostrará su resumen mensual y los accesos a las cuentas de servicios públicos.</p>
+  </section>
+
+  <section id="institutionReport" class="institution-report" hidden>
+    <section class="panel institution-profile">
+      <div>
+        <span class="section-kicker">Institución seleccionada</span>
+        <h2 id="institutionName">—</h2>
+        <p id="institutionAddress" class="muted">—</p>
+      </div>
+      <div class="institution-profile-meta" id="institutionMeta"></div>
+    </section>
+
+    <section class="institutional-kpis" aria-label="Resumen consolidado">
+      <article><span>Meses con factura</span><strong id="kpiMonths">0</strong></article>
+      <article><span>Energía acumulada</span><strong id="kpiEnergy">0 kWh</strong></article>
+      <article><span>Huella de carbono</span><strong id="kpiCo2">0 t CO₂e</strong></article>
+      <article><span>Agua acumulada</span><strong id="kpiWater">0 m³</strong></article>
+      <article><span>Gas acumulado</span><strong id="kpiGas">0 m³</strong></article>
+    </section>
+
+    <section class="panel monthly-bills-panel">
+      <div class="section-head">
+        <div>
+          <span class="section-kicker">Resumen mensual</span>
+          <h2>Facturas de servicios públicos por mes</h2>
+          <p class="muted">Cada fila consolida los registros de la sede para ese periodo. El botón de cuenta abre el PDF en la página correspondiente; también permite extraer esa página como un PDF independiente.</p>
+        </div>
+      </div>
+      <div class="table-wrap institutional-table-wrap">
+        <table class="institutional-bills-table">
+          <thead><tr>
+            <th>Periodo</th><th>Energía</th><th>CO₂e</th><th>Agua</th><th>Alcantarillado</th><th>Gas</th><th>Aseo</th><th>Cuenta de servicios públicos</th>
+          </tr></thead>
+          <tbody id="institutionBillsBody"></tbody>
+        </table>
+      </div>
+    </section>
+  </section>
+</main>
+
+<nav class="mobile-bottom-nav"><a href="index.html#inicio">Inicio</a><a href="dashboard.html">Dashboard</a><a href="#module-top">Institucional</a><a href="aula-climatica.html">Aula</a></nav>
+<footer class="brand-footer"><div class="brand-footer-inner"><img alt="Los Yoguis" class="brand-footer-image" src="assets/los-yoguis-footer.png"><a class="brand-footer-link" href="https://www.losyoguis.com" rel="noopener noreferrer" target="_blank">www.losyoguis.com</a></div></footer>
+<script defer src="data/registros.js?v=3"></script>
+<script defer src="data/sincronizacion-territorial.js?v=3"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+<script defer src="institucional.js?v=1"></script>
+</body>
+</html>
