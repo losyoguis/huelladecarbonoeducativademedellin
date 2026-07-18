@@ -124,3 +124,12 @@ Todos incluyen un botón “Volver al inicio” que dirige a `index.html#inicio`
 - La búsqueda territorial usa exclusivamente registros extraídos de las facturas de energía.
 - Se incluye `data/registros.js` para carga inmediata incluso al abrir el proyecto localmente.
 - Se añadió una tabla visible de resultados y totales energéticos.
+
+
+## Modelo de datos y sincronización territorial
+
+- **Fuente principal:** los registros de consumo, sede, dirección y periodo se extraen de los PDF de servicios públicos y se distribuyen en `data/registros.js` y `data/registros.json`.
+- **Fuente territorial auxiliar:** `data/sincronizacion-territorial.js` relaciona conservadoramente las sedes facturadas con el directorio territorial usado por la Red Escolar de Pluviómetros.
+- La sincronización solo completa zona, comuna/corregimiento, barrio/vereda, núcleo y tipo de sede. Nunca cambia kWh, CO₂e, periodos ni otros valores facturados.
+- Solo se aplican automáticamente coincidencias de confianza **Alta** o **Media**. Las sedes no confiables permanecen como `Sin clasificar`.
+- Las correcciones manuales realizadas desde “Revisar clasificación” tienen prioridad sobre cualquier coincidencia automática.

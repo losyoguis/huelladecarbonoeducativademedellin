@@ -4,8 +4,10 @@ let TREE_CO2_KG_YEAR = 22; // kg CO2e capturados por árbol al año. Ajustable d
 const FACTOR_KEY = 'simeco2_factores_ambientales_v8';
 const STORE_KEY = 'simeco2_servicios_v7';
 const CONFIG_KEY = 'simeco2_repo_config_v7';
-const SITE_META_KEY = 'simeco2_clasificacion_sedes_energia_v1';
-const TERRITORIAL_DIRECTORY = []; // Las sedes provienen exclusivamente de las facturas de energía.
+const SITE_META_KEY = 'simeco2_clasificacion_sedes_energia_v2';
+const LEGACY_SITE_META_KEY = 'simeco2_clasificacion_sedes_energia_v1';
+// Los consumos y las sedes siempre provienen de las facturas. Este mapa solo aporta contexto territorial de referencia.
+const TERRITORIAL_SYNC = window.SIMECO_TERRITORIAL_SYNC || {};
 const EMPTY_META = {zone:'Sin clasificar', territoryType:'Sin clasificar', commune:'Sin clasificar', neighborhood:'Sin clasificar', nucleus:'Sin clasificar', siteType:'Sin clasificar', directoryId:'', source:'Manual', confidence:'Pendiente'};
 let siteMetadata = loadSiteMetadata();
 
@@ -659,7 +661,13 @@ function hasAnyMeasure(r){ return [r.waterM3,r.alcM3,r.energyKwh,r.gasM3,r.waste
 function siteKey(site,address=''){ return `${loose(site)}|${loose(address)}`; }
 
 function loadSiteMetadata(){
-  try{return JSON.parse(localStorage.getItem(SITE_META_KEY)||'{}')||{}}catch{return {}}
+  try{
+    const current=JSON.parse(localStorage.getItem(SITE_META_KEY)||'{}')||{};
+    if(Object.keys(current).length) return current;
+    const legacy=JSON.parse(localStorage.getItem(LEGACY_SITE_META_KEY)||'{}')||{};
+    // Solo migramos correcciones manuales; las asociaciones automáticas se reconstruyen desde la sincronización actual.
+    return Object.fromEntries(Object.entries(legacy).filter(([,m])=>m && (m.source==='Revisión manual' || m.confidence==='Confirmada')));
+  }catch{return {}}
 }
 function saveSiteMetadata(){ localStorage.setItem(SITE_META_KEY, JSON.stringify(siteMetadata)); }
 function defaultMeta(){ return {...EMPTY_META}; }
@@ -667,15 +675,25 @@ function normalizedTokens(value){
   const stop=new Set(['institucion','institución','educativa','educativo','escuela','colegio','sede','centro','ie','i','e','de','del','la','las','el','los','y','n','no','numero']);
   return loose(value).replace(/\b(inst|educ|esc|col|jardin|inf|nro|num)\b/g,' ').split(/\s+/).filter(t=>t.length>1&&!stop.has(t));
 }
-function directoryMatchForSite(){ return null; }
-function metaFromDirectory(){ return defaultMeta(); }
+function directoryMatchForSite(site,address=''){
+  return TERRITORIAL_SYNC[siteKey(site,address)] || null;
+}
+function metaFromDirectory(match){
+  return match ? {...defaultMeta(),...match} : {...defaultMeta(),source:'Factura de servicios públicos',confidence:'Pendiente de clasificación'};
+}
 function ensureSiteMetadata(){
   let changed=false;
   for(const s of getSiteOptions()){
     const key=siteKey(s.site,s.address);
-    if(siteMetadata[key]) continue;
-    siteMetadata[key]={...defaultMeta(),source:'Factura de energía',confidence:'Pendiente de clasificación'};
-    changed=true;
+    const existing=siteMetadata[key];
+    // Las correcciones confirmadas por el usuario tienen prioridad permanente.
+    if(existing && (existing.source==='Revisión manual' || existing.confidence==='Confirmada')) continue;
+    const match=directoryMatchForSite(s.site,s.address);
+    const next=metaFromDirectory(match);
+    if(!existing || JSON.stringify(existing)!==JSON.stringify(next)){
+      siteMetadata[key]=next;
+      changed=true;
+    }
   }
   if(changed) saveSiteMetadata();
 }
@@ -767,7 +785,8 @@ function renderFilterSummary(){
   if(!$('filterSummary')) return;
   const recs=advancedFilteredRecords(), sites=new Set(recs.map(r=>siteKey(r.site,r.address))).size, f=currentTerritorialFilters();
   const labels=[]; if(f.q)labels.push('búsqueda'); if(f.zone)labels.push('zona'); if(f.territoryType)labels.push('tipo de territorio'); if(f.commune)labels.push('comuna/corregimiento'); if(f.neighborhood)labels.push('barrio/vereda'); if(f.nucleus)labels.push('núcleo'); if(f.siteType)labels.push('tipo de sede'); if(f.siteKey)labels.push('sede'); if(f.period)labels.push('periodo'); if(f.service)labels.push('servicio'); if(f.priority)labels.push('prioridad');
-  $('filterSummary').innerHTML=`Mostrando <strong>${fmt(sites)} sede(s)</strong> y <strong>${fmt(recs.length)} registro(s)</strong> según los filtros seleccionados.`;
+  const synchronized=new Set(recs.map(r=>siteKey(r.site,r.address)).filter(k=>getSiteMeta(k).directoryId)).size;
+  $('filterSummary').innerHTML=`Mostrando <strong>${fmt(sites)} sede(s)</strong> y <strong>${fmt(recs.length)} registro(s)</strong> extraídos de las facturas. <strong>${fmt(synchronized)}</strong> sede(s) cuentan con asociación territorial de referencia.`;
   if($('filterStatus')) $('filterStatus').textContent=labels.length?`Filtros activos: ${labels.join(', ')}.`:`Filtros listos · mostrando todas las sedes con datos.`;
 }
 function toggleClassificationPanel(){
