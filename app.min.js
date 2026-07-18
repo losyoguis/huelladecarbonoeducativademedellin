@@ -187,9 +187,9 @@ function initPdfJs(){
 }
 function bindEvents(){
   document.addEventListener("click", handleIntroControl);
-  $("scanDataBtn").addEventListener("click", scanDataFolder);
-  $("localPdfInput").addEventListener("change", handleLocalPdf);
-  $("clearBtn").addEventListener("click", ()=>{ if(confirm("¿Reiniciar todos los datos importados?")){ localStorage.removeItem(STORE_KEY); localStorage.removeItem(SITE_META_KEY); location.reload(); }});
+  if($("scanDataBtn")) $("scanDataBtn").addEventListener("click", ()=>scanDataFolder({automatic:false}));
+  if($("localPdfInput")) $("localPdfInput").addEventListener("change", handleLocalPdf);
+  if($("clearBtn")) $("clearBtn").addEventListener("click", ()=>{ if(confirm("¿Reiniciar todos los datos importados?")){ localStorage.removeItem(STORE_KEY); localStorage.removeItem(SITE_META_KEY); location.reload(); }});
   if($("saveRepoBtn")) $("saveRepoBtn").addEventListener("click", saveConfig);
   if($("updateFactorsBtn")) $("updateFactorsBtn").addEventListener("click", updateFactors);
   let basicFilterTimer = null;
@@ -217,8 +217,8 @@ function bindEvents(){
   if($("clearSiteFiltersBtn")) $("clearSiteFiltersBtn").addEventListener("click", clearAdvancedSiteFilters);
   if($("toggleClassificationBtn")) $("toggleClassificationBtn").addEventListener("click", toggleClassificationPanel);
   if($("classificationBody")) $("classificationBody").addEventListener("change", handleClassificationChange);
-  $("exportCsvBtn").addEventListener("click", exportCsv);
-  $("exportJsonBtn").addEventListener("click", exportJson);
+  if($("exportCsvBtn")) $("exportCsvBtn").addEventListener("click", exportCsv);
+  if($("exportJsonBtn")) $("exportJsonBtn").addEventListener("click", exportJson);
   if($("compareMode")) $("compareMode").addEventListener("change", ()=>{ renderCompareControls({keepSite:true}); comparePeriods(); });
   if($("compareSiteSearch")){
     let compareSearchTimer;
@@ -235,7 +235,7 @@ function bindEvents(){
     });
   }
   if($("clearCompareSite")) $("clearCompareSite").addEventListener("click", clearCompareSiteSearch);
-  $("compareBtn").addEventListener("click", ()=>{ selectCompareSiteFromSearch(true, false); comparePeriods(); });
+  if($("compareBtn")) $("compareBtn").addEventListener("click", ()=>{ selectCompareSiteFromSearch(true, false); comparePeriods(); });
   if($("printPlanBtn")) $("printPlanBtn").addEventListener("click", printCurrentPlan);
   if($("downloadPlanBtn")) $("downloadPlanBtn").addEventListener("click", downloadCurrentPlan);
   document.addEventListener("click", handlePlanButtonClick);

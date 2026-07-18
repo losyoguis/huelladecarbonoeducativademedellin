@@ -110,3 +110,11 @@ Todos incluyen un botón “Volver al inicio” que dirige a `index.html#inicio`
 - El ranking se dibuja aunque la tabla completa del Dashboard esté en una página independiente.
 - La secuencia continúa automáticamente: carga → ranking → indicadores → portada.
 - Se añadió una salida segura hacia la portada si una diapositiva no está disponible.
+
+
+## Reparación integral v50
+- Se corrigieron listeners que detenían todo el JavaScript cuando una página no incluía determinados botones.
+- Cada página inicializa únicamente los controles que realmente contiene.
+- Se reparó el flujo carga → ranking → indicadores → portada.
+- Se forzó una nueva versión de CSS y JavaScript para evitar que el navegador use archivos antiguos en caché.
+- Las páginas publicadas usan los archivos fuente validados `app.js` y `styles.css`.
