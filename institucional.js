@@ -144,7 +144,14 @@ function reset() {
   selectedKey = ''; $('institutionSearch').value = ''; $('institutionYear').value = ''; refreshPeriodFilter(); $('institutionPeriod').value = ''; $('institutionSuggestions').hidden = true; $('institutionReport').hidden = true; $('institutionEmpty').hidden = false; $('institutionSearchStatus').textContent = `${fmt(institutionList.length,0)} instituciones o sedes disponibles en la base de facturas.`;
 }
 document.addEventListener('DOMContentLoaded', () => {
-  if (!records.length) { $('institutionSearchStatus').textContent = 'No fue posible cargar la base consolidada de facturas.'; return; }
+  const status = $('institutionSearchStatus');
+  if (!status) { console.error('SiMeCO₂: no se encontró el contenedor del módulo institucional.'); return; }
+  if (!records.length) {
+    status.innerHTML = '<strong>No fue posible cargar la base consolidada de facturas.</strong> Verifica que la carpeta <code>data</code> y el archivo <code>registros.js</code> estén publicados junto a esta página.';
+    const empty = $('institutionEmpty');
+    if (empty) { empty.hidden = false; empty.querySelector('h2').textContent = 'Base de facturas no disponible'; empty.querySelector('p').textContent = 'Recarga la página o comprueba la publicación completa del proyecto.'; }
+    return;
+  }
   populateGlobalFilters();
   $('institutionSearchStatus').textContent = `${fmt(institutionList.length,0)} instituciones o sedes disponibles en la base de facturas.`;
   $('institutionSearch').addEventListener('input', e => { selectedKey = ''; showSuggestions(e.target.value); });
