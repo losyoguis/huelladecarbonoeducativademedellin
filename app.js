@@ -162,11 +162,27 @@ function bindEvents(){
   $("clearBtn").addEventListener("click", ()=>{ if(confirm("¿Reiniciar todos los datos importados?")){ localStorage.removeItem(STORE_KEY); localStorage.removeItem(SITE_META_KEY); location.reload(); }});
   if($("saveRepoBtn")) $("saveRepoBtn").addEventListener("click", saveConfig);
   if($("updateFactorsBtn")) $("updateFactorsBtn").addEventListener("click", updateFactors);
-  ["siteSearch","periodFilter","serviceFilter"].forEach(id=>$(id).addEventListener("input", ()=>{ renderTable(); renderDashboard(); }));
+  let basicFilterTimer = null;
+  ["siteSearch","periodFilter","serviceFilter"].forEach(id=>{
+    const el=$(id); if(!el) return;
+    const run=()=>{ renderTable(); renderDashboard(); };
+    if(el.tagName === 'INPUT'){
+      el.addEventListener('input', ()=>{ clearTimeout(basicFilterTimer); basicFilterTimer=setTimeout(run,120); }, {passive:true});
+    } else el.addEventListener('change', run);
+  });
+  let advancedFilterTimer = null;
   ["globalSiteSearch","zoneFilter","territoryTypeFilter","communeFilter","neighborhoodFilter","nucleusFilter","siteTypeFilter","specificSiteFilter","globalPeriodFilter","globalServiceFilter","priorityFilter"].forEach(id=>{
     const el=$(id); if(!el) return;
-    const handler=()=>applyAdvancedSiteFilters({refresh:true});
-    el.addEventListener('input', handler); el.addEventListener('change', handler);
+    const run=()=>applyAdvancedSiteFilters({refresh:true});
+    if(el.tagName === 'INPUT'){
+      el.addEventListener('input', ()=>{
+        clearTimeout(advancedFilterTimer);
+        advancedFilterTimer=setTimeout(run, 140);
+      }, {passive:true});
+      el.addEventListener('change', run);
+    } else {
+      el.addEventListener('change', run);
+    }
   });
   if($("clearSiteFiltersBtn")) $("clearSiteFiltersBtn").addEventListener("click", clearAdvancedSiteFilters);
   if($("toggleClassificationBtn")) $("toggleClassificationBtn").addEventListener("click", toggleClassificationPanel);
@@ -192,7 +208,6 @@ function bindEvents(){
   $("compareBtn").addEventListener("click", ()=>{ selectCompareSiteFromSearch(true, false); comparePeriods(); });
   if($("printPlanBtn")) $("printPlanBtn").addEventListener("click", printCurrentPlan);
   if($("downloadPlanBtn")) $("downloadPlanBtn").addEventListener("click", downloadCurrentPlan);
-  if($("environmentBody")) $("environmentBody").addEventListener("click", handlePlanButtonClick);
   document.addEventListener("click", handlePlanButtonClick);
 }
 function initConfig(){

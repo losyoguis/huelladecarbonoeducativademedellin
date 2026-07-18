@@ -1178,3 +1178,16 @@ body.data-gate #importacion .intro-slide-controls,body.intro-ranking #ranking-se
 .compare-site-hint{display:block;margin-top:6px;color:#56706b;font-weight:600;min-height:1.2em}
 .compare-site-hint.bad{color:#b43b32}
 @media(max-width:760px){.compare-site-field{min-width:100%}}
+
+
+/* Optimización de renderizado: las secciones fuera de pantalla se calculan al acercarse al viewport. */
+main > section, .page-section, .platform-section {
+  content-visibility: auto;
+  contain-intrinsic-size: 900px;
+}
+.intro-stage-focus, #importacion, body.data-gate #importacion {
+  content-visibility: visible;
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+}
