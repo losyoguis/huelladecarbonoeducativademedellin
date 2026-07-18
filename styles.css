@@ -1121,3 +1121,50 @@ body.data-gate #importacion .intro-slide-controls,body.intro-ranking #ranking-se
 .intro-next{background:linear-gradient(135deg,#079b79,#12cda0);border-color:transparent;color:#fff}
 .intro-control.is-paused{background:#fff4d9;border-color:#edc86d;color:#795600}
 @media(max-width:640px){.intro-slide-controls{gap:8px;position:sticky;bottom:12px}.intro-control{min-width:0;flex:1;padding:12px 8px;font-size:13px}.intro-control span{display:inline}}
+
+/* v39 · páginas independientes de Dashboard y Aula Climática */
+.module-access-panel{overflow:hidden}
+.module-access-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px}
+.module-access-card{display:flex;flex-direction:column;gap:10px;padding:28px;border:1px solid rgba(4,130,104,.18);border-radius:26px;background:linear-gradient(145deg,#fff,#effbf7);color:var(--ink,#10372f);text-decoration:none;box-shadow:0 18px 40px rgba(15,70,60,.08);transition:transform .2s ease,box-shadow .2s ease,border-color .2s ease}
+.module-access-card:hover{transform:translateY(-4px);box-shadow:0 24px 48px rgba(15,70,60,.14);border-color:#11b990}
+.module-access-card small{font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:#078d73}
+.module-access-card strong{font-size:clamp(1.35rem,2.2vw,2rem);line-height:1.12}
+.module-access-card p{margin:0;color:#55736d;line-height:1.6}
+.module-access-card b{margin-top:auto;color:#078d73}
+.module-access-icon{font-size:2.2rem}
+
+/* Los módulos ya no se repiten dentro de index.html. */
+.index-page.app-ready #dashboard-ambiental,
+.index-page.app-ready #planPanel,
+.index-page.app-ready #aula-climatica{display:none!important}
+
+.module-page-header{max-width:1500px;margin:22px auto 10px;padding:28px 34px;border-radius:28px;background:linear-gradient(135deg,#07382f,#0b9b7b);color:#fff;box-shadow:0 20px 55px rgba(5,68,57,.18);display:grid;grid-template-columns:auto 1fr auto;gap:26px;align-items:center}
+.module-page-header h1{margin:5px 0 8px;font-size:clamp(2rem,4vw,4rem);line-height:1.02}
+.module-page-header p{margin:0;max-width:900px;color:rgba(255,255,255,.84);font-size:1.05rem;line-height:1.55}
+.module-page-header .section-kicker{color:#b9ffe9}
+.module-back-button,.module-page-links a{display:inline-flex;align-items:center;justify-content:center;padding:12px 17px;border-radius:999px;border:1px solid rgba(255,255,255,.35);background:rgba(255,255,255,.12);color:#fff;text-decoration:none;font-weight:850;white-space:nowrap}
+.module-back-button:hover,.module-page-links a:hover,.module-page-links a[aria-current="page"]{background:#fff;color:#086b57}
+.module-page-links{display:flex;gap:9px;flex-wrap:wrap;justify-content:flex-end}
+
+.standalone-page .hero,
+.standalone-page .sticky-nav,
+.standalone-page .mobile-bottom-nav{display:none!important}
+.standalone-page main>section{display:none!important}
+.dashboard-page #filtros-sedes,
+.dashboard-page #dashboard-ambiental,
+.dashboard-page #planPanel{display:block!important}
+.aula-page #aula-climatica{display:block!important}
+.standalone-page main{padding-top:4px}
+.standalone-page #dashboard-ambiental,
+.standalone-page #aula-climatica{scroll-margin-top:20px}
+.standalone-page .brand-footer{margin-top:28px}
+.dashboard-page #planPanel{margin-top:26px}
+
+.module-empty-notice{padding:14px 18px;margin:0 0 18px;border-radius:16px;background:#fff7db;border:1px solid #f1d27a;color:#604b00;font-weight:700}
+
+@media(max-width:900px){
+  .module-access-grid{grid-template-columns:1fr}
+  .module-page-header{margin:10px;grid-template-columns:1fr;padding:22px}
+  .module-back-button{justify-self:start}
+  .module-page-links{justify-content:flex-start}
+}

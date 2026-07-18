@@ -1,4 +1,4 @@
-/* SiMeCO2 Servicios Públicos - v38 controles de secuencia y filtros corregidos */
+/* SiMeCO2 Servicios Públicos - v39 páginas independientes */
 let FACTOR_CO2_KG_KWH = 0.126; // kg CO2e/kWh. Ajustable desde el dashboard.
 let TREE_CO2_KG_YEAR = 22; // kg CO2e capturados por árbol al año. Ajustable desde el dashboard.
 const FACTOR_KEY = 'simeco2_factores_ambientales_v8';
@@ -19,8 +19,28 @@ window.addEventListener('load', () => {
   initFactors();
   bindEvents();
   renderAll();
-  activateDataGate();
-  log('Sistema listo. Actualiza la información del sistema o carga un PDF local para iniciar el análisis.');
+  const standalonePage = document.body.classList.contains('standalone-page');
+  if(standalonePage){
+    document.body.classList.remove('data-gate','data-gate-opening','intro-ranking','intro-impact');
+    document.body.classList.add('app-ready');
+    document.documentElement.classList.remove('data-gate-active');
+    const page = document.body.dataset.page;
+    const target = page === 'dashboard' ? $('dashboard-ambiental') : $('aula-climatica');
+    requestAnimationFrame(()=>target?.scrollIntoView({block:'start',behavior:'auto'}));
+    if(page === 'dashboard' && !state.records.length){
+      const panel = $('dashboard-ambiental');
+      if(panel){
+        const note=document.createElement('div');
+        note.className='module-empty-notice';
+        note.innerHTML='No hay datos cargados en este dispositivo. <a href="index.html#importacion">Volver al inicio para cargar las facturas</a>.';
+        panel.insertBefore(note,panel.firstChild);
+      }
+    }
+    log('Módulo independiente listo.');
+  } else {
+    activateDataGate();
+    log('Sistema listo. Actualiza la información del sistema o carga un PDF local para iniciar el análisis.');
+  }
 });
 
 const INTRO_STAGE_DURATION = 4200;
