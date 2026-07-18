@@ -1,460 +1,215 @@
-<!doctype html>
+<!DOCTYPE html>
+
 <html lang="es">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>SiMeCO₂ · Plataforma de Huella de Carbono Educativa</title>
-  <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
-  <link rel="dns-prefetch" href="//cdnjs.cloudflare.com">
-  <meta name="description" content="Sistema interactivo para medir, interpretar y gestionar la huella de carbono educativa a partir del consumo de servicios públicos." />
-  <link rel="icon" type="image/png" href="assets/los-yoguis-logo.png" />
-  <link rel="apple-touch-icon" href="assets/los-yoguis-logo.png" />
-  <link rel="stylesheet" href="styles.min.css?v=40-optimizado" />
-</head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1" name="viewport"/>
+<title>SiMeCO₂ · Plataforma de Huella de Carbono Educativa</title>
+<link crossorigin="" href="https://cdnjs.cloudflare.com" rel="preconnect"/>
+<link href="//cdnjs.cloudflare.com" rel="dns-prefetch"/>
+<meta content="Sistema interactivo para medir, interpretar y gestionar la huella de carbono educativa a partir del consumo de servicios públicos." name="description"/>
+<link href="assets/los-yoguis-logo.png" rel="icon" type="image/png">
+<link href="assets/los-yoguis-logo.png" rel="apple-touch-icon">
+<link href="styles.min.css?v=40-optimizado" rel="stylesheet"/>
+</link></link></head>
 <body class="data-gate index-page" data-page="index">
-  <header class="hero hero-mjb hero-yoguis" id="inicio">
-    <nav class="hero-top-links" aria-label="Enlaces principales del ecosistema Los Yoguis">
-      <a class="hero-top-link hero-top-link-pluvio" href="https://losyoguis.github.io/Red-Escolar-de-Pluviometros-de-Medellin/" target="_blank" rel="noopener noreferrer">Red Escolar de Pluviómetros de Medellín</a>
-      <a class="hero-top-link hero-top-link-guardianes" href="https://losyoguis.github.io/guardianes-climaticos/#home" target="_blank" rel="noopener noreferrer">Guardianes Climáticos de Medellín</a>
-    </nav>
-
-    <div class="hero-showcase-card">
-      <div class="hero-logo-frame" aria-hidden="true">
-        <img src="assets/los-yoguis-logo.png" alt="" class="hero-yoguis-logo" />
-      </div>
-      <div class="hero-title-block hero-yoguis-content">
-        <p class="mjb-chip">Ciencia escolar · energía · clima · territorio</p>
-        <div class="mjb-title-card hero-main-title-card">
-          <h1>Sistema de medición de la huella de carbono educativa de Medellín</h1>
-          <h2>SiMeCO₂ · Los Yoguis · Guardianes Climáticos</h2>
+<header class="hero hero-mjb hero-yoguis" id="inicio">
+<nav aria-label="Enlaces principales del ecosistema Los Yoguis" class="hero-top-links">
+<a class="hero-top-link hero-top-link-pluvio" href="https://losyoguis.github.io/Red-Escolar-de-Pluviometros-de-Medellin/" rel="noopener noreferrer" target="_blank">Red Escolar de Pluviómetros de Medellín</a>
+<a class="hero-top-link hero-top-link-guardianes" href="https://losyoguis.github.io/guardianes-climaticos/#home" rel="noopener noreferrer" target="_blank">Guardianes Climáticos de Medellín</a>
+</nav>
+<div class="hero-showcase-card">
+<div aria-hidden="true" class="hero-logo-frame">
+<img alt="" class="hero-yoguis-logo" src="assets/los-yoguis-logo.png"/>
+</div>
+<div class="hero-title-block hero-yoguis-content">
+<p class="mjb-chip">Ciencia escolar · energía · clima · territorio</p>
+<div class="mjb-title-card hero-main-title-card">
+<h1>Sistema de medición de la huella de carbono educativa de Medellín</h1>
+<h2>SiMeCO₂ · Los Yoguis · Guardianes Climáticos</h2>
+</div>
+<p class="lead">Plataforma educativa e institucional para medir consumos, estimar emisiones de CO₂e, priorizar sedes y generar planes de gestión ambiental escolar.</p>
+<div class="hero-purpose-box">
+<strong>Propósito:</strong> convertir los datos de servicios públicos en decisiones pedagógicas, ambientales e institucionales para reducir la huella de carbono educativa de Medellín.
         </div>
-        <p class="lead">Plataforma educativa e institucional para medir consumos, estimar emisiones de CO₂e, priorizar sedes y generar planes de gestión ambiental escolar.</p>
-        <div class="hero-purpose-box">
-          <strong>Propósito:</strong> convertir los datos de servicios públicos en decisiones pedagógicas, ambientales e institucionales para reducir la huella de carbono educativa de Medellín.
-        </div>
-        <div class="hero-actions">
-          <a class="hero-cta" href="#resumen-ejecutivo">Ver resumen ejecutivo</a>
-          <a class="hero-cta ghost" href="dashboard.html">Dashboard ambiental por sede</a>
-          <a class="hero-cta ghost" href="filtros-territoriales.html">Búsqueda territorial</a>
-          <a class="hero-cta ghost" href="aula-climatica.html">Aula climática</a>
-        </div>
-      </div>
-    </div>
-  </header>
-
-  <nav class="sticky-nav" aria-label="Menú interno de SiMeCO₂">
-    <a href="#inicio">Inicio</a>
-    <a href="#resumen-ejecutivo">Resumen</a>
-    <a href="#comparar-periodos">Comparar</a>
-    <a href="#ranking-sedes">Ranking</a>
-    <a href="dashboard.html">Dashboard</a>
-    <a href="filtros-territoriales.html">Búsqueda</a>
-    <a href="#planPanel">Planes</a>
-    <a href="aula-climatica.html">Aula</a>
-  </nav>
-
-  <main>
-    <section class="panel intro-panel" id="resumen-ejecutivo">
-      <div class="section-head">
-        <div>
-          <span class="section-kicker">Resumen ejecutivo</span>
-          <h2>Lectura institucional de la huella de carbono educativa</h2>
-          <p id="executiveText" class="executive-text">Importa información para generar una lectura ejecutiva del consumo, las emisiones y las sedes prioritarias.</p>
-        </div>
-        <div class="method-card">
-          <strong>Metodología</strong>
-          <p>Las emisiones se estiman multiplicando los kWh consumidos por el factor de emisión seleccionado. Este cálculo corresponde al alcance 2: energía eléctrica adquirida.</p>
-        </div>
-      </div>
-      <div class="feature-grid">
-        <article><span>Medición</span><strong>Servicios públicos</strong><p>Consolida energía, agua, gas, alcantarillado y aseo para seguimiento institucional.</p></article>
-        <article><span>Huella</span><strong>CO₂ equivalente</strong><p>Transforma kWh en emisiones estimadas y árboles equivalentes para compensación pedagógica.</p></article>
-        <article><span>Gestión</span><strong>Planes por sede</strong><p>Genera acciones, metas, indicadores, cronograma y evidencias de seguimiento.</p></article>
-      </div>
-      <div class="executive-grid" id="executiveGrid">
-        <article><span>Estado</span><strong>Sin datos</strong><small>Actualiza el sistema para iniciar.</small></article>
-      </div>
-    </section>
-
-    <section class="cards kpi-cards" id="cards" aria-label="Indicadores generales">
-      <article class="hero-huella-card">
-        <span>Huella de Carbono Educativa de Medellín</span>
-        <strong id="kCo2">0 t CO₂e</strong>
-        <small>Alcance 2 estimado del consumo eléctrico institucional</small>
-      </article>
-      <article><span>Periodos</span><strong id="kPeriods">0</strong></article>
-      <article><span>Sedes</span><strong id="kSites">0</strong></article>
-      <article><span>Energía acumulada</span><strong id="kKwh">0 kWh</strong></article>
-      <article><span>Árboles requeridos</span><strong id="kTrees">0</strong></article>
-      <article><span>Agua</span><strong id="kWater">0 m³</strong></article>
-      <article><span>Aseo/Residuos</span><strong id="kWaste">0 t</strong></article>
-    </section>
-
-    <section class="panel grid-2 import-panel update-spotlight" id="importacion">
-      <div class="update-copy">
-        <span class="section-kicker">Actualizando los datos</span>
-        <h2>Carga las facturas de servicios públicos</h2>
-        <p class="update-lead">Actualiza la plataforma cargando las facturas de servicios públicos de todas las Instituciones Educativas de la ciudad de Medellín desde el año 2025.</p>
-        <div class="update-badges" aria-label="Alcance de actualización">
-          <span>Medellín</span>
-          <span>Instituciones Educativas</span>
-          <span>Desde 2025</span>
-        </div>
-        <div class="actions update-actions">
-          <button class="primary update-cta" id="scanDataBtn" aria-label="Actualizar datos del sistema ahora"><span class="cta-icon" aria-hidden="true">↻</span><span>Actualizar datos ahora</span><span class="cta-pulse-dot" aria-hidden="true"></span></button>
-          <label class="secondary file-label">
+<div class="hero-actions">
+<a class="hero-cta" href="#resumen-ejecutivo">Ver resumen ejecutivo</a>
+<a class="hero-cta ghost" href="dashboard.html">Dashboard ambiental por sede</a>
+<a class="hero-cta ghost" href="filtros-territoriales.html">Búsqueda territorial</a>
+<a class="hero-cta ghost" href="aula-climatica.html">Aula climática</a>
+</div>
+</div>
+</div>
+</header>
+<nav aria-label="Menú interno de SiMeCO₂" class="sticky-nav"><a href="#inicio">Inicio</a><a href="#resumen-ejecutivo">Resumen</a><a href="#comparar-periodos">Comparar</a><a href="dashboard.html">Dashboard</a><a href="filtros-territoriales.html">Búsqueda</a><a href="aula-climatica.html">Aula</a></nav>
+<main>
+<section class="panel intro-panel" id="resumen-ejecutivo">
+<div class="section-head">
+<div>
+<span class="section-kicker">Resumen ejecutivo</span>
+<h2>Lectura institucional de la huella de carbono educativa</h2>
+<p class="executive-text" id="executiveText">Importa información para generar una lectura ejecutiva del consumo, las emisiones y las sedes prioritarias.</p>
+</div>
+<div class="method-card">
+<strong>Metodología</strong>
+<p>Las emisiones se estiman multiplicando los kWh consumidos por el factor de emisión seleccionado. Este cálculo corresponde al alcance 2: energía eléctrica adquirida.</p>
+</div>
+</div>
+<div class="feature-grid">
+<article><span>Medición</span><strong>Servicios públicos</strong><p>Consolida energía, agua, gas, alcantarillado y aseo para seguimiento institucional.</p></article>
+<article><span>Huella</span><strong>CO₂ equivalente</strong><p>Transforma kWh en emisiones estimadas y árboles equivalentes para compensación pedagógica.</p></article>
+<article><span>Gestión</span><strong>Planes por sede</strong><p>Genera acciones, metas, indicadores, cronograma y evidencias de seguimiento.</p></article>
+</div>
+<div class="executive-grid" id="executiveGrid">
+<article><span>Estado</span><strong>Sin datos</strong><small>Actualiza el sistema para iniciar.</small></article>
+</div>
+</section>
+<section aria-label="Indicadores generales" class="cards kpi-cards" id="cards">
+<article class="hero-huella-card">
+<span>Huella de Carbono Educativa de Medellín</span>
+<strong id="kCo2">0 t CO₂e</strong>
+<small>Alcance 2 estimado del consumo eléctrico institucional</small>
+</article>
+<article><span>Periodos</span><strong id="kPeriods">0</strong></article>
+<article><span>Sedes</span><strong id="kSites">0</strong></article>
+<article><span>Energía acumulada</span><strong id="kKwh">0 kWh</strong></article>
+<article><span>Árboles requeridos</span><strong id="kTrees">0</strong></article>
+<article><span>Agua</span><strong id="kWater">0 m³</strong></article>
+<article><span>Aseo/Residuos</span><strong id="kWaste">0 t</strong></article>
+</section>
+<section class="panel grid-2 import-panel update-spotlight" id="importacion">
+<div class="update-copy">
+<span class="section-kicker">Actualizando los datos</span>
+<h2>Carga las facturas de servicios públicos</h2>
+<p class="update-lead">Actualiza la plataforma cargando las facturas de servicios públicos de todas las Instituciones Educativas de la ciudad de Medellín desde el año 2025.</p>
+<div aria-label="Alcance de actualización" class="update-badges">
+<span>Medellín</span>
+<span>Instituciones Educativas</span>
+<span>Desde 2025</span>
+</div>
+<div class="actions update-actions">
+<button aria-label="Actualizar datos del sistema ahora" class="primary update-cta" id="scanDataBtn"><span aria-hidden="true" class="cta-icon">↻</span><span>Actualizar datos ahora</span><span aria-hidden="true" class="cta-pulse-dot"></span></button>
+<label class="secondary file-label">
             Cargar factura PDF local
-            <input type="file" id="localPdfInput" accept="application/pdf" hidden />
-          </label>
-          <button class="secondary" id="clearBtn">Limpiar este dispositivo</button>
-        </div>
-      </div>
-      <div class="update-status-card">
-        <div class="update-icon" aria-hidden="true">⚡</div>
-        <h2>Seguimiento de actualización</h2>
-        <p class="muted">Aquí se registra el proceso de lectura, reconocimiento de sedes y consolidación ambiental de las facturas cargadas.</p>
-        <div id="loadingMessage" class="loading-data-message" role="status" aria-live="assertive" hidden>
-          <span class="loading-data-spinner" aria-hidden="true"></span>
-          <div><strong>Cargando datos, espera por favor...</strong><small>Estamos leyendo las facturas y preparando el informe de sedes educativas.</small></div>
-        </div>
-        <pre id="logBox" class="log" aria-live="polite"></pre>
-      </div>
-      <div class="intro-slide-controls" aria-label="Controles de presentación inicial">
-        <button type="button" class="intro-control intro-back" data-intro-action="back" aria-label="Diapositiva anterior">← <span>Atrás</span></button>
-        <button type="button" class="intro-control intro-pause" data-intro-action="pause" aria-label="Pausar presentación">⏸ <span>Pausa</span></button>
-        <button type="button" class="intro-control intro-next" data-intro-action="next" aria-label="Diapositiva siguiente"><span>Adelante</span> →</button>
-      </div>
-    </section>
-
-    <section class="panel insights-panel" id="impacto-proyecto">
-      <div class="section-head">
-        <div>
-          <span class="section-kicker">Impacto del proyecto</span>
-          <h2>Indicadores de avance y alertas inteligentes</h2>
-          <p class="muted">Esta sección traduce los datos en decisiones: sedes prioritarias, señales de aumento, buenas prácticas y oportunidades de intervención.</p>
-        </div>
-      </div>
-      <div class="impact-grid" id="impactGrid"></div>
-      <div id="smartAlerts" class="smart-alerts"></div>
-      <div class="intro-slide-controls" aria-label="Controles de presentación inicial">
-        <button type="button" class="intro-control intro-back" data-intro-action="back" aria-label="Diapositiva anterior">← <span>Atrás</span></button>
-        <button type="button" class="intro-control intro-pause" data-intro-action="pause" aria-label="Pausar presentación">⏸ <span>Pausa</span></button>
-        <button type="button" class="intro-control intro-next" data-intro-action="next" aria-label="Diapositiva siguiente"><span>Adelante</span> →</button>
-      </div>
-    </section>
-
-    <section class="panel" id="comparar-periodos">
-      <div class="section-head">
-        <div>
-          <span class="section-kicker">Análisis temporal</span>
-          <h2>Comparar periodos</h2>
-          <p class="muted">Compara el consumo y la huella ambiental por mes, trimestre, semestre o año. También puedes filtrar la comparación por una sede específica.</p>
-        </div>
-      </div>
-      <div class="compare-controls compare-controls-advanced">
-        <label>Tipo de comparación
+            <input accept="application/pdf" hidden="" id="localPdfInput" type="file"/>
+</label>
+<button class="secondary" id="clearBtn">Limpiar este dispositivo</button>
+</div>
+</div>
+<div class="update-status-card">
+<div aria-hidden="true" class="update-icon">⚡</div>
+<h2>Seguimiento de actualización</h2>
+<p class="muted">Aquí se registra el proceso de lectura, reconocimiento de sedes y consolidación ambiental de las facturas cargadas.</p>
+<div aria-live="assertive" class="loading-data-message" hidden="" id="loadingMessage" role="status">
+<span aria-hidden="true" class="loading-data-spinner"></span>
+<div><strong>Cargando datos, espera por favor...</strong><small>Estamos leyendo las facturas y preparando el informe de sedes educativas.</small></div>
+</div>
+<pre aria-live="polite" class="log" id="logBox"></pre>
+</div>
+<div aria-label="Controles de presentación inicial" class="intro-slide-controls">
+<button aria-label="Diapositiva anterior" class="intro-control intro-back" data-intro-action="back" type="button">← <span>Atrás</span></button>
+<button aria-label="Pausar presentación" class="intro-control intro-pause" data-intro-action="pause" type="button">⏸ <span>Pausa</span></button>
+<button aria-label="Diapositiva siguiente" class="intro-control intro-next" data-intro-action="next" type="button"><span>Adelante</span> →</button>
+</div>
+</section>
+<section class="panel insights-panel" id="impacto-proyecto">
+<div class="section-head">
+<div>
+<span class="section-kicker">Impacto del proyecto</span>
+<h2>Indicadores de avance y alertas inteligentes</h2>
+<p class="muted">Esta sección traduce los datos en decisiones: sedes prioritarias, señales de aumento, buenas prácticas y oportunidades de intervención.</p>
+</div>
+</div>
+<div class="impact-grid" id="impactGrid"></div>
+<div class="smart-alerts" id="smartAlerts"></div>
+<div aria-label="Controles de presentación inicial" class="intro-slide-controls">
+<button aria-label="Diapositiva anterior" class="intro-control intro-back" data-intro-action="back" type="button">← <span>Atrás</span></button>
+<button aria-label="Pausar presentación" class="intro-control intro-pause" data-intro-action="pause" type="button">⏸ <span>Pausa</span></button>
+<button aria-label="Diapositiva siguiente" class="intro-control intro-next" data-intro-action="next" type="button"><span>Adelante</span> →</button>
+</div>
+</section>
+<section class="panel" id="comparar-periodos">
+<div class="section-head">
+<div>
+<span class="section-kicker">Análisis temporal</span>
+<h2>Comparar periodos</h2>
+<p class="muted">Compara el consumo y la huella ambiental por mes, trimestre, semestre o año. También puedes filtrar la comparación por una sede específica.</p>
+</div>
+</div>
+<div class="compare-controls compare-controls-advanced">
+<label>Tipo de comparación
           <select id="compareMode">
-            <option value="month">Mes vs mes</option>
-            <option value="quarter">Trimestre vs trimestre</option>
-            <option value="semester">Semestre vs semestre</option>
-            <option value="year">Año vs año</option>
-          </select>
-        </label>
-        <label class="compare-site-field">Sede educativa
+<option value="month">Mes vs mes</option>
+<option value="quarter">Trimestre vs trimestre</option>
+<option value="semester">Semestre vs semestre</option>
+<option value="year">Año vs año</option>
+</select>
+</label>
+<label class="compare-site-field">Sede educativa
           <div class="site-autocomplete">
-            <input id="compareSiteSearch" type="search" list="compareSiteOptions" placeholder="Escribe el nombre de la I.E." autocomplete="off" aria-label="Buscar sede educativa por nombre">
-            <datalist id="compareSiteOptions"></datalist>
-            <input id="compareSite" type="hidden" value="">
-            <button id="clearCompareSite" class="site-autocomplete-clear" type="button" aria-label="Limpiar sede" title="Mostrar todas las sedes">×</button>
-          </div>
-          <small id="compareSiteHint" class="compare-site-hint">Todas las sedes</small>
-        </label>
-        <label>Periodo A <select id="compareA"></select></label>
-        <label>Periodo B <select id="compareB"></select></label>
-        <button id="compareBtn" class="primary">Comparar</button>
-      </div>
-      <div id="compareNarrative" class="interpretation-box">Selecciona dos periodos para generar una interpretación automática.</div>
-      <div id="compareResult" class="compare-result"></div>
-      <canvas id="chart" width="1100" height="420" aria-label="Gráfico comparativo"></canvas>
-    </section>
+<input aria-label="Buscar sede educativa por nombre" autocomplete="off" id="compareSiteSearch" list="compareSiteOptions" placeholder="Escribe el nombre de la I.E." type="search"/>
+<datalist id="compareSiteOptions"></datalist>
+<input id="compareSite" type="hidden" value=""/>
+<button aria-label="Limpiar sede" class="site-autocomplete-clear" id="clearCompareSite" title="Mostrar todas las sedes" type="button">×</button>
+</div>
+<small class="compare-site-hint" id="compareSiteHint">Todas las sedes</small>
+</label>
+<label>Periodo A <select id="compareA"></select></label>
+<label>Periodo B <select id="compareB"></select></label>
+<button class="primary" id="compareBtn">Comparar</button>
+</div>
+<div class="interpretation-box" id="compareNarrative">Selecciona dos periodos para generar una interpretación automática.</div>
+<div class="compare-result" id="compareResult"></div>
+<canvas aria-label="Gráfico comparativo" height="420" id="chart" width="1100"></canvas>
+</section>
+<section class="panel module-access-panel" id="modulos-principales">
+<div class="section-head">
+<div>
+<span class="section-kicker">Módulos independientes</span>
+<h2>Explora los módulos ambientales de SiMeCO₂</h2>
+<p class="muted">Los tres módulos se abren en páginas independientes y conservan los datos cargados en este dispositivo.</p>
+</div>
+</div>
+<div class="module-access-grid">
+<a class="module-access-card" href="dashboard.html">
+<span aria-hidden="true" class="module-access-icon">📊</span>
+<small>Gestión por sede</small>
+<strong>Dashboard ambiental por sede</strong>
+<p>Consulta consumos, emisiones, prioridades y genera planes de gestión por institución educativa.</p>
+<b>Entrar al dashboard →</b>
+</a>
+<a class="module-access-card" href="filtros-territoriales.html">
+<span aria-hidden="true" class="module-access-icon">🔎</span>
+<small>Búsqueda territorial</small>
+<strong>Filtros territoriales de sedes educativas</strong>
+<p>Localiza y relaciona sedes por zona, comuna o corregimiento, barrio, núcleo educativo, tipo y periodo.</p>
+<b>Entrar a la búsqueda →</b>
+</a>
+<a class="module-access-card" href="aula-climatica.html">
+<span aria-hidden="true" class="module-access-icon">🌎</span>
+<small>Aula climática</small>
+<strong>Guardianes Climáticos: aprender, medir y actuar</strong>
+<p>Comprende la huella de carbono y desarrolla misiones ambientales con estudiantes y docentes.</p>
+<b>Entrar al aula →</b>
+</a>
+</div>
+</section>
 
-    <section class="panel module-access-panel" id="modulos-principales">
-      <div class="section-head">
-        <div>
-          <span class="section-kicker">Módulos independientes</span>
-          <h2>Explora los módulos ambientales de SiMeCO₂</h2>
-          <p class="muted">Los tres módulos se abren en páginas independientes y conservan los datos cargados en este dispositivo.</p>
-        </div>
-      </div>
-      <div class="module-access-grid">
-        <a class="module-access-card" href="dashboard.html">
-          <span class="module-access-icon" aria-hidden="true">📊</span>
-          <small>Gestión por sede</small>
-          <strong>Dashboard ambiental por sede</strong>
-          <p>Consulta consumos, emisiones, prioridades y genera planes de gestión por institución educativa.</p>
-          <b>Entrar al dashboard →</b>
-        </a>
-        <a class="module-access-card" href="filtros-territoriales.html">
-          <span class="module-access-icon" aria-hidden="true">🔎</span>
-          <small>Búsqueda territorial</small>
-          <strong>Filtros territoriales de sedes educativas</strong>
-          <p>Localiza y relaciona sedes por zona, comuna o corregimiento, barrio, núcleo educativo, tipo y periodo.</p>
-          <b>Entrar a la búsqueda →</b>
-        </a>
-        <a class="module-access-card" href="aula-climatica.html">
-          <span class="module-access-icon" aria-hidden="true">🌎</span>
-          <small>Aula climática</small>
-          <strong>Guardianes Climáticos: aprender, medir y actuar</strong>
-          <p>Comprende la huella de carbono y desarrolla misiones ambientales con estudiantes y docentes.</p>
-          <b>Entrar al aula →</b>
-        </a>
-      </div>
-    </section>
 
-    <section class="panel advanced-site-filters territorial-filter-panel" id="filtros-sedes">
-      <div class="section-head">
-        <div>
-          <span class="section-kicker">Búsqueda territorial</span>
-          <h2>Filtros territoriales de sedes educativas</h2>
-          <p class="muted">Sistema de búsqueda inspirado en la Red Escolar de Pluviómetros. Los filtros son dependientes: cada selección reduce las opciones disponibles y actualiza el ranking, el dashboard, las comparaciones, las gráficas y los registros.</p>
-        </div>
-        <button id="toggleClassificationBtn" class="secondary" type="button">Revisar clasificación</button>
-      </div>
 
-      <div class="territorial-filter-help">
-        <strong>Busca una sede por cualquier dato territorial</strong>
-        <span>Nombre, dirección, zona, comuna, corregimiento, barrio, vereda, núcleo educativo o tipo de sede.</span>
-      </div>
 
-      <div class="site-filter-grid territorial-filter-grid">
-        <label class="filter-search-wide">Buscar dentro de los filtros
-          <input id="globalSiteSearch" type="search" list="siteSearchSuggestions" placeholder="Escribe sede, núcleo, comuna, barrio o vereda" autocomplete="off" />
-          <datalist id="siteSearchSuggestions"></datalist>
-        </label>
-        <label>Zona territorial
-          <select id="zoneFilter"><option value="">Todas</option></select>
-        </label>
-        <label>Tipo de territorio
-          <select id="territoryTypeFilter"><option value="">Todos</option></select>
-        </label>
-        <label>Comuna o corregimiento
-          <select id="communeFilter"><option value="">Todos</option></select>
-        </label>
-        <label>Barrio o vereda probable
-          <select id="neighborhoodFilter"><option value="">Todos</option></select>
-        </label>
-        <label>Núcleo educativo
-          <select id="nucleusFilter"><option value="">Todos</option></select>
-        </label>
-        <label>Tipo de sede
-          <select id="siteTypeFilter"><option value="">Todos</option></select>
-        </label>
-        <label>Sede educativa
-          <select id="specificSiteFilter"><option value="">Todas</option></select>
-        </label>
-        <label>Periodo
-          <select id="globalPeriodFilter"><option value="">Todos</option></select>
-        </label>
-        <label>Servicio disponible
-          <select id="globalServiceFilter">
-            <option value="">Todos</option><option value="energia">Energía</option><option value="agua">Agua</option>
-            <option value="alcantarillado">Alcantarillado</option><option value="gas">Gas</option><option value="aseo">Aseo</option>
-          </select>
-        </label>
-        <label>Prioridad energética
-          <select id="priorityFilter">
-            <option value="">Todas</option><option value="high">Alta prioridad</option><option value="medium">Prioridad media</option><option value="low">Prioridad preventiva</option>
-          </select>
-        </label>
-      </div>
-      <div class="filter-actions">
-        <div>
-          <div id="filterStatus" class="filter-status">Filtros listos · mostrando todas las sedes.</div>
-          <div id="filterSummary" class="filter-summary">Mostrando todas las sedes cargadas.</div>
-        </div>
-        <button id="clearSiteFiltersBtn" class="secondary" type="button">Limpiar todos los filtros</button>
-      </div>
-      <div id="classificationPanel" class="classification-panel" hidden>
-        <div class="classification-help">
-          <strong>Clasificación territorial de sedes</strong>
-          <p>El sistema intenta relacionar automáticamente las sedes de las facturas con el directorio territorial de 422 sedes usado por la Red Escolar de Pluviómetros. Puedes revisar o corregir cualquier dato; los cambios quedan guardados en este dispositivo.</p>
-        </div>
-        <div class="table-wrap">
-          <table class="classification-table">
-            <thead><tr><th>Sede</th><th>Dirección</th><th>Zona</th><th>Tipo territorio</th><th>Comuna/corregimiento</th><th>Barrio/vereda</th><th>Núcleo</th><th>Tipo de sede</th><th>Origen</th></tr></thead>
-            <tbody id="classificationBody"></tbody>
-          </table>
-        </div>
-      </div>
-    </section>
 
-    <section class="panel ranking-panel" id="ranking-sedes">
-      <div class="section-head">
-        <div>
-          <span class="section-kicker">Priorización</span>
-          <h2>Ranking de sedes por consumo eléctrico total</h2>
-          <p class="muted">Visualización principal con kWh acumulados, toneladas de CO₂e y árboles requeridos por sede.</p>
-        </div>
-      </div>
-      <div class="priority-legend" aria-label="Leyenda de prioridad">
-        <span class="priority-chip high">Alta prioridad</span>
-        <span class="priority-chip medium">Prioridad media</span>
-        <span class="priority-chip low">Prioridad preventiva</span>
-      </div>
-      <div class="ranking-territorial-summary" id="rankingTerritorialSummary" aria-live="polite">
-        <div class="ranking-summary-title">Contexto territorial del informe</div>
-        <div class="ranking-summary-chips">
-          <span class="ranking-summary-chip"><strong>Zona:</strong> Todas</span>
-          <span class="ranking-summary-chip"><strong>Comuna o corregimiento:</strong> Todos</span>
-          <span class="ranking-summary-chip"><strong>Núcleo educativo:</strong> Todos</span>
-        </div>
-      </div>
-      <div class="chart-card environmental-ranking-chart">
-        <canvas id="siteChart" width="1100" height="650" aria-label="Ranking de sedes por consumo eléctrico y árboles requeridos"></canvas>
-      </div>
-      <div class="intro-slide-controls" aria-label="Controles de presentación inicial">
-        <button type="button" class="intro-control intro-back" data-intro-action="back" aria-label="Diapositiva anterior">← <span>Atrás</span></button>
-        <button type="button" class="intro-control intro-pause" data-intro-action="pause" aria-label="Pausar presentación">⏸ <span>Pausa</span></button>
-        <button type="button" class="intro-control intro-next" data-intro-action="next" aria-label="Diapositiva siguiente"><span>Adelante</span> →</button>
-      </div>
-    </section>
 
-    <section class="panel dashboard-panel" id="dashboard-ambiental">
-      <div class="section-head">
-        <div>
-          <span class="section-kicker">Gestión por sede</span>
-          <h2>Dashboard ambiental por sede</h2>
-          <p class="muted">Consumo total de energía eléctrica, toneladas de CO₂ equivalente, árboles requeridos y prioridad de intervención.</p>
-        </div>
-        <div class="factor-box">
-          <label>Factor CO₂ kg/kWh
-            <input id="factorCo2Input" type="number" step="0.001" min="0" value="0.126" />
-          </label>
-          <label>kg CO₂ capturados por árbol/año
-            <input id="treeFactorInput" type="number" step="0.1" min="0.1" value="22" />
-          </label>
-          <button id="updateFactorsBtn" class="secondary">Actualizar cálculos</button>
-        </div>
-      </div>
-      <div class="dashboard-grid">
-        <article class="big-total"><span>Total energía eléctrica</span><strong id="dashTotalKwh">0 kWh</strong></article>
-        <article class="big-total"><span>Total CO₂ equivalente</span><strong id="dashTotalCo2">0 t CO₂e</strong></article>
-        <article class="big-total"><span>Árboles necesarios</span><strong id="dashTotalTrees">0 árboles</strong></article>
-      </div>
-      <div class="table-wrap dashboard-table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Sede</th>
-              <th>Dirección</th>
-              <th>Periodos</th>
-              <th>Energía total kWh</th>
-              <th>CO₂e t</th>
-              <th>Árboles requeridos</th>
-              <th>Promedio kWh/mes</th>
-              <th>Prioridad</th>
-              <th>Plan de gestión</th>
-            </tr>
-          </thead>
-          <tbody id="environmentBody"></tbody>
-        </table>
-      </div>
-    </section>
-
-    <section class="panel plan-panel" id="planPanel">
-      <div class="section-head">
-        <div>
-          <span class="section-kicker">Informe institucional</span>
-          <h2>Planes de Gestión por sede</h2>
-          <p class="muted">Selecciona una sede desde el dashboard ambiental. El sistema generará un informe personalizado para reducir consumo eléctrico y emisiones de GEI en alcance 2.</p>
-        </div>
-        <div class="plan-actions">
-          <button id="printPlanBtn" class="secondary" disabled>Generar informe institucional</button>
-          <button id="downloadPlanBtn" class="secondary" disabled>Descargar HTML</button>
-        </div>
-      </div>
-      <div id="planReport" class="plan-empty">Aún no se ha seleccionado una sede. Usa el botón <strong>Plan de Gestión</strong> en la tabla del Dashboard ambiental por sede.</div>
-    </section>
-
-    <section class="panel aula-panel" id="aula-climatica">
-      <div class="section-head">
-        <div>
-          <span class="section-kicker">Aula climática</span>
-          <h2>Guardianes Climáticos: aprender, medir y actuar</h2>
-          <p class="muted">Módulo pedagógico para que estudiantes y docentes comprendan la huella de carbono y conviertan los datos en misiones ambientales.</p>
-        </div>
-      </div>
-      <div class="learning-grid">
-        <article><strong>¿Qué es la huella de carbono?</strong><p>Es la estimación de gases de efecto invernadero asociados a una actividad. En esta plataforma se mide principalmente el impacto del consumo eléctrico institucional.</p></article>
-        <article><strong>¿Qué significa CO₂e?</strong><p>CO₂ equivalente permite expresar diferentes gases de efecto invernadero en una unidad común para facilitar la comparación y la toma de decisiones.</p></article>
-        <article><strong>¿Qué es alcance 2?</strong><p>Corresponde a las emisiones indirectas generadas por la energía eléctrica comprada y consumida por la institución educativa.</p></article>
-      </div>
-      <div class="mission-grid">
-        <article><span>Misión 1</span><strong>Detectar puntos de consumo</strong><p>Identifica aulas, oficinas o equipos donde se usa más energía y registra evidencias fotográficas.</p></article>
-        <article><span>Misión 2</span><strong>Proponer acciones</strong><p>Diseña tres acciones concretas con responsable, fecha e indicador de seguimiento.</p></article>
-        <article><span>Misión 3</span><strong>Socializar resultados</strong><p>Presenta el ranking, las emisiones y el plan de gestión a la comunidad educativa.</p></article>
-      </div>
-    </section>
-
-    <section class="panel data-panel" id="registros">
-      <div class="toolbar">
-        <div>
-          <label>Buscar sede</label>
-          <input id="siteSearch" list="siteList" placeholder="Ej. Manuel J. Betancur" />
-          <datalist id="siteList"></datalist>
-        </div>
-        <div>
-          <label>Periodo</label>
-          <select id="periodFilter"><option value="">Todos</option></select>
-        </div>
-        <div>
-          <label>Servicio</label>
-          <select id="serviceFilter">
-            <option value="">Todos</option>
-            <option value="energia">Energía</option>
-            <option value="agua">Agua</option>
-            <option value="alcantarillado">Alcantarillado</option>
-            <option value="gas">Gas</option>
-            <option value="aseo">Aseo</option>
-          </select>
-        </div>
-        <div class="toolbar-buttons">
-          <button id="exportCsvBtn" class="secondary">Exportar CSV</button>
-          <button id="exportJsonBtn" class="secondary">Exportar JSON</button>
-          <button onclick="window.print()" class="secondary">PDF/Imprimir</button>
-        </div>
-      </div>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Periodo</th><th>Sede</th><th>Dirección</th><th>Comuna</th><th>Núcleo</th><th>Agua m³</th><th>Alc. m³</th><th>Energía kWh</th><th>Gas m³</th><th>Aseo $</th><th>Residuos t</th><th>CO₂ kg</th><th>Fuente</th>
-            </tr>
-          </thead>
-          <tbody id="recordsBody"></tbody>
-        </table>
-      </div>
-    </section>
-  </main>
-
-  <nav class="mobile-bottom-nav" aria-label="Navegación móvil">
-    <a href="#inicio">Inicio</a>
-    <a href="#resumen-ejecutivo">Resumen</a>
-    <a href="dashboard.html">Sedes</a>
-    <a href="#planPanel">Plan</a>
-    <a href="aula-climatica.html">Aula</a>
-  </nav>
-
-  <footer class="brand-footer" aria-label="Pie de página Los Yoguis">
-    <div class="brand-footer-inner">
-      <img src="assets/los-yoguis-footer.png" alt="Los Yoguis, 15 años aportando a la transformación educativa, cultural y ambiental" class="brand-footer-image" />
-      <a class="brand-footer-link" href="https://www.losyoguis.com" target="_blank" rel="noopener noreferrer">www.losyoguis.com</a>
-    </div>
-  </footer>
-
-  <script defer src="data/instituciones.js"></script>
-  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-  <script defer src="app.min.js?v=40-optimizado"></script>
+</main>
+<nav aria-label="Navegación móvil" class="mobile-bottom-nav"><a href="#inicio">Inicio</a><a href="#resumen-ejecutivo">Resumen</a><a href="dashboard.html">Dashboard</a><a href="filtros-territoriales.html">Búsqueda</a><a href="aula-climatica.html">Aula</a></nav>
+<footer aria-label="Pie de página Los Yoguis" class="brand-footer">
+<div class="brand-footer-inner">
+<img alt="Los Yoguis, 15 años aportando a la transformación educativa, cultural y ambiental" class="brand-footer-image" src="assets/los-yoguis-footer.png"/>
+<a class="brand-footer-link" href="https://www.losyoguis.com" rel="noopener noreferrer" target="_blank">www.losyoguis.com</a>
+</div>
+</footer>
+<script defer="" src="data/instituciones.js"></script>
+<script defer="" src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script defer="" src="app.min.js?v=40-optimizado"></script>
 </body>
 </html>
