@@ -124,3 +124,7 @@ Todos incluyen un botón “Volver al inicio” que dirige a `index.html#inicio`
 - La búsqueda territorial usa exclusivamente registros extraídos de las facturas de energía.
 - Se incluye `data/registros.js` para carga inmediata incluso al abrir el proyecto localmente.
 - Se añadió una tabla visible de resultados y totales energéticos.
+
+
+## Versión simplificada
+La portada contiene un único módulo: **Plan de Gestión Ambiental por Sede**. Se eliminaron las páginas independientes de búsqueda territorial, búsqueda institucional y aula climática para reducir peso, enlaces y código innecesario. La fuente principal de datos continúa siendo `data/registros.js`/`data/registros.json`, generada a partir de las facturas PDF incluidas.

@@ -1366,3 +1366,12 @@ main > section, .page-section, .platform-section {
 .institutional-page .institution-report:not([hidden]) {
   display: grid !important;
 }
+
+/* Versión simplificada: un único módulo principal */
+.single-module-grid{grid-template-columns:minmax(0,760px)!important;justify-content:center}
+.primary-module-card{min-height:360px;padding:clamp(28px,4vw,48px)}
+.primary-module-card .module-access-icon{font-size:3.25rem}
+.primary-module-card strong{font-size:clamp(1.8rem,3vw,2.8rem)}
+.primary-module-card p{font-size:1.08rem}
+.single-module-panel .section-head{justify-content:center;text-align:center}
+@media(max-width:720px){.primary-module-card{min-height:auto;padding:26px}.single-module-panel .section-head{text-align:left}}

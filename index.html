@@ -10,7 +10,7 @@
 <meta content="Sistema interactivo para medir, interpretar y gestionar la huella de carbono educativa a partir del consumo de servicios públicos." name="description"/>
 <link href="assets/los-yoguis-logo.png" rel="icon" type="image/png">
 <link href="assets/los-yoguis-logo.png" rel="apple-touch-icon">
-<link href="styles.css?v=52-datos-render-estable" rel="stylesheet"/>
+<link href="styles.css?v=70-plan-gestion" rel="stylesheet"/>
 </link></link></head>
 <body class="data-gate index-page" data-page="index">
 <header class="hero hero-mjb hero-yoguis" id="inicio">
@@ -34,14 +34,12 @@
         </div>
 <div class="hero-actions">
 <a class="hero-cta" href="#resumen-ejecutivo">Ver resumen ejecutivo</a>
-<a class="hero-cta ghost" href="dashboard.html">Dashboard ambiental por sede</a>
-<a class="hero-cta ghost" href="filtros-territoriales.html">Búsqueda territorial</a>
-<a class="hero-cta ghost" href="aula-climatica.html">Aula climática</a>
+<a class="hero-cta ghost" href="dashboard.html">Plan de Gestión Ambiental por Sede</a>
 </div>
 </div>
 </div>
 </header>
-<nav aria-label="Menú interno de SiMeCO₂" class="sticky-nav"><a href="#inicio">Inicio</a><a href="#resumen-ejecutivo">Resumen</a><a href="#comparar-periodos">Comparar</a><a href="dashboard.html">Dashboard</a><a href="filtros-territoriales.html">Búsqueda</a><a href="aula-climatica.html">Aula</a></nav>
+<nav aria-label="Menú interno de SiMeCO₂" class="sticky-nav"><a href="#inicio">Inicio</a><a href="#resumen-ejecutivo">Resumen</a><a href="#comparar-periodos">Comparar</a><a href="dashboard.html">Plan de gestión</a></nav>
 <main>
 <section class="panel intro-panel" id="resumen-ejecutivo">
 <div class="section-head">
@@ -192,38 +190,22 @@
 <div class="compare-result" id="compareResult"></div>
 <canvas aria-label="Gráfico comparativo" height="420" id="chart" width="1100"></canvas>
 </section>
-<section class="panel module-access-panel" id="modulos-principales">
+<section class="panel module-access-panel single-module-panel" id="modulos-principales">
 <div class="section-head">
 <div>
-<span class="section-kicker">Módulos independientes</span>
-<h2>Explora los módulos ambientales de SiMeCO₂</h2>
-<p class="muted">Elige el módulo según la tarea que deseas realizar. Todos usan la misma base de datos cargada y se abren en páginas independientes.</p>
+<span class="section-kicker">Módulo principal</span>
+<h2>Plan de Gestión Ambiental por Sede</h2>
+<p class="muted">Consulta los consumos registrados en las facturas de servicios públicos, identifica prioridades y construye acciones ambientales para cada institución educativa.</p>
 </div>
 </div>
-<div class="module-access-grid">
-<a class="module-access-card" href="dashboard.html">
+<div class="module-access-grid single-module-grid">
+<a class="module-access-card primary-module-card" href="dashboard.html">
 <span aria-hidden="true" class="module-access-icon">📊</span>
-<small>Gestión por sede</small>
-<strong>Dashboard ambiental por sede</strong>
-<p><strong>¿Para qué sirve?</strong> Analiza cada sede de manera individual, consulta consumo eléctrico, emisiones de CO₂e y nivel de prioridad, y genera un plan de gestión ambiental.</p>
-<span class="module-card-features">Indicadores por sede · Tabla comparativa · Planes de acción</span>
-<b>Abrir gestión por sede →</b>
-</a>
-<a class="module-access-card" href="filtros-territoriales.html">
-<span aria-hidden="true" class="module-access-icon">🔎</span>
-<small>Búsqueda territorial</small>
-<strong>Filtros territoriales de sedes educativas</strong>
-<p><strong>¿Para qué sirve?</strong> Encuentra sedes educativas y compara resultados mediante filtros por zona, comuna o corregimiento, barrio o vereda, núcleo educativo, tipo de sede y periodo.</p>
-<span class="module-card-features">Filtros en cascada · Ranking territorial · Clasificación de sedes</span>
-<b>Abrir búsqueda territorial →</b>
-</a>
-<a class="module-access-card" href="aula-climatica.html">
-<span aria-hidden="true" class="module-access-icon">🌎</span>
-<small>Aula climática</small>
-<strong>Guardianes Climáticos: aprender, medir y actuar</strong>
-<p><strong>¿Para qué sirve?</strong> Explica la huella de carbono con lenguaje educativo y propone actividades para que estudiantes y docentes aprendan, midan consumos y actúen en su institución.</p>
-<span class="module-card-features">Aprendizaje climático · Retos escolares · Acciones ambientales</span>
-<b>Abrir aula climática →</b>
+<small>Gestión ambiental institucional</small>
+<strong>Plan de Gestión Ambiental por Sede</strong>
+<p><strong>¿Para qué sirve?</strong> Permite consultar el consumo de energía y otros servicios, calcular la huella de carbono, comparar periodos, priorizar sedes y generar un plan de acción ambiental individual.</p>
+<span class="module-card-features">Indicadores por sede · Comparación mensual · Priorización · Planes de acción</span>
+<b>Abrir Plan de Gestión Ambiental →</b>
 </a>
 </div>
 </section>
@@ -234,7 +216,7 @@
 
 
 </main>
-<nav aria-label="Navegación móvil" class="mobile-bottom-nav"><a href="#inicio">Inicio</a><a href="#resumen-ejecutivo">Resumen</a><a href="dashboard.html">Dashboard</a><a href="filtros-territoriales.html">Búsqueda</a><a href="aula-climatica.html">Aula</a></nav>
+<nav aria-label="Navegación móvil" class="mobile-bottom-nav"><a href="#inicio">Inicio</a><a href="#resumen-ejecutivo">Resumen</a><a href="dashboard.html">Plan de gestión</a></nav>
 <footer aria-label="Pie de página Los Yoguis" class="brand-footer">
 <div class="brand-footer-inner">
 <img alt="Los Yoguis, 15 años aportando a la transformación educativa, cultural y ambiental" class="brand-footer-image" src="assets/los-yoguis-footer.png"/>
@@ -244,6 +226,6 @@
 
 <script defer src="data/registros.js?v=1"></script>
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-<script defer="" src="app.js?v=60-facturas-energia"></script>
+<script defer="" src="app.js?v=70-plan-gestion"></script>
 </body>
 </html>

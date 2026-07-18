@@ -3,27 +3,23 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Dashboard ambiental por sede · SiMeCO₂</title>
+  <title>Plan de Gestión Ambiental por Sede · SiMeCO₂</title>
   <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
   <link rel="dns-prefetch" href="//cdnjs.cloudflare.com">
   <meta name="description" content="Sistema interactivo para medir, interpretar y gestionar la huella de carbono educativa a partir del consumo de servicios públicos." />
   <link rel="icon" type="image/png" href="assets/los-yoguis-logo.png" />
   <link rel="apple-touch-icon" href="assets/los-yoguis-logo.png" />
-  <link rel="stylesheet" href="styles.css?v=52-datos-render-estable" />
+  <link rel="stylesheet" href="styles.css?v=70-plan-gestion" />
 </head>
 <body class="standalone-page dashboard-page app-ready" data-page="dashboard">
   <header class="module-page-header" id="module-top">
     <a class="module-back-button" href="index.html#inicio" aria-label="Volver a la página principal">← Volver al inicio</a>
     <div>
       <span class="section-kicker">Gestión por sede</span>
-      <h1>Dashboard ambiental por sede</h1>
+      <h1>Plan de Gestión Ambiental por Sede</h1>
       <p>Consulta el consumo eléctrico, las emisiones estimadas, la prioridad de intervención y los planes de gestión de cada sede educativa.</p>
     </div>
-    <div class="module-page-links">
-      <a href="dashboard.html" aria-current="page">Dashboard</a>
-      <a href="filtros-territoriales.html">Búsqueda territorial</a>
-      <a href="aula-climatica.html">Aula climática</a>
-    </div>
+    <div class="module-page-links"><a href="index.html#inicio">Inicio</a><a href="dashboard.html" aria-current="page">Plan de gestión</a></div>
   </header>
 
   <header class="hero hero-mjb hero-yoguis" id="inicio">
@@ -48,23 +44,19 @@
         </div>
         <div class="hero-actions">
           <a class="hero-cta" href="#resumen-ejecutivo">Ver resumen ejecutivo</a>
-          <a class="hero-cta ghost" href="dashboard.html">Dashboard ambiental por sede</a>
-          <a class="hero-cta ghost" href="filtros-territoriales.html">Búsqueda territorial</a>
-          <a class="hero-cta ghost" href="aula-climatica.html">Aula climática</a>
-        </div>
+          <a class="hero-cta ghost" href="dashboard.html">Plan de Gestión Ambiental por Sede</a>
+          </div>
       </div>
     </div>
   </header>
 
-  <nav class="sticky-nav" aria-label="Menú interno de SiMeCO₂">
+  <nav class="sticky-nav" aria-label="Menú del Plan de Gestión Ambiental">
     <a href="#inicio">Inicio</a>
     <a href="#resumen-ejecutivo">Resumen</a>
     <a href="#comparar-periodos">Comparar</a>
     <a href="#ranking-sedes">Ranking</a>
-    <a href="dashboard.html">Dashboard</a>
-    <a href="filtros-territoriales.html">Búsqueda</a>
-    <a href="#planPanel">Planes</a>
-    <a href="aula-climatica.html">Aula</a>
+    <a href="#dashboard-ambiental">Sedes</a>
+    <a href="#planPanel">Plan de gestión</a>
   </nav>
 
   <main>
@@ -187,34 +179,7 @@
       <div id="compareResult" class="compare-result"></div>
       <canvas id="chart" width="1100" height="420" aria-label="Gráfico comparativo"></canvas>
     </section>
-
-    <section class="panel module-access-panel" id="modulos-principales">
-      <div class="section-head">
-        <div>
-          <span class="section-kicker">Módulos independientes</span>
-          <h2>Explora la gestión ambiental y el aula climática</h2>
-          <p class="muted">Los dos módulos se abren en páginas independientes y conservan los datos cargados en este dispositivo.</p>
-        </div>
-      </div>
-      <div class="module-access-grid">
-        <a class="module-access-card" href="dashboard.html">
-          <span class="module-access-icon" aria-hidden="true">📊</span>
-          <small>Gestión por sede</small>
-          <strong>Dashboard ambiental por sede</strong>
-          <p>Consulta consumos, emisiones, prioridades y genera planes de gestión por institución educativa.</p>
-          <b>Entrar al dashboard →</b>
-        </a>
-        <a class="module-access-card" href="aula-climatica.html">
-          <span class="module-access-icon" aria-hidden="true">🌎</span>
-          <small>Aula climática</small>
-          <strong>Guardianes Climáticos: aprender, medir y actuar</strong>
-          <p>Comprende la huella de carbono y desarrolla misiones ambientales con estudiantes y docentes.</p>
-          <b>Entrar al aula →</b>
-        </a>
-      </div>
-    </section>
-
-    <section class="panel ranking-panel" id="ranking-sedes">
+<section class="panel ranking-panel" id="ranking-sedes">
       <div class="section-head">
         <div>
           <span class="section-kicker">Priorización</span>
@@ -249,7 +214,7 @@
       <div class="section-head">
         <div>
           <span class="section-kicker">Gestión por sede</span>
-          <h2>Dashboard ambiental por sede</h2>
+          <h2>Plan de Gestión Ambiental por Sede</h2>
           <p class="muted">Consumo total de energía eléctrica, toneladas de CO₂ equivalente, árboles requeridos y prioridad de intervención.</p>
         </div>
         <div class="factor-box">
@@ -398,7 +363,7 @@
           <button id="downloadPlanBtn" class="secondary" disabled>Descargar HTML</button>
         </div>
       </div>
-      <div id="planReport" class="plan-empty">Aún no se ha seleccionado una sede. Usa el botón <strong>Plan de Gestión</strong> en la tabla del Dashboard ambiental por sede.</div>
+      <div id="planReport" class="plan-empty">Aún no se ha seleccionado una sede. Usa el botón <strong>Plan de Gestión</strong> en la tabla del Plan de Gestión Ambiental por Sede.</div>
     </section>
 
     <section class="panel data-panel" id="registros">
@@ -443,11 +408,10 @@
   </main>
 
   <nav class="mobile-bottom-nav" aria-label="Navegación móvil">
-    <a href="#inicio">Inicio</a>
+    <a href="index.html#inicio">Inicio</a>
     <a href="#resumen-ejecutivo">Resumen</a>
-    <a href="dashboard.html">Sedes</a>
+    <a href="#dashboard-ambiental">Sedes</a>
     <a href="#planPanel">Plan</a>
-    <a href="aula-climatica.html">Aula</a>
   </nav>
 
   <footer class="brand-footer" aria-label="Pie de página Los Yoguis">
@@ -460,6 +424,6 @@
   
   <script defer src="data/registros.js?v=1"></script>
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-  <script defer src="app.js?v=60-facturas-energia"></script>
+  <script defer src="app.js?v=70-plan-gestion"></script>
 </body>
 </html>
