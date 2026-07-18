@@ -1,4 +1,4 @@
-/* SiMeCO2 Servicios Públicos - v39 páginas independientes */
+/* SiMeCO2 Servicios Públicos - v42 renderizado modular estable */
 let FACTOR_CO2_KG_KWH = 0.126; // kg CO2e/kWh. Ajustable desde el dashboard.
 let TREE_CO2_KG_YEAR = 22; // kg CO2e capturados por árbol al año. Ajustable desde el dashboard.
 const FACTOR_KEY = 'simeco2_factores_ambientales_v8';
@@ -45,7 +45,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
       log(loaded ? `Módulo listo con ${state.records.length} registros.` : 'Módulo listo, sin registros disponibles.');
     } else if(state.records.length){
-      unlockDataView(`Datos cargados correctamente: ${state.records.length} registros disponibles. Mostrando los informes...`);
+      setLoadingState(false); unlockDataView(`Datos cargados correctamente: ${state.records.length} registros disponibles. Mostrando los informes...`);
     } else {
       log('No fue posible cargar el archivo de datos. Intentando leer las facturas PDF...');
       await scanDataFolder({automatic:true});
@@ -58,11 +58,30 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 });
 
+function hasUsableRecords(records){
+  return Array.isArray(records) && records.some(r=>r && r.period && r.site && [r.energyKwh,r.waterM3,r.alcM3,r.gasM3,r.wasteTon].some(v=>Number(v)>0));
+}
+function normalizeLoadedRecords(records){
+  return (Array.isArray(records)?records:[]).filter(r=>r && r.period && r.site).map((r,index)=>({
+    ...r,
+    key:r.key || `${r.period}|${siteKey(r.site,r.address)}|${index}`,
+    address:r.address || '',
+    energyKwh:Number(r.energyKwh)||0,
+    waterM3:Number(r.waterM3)||0,
+    alcM3:Number(r.alcM3)||0,
+    gasM3:Number(r.gasM3)||0,
+    wasteTon:Number(r.wasteTon)||0,
+    wasteValue:Number(r.wasteValue)||0,
+    co2kg:Number(r.co2kg)||round((Number(r.energyKwh)||0)*FACTOR_CO2_KG_KWH,2)
+  }));
+}
 async function ensureInitialData(){
-  if(Array.isArray(state.records) && state.records.length){
+  if(hasUsableRecords(state.records)){
+    state.records=normalizeLoadedRecords(state.records);
     log(`Recuperados ${state.records.length} registros guardados en este dispositivo.`);
     return true;
   }
+  state.records=[]; state.sites={};
   try{
     log('Cargando la base de datos ambiental consolidada...');
     const response = await fetch('data/registros.json', {cache:'force-cache'});
@@ -70,14 +89,14 @@ async function ensureInitialData(){
     const payload = await response.json();
     const records = Array.isArray(payload) ? payload : payload.records;
     if(!Array.isArray(records) || !records.length) throw new Error('El archivo registros.json está vacío.');
-    state.records = records;
+    state.records = normalizeLoadedRecords(records);
     state.files = state.files || {};
     state.sites = state.sites || {};
-    for(const r of records){
+    for(const r of state.records){
       if(r.site) state.sites[siteKey(r.site,r.address)] = {site:r.site,address:r.address};
       if(r.source) state.files['manifest:'+r.source] = {name:r.source,period:r.period,importedAt:'incluido en el proyecto',count:0};
     }
-    log(`Base consolidada cargada: ${records.length} registros de ${Object.keys(state.sites).length} sedes.`);
+    log(`Base consolidada cargada: ${state.records.length} registros de ${Object.keys(state.sites).length} sedes.`);
     return true;
   }catch(err){
     log(`No se pudo cargar data/registros.json: ${err.message}`);
@@ -329,7 +348,7 @@ function loadStore(){
   try{ return JSON.parse(localStorage.getItem(STORE_KEY)) || {records:[], files:{}, sites:{}}; }
   catch{ return {records:[], files:{}, sites:{}}; }
 }
-function saveStore(){ localStorage.setItem(STORE_KEY, JSON.stringify(state)); }
+function saveStore(){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(state)); }catch(error){ console.warn('[SiMeCO2] No fue posible guardar toda la base en localStorage:',error); } }
 function log(msg){
   const box=$('logBox'); if(!box) return;
   const t=new Date().toLocaleTimeString();
@@ -804,15 +823,34 @@ function filteredRecords(){
     return true;
   });
 }
-function renderAll(){ recalculateCo2(); renderControls(); renderAdvancedFilterControls(); renderCards(); renderExecutiveSummary(); renderProjectImpact(); renderDashboard(); renderTable(); drawChart(aggregateByPeriod(advancedFilteredRecords())); }
+function safeRender(name, fn){
+  try{ fn(); }
+  catch(error){ console.error(`[SiMeCO2] Error en ${name}:`, error); log(`Aviso: no se pudo actualizar ${name}.`); }
+}
+function renderAll(){
+  safeRender('cálculos de CO₂', recalculateCo2);
+  if($('periodFilter') || $('compareA')) safeRender('controles de periodos', renderControls);
+  if($('globalSiteSearch') || $('zoneFilter')) safeRender('filtros territoriales', renderAdvancedFilterControls);
+  if($('kPeriods')) safeRender('indicadores generales', renderCards);
+  if($('executiveSummary') || $('executiveCards')) safeRender('resumen ejecutivo', renderExecutiveSummary);
+  if($('impactGrid') || $('smartAlerts')) safeRender('indicadores de impacto', renderProjectImpact);
+  if($('siteChart') || $('environmentBody')) safeRender('dashboard y ranking', renderDashboard);
+  if($('recordsBody')) safeRender('tabla de registros', renderTable);
+  if($('mainChart')) safeRender('gráfica temporal', ()=>drawChart(aggregateByPeriod(advancedFilteredRecords())));
+  if($('compareA') && $('compareB')) safeRender('comparador de periodos', comparePeriods);
+}
 function renderControls(){
-  const periods = [...new Set(state.records.map(r=>r.period))].sort();
-  const options = '<option value="">Todos</option>'+periods.map(p=>`<option value="${p}">${p}</option>`).join('');
-  const current = $('periodFilter').value;
-  $('periodFilter').innerHTML = options; $('periodFilter').value = current;
-  const siteValues = Object.values(state.sites).sort((a,b)=>a.site.localeCompare(b.site));
-  $('siteList').innerHTML = siteValues.map(s=>`<option value="${escapeHtml(s.site)}${s.address?' · '+escapeHtml(s.address):''}"></option>`).join('');
-  renderCompareControls();
+  const periods = [...new Set(state.records.map(r=>r.period).filter(Boolean))].sort();
+  if($('periodFilter')){
+    const options = '<option value="">Todos</option>'+periods.map(p=>`<option value="${p}">${p}</option>`).join('');
+    const current = $('periodFilter').value;
+    $('periodFilter').innerHTML = options; $('periodFilter').value = periods.includes(current)?current:'';
+  }
+  if($('siteList')){
+    const siteValues = Object.values(state.sites||{}).sort((a,b)=>String(a.site).localeCompare(String(b.site),'es'));
+    $('siteList').innerHTML = siteValues.map(s=>`<option value="${escapeHtml(s.site)}${s.address?' · '+escapeHtml(s.address):''}"></option>`).join('');
+  }
+  if($('compareA') && $('compareB')) renderCompareControls();
 }
 function renderCards(){
   const recs = state.records;
