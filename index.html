@@ -7,7 +7,7 @@
   <meta name="description" content="Sistema interactivo para medir, interpretar y gestionar la huella de carbono educativa a partir del consumo de servicios públicos." />
   <link rel="icon" type="image/png" href="assets/los-yoguis-logo.png" />
   <link rel="apple-touch-icon" href="assets/los-yoguis-logo.png" />
-  <link rel="stylesheet" href="styles.css?v=33-pantalla-carga-inicial" />
+  <link rel="stylesheet" href="styles.css?v=35-carga-ranking-filtros" />
 </head>
 <body class="data-gate">
   <header class="hero hero-mjb hero-yoguis" id="inicio">
@@ -108,6 +108,10 @@
         <div class="update-icon" aria-hidden="true">⚡</div>
         <h2>Seguimiento de actualización</h2>
         <p class="muted">Aquí se registra el proceso de lectura, reconocimiento de sedes y consolidación ambiental de las facturas cargadas.</p>
+        <div id="loadingMessage" class="loading-data-message" role="status" aria-live="assertive" hidden>
+          <span class="loading-data-spinner" aria-hidden="true"></span>
+          <div><strong>Cargando datos, espera por favor...</strong><small>Estamos leyendo las facturas y preparando el informe de sedes educativas.</small></div>
+        </div>
         <pre id="logBox" class="log" aria-live="polite"></pre>
       </div>
     </section>
@@ -360,6 +364,6 @@
   </footer>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-  <script src="app.js?v=34-filtros-territoriales"></script>
+  <script src="app.js?v=35-carga-ranking-filtros"></script>
 </body>
 </html>

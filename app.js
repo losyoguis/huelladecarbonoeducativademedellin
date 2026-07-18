@@ -1,4 +1,4 @@
-/* SiMeCO2 Servicios Públicos - v33 pantalla inicial de carga */
+/* SiMeCO2 Servicios Públicos - v35 carga, ranking inicial y filtros territoriales */
 let FACTOR_CO2_KG_KWH = 0.126; // kg CO2e/kWh. Ajustable desde el dashboard.
 let TREE_CO2_KG_YEAR = 22; // kg CO2e capturados por árbol al año. Ajustable desde el dashboard.
 const FACTOR_KEY = 'simeco2_factores_ambientales_v8';
@@ -29,7 +29,7 @@ function activateDataGate(){
   requestAnimationFrame(() => $('importacion')?.scrollIntoView({block:'start'}));
 }
 
-function unlockDataView(message='Datos cargados correctamente. Abriendo la plataforma completa...'){
+function unlockDataView(message='Datos cargados correctamente. Abriendo primero el informe de ranking...'){
   if(!state.records.length){
     log('La plataforma permanecerá en la pantalla de carga porque todavía no hay registros válidos.');
     return false;
@@ -39,8 +39,11 @@ function unlockDataView(message='Datos cargados correctamente. Abriendo la plata
   setTimeout(() => {
     document.body.classList.remove('data-gate', 'data-gate-opening');
     document.documentElement.classList.remove('data-gate-active');
-    history.replaceState(null, '', location.pathname + location.search + '#resumen-ejecutivo');
-    window.scrollTo({top:0, behavior:'smooth'});
+    history.replaceState(null, '', location.pathname + location.search + '#ranking-sedes');
+    const ranking=$('ranking-sedes');
+    ranking?.classList.add('post-load-focus');
+    ranking?.scrollIntoView({block:'start', behavior:'smooth'});
+    setTimeout(()=>ranking?.classList.remove('post-load-focus'), 2400);
   }, 450);
   return true;
 }
@@ -48,13 +51,20 @@ function unlockDataView(message='Datos cargados correctamente. Abriendo la plata
 function setLoadingState(isLoading){
   const btn = $('scanDataBtn');
   const input = $('localPdfInput');
+  const loadingMessage = $('loadingMessage');
   if(btn){
     btn.disabled = isLoading;
     btn.classList.toggle('is-loading', isLoading);
     const label = btn.querySelector('span:nth-child(2)');
-    if(label) label.textContent = isLoading ? 'Procesando facturas...' : 'Actualizar datos ahora';
+    if(label) label.textContent = isLoading ? 'Cargando datos...' : 'Actualizar datos ahora';
   }
   if(input) input.disabled = isLoading;
+  if(loadingMessage){
+    loadingMessage.hidden = !isLoading;
+    loadingMessage.classList.toggle('is-visible', isLoading);
+  }
+  document.body.classList.toggle('is-processing-data', isLoading);
+  if(isLoading) log('Cargando datos, espera por favor....');
 }
 
 function initPdfJs(){
@@ -75,7 +85,7 @@ function bindEvents(){
   if($("updateFactorsBtn")) $("updateFactorsBtn").addEventListener("click", updateFactors);
   ["siteSearch","periodFilter","serviceFilter"].forEach(id=>$(id).addEventListener("input", ()=>{ renderTable(); renderDashboard(); }));
   ["globalSiteSearch","communeFilter","nucleusFilter","globalPeriodFilter","globalServiceFilter","priorityFilter"].forEach(id=>{
-    if($(id)) $(id).addEventListener("input", applyAdvancedSiteFilters);
+    if($(id)){ $(id).addEventListener('input', applyAdvancedSiteFilters); $(id).addEventListener('change', applyAdvancedSiteFilters); }
   });
   if($("clearSiteFiltersBtn")) $("clearSiteFiltersBtn").addEventListener("click", clearAdvancedSiteFilters);
   if($("toggleClassificationBtn")) $("toggleClassificationBtn").addEventListener("click", toggleClassificationPanel);
@@ -208,6 +218,7 @@ async function scanDataFolder(){
     }catch(err){ failed++; log(`Error importando ${file.name}: ${err.message}`); }
   }
   log(`Proceso terminado. Importados: ${imported}. Omitidos ya existentes: ${skipped}. Fallidos: ${failed}.`);
+  log('Datos cargados. Generando el ranking de sedes educativas...');
   saveStore(); renderAll();
   setLoadingState(false);
   unlockDataView();
@@ -223,6 +234,7 @@ async function handleLocalPdf(ev){
     addImport(result, fingerprint);
     saveStore(); renderAll();
     log(`PDF local importado: ${result.records.length} registros, periodo ${result.period}.`);
+    log('Datos cargados. Generando el ranking de sedes educativas...');
     unlockDataView();
   } else {
     log(`PDF abierto, pero no se estructuraron registros. Muestra: ${result.sample.slice(0,1000).replace(/\s+/g,' ')}`);
@@ -451,9 +463,9 @@ function advancedFilteredRecords(records=state.records){
   return records.filter(r=>{
     const meta=getSiteMeta(r);
     if(q && !(`${loose(r.site)} ${loose(r.address)} ${loose(meta.commune)} ${loose(meta.nucleus)}`.includes(q))) return false;
-    if(commune && meta.commune!==commune) return false;
-    if(nucleus && meta.nucleus!==nucleus) return false;
-    if(period && r.period!==period) return false;
+    if(commune && loose(meta.commune)!==loose(commune)) return false;
+    if(nucleus && loose(meta.nucleus)!==loose(nucleus)) return false;
+    if(period && String(r.period)!==String(period)) return false;
     if(!matchesService(r,service)) return false;
     if(priority && sitePriorityClass(r)!==priority) return false;
     return true;
@@ -473,18 +485,43 @@ function clearAdvancedSiteFilters(){
 }
 function renderAdvancedFilterControls(){
   if(!$('communeFilter')) return;
-  const keepCommune=$('communeFilter').value, keepNucleus=$('nucleusFilter').value, keepPeriod=$('globalPeriodFilter').value;
-  $('communeFilter').innerHTML='<option value="">Todas</option>'+COMMUNES.map(x=>`<option value="${escapeHtml(x)}">${escapeHtml(x)}</option>`).join('');
-  const nuclei=[...new Set(Object.values(siteMetadata).map(x=>x.nucleus||'Sin clasificar').concat(['Sin clasificar']))].sort((a,b)=>a.localeCompare(b,'es'));
-  $('nucleusFilter').innerHTML='<option value="">Todos</option>'+nuclei.map(x=>`<option value="${escapeHtml(x)}">${escapeHtml(x)}</option>`).join('');
+  const keepCommune=$('communeFilter').value;
+  const keepNucleus=$('nucleusFilter').value;
+  const keepPeriod=$('globalPeriodFilter').value;
+
+  // Solo se ofrecen clasificaciones que realmente existen en las sedes cargadas.
+  // Esto evita seleccionar una comuna o un núcleo sin registros asociados.
+  const siteRows=getSiteOptions();
+  const metaRows=siteRows.map(s=>getSiteMeta(siteKey(s.site,s.address)));
+  const communeCounts=new Map();
+  const nucleusCounts=new Map();
+  for(const meta of metaRows){
+    const commune=(meta.commune||'Sin clasificar').trim()||'Sin clasificar';
+    const nucleus=(meta.nucleus||'Sin clasificar').trim()||'Sin clasificar';
+    communeCounts.set(commune,(communeCounts.get(commune)||0)+1);
+    nucleusCounts.set(nucleus,(nucleusCounts.get(nucleus)||0)+1);
+  }
+  if(!communeCounts.size) communeCounts.set('Sin clasificar',0);
+  if(!nucleusCounts.size) nucleusCounts.set('Sin clasificar',0);
+  const communes=[...communeCounts.keys()].sort((a,b)=>a.localeCompare(b,'es'));
+  const nuclei=[...nucleusCounts.keys()].sort((a,b)=>a.localeCompare(b,'es'));
+
+  $('communeFilter').innerHTML='<option value="">Todas las comunas/corregimientos</option>'+communes.map(x=>`<option value="${escapeHtml(x)}">${escapeHtml(x)} (${fmt(communeCounts.get(x))} sedes)</option>`).join('');
+  $('nucleusFilter').innerHTML='<option value="">Todos los núcleos</option>'+nuclei.map(x=>`<option value="${escapeHtml(x)}">${escapeHtml(x)} (${fmt(nucleusCounts.get(x))} sedes)</option>`).join('');
   const periods=[...new Set(state.records.map(r=>r.period).filter(Boolean))].sort();
   $('globalPeriodFilter').innerHTML='<option value="">Todos</option>'+periods.map(x=>`<option value="${escapeHtml(x)}">${escapeHtml(x)}</option>`).join('');
-  if([...$('communeFilter').options].some(o=>o.value===keepCommune)) $('communeFilter').value=keepCommune;
-  if([...$('nucleusFilter').options].some(o=>o.value===keepNucleus)) $('nucleusFilter').value=keepNucleus;
-  if([...$('globalPeriodFilter').options].some(o=>o.value===keepPeriod)) $('globalPeriodFilter').value=keepPeriod;
+
+  const restoreNormalized=(select,value)=>{
+    if(!value) return;
+    const found=[...select.options].find(o=>loose(o.value)===loose(value));
+    if(found) select.value=found.value;
+  };
+  restoreNormalized($('communeFilter'),keepCommune);
+  restoreNormalized($('nucleusFilter'),keepNucleus);
+  restoreNormalized($('globalPeriodFilter'),keepPeriod);
   renderClassificationTable();
   renderFilterSummary();
-}
+} 
 function renderFilterSummary(){
   if(!$('filterSummary')) return;
   const recs=advancedFilteredRecords();
