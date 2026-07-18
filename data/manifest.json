@@ -1,4 +1,21 @@
 {
-  "description": "Opcional para pruebas locales. En GitHub Pages el sistema usa la API pública para listar todos los PDF dentro de /data. Si trabajas localmente, agrega aquí los nombres de los PDF.",
-  "files": []
+  "description": "Facturas disponibles para actualización automática de SiMeCO₂.",
+  "files": [
+    "1-2025Enero.pdf",
+    "1-2026Enero.pdf",
+    "11-2025Noviembre.pdf",
+    "12-2025Diciembre.pdf",
+    "2-2025Febrero.pdf",
+    "2-2026Febrero.pdf",
+    "3-2025Marzo.pdf",
+    "3-2026Marzo.pdf",
+    "4-2025Abril.pdf",
+    "4-2026Abril.pdf",
+    "5-2025Mayo.pdf",
+    "5-2026Mayo.pdf",
+    "6-2025Junio.pdf",
+    "6-2026Junio.pdf",
+    "7-2025julio.pdf",
+    "8-2025Agosto.pdf"
+  ]
 }
