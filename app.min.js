@@ -13,7 +13,7 @@ const $ = (id)=>document.getElementById(id);
 const state = loadStore();
 let chartData = [];
 
-window.addEventListener('load', () => {
+document.addEventListener('DOMContentLoaded', () => {
   initPdfJs();
   initConfig();
   initFactors();
@@ -39,7 +39,18 @@ window.addEventListener('load', () => {
     log('Módulo independiente listo.');
   } else {
     activateDataGate();
-    log('Sistema listo. Actualiza la información del sistema o carga un PDF local para iniciar el análisis.');
+    if(state.records.length){
+      setLoadingState(true);
+      log(`Cargando ${state.records.length} registros guardados en este dispositivo...`);
+      requestAnimationFrame(()=>requestAnimationFrame(()=>{
+        renderAll();
+        setLoadingState(false);
+        unlockDataView('Datos guardados recuperados correctamente. Mostrando los resultados sin volver a procesar las facturas...');
+      }));
+    } else {
+      log('No hay datos guardados. Iniciando la carga automática de las facturas...');
+      setTimeout(()=>scanDataFolder({automatic:true}), 180);
+    }
   }
 });
 
@@ -143,6 +154,15 @@ function setLoadingState(isLoading){
   }
   document.body.classList.toggle('is-processing-data', isLoading);
   if(isLoading) log('Cargando datos, espera por favor....');
+}
+
+function setLoadingProgress(current,total,fileName=''){
+  const btn=$('scanDataBtn');
+  const label=btn?.querySelector('span:nth-child(2)');
+  if(label && total) label.textContent=`Cargando ${current} de ${total}`;
+  const loadingMessage=$('loadingMessage');
+  const detail=loadingMessage?.querySelector('small');
+  if(detail) detail.textContent=fileName ? `Procesando ${fileName}. No cierres esta página.` : 'Estamos preparando la información ambiental.';
 }
 
 function initPdfJs(){
@@ -270,68 +290,92 @@ function loadStore(){
 }
 function saveStore(){ localStorage.setItem(STORE_KEY, JSON.stringify(state)); }
 function log(msg){
-  const t = new Date().toLocaleTimeString();
-  $('logBox').textContent += `[${t}] ${msg}\n`;
-  $('logBox').scrollTop = $('logBox').scrollHeight;
+  const box=$('logBox'); if(!box) return;
+  const t=new Date().toLocaleTimeString();
+  box.textContent += `[${t}] ${msg}\n`;
+  box.scrollTop=box.scrollHeight;
 }
 
-async function scanDataFolder(){
-  setLoadingState(true);
-  log('Buscando PDFs nuevos en carpeta /data...');
-  const cfg = getRepoConfig();
-  let files = [];
+async function getDataPdfFiles(){
+  // El manifiesto local es la fuente más rápida y estable en GitHub Pages.
+  try{
+    const res=await fetch('data/manifest.json', {cache:'default'});
+    if(res.ok){
+      const manifest=await res.json();
+      const arr=Array.isArray(manifest)?manifest:(manifest.files||[]);
+      const files=arr.filter(x=>String(typeof x==='string'?x:x.name).toLowerCase().endsWith('.pdf')).map(x=>{
+        if(typeof x==='string') return {name:x,url:'data/'+encodeURIComponent(x),sha:'manifest:'+x};
+        return {name:x.name,url:x.url||('data/'+encodeURIComponent(x.name)),sha:x.sha||x.version||('manifest:'+x.name)};
+      });
+      if(files.length){ log(`Manifest local: ${files.length} PDF disponibles.`); return files; }
+    }
+  }catch(err){ log(`No se pudo leer manifest.json: ${err.message}`); }
+
+  const cfg=getRepoConfig();
   if(cfg.owner && cfg.repo){
     try{
-      const api = `https://api.github.com/repos/${encodeURIComponent(cfg.owner)}/${encodeURIComponent(cfg.repo)}/contents/data?ref=${encodeURIComponent(cfg.branch)}`;
-      const res = await fetch(api, {cache:'no-store'});
+      const api=`https://api.github.com/repos/${encodeURIComponent(cfg.owner)}/${encodeURIComponent(cfg.repo)}/contents/data?ref=${encodeURIComponent(cfg.branch)}`;
+      const res=await fetch(api,{cache:'default'});
       if(!res.ok) throw new Error(`${res.status} ${res.statusText}`);
-      const json = await res.json();
-      files = json.filter(f=>f.type==='file' && f.name.toLowerCase().endsWith('.pdf')).map(f=>({name:f.name,url:f.download_url,sha:f.sha}));
-      log(`GitHub API: ${files.length} PDF encontrados en /data.`);
-    } catch(err){
-      log(`No se pudo leer GitHub API (${err.message}). Intentando data/manifest.json...`);
+      const json=await res.json();
+      const files=json.filter(f=>f.type==='file'&&f.name.toLowerCase().endsWith('.pdf')).map(f=>({name:f.name,url:f.download_url,sha:f.sha}));
+      log(`GitHub API: ${files.length} PDF encontrados.`);
+      return files;
+    }catch(err){ log(`No se pudo consultar GitHub API: ${err.message}`); }
+  }
+  return [];
+}
+
+async function scanDataFolder(options={}){
+  if(document.body.classList.contains('is-processing-data')) return;
+  setLoadingState(true);
+  log(options.automatic?'Carga automática iniciada...':'Buscando actualizaciones en las facturas...');
+  try{
+    const files=await getDataPdfFiles();
+    if(!files.length){
+      log('No se encontraron archivos PDF en data/manifest.json ni en GitHub.');
+      if(state.records.length) unlockDataView('Se conservaron los datos disponibles en este dispositivo.');
+      return;
     }
-  }
-  if(!files.length){
-    try{
-      const res = await fetch('data/manifest.json?ts='+Date.now(), {cache:'no-store'});
-      if(res.ok){
-        const manifest = await res.json();
-        const arr = Array.isArray(manifest) ? manifest : manifest.files || [];
-        files = arr.filter(x => String(typeof x==='string'?x:x.name).toLowerCase().endsWith('.pdf')).map(x=> typeof x==='string' ? {name:x,url:'data/'+encodeURIComponent(x)} : {name:x.name,url:x.url||('data/'+encodeURIComponent(x.name))});
-        log(`Manifest: ${files.length} PDF encontrados.`);
+
+    const pending=[]; let skipped=0;
+    for(const file of files){
+      const fingerprint=file.sha||file.url||file.name;
+      if(state.files[fingerprint]) skipped++; else pending.push({...file,fingerprint});
+    }
+    if(!pending.length){
+      log(`Los ${skipped} PDF ya estaban procesados. No fue necesario descargarlos nuevamente.`);
+      renderAll();
+      unlockDataView('Datos recuperados desde la memoria local. La plataforma está lista.');
+      return;
+    }
+
+    let imported=0,failed=0,completed=0;
+    const concurrency=Math.min(3,pending.length);
+    let nextIndex=0;
+    async function worker(){
+      while(true){
+        const i=nextIndex++; if(i>=pending.length) return;
+        const file=pending[i];
+        setLoadingProgress(completed+1,pending.length,file.name);
+        try{
+          const response=await fetch(file.url,{cache:'force-cache'});
+          if(!response.ok) throw new Error(`${response.status} ${response.statusText}`);
+          const result=await parsePdfArrayBuffer(await response.arrayBuffer(),file.name,file.url);
+          if(result.records.length){ addImport(result,file.fingerprint); imported++; }
+          else { failed++; log(`Sin registros estructurados en ${file.name}.`); }
+        }catch(err){ failed++; log(`Error importando ${file.name}: ${err.message}`); }
+        completed++;
+        setLoadingProgress(completed,pending.length,file.name);
       }
-    }catch(err){ log(`No se pudo leer manifest.json: ${err.message}`); }
-  }
-  if(!files.length){
-    log('No se encontraron PDF. En GitHub público basta subir los PDF a /data. En local usa data/manifest.json.');
+    }
+    await Promise.all(Array.from({length:concurrency},worker));
+    saveStore(); renderAll();
+    log(`Carga terminada. Nuevos PDF: ${imported}. Ya procesados: ${skipped}. Fallidos: ${failed}.`);
+    if(state.records.length) unlockDataView('Datos cargados correctamente. Mostrando el ranking y los indicadores...');
+  } finally {
     setLoadingState(false);
-    if(state.records.length) unlockDataView('Se conservaron los datos disponibles en este dispositivo. Abriendo la plataforma completa...');
-    return;
   }
-  let imported=0, skipped=0, failed=0;
-  for(const file of files){
-    const fingerprint = file.sha || file.url || file.name;
-    if(state.files[fingerprint]){ skipped++; continue; }
-    try{
-      log(`Importando ${file.name}...`);
-      const buf = await (await fetch(file.url, {cache:'no-store'})).arrayBuffer();
-      const result = await parsePdfArrayBuffer(buf, file.name, file.url);
-      if(result.records.length){
-        addImport(result, fingerprint);
-        imported++;
-        log(`OK ${file.name}: ${result.records.length} registros, periodo ${result.period}.`);
-      }else{
-        failed++;
-        log(`Sin registros estructurados en ${file.name}. Muestra: ${result.sample.slice(0,500).replace(/\s+/g,' ')}`);
-      }
-    }catch(err){ failed++; log(`Error importando ${file.name}: ${err.message}`); }
-  }
-  log(`Proceso terminado. Importados: ${imported}. Omitidos ya existentes: ${skipped}. Fallidos: ${failed}.`);
-  log('Datos cargados. Generando el ranking de sedes educativas...');
-  saveStore(); renderAll();
-  setLoadingState(false);
-  unlockDataView();
 }
 async function handleLocalPdf(ev){
   const file = ev.target.files[0]; if(!file) return;

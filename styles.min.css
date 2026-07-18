@@ -1332,3 +1332,9 @@ main > section, .page-section, .platform-section {
 .module-access-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
 .module-page-links{flex-wrap:wrap}
 @media (max-width:900px){.module-access-grid{grid-template-columns:1fr}}
+
+/* Claridad de los módulos principales */
+.module-access-card p strong{display:block;margin-bottom:.28rem;color:var(--ink,#12352f)}
+.module-card-features{display:block;margin-top:auto;padding:.7rem .8rem;border-radius:14px;background:rgba(9,157,126,.08);color:#24635a;font-size:.82rem;font-weight:800;line-height:1.45}
+.module-access-card b{margin-top:.25rem}
+.module-access-card{gap:.7rem}
