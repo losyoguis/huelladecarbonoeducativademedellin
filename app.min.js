@@ -1121,56 +1121,96 @@ function renderDashboard(){
 function drawSiteChart(rows){
   const c = $('siteChart');
   if(!c) return;
-  const displayRows=rows.slice(0,12);
-  const rowH=44;
-  c.height=Math.max(360,112 + displayRows.length*rowH);
+  const displayRows = rows.slice(0,12);
+  const rowH = 38;
+  const headerY = 84;
+  const top = 104;
+
+  // El informe usa un lienzo amplio para organizar la información en columnas.
+  c.width = 1600;
+  c.height = Math.max(390, 132 + displayRows.length * rowH);
   const ctx = c.getContext('2d');
   ctx.clearRect(0,0,c.width,c.height);
-  ctx.fillStyle='#13312d';
-  ctx.font='bold 17px Arial';
-  ctx.textAlign='left';
-  ctx.fillText('Ranking de sedes por consumo eléctrico total (kWh)',24,32);
-  ctx.font='12px Arial';
-  ctx.fillStyle='#637772';
-  ctx.fillText('Cada sede incluye zona, comuna o corregimiento, núcleo educativo, kWh, CO₂e y árboles.',24,52);
-  if(!displayRows.length){ ctx.fillStyle='#13312d'; ctx.fillText('Sin datos para graficar',24,92); return; }
 
-  const padL = 300;
-  const padR = 24;
-  const valueX = Math.max(760, c.width - 315);
-  const top = 82;
-  const barH = 17;
+  ctx.fillStyle = '#13312d';
+  ctx.font = 'bold 18px Arial';
+  ctx.textAlign = 'left';
+  ctx.fillText('Ranking de sedes por consumo eléctrico total (kWh)',24,32);
+  ctx.font = '12px Arial';
+  ctx.fillStyle = '#637772';
+  ctx.fillText('Información organizada por sede, zona, comuna o corregimiento, núcleo educativo e indicadores ambientales.',24,53);
+
+  const columns = {
+    site: {x:24, w:250, title:'Sede educativa'},
+    zone: {x:286, w:170, title:'Zona'},
+    commune: {x:468, w:190, title:'Comuna o corregimiento'},
+    nucleus: {x:670, w:120, title:'Núcleo'},
+    bar: {x:805, w:430, title:'Consumo eléctrico'},
+    metrics: {x:1252, w:320, title:'kWh · CO₂e · árboles'}
+  };
+
+  // Encabezados y separadores de columnas.
+  ctx.font = 'bold 11px Arial';
+  ctx.fillStyle = '#315650';
+  Object.values(columns).forEach(col=>ctx.fillText(col.title,col.x,headerY));
+  ctx.strokeStyle = '#d7e7e2';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(24,headerY+10);
+  ctx.lineTo(c.width-24,headerY+10);
+  ctx.stroke();
+
+  if(!displayRows.length){
+    ctx.fillStyle='#13312d';
+    ctx.font='13px Arial';
+    ctx.fillText('Sin datos para graficar',24,top+28);
+    return;
+  }
+
   const max = Math.max(...displayRows.map(r=>r.energyKwh),1);
-  const maxBarW = Math.max(180, valueX - padL - 18);
+  const barH = 16;
 
   displayRows.forEach((r,i)=>{
     const y = top + i*rowH;
-    const meta=getSiteMeta(siteKey(r.site,r.address));
-    const label = (r.site||'').length>36 ? r.site.slice(0,36)+'…' : r.site;
-    const territorial=[meta.zone,meta.commune,`Núcleo ${meta.nucleus}`]
-      .filter(v=>v&&v!=='Sin clasificar'&&v!=='Núcleo Sin clasificar').join(' · ') || 'Información territorial sin clasificar';
+    const meta = getSiteMeta(siteKey(r.site,r.address));
+    const zone = meta.zone || 'Sin clasificar';
+    const commune = meta.commune || 'Sin clasificar';
+    const nucleus = meta.nucleus || 'Sin clasificar';
 
-    ctx.fillStyle='#315650';
-    ctx.textAlign='right';
-    ctx.font='bold 11.5px Arial';
-    ctx.fillText(label, padL-12, y+12);
-    ctx.fillStyle='#6b7f7a';
-    ctx.font='10px Arial';
-    ctx.fillText(fitCanvasText(ctx,territorial,padL-28),padL-12,y+28);
+    if(i % 2 === 0){
+      ctx.fillStyle = '#f7fbfa';
+      ctx.fillRect(18,y-8,c.width-36,rowH);
+    }
 
-    const bw = Math.max(8, (r.energyKwh/max)*maxBarW);
-    const grad = ctx.createLinearGradient(padL,0,padL+bw,0);
+    ctx.textAlign='left';
+    ctx.fillStyle='#244b45';
+    ctx.font='bold 11px Arial';
+    ctx.fillText(fitCanvasText(ctx,r.site||'Sin nombre',columns.site.w),columns.site.x,y+13);
+
+    ctx.font='10.5px Arial';
+    ctx.fillStyle='#58716c';
+    ctx.fillText(fitCanvasText(ctx,zone,columns.zone.w),columns.zone.x,y+13);
+    ctx.fillText(fitCanvasText(ctx,commune,columns.commune.w),columns.commune.x,y+13);
+    ctx.fillText(fitCanvasText(ctx,nucleus,columns.nucleus.w),columns.nucleus.x,y+13);
+
+    const bw = Math.max(8,(r.energyKwh/max)*columns.bar.w);
+    const grad = ctx.createLinearGradient(columns.bar.x,0,columns.bar.x+bw,0);
     grad.addColorStop(0,'#0b9878');
     grad.addColorStop(1,'#0fc39a');
     ctx.fillStyle=grad;
-    roundRect(ctx,padL,y+5,bw,barH,8); ctx.fill();
+    roundRect(ctx,columns.bar.x,y,bw,barH,8);
+    ctx.fill();
 
-    const available = c.width - valueX - padR;
-    const fullLabel = `${fmt(r.energyKwh)} kWh · ${fmt(r.co2kg/1000)} t CO₂e · ${fmt(r.trees)} árboles`;
+    const metricText = `${fmt(r.energyKwh)} kWh · ${fmt(r.co2kg/1000)} t CO₂e · ${fmt(r.trees)} árboles`;
     ctx.fillStyle='#13312d';
-    ctx.textAlign='left';
-    ctx.font='bold 11px Arial';
-    ctx.fillText(fitCanvasText(ctx, fullLabel, available), valueX, y+18);
+    ctx.font='bold 10.5px Arial';
+    ctx.fillText(fitCanvasText(ctx,metricText,columns.metrics.w),columns.metrics.x,y+13);
+
+    ctx.strokeStyle='#e7f0ed';
+    ctx.beginPath();
+    ctx.moveTo(24,y+29);
+    ctx.lineTo(c.width-24,y+29);
+    ctx.stroke();
   });
   ctx.textAlign='left';
 }

@@ -1318,3 +1318,8 @@ main > section, .page-section, .platform-section {
 .ranking-summary-chip strong{color:#0c7f66}
 .environmental-ranking-chart canvas{width:100%;height:auto;display:block}
 @media(max-width:700px){.ranking-summary-chips{display:grid;grid-template-columns:1fr}.ranking-summary-chip{border-radius:12px}.environmental-ranking-chart{overflow-x:auto}.environmental-ranking-chart canvas{min-width:900px}}
+
+/* Ranking territorial organizado en columnas */
+.environmental-ranking-chart{overflow-x:auto;max-width:100%;border:1px solid var(--line);border-radius:20px;background:#fff;padding:12px}
+.environmental-ranking-chart canvas{min-width:1600px;width:1600px;max-width:none;height:auto;margin:0}
+@media(max-width:900px){.environmental-ranking-chart{padding:8px}.environmental-ranking-chart canvas{min-width:1600px;width:1600px}}
