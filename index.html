@@ -8,10 +8,10 @@
 <link crossorigin="" href="https://cdnjs.cloudflare.com" rel="preconnect"/>
 <link href="//cdnjs.cloudflare.com" rel="dns-prefetch"/>
 <meta content="Sistema interactivo para medir, interpretar y gestionar la huella de carbono educativa a partir del consumo de servicios públicos." name="description"/>
-<link href="assets/los-yoguis-logo.png" rel="icon" type="image/png">
-<link href="assets/los-yoguis-logo.png" rel="apple-touch-icon">
-<link href="styles.css?v=70-plan-gestion" rel="stylesheet"/>
-</link></link></head>
+<link href="assets/los-yoguis-logo.png" rel="icon" type="image/png"/>
+<link href="assets/los-yoguis-logo.png" rel="apple-touch-icon"/>
+<link href="styles.css?v=80-index-integrado" rel="stylesheet">
+</link></head>
 <body class="data-gate index-page" data-page="index">
 <header class="hero hero-mjb hero-yoguis" id="inicio">
 <nav aria-label="Enlaces principales del ecosistema Los Yoguis" class="hero-top-links">
@@ -34,12 +34,12 @@
         </div>
 <div class="hero-actions">
 <a class="hero-cta" href="#resumen-ejecutivo">Ver resumen ejecutivo</a>
-<a class="hero-cta ghost" href="dashboard.html">Plan de Gestión Ambiental por Sede</a>
+<a class="hero-cta ghost" href="#dashboard-ambiental">Plan de Gestión Ambiental por Sede</a>
 </div>
 </div>
 </div>
 </header>
-<nav aria-label="Menú interno de SiMeCO₂" class="sticky-nav"><a href="#inicio">Inicio</a><a href="#resumen-ejecutivo">Resumen</a><a href="#comparar-periodos">Comparar</a><a href="dashboard.html">Plan de gestión</a></nav>
+<nav aria-label="Menú interno de SiMeCO₂" class="sticky-nav"><a href="#inicio">Inicio</a><a href="#resumen-ejecutivo">Resumen</a><a href="#comparar-periodos">Comparar</a><a href="#dashboard-ambiental">Plan de gestión</a></nav>
 <main>
 <section class="panel intro-panel" id="resumen-ejecutivo">
 <div class="section-head">
@@ -190,42 +190,201 @@
 <div class="compare-result" id="compareResult"></div>
 <canvas aria-label="Gráfico comparativo" height="420" id="chart" width="1100"></canvas>
 </section>
-<section class="panel module-access-panel single-module-panel" id="modulos-principales">
+<section class="panel dashboard-panel organized-page-section" id="dashboard-ambiental">
 <div class="section-head">
 <div>
-<span class="section-kicker">Módulo principal</span>
+<span class="section-kicker">Gestión por sede</span>
 <h2>Plan de Gestión Ambiental por Sede</h2>
-<p class="muted">Consulta los consumos registrados en las facturas de servicios públicos, identifica prioridades y construye acciones ambientales para cada institución educativa.</p>
+<p class="muted">Consumo total de energía eléctrica, toneladas de CO₂ equivalente, árboles requeridos y prioridad de intervención.</p>
+</div>
+<div class="factor-box">
+<label>Factor CO₂ kg/kWh
+            <input id="factorCo2Input" min="0" step="0.001" type="number" value="0.126"/>
+</label>
+<label>kg CO₂ capturados por árbol/año
+            <input id="treeFactorInput" min="0.1" step="0.1" type="number" value="22"/>
+</label>
+<button class="secondary" id="updateFactorsBtn">Actualizar cálculos</button>
 </div>
 </div>
-<div class="module-access-grid single-module-grid">
-<a class="module-access-card primary-module-card" href="dashboard.html">
-<span aria-hidden="true" class="module-access-icon">📊</span>
-<small>Gestión ambiental institucional</small>
-<strong>Plan de Gestión Ambiental por Sede</strong>
-<p><strong>¿Para qué sirve?</strong> Permite consultar el consumo de energía y otros servicios, calcular la huella de carbono, comparar periodos, priorizar sedes y generar un plan de acción ambiental individual.</p>
-<span class="module-card-features">Indicadores por sede · Comparación mensual · Priorización · Planes de acción</span>
-<b>Abrir Plan de Gestión Ambiental →</b>
-</a>
+<div class="dashboard-section-block dashboard-filter-block">
+<div class="dashboard-subsection-title">
+<span>1</span>
+<div><strong>Filtrar sedes educativas</strong><small>Selecciona criterios territoriales y energéticos antes de consultar los resultados.</small></div>
+</div>
+<div class="advanced-site-filters territorial-filter-panel embedded-filter-panel" id="filtros-sedes">
+<div class="section-head">
+<div>
+<span class="section-kicker">Búsqueda territorial</span>
+<h2>Filtros territoriales de sedes educativas</h2>
+<p class="muted">Filtros dependientes construidos sobre las sedes y periodos detectados en las facturas de servicios públicos. Cada selección actualiza los indicadores, resultados y registros.</p>
+</div>
+<button class="secondary" id="toggleClassificationBtn" type="button">Revisar clasificación</button>
+</div>
+<div class="territorial-filter-help">
+<strong>Busca una sede por cualquier dato territorial</strong>
+<span>Nombre, dirección, zona, comuna, corregimiento, barrio, vereda, núcleo educativo o tipo de sede.</span>
+</div>
+<div class="site-filter-grid territorial-filter-grid">
+<label class="filter-search-wide">Buscar dentro de los filtros
+          <input autocomplete="off" id="globalSiteSearch" list="siteSearchSuggestions" placeholder="Escribe sede, núcleo, comuna, barrio o vereda" type="search"/>
+<datalist id="siteSearchSuggestions"></datalist>
+</label>
+<label>Zona territorial
+          <select id="zoneFilter"><option value="">Todas</option></select>
+</label>
+<label>Tipo de territorio
+          <select id="territoryTypeFilter"><option value="">Todos</option></select>
+</label>
+<label>Comuna o corregimiento
+          <select id="communeFilter"><option value="">Todos</option></select>
+</label>
+<label>Barrio o vereda probable
+          <select id="neighborhoodFilter"><option value="">Todos</option></select>
+</label>
+<label>Núcleo educativo
+          <select id="nucleusFilter"><option value="">Todos</option></select>
+</label>
+<label>Tipo de sede
+          <select id="siteTypeFilter"><option value="">Todos</option></select>
+</label>
+<label>Sede educativa
+          <select id="specificSiteFilter"><option value="">Todas</option></select>
+</label>
+<label>Periodo
+          <select id="globalPeriodFilter"><option value="">Todos</option></select>
+</label>
+<label>Servicio disponible
+          <select id="globalServiceFilter">
+<option value="">Todos</option><option value="energia">Energía</option><option value="agua">Agua</option>
+<option value="alcantarillado">Alcantarillado</option><option value="gas">Gas</option><option value="aseo">Aseo</option>
+</select>
+</label>
+<label>Prioridad energética
+          <select id="priorityFilter">
+<option value="">Todas</option><option value="high">Alta prioridad</option><option value="medium">Prioridad media</option><option value="low">Prioridad preventiva</option>
+</select>
+</label>
+</div>
+<div class="filter-actions">
+<div>
+<div class="filter-status" id="filterStatus">Filtros listos · mostrando todas las sedes.</div>
+<div class="filter-summary" id="filterSummary">Mostrando todas las sedes cargadas.</div>
+</div>
+<button class="secondary" id="clearSiteFiltersBtn" type="button">Limpiar todos los filtros</button>
+</div>
+<div class="classification-panel" hidden="" id="classificationPanel">
+<div class="classification-help">
+<strong>Clasificación territorial de sedes</strong>
+<p>Revisa o completa la clasificación territorial de las sedes identificadas en las facturas. Los cambios quedan guardados en este dispositivo y no modifican los consumos originales.</p>
+</div>
+<div class="table-wrap">
+<table class="classification-table">
+<thead><tr><th>Sede</th><th>Dirección</th><th>Zona</th><th>Tipo territorio</th><th>Comuna/corregimiento</th><th>Barrio/vereda</th><th>Núcleo</th><th>Tipo de sede</th><th>Origen</th></tr></thead>
+<tbody id="classificationBody"></tbody>
+</table>
+</div>
+</div>
+</div>
+</div>
+<div class="dashboard-section-block dashboard-summary-block">
+<div class="dashboard-subsection-title">
+<span>2</span>
+<div><strong>Resumen ambiental filtrado</strong><small>Los indicadores se actualizan automáticamente según los filtros seleccionados.</small></div>
+</div>
+<div class="dashboard-grid">
+<article class="big-total"><span>Total energía eléctrica</span><strong id="dashTotalKwh">0 kWh</strong></article>
+<article class="big-total"><span>Total CO₂ equivalente</span><strong id="dashTotalCo2">0 t CO₂e</strong></article>
+<article class="big-total"><span>Árboles necesarios</span><strong id="dashTotalTrees">0 árboles</strong></article>
+</div>
+</div>
+<div class="dashboard-section-block dashboard-results-block">
+<div class="dashboard-subsection-title">
+<span>3</span>
+<div><strong>Resultados por sede</strong><small>Consulta consumos, emisiones, prioridad y genera el plan de gestión de cada institución.</small></div>
+</div>
+<div class="table-wrap dashboard-table-wrap">
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Sede</th>
+<th>Dirección</th>
+<th>Periodos</th>
+<th>Energía total kWh</th>
+<th>CO₂e t</th>
+<th>Árboles requeridos</th>
+<th>Promedio kWh/mes</th>
+<th>Prioridad</th>
+<th>Plan de gestión</th>
+</tr>
+</thead>
+<tbody id="environmentBody"></tbody>
+</table>
+</div>
+</div>
+</section><section class="panel plan-panel organized-page-section" id="planPanel">
+<div class="section-head">
+<div>
+<span class="section-kicker">Informe institucional</span>
+<h2>Planes de Gestión por sede</h2>
+<p class="muted">Selecciona una sede desde el dashboard ambiental. El sistema generará un informe personalizado para reducir consumo eléctrico y emisiones de GEI en alcance 2.</p>
+</div>
+<div class="plan-actions">
+<button class="secondary" disabled="" id="printPlanBtn">Generar informe institucional</button>
+<button class="secondary" disabled="" id="downloadPlanBtn">Descargar HTML</button>
+</div>
+</div>
+<div class="plan-empty" id="planReport">Aún no se ha seleccionado una sede. Usa el botón <strong>Plan de Gestión</strong> en la tabla del Plan de Gestión Ambiental por Sede.</div>
+</section><section class="panel data-panel" id="registros">
+<div class="toolbar">
+<div>
+<label>Buscar sede</label>
+<input id="siteSearch" list="siteList" placeholder="Ej. Manuel J. Betancur"/>
+<datalist id="siteList"></datalist>
+</div>
+<div>
+<label>Periodo</label>
+<select id="periodFilter"><option value="">Todos</option></select>
+</div>
+<div>
+<label>Servicio</label>
+<select id="serviceFilter">
+<option value="">Todos</option>
+<option value="energia">Energía</option>
+<option value="agua">Agua</option>
+<option value="alcantarillado">Alcantarillado</option>
+<option value="gas">Gas</option>
+<option value="aseo">Aseo</option>
+</select>
+</div>
+<div class="toolbar-buttons">
+<button class="secondary" id="exportCsvBtn">Exportar CSV</button>
+<button class="secondary" id="exportJsonBtn">Exportar JSON</button>
+<button class="secondary" onclick="window.print()">PDF/Imprimir</button>
+</div>
+</div>
+<div class="table-wrap">
+<table>
+<thead>
+<tr>
+<th>Periodo</th><th>Sede</th><th>Dirección</th><th>Comuna</th><th>Núcleo</th><th>Agua m³</th><th>Alc. m³</th><th>Energía kWh</th><th>Gas m³</th><th>Aseo $</th><th>Residuos t</th><th>CO₂ kg</th><th>Fuente</th>
+</tr>
+</thead>
+<tbody id="recordsBody"></tbody>
+</table>
 </div>
 </section>
-
-
-
-
-
-
 </main>
-<nav aria-label="Navegación móvil" class="mobile-bottom-nav"><a href="#inicio">Inicio</a><a href="#resumen-ejecutivo">Resumen</a><a href="dashboard.html">Plan de gestión</a></nav>
+<nav aria-label="Navegación móvil" class="mobile-bottom-nav"><a href="#inicio">Inicio</a><a href="#resumen-ejecutivo">Resumen</a><a href="#dashboard-ambiental">Plan de gestión</a></nav>
 <footer aria-label="Pie de página Los Yoguis" class="brand-footer">
 <div class="brand-footer-inner">
 <img alt="Los Yoguis, 15 años aportando a la transformación educativa, cultural y ambiental" class="brand-footer-image" src="assets/los-yoguis-footer.png"/>
 <a class="brand-footer-link" href="https://www.losyoguis.com" rel="noopener noreferrer" target="_blank">www.losyoguis.com</a>
 </div>
 </footer>
-
-<script defer src="data/registros.js?v=1"></script>
-  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-<script defer="" src="app.js?v=70-plan-gestion"></script>
+<script defer="" src="data/registros.js?v=1"></script>
+<script defer="" src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script defer="" src="app.js?v=80-index-integrado"></script>
 </body>
 </html>
