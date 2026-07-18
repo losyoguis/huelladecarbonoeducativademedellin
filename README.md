@@ -116,3 +116,12 @@ La plataforma se reorganizó como una aplicación de cuatro secciones internas, 
 4. Aula y registros: Guardianes Climáticos, autocompletado, filtros, exportaciones y tabla de registros.
 
 La navegación funciona mediante pestañas superiores y una barra móvil. Los enlaces directos y los botones de generación de planes activan automáticamente la sección correspondiente.
+
+## Versión 36 · cinco módulos
+
+- Se eliminaron los dos botones del encabezado principal.
+- El módulo 1 ahora se llama **Actualizar datos** y su botón ejecuta directamente la actualización de facturas.
+- El módulo 2 se llama **Histórico**.
+- El módulo 3 se llama **Informe por sede**.
+- El módulo 4 se llama **Facturas por I.E.** e incluye filtros, registros y descarga directa de la factura desde la columna Fuente.
+- Se creó el módulo 5 **Aula**, donde se trasladó íntegramente Guardianes Climáticos.

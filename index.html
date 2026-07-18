@@ -7,7 +7,7 @@
   <meta name="description" content="Sistema interactivo para medir, interpretar y gestionar la huella de carbono educativa a partir del consumo de servicios públicos." />
   <link rel="icon" type="image/png" href="assets/los-yoguis-logo.png" />
   <link rel="apple-touch-icon" href="assets/los-yoguis-logo.png" />
-  <link rel="stylesheet" href="styles.css?v=35-cuatro-secciones" />
+  <link rel="stylesheet" href="styles.css?v=36-cinco-secciones" />
 </head>
 <body>
   <header class="hero hero-mjb hero-yoguis" id="inicio">
@@ -30,24 +30,21 @@
         <div class="hero-purpose-box">
           <strong>Propósito:</strong> convertir los datos de servicios públicos en decisiones pedagógicas, ambientales e institucionales para reducir la huella de carbono educativa de Medellín.
         </div>
-        <div class="hero-actions">
-          <a class="hero-cta" href="#resumen-ejecutivo">Ver resumen ejecutivo</a>
-          <a class="hero-cta ghost" href="#aula-climatica">Entrar al aula climática</a>
-        </div>
       </div>
     </div>
   </header>
 
 
   <nav class="section-switcher" aria-label="Secciones principales de SiMeCO₂">
-    <button type="button" class="section-tab active" data-section="seccion-1" aria-selected="true"><span>1</span><strong>Resumen institucional</strong><small>Carga, lectura e indicadores</small></button>
-    <button type="button" class="section-tab" data-section="seccion-2" aria-selected="false"><span>2</span><strong>Análisis temporal</strong><small>Comparación y ranking</small></button>
-    <button type="button" class="section-tab" data-section="seccion-3" aria-selected="false"><span>3</span><strong>Gestión por sede</strong><small>Dashboard y planes</small></button>
-    <button type="button" class="section-tab" data-section="seccion-4" aria-selected="false"><span>4</span><strong>Aula y registros</strong><small>Aprendizaje, filtros y datos</small></button>
+    <button type="button" class="section-tab active" id="scanDataBtn" data-section="seccion-1" data-action="actualizar" aria-selected="true"><span>1</span><strong>Actualizar datos</strong><small>Carga, lectura e indicadores</small></button>
+    <button type="button" class="section-tab" data-section="seccion-2" aria-selected="false"><span>2</span><strong>Histórico</strong><small>Comparación y ranking</small></button>
+    <button type="button" class="section-tab" data-section="seccion-3" aria-selected="false"><span>3</span><strong>Informe por sede</strong><small>Dashboard y planes</small></button>
+    <button type="button" class="section-tab" data-section="seccion-4" aria-selected="false"><span>4</span><strong>Facturas por I.E.</strong><small>Filtros, datos y descargas</small></button>
+    <button type="button" class="section-tab" data-section="seccion-5" aria-selected="false"><span>5</span><strong>Aula</strong><small>Aprender, medir y actuar</small></button>
   </nav>
 
   <main>
-    <div class="app-section active" id="seccion-1" data-page-title="Resumen institucional">
+    <div class="app-section active" id="seccion-1" data-page-title="Actualizar datos">
     <section class="panel grid-2 import-panel update-spotlight" id="importacion">
       <div class="update-copy">
         <span class="section-kicker">Actualizando los datos</span>
@@ -59,7 +56,6 @@
           <span>Desde 2025</span>
         </div>
         <div class="actions update-actions">
-          <button class="primary update-cta" id="scanDataBtn" aria-label="Actualizar datos del sistema ahora"><span class="cta-icon" aria-hidden="true">↻</span><span>Actualizar datos ahora</span><span class="cta-pulse-dot" aria-hidden="true"></span></button>
           <label class="secondary file-label">
             Cargar factura PDF local
             <input type="file" id="localPdfInput" accept="application/pdf" hidden />
@@ -115,11 +111,11 @@
 
     </div>
 
-    <div class="app-section" id="seccion-2" data-page-title="Análisis temporal">
+    <div class="app-section" id="seccion-2" data-page-title="Histórico">
     <section class="panel" id="comparar-periodos">
       <div class="section-head">
         <div>
-          <span class="section-kicker">Análisis temporal</span>
+          <span class="section-kicker">Histórico</span>
           <h2>Comparar periodos</h2>
           <p class="muted">Compara el consumo y la huella ambiental por mes, trimestre, semestre o año. También puedes filtrar la comparación por una sede específica.</p>
         </div>
@@ -167,11 +163,11 @@
 
     </div>
 
-    <div class="app-section" id="seccion-3" data-page-title="Gestión por sede">
+    <div class="app-section" id="seccion-3" data-page-title="Informe por sede">
     <section class="panel dashboard-panel" id="dashboard-ambiental">
       <div class="section-head">
         <div>
-          <span class="section-kicker">Gestión por sede</span>
+          <span class="section-kicker">Informe por sede</span>
           <h2>Dashboard ambiental por sede</h2>
           <p class="muted">Consumo total de energía eléctrica, toneladas de CO₂ equivalente, árboles requeridos y prioridad de intervención.</p>
         </div>
@@ -228,27 +224,7 @@
 
     </div>
 
-    <div class="app-section" id="seccion-4" data-page-title="Aula y registros">
-    <section class="panel aula-panel" id="aula-climatica">
-      <div class="section-head">
-        <div>
-          <span class="section-kicker">Aula climática</span>
-          <h2>Guardianes Climáticos: aprender, medir y actuar</h2>
-          <p class="muted">Módulo pedagógico para que estudiantes y docentes comprendan la huella de carbono y conviertan los datos en misiones ambientales.</p>
-        </div>
-      </div>
-      <div class="learning-grid">
-        <article><strong>¿Qué es la huella de carbono?</strong><p>Es la estimación de gases de efecto invernadero asociados a una actividad. En esta plataforma se mide principalmente el impacto del consumo eléctrico institucional.</p></article>
-        <article><strong>¿Qué significa CO₂e?</strong><p>CO₂ equivalente permite expresar diferentes gases de efecto invernadero en una unidad común para facilitar la comparación y la toma de decisiones.</p></article>
-        <article><strong>¿Qué es alcance 2?</strong><p>Corresponde a las emisiones indirectas generadas por la energía eléctrica comprada y consumida por la institución educativa.</p></article>
-      </div>
-      <div class="mission-grid">
-        <article><span>Misión 1</span><strong>Detectar puntos de consumo</strong><p>Identifica aulas, oficinas o equipos donde se usa más energía y registra evidencias fotográficas.</p></article>
-        <article><span>Misión 2</span><strong>Proponer acciones</strong><p>Diseña tres acciones concretas con responsable, fecha e indicador de seguimiento.</p></article>
-        <article><span>Misión 3</span><strong>Socializar resultados</strong><p>Presenta el ranking, las emisiones y el plan de gestión a la comunidad educativa.</p></article>
-      </div>
-    </section>
-
+    <div class="app-section" id="seccion-4" data-page-title="Facturas por I.E.">
     <section class="panel data-panel" id="registros">
       <div class="toolbar filter-toolbar">
         <div class="search-filter">
@@ -308,13 +284,37 @@
       </div>
     </section>
     </div>
+
+    <div class="app-section" id="seccion-5" data-page-title="Aula">
+    <section class="panel aula-panel" id="aula-climatica">
+      <div class="section-head">
+        <div>
+          <span class="section-kicker">Aula climática</span>
+          <h2>Guardianes Climáticos: aprender, medir y actuar</h2>
+          <p class="muted">Módulo pedagógico para que estudiantes y docentes comprendan la huella de carbono y conviertan los datos en misiones ambientales.</p>
+        </div>
+      </div>
+      <div class="learning-grid">
+        <article><strong>¿Qué es la huella de carbono?</strong><p>Es la estimación de gases de efecto invernadero asociados a una actividad. En esta plataforma se mide principalmente el impacto del consumo eléctrico institucional.</p></article>
+        <article><strong>¿Qué significa CO₂e?</strong><p>CO₂ equivalente permite expresar diferentes gases de efecto invernadero en una unidad común para facilitar la comparación y la toma de decisiones.</p></article>
+        <article><strong>¿Qué es alcance 2?</strong><p>Corresponde a las emisiones indirectas generadas por la energía eléctrica comprada y consumida por la institución educativa.</p></article>
+      </div>
+      <div class="mission-grid">
+        <article><span>Misión 1</span><strong>Detectar puntos de consumo</strong><p>Identifica aulas, oficinas o equipos donde se usa más energía y registra evidencias fotográficas.</p></article>
+        <article><span>Misión 2</span><strong>Proponer acciones</strong><p>Diseña tres acciones concretas con responsable, fecha e indicador de seguimiento.</p></article>
+        <article><span>Misión 3</span><strong>Socializar resultados</strong><p>Presenta el ranking, las emisiones y el plan de gestión a la comunidad educativa.</p></article>
+      </div>
+    </section>
+
+    </div>
   </main>
 
   <nav class="mobile-bottom-nav section-mobile-nav" aria-label="Navegación móvil por secciones">
-    <button type="button" class="mobile-section-tab active" data-section="seccion-1">Resumen</button>
-    <button type="button" class="mobile-section-tab" data-section="seccion-2">Análisis</button>
-    <button type="button" class="mobile-section-tab" data-section="seccion-3">Gestión</button>
-    <button type="button" class="mobile-section-tab" data-section="seccion-4">Aula</button>
+    <button type="button" class="mobile-section-tab active" data-section="seccion-1" data-action="actualizar">Actualizar</button>
+    <button type="button" class="mobile-section-tab" data-section="seccion-2">Histórico</button>
+    <button type="button" class="mobile-section-tab" data-section="seccion-3">Informes</button>
+    <button type="button" class="mobile-section-tab" data-section="seccion-4">Facturas</button>
+    <button type="button" class="mobile-section-tab" data-section="seccion-5">Aula</button>
   </nav>
 
   <footer class="brand-footer" aria-label="Pie de página Los Yoguis">
@@ -330,7 +330,7 @@
         inicio: 'seccion-1', importacion: 'seccion-1', 'resumen-ejecutivo': 'seccion-1', cards: 'seccion-1',
         'comparar-periodos': 'seccion-2', 'ranking-sedes': 'seccion-2',
         'dashboard-ambiental': 'seccion-3', planPanel: 'seccion-3',
-        'aula-climatica': 'seccion-4', registros: 'seccion-4'
+        registros: 'seccion-4', 'aula-climatica': 'seccion-5'
       };
 
       function openSection(sectionId, options = {}) {
@@ -383,6 +383,6 @@
   </script>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-  <script src="app.js?v=35-cuatro-secciones"></script>
+  <script src="app.js?v=36-cinco-secciones"></script>
 </body>
 </html>

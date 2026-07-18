@@ -1,4 +1,4 @@
-/* SiMeCO2 Servicios Públicos - v32 sin botón de modo presentación */
+/* SiMeCO2 Servicios Públicos - v36 cinco secciones y descarga de facturas */
 let FACTOR_CO2_KG_KWH = 0.126; // kg CO2e/kWh. Ajustable desde el dashboard.
 let TREE_CO2_KG_YEAR = 22; // kg CO2e capturados por árbol al año. Ajustable desde el dashboard.
 const FACTOR_KEY = 'simeco2_factores_ambientales_v8';
@@ -491,6 +491,17 @@ function renderCards(){
   $('kWater').textContent = fmt(sum('waterM3'))+' m³';
   $('kWaste').textContent = fmt(sum('wasteTon'))+' t';
 }
+function renderSourceDownload(record){
+  const name = String(record?.source || 'Factura PDF');
+  const rawUrl = String(record?.sourceUrl || '');
+  if(!rawUrl || rawUrl === 'local'){
+    return `<span class="source-local" title="Este archivo fue cargado localmente y no tiene una URL permanente">${escapeHtml(name)}</span>`;
+  }
+  let url = rawUrl;
+  if(!/^https?:\/\//i.test(url) && !url.startsWith('data/')) url = 'data/' + encodeURIComponent(name);
+  const safeUrl = escapeHtml(url);
+  return `<a class="source-download" href="${safeUrl}" download="${escapeHtml(name)}" target="_blank" rel="noopener" title="Descargar factura PDF">${escapeHtml(name)} <span aria-hidden="true">↓</span></a>`;
+}
 function renderTable(){
   const recs = filteredRecords();
   renderFilterSummary();
@@ -505,7 +516,7 @@ function renderTable(){
     <td data-label="Aseo $">${money(r.wasteValue)}</td>
     <td data-label="Residuos t">${num(r.wasteTon)}</td>
     <td data-label="CO₂ kg">${num(r.co2kg)}</td>
-    <td data-label="Fuente">${escapeHtml(r.source||'')}</td>
+    <td data-label="Fuente">${renderSourceDownload(r)}</td>
   </tr>`).join('') || `<tr><td colspan="11"><div class="empty-filter-state"><strong>No hay coincidencias</strong><span>Prueba con menos palabras, cambia el periodo o limpia los filtros.</span><button type="button" onclick="clearAllFilters()" class="secondary">Limpiar filtros</button></div></td></tr>`;
 }
 function aggregateByPeriod(records){

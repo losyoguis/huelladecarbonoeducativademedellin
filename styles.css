@@ -935,3 +935,11 @@ canvas{max-width:100%;height:auto;border-radius:16px;}
   .app-section{display:block!important}
   .app-section[hidden]{display:block!important}
 }
+
+/* SiMeCO₂ v36 · cinco módulos y descarga directa de facturas */
+.section-switcher{grid-template-columns:repeat(5,minmax(0,1fr))}
+.source-download{display:inline-flex;align-items:center;gap:6px;color:#087d69;font-weight:900;text-decoration:none;padding:6px 9px;border:1px solid #bfe8de;border-radius:10px;background:#f2fffb;white-space:nowrap}
+.source-download:hover{background:#ddf8f0;border-color:#08a987;transform:translateY(-1px)}
+.source-local{display:inline-block;color:#667b76;font-weight:800;font-size:.82rem}
+@media(max-width:1100px){.section-switcher{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:700px){.section-switcher{grid-template-columns:repeat(2,minmax(0,1fr))}}
