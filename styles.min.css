@@ -1309,3 +1309,12 @@ main > section, .page-section, .platform-section {
     padding: 14px;
   }
 }
+
+/* Resumen territorial del ranking */
+.ranking-territorial-summary{margin:16px 0 18px;padding:14px 16px;border:1px solid #cce8e1;border-radius:16px;background:linear-gradient(135deg,#f1fbf8,#f8fcfb)}
+.ranking-summary-title{font-weight:800;color:#143b34;margin-bottom:10px}
+.ranking-summary-chips{display:flex;flex-wrap:wrap;gap:8px}
+.ranking-summary-chip{display:inline-flex;gap:5px;align-items:center;padding:8px 11px;border:1px solid #c7e2dc;border-radius:999px;background:#fff;color:#345d55;font-size:.86rem}
+.ranking-summary-chip strong{color:#0c7f66}
+.environmental-ranking-chart canvas{width:100%;height:auto;display:block}
+@media(max-width:700px){.ranking-summary-chips{display:grid;grid-template-columns:1fr}.ranking-summary-chip{border-radius:12px}.environmental-ranking-chart{overflow-x:auto}.environmental-ranking-chart canvas{min-width:900px}}

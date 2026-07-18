@@ -1032,6 +1032,31 @@ function num(n){ return n==null||n==='' ? '—' : fmt(n); }
 function money(n){ return n==null||n==='' ? '—' : '$ '+fmt(n); }
 
 /* Dashboard ambiental por sede - v8 */
+function renderRankingTerritorialSummary(rows=[]){
+  const box=$('rankingTerritorialSummary');
+  if(!box) return;
+  const f=currentTerritorialFilters();
+  const metas=rows.map(r=>getSiteMeta(siteKey(r.site,r.address)));
+  const unique=(field)=>[...new Set(metas.map(m=>String(m[field]||'Sin clasificar').trim()).filter(Boolean))];
+  const describe=(selected,values,allLabel='Todos')=>{
+    if(selected) return selected;
+    if(!values.length) return 'Sin información';
+    if(values.length===1) return values[0];
+    return `${allLabel} (${values.length})`;
+  };
+  const zone=describe(f.zone,unique('zone'),'Todas');
+  const commune=describe(f.commune,unique('commune'),'Todos');
+  const nucleus=describe(f.nucleus,unique('nucleus'),'Todos');
+  const neighborhood=describe(f.neighborhood,unique('neighborhood'),'Todos');
+  box.innerHTML=`
+    <div class="ranking-summary-title">Contexto territorial del informe · ${fmt(rows.length)} sede(s)</div>
+    <div class="ranking-summary-chips">
+      <span class="ranking-summary-chip"><strong>Zona:</strong> ${escapeHtml(zone)}</span>
+      <span class="ranking-summary-chip"><strong>Comuna o corregimiento:</strong> ${escapeHtml(commune)}</span>
+      <span class="ranking-summary-chip"><strong>Núcleo educativo:</strong> ${escapeHtml(nucleus)}</span>
+      <span class="ranking-summary-chip"><strong>Barrio o vereda:</strong> ${escapeHtml(neighborhood)}</span>
+    </div>`;
+}
 function dashboardRecords(){
   const q = $('siteSearch') ? loose($('siteSearch').value||'') : '';
   const p = $('periodFilter') ? $('periodFilter').value : '';
@@ -1061,6 +1086,7 @@ function aggregateBySite(records){
 function renderDashboard(){
   if(!$('environmentBody')) return;
   const rows = aggregateBySite(dashboardRecords());
+  renderRankingTerritorialSummary(rows);
   const totalKwh = rows.reduce((a,r)=>a+r.energyKwh,0);
   const totalCo2kg = rows.reduce((a,r)=>a+r.co2kg,0);
   const totalTrees = Math.ceil(totalCo2kg / TREE_CO2_KG_YEAR);
@@ -1095,50 +1121,56 @@ function renderDashboard(){
 function drawSiteChart(rows){
   const c = $('siteChart');
   if(!c) return;
+  const displayRows=rows.slice(0,12);
+  const rowH=44;
+  c.height=Math.max(360,112 + displayRows.length*rowH);
   const ctx = c.getContext('2d');
   ctx.clearRect(0,0,c.width,c.height);
   ctx.fillStyle='#13312d';
   ctx.font='bold 17px Arial';
   ctx.textAlign='left';
-  ctx.fillText('Ranking de sedes por consumo eléctrico total (kWh)',24,34);
+  ctx.fillText('Ranking de sedes por consumo eléctrico total (kWh)',24,32);
   ctx.font='12px Arial';
   ctx.fillStyle='#637772';
-  ctx.fillText('Dato visible por sede: kWh acumulados · t CO₂e · árboles requeridos.',24,54);
-  if(!rows.length){ ctx.fillStyle='#13312d'; ctx.fillText('Sin datos para graficar',24,92); return; }
+  ctx.fillText('Cada sede incluye zona, comuna o corregimiento, núcleo educativo, kWh, CO₂e y árboles.',24,52);
+  if(!displayRows.length){ ctx.fillStyle='#13312d'; ctx.fillText('Sin datos para graficar',24,92); return; }
 
-  // v11: barras más cortas y columna fija para que siempre se vean kWh, CO₂e y árboles.
-  const padL = 255;
-  const padR = 28;
-  const valueX = Math.max(735, c.width - 330);
+  const padL = 300;
+  const padR = 24;
+  const valueX = Math.max(760, c.width - 315);
   const top = 82;
-  const rowH = 32;
-  const barH = 18;
-  const max = Math.max(...rows.map(r=>r.energyKwh),1);
+  const barH = 17;
+  const max = Math.max(...displayRows.map(r=>r.energyKwh),1);
   const maxBarW = Math.max(180, valueX - padL - 18);
 
-  ctx.font='12px Arial';
-  rows.forEach((r,i)=>{
+  displayRows.forEach((r,i)=>{
     const y = top + i*rowH;
-    const label = (r.site||'').length>34 ? r.site.slice(0,34)+'…' : r.site;
+    const meta=getSiteMeta(siteKey(r.site,r.address));
+    const label = (r.site||'').length>36 ? r.site.slice(0,36)+'…' : r.site;
+    const territorial=[meta.zone,meta.commune,`Núcleo ${meta.nucleus}`]
+      .filter(v=>v&&v!=='Sin clasificar'&&v!=='Núcleo Sin clasificar').join(' · ') || 'Información territorial sin clasificar';
 
     ctx.fillStyle='#315650';
     ctx.textAlign='right';
-    ctx.fillText(label, padL-12, y+14);
+    ctx.font='bold 11.5px Arial';
+    ctx.fillText(label, padL-12, y+12);
+    ctx.fillStyle='#6b7f7a';
+    ctx.font='10px Arial';
+    ctx.fillText(fitCanvasText(ctx,territorial,padL-28),padL-12,y+28);
 
     const bw = Math.max(8, (r.energyKwh/max)*maxBarW);
     const grad = ctx.createLinearGradient(padL,0,padL+bw,0);
     grad.addColorStop(0,'#0b9878');
     grad.addColorStop(1,'#0fc39a');
     ctx.fillStyle=grad;
-    roundRect(ctx,padL,y,bw,barH,8); ctx.fill();
+    roundRect(ctx,padL,y+5,bw,barH,8); ctx.fill();
 
-    const textX = valueX;
-    const available = c.width - textX - padR;
+    const available = c.width - valueX - padR;
     const fullLabel = `${fmt(r.energyKwh)} kWh · ${fmt(r.co2kg/1000)} t CO₂e · ${fmt(r.trees)} árboles`;
     ctx.fillStyle='#13312d';
     ctx.textAlign='left';
-    ctx.font='bold 11.5px Arial';
-    ctx.fillText(fitCanvasText(ctx, fullLabel, available), textX, y+14);
+    ctx.font='bold 11px Arial';
+    ctx.fillText(fitCanvasText(ctx, fullLabel, available), valueX, y+18);
   });
   ctx.textAlign='left';
 }
