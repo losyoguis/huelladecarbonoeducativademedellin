@@ -96,3 +96,11 @@ Como las facturas de servicios públicos no incluyen comuna ni núcleo, el botó
 ## Actualización v36 · filtros territoriales dependientes
 
 Se incorporó el directorio territorial de 422 sedes educativas usado por la Red Escolar de Pluviómetros de Medellín. La plataforma intenta relacionar automáticamente las sedes encontradas en las facturas y habilita filtros en cascada por zona, tipo de territorio, comuna o corregimiento, barrio o vereda, núcleo, tipo de sede y sede específica. La clasificación puede revisarse manualmente desde la interfaz y queda guardada en el navegador.
+
+
+## Módulos independientes
+- `dashboard.html`: Dashboard ambiental por sede.
+- `filtros-territoriales.html`: Búsqueda territorial y filtros de sedes educativas.
+- `aula-climatica.html`: Aula climática.
+
+Todos incluyen un botón “Volver al inicio” que dirige a `index.html#inicio`.
