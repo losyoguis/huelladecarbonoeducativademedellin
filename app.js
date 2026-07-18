@@ -1,4 +1,4 @@
-/* SiMeCO2 Servicios Públicos - v37 secuencia inicial guiada */
+/* SiMeCO2 Servicios Públicos - v38 controles de secuencia y filtros corregidos */
 let FACTOR_CO2_KG_KWH = 0.126; // kg CO2e/kWh. Ajustable desde el dashboard.
 let TREE_CO2_KG_YEAR = 22; // kg CO2e capturados por árbol al año. Ajustable desde el dashboard.
 const FACTOR_KEY = 'simeco2_factores_ambientales_v8';
@@ -25,62 +25,84 @@ window.addEventListener('load', () => {
 
 const INTRO_STAGE_DURATION = 4200;
 let introSequenceTimer = null;
+let introStage = 0; // 0 carga, 1 ranking, 2 impacto, 3 aplicación
+let introPaused = false;
 
 function clearIntroSequenceTimer(){
-  if(introSequenceTimer){
-    clearTimeout(introSequenceTimer);
-    introSequenceTimer = null;
-  }
+  if(introSequenceTimer){ clearTimeout(introSequenceTimer); introSequenceTimer = null; }
 }
-
+function updateIntroControls(){
+  document.querySelectorAll('[data-intro-action="back"]').forEach(btn=>btn.disabled=introStage<=0);
+  document.querySelectorAll('[data-intro-action="next"]').forEach(btn=>btn.disabled=introStage===0 && !state.records.length);
+  document.querySelectorAll('[data-intro-action="pause"]').forEach(btn=>{
+    btn.classList.toggle('is-paused',introPaused);
+    btn.setAttribute('aria-label',introPaused?'Reanudar presentación':'Pausar presentación');
+    btn.innerHTML=introPaused?'▶ <span>Reanudar</span>':'⏸ <span>Pausa</span>';
+  });
+}
 function activateDataGate(){
-  clearIntroSequenceTimer();
-  document.body.classList.remove('intro-ranking', 'intro-impact', 'app-ready');
+  clearIntroSequenceTimer(); introStage=0; introPaused=false;
+  document.body.classList.remove('intro-ranking','intro-impact','app-ready');
   document.body.classList.add('data-gate');
   document.documentElement.classList.add('data-gate-active');
-  history.replaceState(null, '', location.pathname + location.search + '#importacion');
-  requestAnimationFrame(() => $('importacion')?.scrollIntoView({block:'start'}));
+  history.replaceState(null,'',location.pathname+location.search+'#importacion');
+  requestAnimationFrame(()=>$('importacion')?.scrollIntoView({block:'start'}));
+  updateIntroControls();
 }
-
 function showIntroStage(stage){
-  document.body.classList.remove('data-gate', 'data-gate-opening', 'intro-ranking', 'intro-impact', 'app-ready');
+  clearIntroSequenceTimer();
+  document.body.classList.remove('data-gate','data-gate-opening','intro-ranking','intro-impact','app-ready');
   document.documentElement.classList.remove('data-gate-active');
   document.body.classList.add(stage);
-  const target = stage === 'intro-ranking' ? $('ranking-sedes') : $('impacto-proyecto');
-  const hash = stage === 'intro-ranking' ? '#ranking-sedes' : '#impacto-proyecto';
-  history.replaceState(null, '', location.pathname + location.search + hash);
-  target?.scrollIntoView({block:'start', behavior:'auto'});
+  introStage=stage==='intro-ranking'?1:2;
+  const target=introStage===1?$('ranking-sedes'):$('impacto-proyecto');
+  const hash=introStage===1?'#ranking-sedes':'#impacto-proyecto';
+  history.replaceState(null,'',location.pathname+location.search+hash);
+  target?.scrollIntoView({block:'start',behavior:'auto'});
   target?.classList.add('intro-stage-focus');
-  setTimeout(() => target?.classList.remove('intro-stage-focus'), 1100);
+  setTimeout(()=>target?.classList.remove('intro-stage-focus'),1100);
+  updateIntroControls();
 }
-
 function finishIntroSequence(){
-  clearIntroSequenceTimer();
-  document.body.classList.remove('data-gate', 'data-gate-opening', 'intro-ranking', 'intro-impact');
+  clearIntroSequenceTimer(); introStage=3; introPaused=false;
+  document.body.classList.remove('data-gate','data-gate-opening','intro-ranking','intro-impact');
   document.body.classList.add('app-ready');
   document.documentElement.classList.remove('data-gate-active');
-  history.replaceState(null, '', location.pathname + location.search + '#inicio');
-  window.scrollTo({top:0, behavior:'auto'});
+  history.replaceState(null,'',location.pathname+location.search+'#inicio');
+  window.scrollTo({top:0,behavior:'auto'}); updateIntroControls();
   log('Presentación inicial finalizada. Plataforma completa disponible.');
 }
-
-function unlockDataView(message='Datos cargados correctamente. Iniciando presentación de resultados...'){
-  if(!state.records.length){
-    log('La plataforma permanecerá en la pantalla de carga porque todavía no hay registros válidos.');
-    return false;
-  }
+function scheduleNextIntroStage(){
   clearIntroSequenceTimer();
-  log(message);
+  if(introPaused || introStage===0 || introStage>=3) return;
+  introSequenceTimer=setTimeout(()=>goToIntroStage(introStage+1,true),INTRO_STAGE_DURATION);
+}
+function goToIntroStage(target,automatic=false){
+  clearIntroSequenceTimer();
+  if(target<=0){ activateDataGate(); return; }
+  if(target===1){ if(!state.records.length){log('Primero debes cargar datos válidos para continuar.');return;} showIntroStage('intro-ranking'); }
+  else if(target===2) showIntroStage('intro-impact');
+  else { finishIntroSequence(); return; }
+  if(!introPaused) scheduleNextIntroStage();
+  if(!automatic) log(`Presentación: diapositiva ${introStage} de 3.`);
+}
+function handleIntroControl(e){
+  const btn=e.target.closest('[data-intro-action]'); if(!btn) return;
+  const action=btn.dataset.introAction;
+  if(action==='back') goToIntroStage(Math.max(0,introStage-1));
+  if(action==='next') goToIntroStage(introStage+1);
+  if(action==='pause'){
+    introPaused=!introPaused;
+    if(introPaused) clearIntroSequenceTimer(); else scheduleNextIntroStage();
+    updateIntroControls();
+    log(introPaused?'Presentación pausada.':'Presentación reanudada.');
+  }
+}
+function unlockDataView(message='Datos cargados correctamente. Iniciando presentación de resultados...'){
+  if(!state.records.length){ log('La plataforma permanecerá en la pantalla de carga porque todavía no hay registros válidos.'); updateIntroControls(); return false; }
+  clearIntroSequenceTimer(); introPaused=false; log(message);
   document.body.classList.add('data-gate-opening');
-  introSequenceTimer = setTimeout(() => {
-    log('Etapa 2 de 3: mostrando el ranking de sedes por consumo eléctrico total.');
-    showIntroStage('intro-ranking');
-    introSequenceTimer = setTimeout(() => {
-      log('Etapa 3 de 3: mostrando los indicadores de avance y alertas inteligentes.');
-      showIntroStage('intro-impact');
-      introSequenceTimer = setTimeout(finishIntroSequence, INTRO_STAGE_DURATION);
-    }, INTRO_STAGE_DURATION);
-  }, 450);
+  introSequenceTimer=setTimeout(()=>{ log('Etapa 2 de 3: mostrando el ranking de sedes por consumo eléctrico total.'); goToIntroStage(1,true); },450);
   return true;
 }
 
@@ -114,6 +136,7 @@ function initPdfJs(){
   }
 }
 function bindEvents(){
+  document.addEventListener("click", handleIntroControl);
   $("scanDataBtn").addEventListener("click", scanDataFolder);
   $("localPdfInput").addEventListener("change", handleLocalPdf);
   $("clearBtn").addEventListener("click", ()=>{ if(confirm("¿Reiniciar todos los datos importados?")){ localStorage.removeItem(STORE_KEY); localStorage.removeItem(SITE_META_KEY); location.reload(); }});
@@ -122,7 +145,7 @@ function bindEvents(){
   ["siteSearch","periodFilter","serviceFilter"].forEach(id=>$(id).addEventListener("input", ()=>{ renderTable(); renderDashboard(); }));
   ["globalSiteSearch","zoneFilter","territoryTypeFilter","communeFilter","neighborhoodFilter","nucleusFilter","siteTypeFilter","specificSiteFilter","globalPeriodFilter","globalServiceFilter","priorityFilter"].forEach(id=>{
     const el=$(id); if(!el) return;
-    const handler=()=>applyAdvancedSiteFilters({refresh: !["globalPeriodFilter","globalServiceFilter","priorityFilter"].includes(id)});
+    const handler=()=>applyAdvancedSiteFilters({refresh:true});
     el.addEventListener('input', handler); el.addEventListener('change', handler);
   });
   if($("clearSiteFiltersBtn")) $("clearSiteFiltersBtn").addEventListener("click", clearAdvancedSiteFilters);
@@ -573,12 +596,12 @@ function fillDependentSelect(id,values,label,keep){
 function refreshTerritorialFilters(){
   ensureSiteMetadata();
   const f=currentTerritorialFilters(), rows=siteRows();
-  fillDependentSelect('zoneFilter',optionValues(rows.filter(r=>siteMatchesTerritorial(r,f,'zone')),'zone'),'Todas',f.zone);
-  fillDependentSelect('territoryTypeFilter',optionValues(rows.filter(r=>siteMatchesTerritorial(r,f,'territoryType')),'territoryType'),'Todos',f.territoryType);
-  fillDependentSelect('communeFilter',optionValues(rows.filter(r=>siteMatchesTerritorial(r,f,'commune')),'commune'),'Todos',f.commune);
-  fillDependentSelect('neighborhoodFilter',optionValues(rows.filter(r=>siteMatchesTerritorial(r,f,'neighborhood')),'neighborhood'),'Todos',f.neighborhood);
-  fillDependentSelect('nucleusFilter',optionValues(rows.filter(r=>siteMatchesTerritorial(r,f,'nucleus')),'nucleus'),'Todos',f.nucleus);
-  fillDependentSelect('siteTypeFilter',optionValues(rows.filter(r=>siteMatchesTerritorial(r,f,'siteType')),'siteType'),'Todos',f.siteType);
+  fillDependentSelect('zoneFilter', optionValues(rows.filter(r=>siteMatchesTerritorial(r,f,'zone')), 'zone'), 'Todas', f.zone);
+  fillDependentSelect('territoryTypeFilter', optionValues(rows.filter(r=>siteMatchesTerritorial(r,f,'territoryType')), 'territoryType'), 'Todos', f.territoryType);
+  fillDependentSelect('communeFilter', optionValues(rows.filter(r=>siteMatchesTerritorial(r,f,'commune')), 'commune'), 'Todas', f.commune);
+  fillDependentSelect('neighborhoodFilter', optionValues(rows.filter(r=>siteMatchesTerritorial(r,f,'neighborhood')), 'neighborhood'), 'Todos', f.neighborhood);
+  fillDependentSelect('nucleusFilter', optionValues(rows.filter(r=>siteMatchesTerritorial(r,f,'nucleus')), 'nucleus'), 'Todos', f.nucleus);
+  fillDependentSelect('siteTypeFilter', optionValues(rows.filter(r=>siteMatchesTerritorial(r,f,'siteType')), 'siteType'), 'Todos', f.siteType);
   const matching=rows.filter(r=>siteMatchesTerritorial(r,f,'siteKey')).sort((a,b)=>a.site.localeCompare(b.site,'es'));
   const siteSel=$('specificSiteFilter');
   siteSel.innerHTML='<option value="">Todas</option>'+matching.map(r=>`<option value="${escapeHtml(r.key)}">${escapeHtml(r.site)}${r.meta.commune!=='Sin clasificar'?` · ${escapeHtml(r.meta.commune)}`:''}</option>`).join('');
@@ -589,7 +612,7 @@ function refreshTerritorialFilters(){
 }
 function applyAdvancedSiteFilters({refresh=true}={}){
   if(refresh) refreshTerritorialFilters();
-  renderFilterSummary(); renderCompareControls({keepSite:true}); comparePeriods(); renderDashboard(); renderTable(); drawChart(aggregateByPeriod(advancedFilteredRecords()));
+  renderFilterSummary(); renderCards(); renderExecutiveSummary(); renderProjectImpact(); renderCompareControls({keepSite:true}); comparePeriods(); renderDashboard(); renderTable(); drawChart(aggregateByPeriod(advancedFilteredRecords()));
 }
 function clearAdvancedSiteFilters(){
   ['globalSiteSearch','zoneFilter','territoryTypeFilter','communeFilter','neighborhoodFilter','nucleusFilter','siteTypeFilter','specificSiteFilter','globalPeriodFilter','globalServiceFilter','priorityFilter'].forEach(id=>{if($(id)) $(id).value='';});

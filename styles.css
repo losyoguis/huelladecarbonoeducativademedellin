@@ -1109,3 +1109,15 @@ body.app-ready .sticky-nav a[href="#ranking-sedes"]{
   body.intro-impact #impacto-proyecto,
   .intro-stage-focus{animation:none!important}
 }
+
+
+/* Controles de la presentación inicial */
+.intro-slide-controls{display:none;align-items:center;justify-content:center;gap:14px;margin:22px auto 0;position:relative;z-index:40}
+body.data-gate #importacion .intro-slide-controls,body.intro-ranking #ranking-sedes .intro-slide-controls,body.intro-impact #impacto-proyecto .intro-slide-controls{display:flex}
+.intro-control{min-width:132px;border:1px solid #b8dcd5;background:#fff;color:#12332e;border-radius:999px;padding:13px 20px;font:800 15px/1.1 inherit;cursor:pointer;box-shadow:0 10px 28px rgba(18,72,62,.10);transition:transform .2s ease,box-shadow .2s ease,opacity .2s ease}
+.intro-control:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 14px 30px rgba(18,72,62,.16)}
+.intro-control:disabled{opacity:.38;cursor:not-allowed}
+.intro-pause{background:#e9fff8;border-color:#8adbc7;color:#08765e}
+.intro-next{background:linear-gradient(135deg,#079b79,#12cda0);border-color:transparent;color:#fff}
+.intro-control.is-paused{background:#fff4d9;border-color:#edc86d;color:#795600}
+@media(max-width:640px){.intro-slide-controls{gap:8px;position:sticky;bottom:12px}.intro-control{min-width:0;flex:1;padding:12px 8px;font-size:13px}.intro-control span{display:inline}}
