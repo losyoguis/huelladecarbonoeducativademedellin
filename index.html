@@ -155,6 +155,58 @@
       <canvas id="chart" width="1100" height="420" aria-label="Gráfico comparativo"></canvas>
     </section>
 
+    <section class="panel advanced-site-filters" id="filtros-sedes">
+      <div class="section-head">
+        <div>
+          <span class="section-kicker">Búsqueda territorial</span>
+          <h2>Filtros avanzados de sedes educativas</h2>
+          <p class="muted">Estos filtros se aplican al comparador, ranking, dashboard y tabla de registros. La comuna y el núcleo pueden asignarse desde el administrador de clasificación.</p>
+        </div>
+        <button id="toggleClassificationBtn" class="secondary" type="button">Clasificar sedes</button>
+      </div>
+      <div class="site-filter-grid">
+        <label>Buscar sede o dirección
+          <input id="globalSiteSearch" type="search" placeholder="Ej. Manuel J. Betancur o dirección" autocomplete="off" />
+        </label>
+        <label>Comuna o corregimiento
+          <select id="communeFilter"><option value="">Todas</option></select>
+        </label>
+        <label>Núcleo educativo
+          <select id="nucleusFilter"><option value="">Todos</option></select>
+        </label>
+        <label>Periodo
+          <select id="globalPeriodFilter"><option value="">Todos</option></select>
+        </label>
+        <label>Servicio disponible
+          <select id="globalServiceFilter">
+            <option value="">Todos</option><option value="energia">Energía</option><option value="agua">Agua</option>
+            <option value="alcantarillado">Alcantarillado</option><option value="gas">Gas</option><option value="aseo">Aseo</option>
+          </select>
+        </label>
+        <label>Prioridad energética
+          <select id="priorityFilter">
+            <option value="">Todas</option><option value="high">Alta prioridad</option><option value="medium">Prioridad media</option><option value="low">Prioridad preventiva</option>
+          </select>
+        </label>
+      </div>
+      <div class="filter-actions">
+        <div id="filterSummary" class="filter-summary">Mostrando todas las sedes cargadas.</div>
+        <button id="clearSiteFiltersBtn" class="secondary" type="button">Limpiar filtros</button>
+      </div>
+      <div id="classificationPanel" class="classification-panel" hidden>
+        <div class="classification-help">
+          <strong>Clasificación territorial de sedes</strong>
+          <p>Las facturas no incluyen comuna ni núcleo educativo. Selecciona estos datos para cada sede; la información queda guardada en este dispositivo.</p>
+        </div>
+        <div class="table-wrap">
+          <table class="classification-table">
+            <thead><tr><th>Sede</th><th>Dirección</th><th>Comuna/corregimiento</th><th>Núcleo educativo</th></tr></thead>
+            <tbody id="classificationBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
     <section class="panel ranking-panel" id="ranking-sedes">
       <div class="section-head">
         <div>
@@ -283,7 +335,7 @@
         <table>
           <thead>
             <tr>
-              <th>Periodo</th><th>Sede</th><th>Dirección</th><th>Agua m³</th><th>Alc. m³</th><th>Energía kWh</th><th>Gas m³</th><th>Aseo $</th><th>Residuos t</th><th>CO₂ kg</th><th>Fuente</th>
+              <th>Periodo</th><th>Sede</th><th>Dirección</th><th>Comuna</th><th>Núcleo</th><th>Agua m³</th><th>Alc. m³</th><th>Energía kWh</th><th>Gas m³</th><th>Aseo $</th><th>Residuos t</th><th>CO₂ kg</th><th>Fuente</th>
             </tr>
           </thead>
           <tbody id="recordsBody"></tbody>
@@ -308,6 +360,6 @@
   </footer>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-  <script src="app.js?v=33-pantalla-carga-inicial"></script>
+  <script src="app.js?v=34-filtros-territoriales"></script>
 </body>
 </html>

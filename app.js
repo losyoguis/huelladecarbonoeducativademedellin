@@ -4,6 +4,9 @@ let TREE_CO2_KG_YEAR = 22; // kg CO2e capturados por árbol al año. Ajustable d
 const FACTOR_KEY = 'simeco2_factores_ambientales_v8';
 const STORE_KEY = 'simeco2_servicios_v7';
 const CONFIG_KEY = 'simeco2_repo_config_v7';
+const SITE_META_KEY = 'simeco2_clasificacion_sedes_v1';
+const COMMUNES = ['Comuna 1 - Popular','Comuna 2 - Santa Cruz','Comuna 3 - Manrique','Comuna 4 - Aranjuez','Comuna 5 - Castilla','Comuna 6 - Doce de Octubre','Comuna 7 - Robledo','Comuna 8 - Villa Hermosa','Comuna 9 - Buenos Aires','Comuna 10 - La Candelaria','Comuna 11 - Laureles-Estadio','Comuna 12 - La América','Comuna 13 - San Javier','Comuna 14 - El Poblado','Comuna 15 - Guayabal','Comuna 16 - Belén','Corregimiento 50 - San Sebastián de Palmitas','Corregimiento 60 - San Cristóbal','Corregimiento 70 - Altavista','Corregimiento 80 - San Antonio de Prado','Corregimiento 90 - Santa Elena','Sin clasificar'];
+let siteMetadata = loadSiteMetadata();
 
 const $ = (id)=>document.getElementById(id);
 const state = loadStore();
@@ -67,10 +70,16 @@ function initPdfJs(){
 function bindEvents(){
   $("scanDataBtn").addEventListener("click", scanDataFolder);
   $("localPdfInput").addEventListener("change", handleLocalPdf);
-  $("clearBtn").addEventListener("click", ()=>{ if(confirm("¿Reiniciar todos los datos importados?")){ localStorage.removeItem(STORE_KEY); location.reload(); }});
+  $("clearBtn").addEventListener("click", ()=>{ if(confirm("¿Reiniciar todos los datos importados?")){ localStorage.removeItem(STORE_KEY); localStorage.removeItem(SITE_META_KEY); location.reload(); }});
   if($("saveRepoBtn")) $("saveRepoBtn").addEventListener("click", saveConfig);
   if($("updateFactorsBtn")) $("updateFactorsBtn").addEventListener("click", updateFactors);
   ["siteSearch","periodFilter","serviceFilter"].forEach(id=>$(id).addEventListener("input", ()=>{ renderTable(); renderDashboard(); }));
+  ["globalSiteSearch","communeFilter","nucleusFilter","globalPeriodFilter","globalServiceFilter","priorityFilter"].forEach(id=>{
+    if($(id)) $(id).addEventListener("input", applyAdvancedSiteFilters);
+  });
+  if($("clearSiteFiltersBtn")) $("clearSiteFiltersBtn").addEventListener("click", clearAdvancedSiteFilters);
+  if($("toggleClassificationBtn")) $("toggleClassificationBtn").addEventListener("click", toggleClassificationPanel);
+  if($("classificationBody")) $("classificationBody").addEventListener("change", handleClassificationChange);
   $("exportCsvBtn").addEventListener("click", exportCsv);
   $("exportJsonBtn").addEventListener("click", exportJson);
   if($("compareMode")) $("compareMode").addEventListener("change", ()=>{ renderCompareControls(); comparePeriods(); });
@@ -408,11 +417,108 @@ function round(n,d=2){ return Number.isFinite(n) ? Math.round(n*Math.pow(10,d))/
 function hasAnyMeasure(r){ return [r.waterM3,r.alcM3,r.energyKwh,r.gasM3,r.wasteValue,r.wasteTon].some(v=>v!==null && v!==undefined && v!==0); }
 function siteKey(site,address=''){ return `${loose(site)}|${loose(address)}`; }
 
+function loadSiteMetadata(){
+  try{return JSON.parse(localStorage.getItem(SITE_META_KEY)||'{}')||{}}catch{return {}}
+}
+function saveSiteMetadata(){ localStorage.setItem(SITE_META_KEY, JSON.stringify(siteMetadata)); }
+function getSiteMeta(recordOrKey){
+  const key = typeof recordOrKey==='string' ? recordOrKey : siteKey(recordOrKey.site, recordOrKey.address);
+  return siteMetadata[key] || {commune:'Sin clasificar', nucleus:'Sin clasificar'};
+}
+function sitePriorityClass(record){
+  const key=siteKey(record.site,record.address);
+  const relevant=state.records.filter(r=>siteKey(r.site,r.address)===key && Number(r.energyKwh)>0);
+  const periods=new Set(relevant.map(r=>r.period)).size || 1;
+  const avg=relevant.reduce((a,r)=>a+(Number(r.energyKwh)||0),0)/periods;
+  return classifyEnergyIntensity(avg).cls;
+}
+function matchesService(r, service){
+  if(!service) return true;
+  if(service==='energia') return Number(r.energyKwh)>0;
+  if(service==='agua') return Number(r.waterM3)>0;
+  if(service==='alcantarillado') return Number(r.alcM3)>0;
+  if(service==='gas') return Number(r.gasM3)>0;
+  if(service==='aseo') return Number(r.wasteValue)>0 || Number(r.wasteTon)>0;
+  return true;
+}
+function advancedFilteredRecords(records=state.records){
+  const q=loose($('globalSiteSearch')?.value||'');
+  const commune=$('communeFilter')?.value||'';
+  const nucleus=$('nucleusFilter')?.value||'';
+  const period=$('globalPeriodFilter')?.value||'';
+  const service=$('globalServiceFilter')?.value||'';
+  const priority=$('priorityFilter')?.value||'';
+  return records.filter(r=>{
+    const meta=getSiteMeta(r);
+    if(q && !(`${loose(r.site)} ${loose(r.address)} ${loose(meta.commune)} ${loose(meta.nucleus)}`.includes(q))) return false;
+    if(commune && meta.commune!==commune) return false;
+    if(nucleus && meta.nucleus!==nucleus) return false;
+    if(period && r.period!==period) return false;
+    if(!matchesService(r,service)) return false;
+    if(priority && sitePriorityClass(r)!==priority) return false;
+    return true;
+  });
+}
+function applyAdvancedSiteFilters(){
+  renderFilterSummary();
+  renderCompareControls({keepSite:true});
+  comparePeriods();
+  renderDashboard();
+  renderTable();
+  drawChart(aggregateByPeriod(advancedFilteredRecords()));
+}
+function clearAdvancedSiteFilters(){
+  ['globalSiteSearch','communeFilter','nucleusFilter','globalPeriodFilter','globalServiceFilter','priorityFilter'].forEach(id=>{if($(id)) $(id).value='';});
+  applyAdvancedSiteFilters();
+}
+function renderAdvancedFilterControls(){
+  if(!$('communeFilter')) return;
+  const keepCommune=$('communeFilter').value, keepNucleus=$('nucleusFilter').value, keepPeriod=$('globalPeriodFilter').value;
+  $('communeFilter').innerHTML='<option value="">Todas</option>'+COMMUNES.map(x=>`<option value="${escapeHtml(x)}">${escapeHtml(x)}</option>`).join('');
+  const nuclei=[...new Set(Object.values(siteMetadata).map(x=>x.nucleus||'Sin clasificar').concat(['Sin clasificar']))].sort((a,b)=>a.localeCompare(b,'es'));
+  $('nucleusFilter').innerHTML='<option value="">Todos</option>'+nuclei.map(x=>`<option value="${escapeHtml(x)}">${escapeHtml(x)}</option>`).join('');
+  const periods=[...new Set(state.records.map(r=>r.period).filter(Boolean))].sort();
+  $('globalPeriodFilter').innerHTML='<option value="">Todos</option>'+periods.map(x=>`<option value="${escapeHtml(x)}">${escapeHtml(x)}</option>`).join('');
+  if([...$('communeFilter').options].some(o=>o.value===keepCommune)) $('communeFilter').value=keepCommune;
+  if([...$('nucleusFilter').options].some(o=>o.value===keepNucleus)) $('nucleusFilter').value=keepNucleus;
+  if([...$('globalPeriodFilter').options].some(o=>o.value===keepPeriod)) $('globalPeriodFilter').value=keepPeriod;
+  renderClassificationTable();
+  renderFilterSummary();
+}
+function renderFilterSummary(){
+  if(!$('filterSummary')) return;
+  const recs=advancedFilteredRecords();
+  const sites=new Set(recs.map(r=>siteKey(r.site,r.address))).size;
+  $('filterSummary').innerHTML=`Mostrando <strong>${fmt(sites)} sede(s)</strong> y <strong>${fmt(recs.length)} registro(s)</strong> según los filtros seleccionados.`;
+}
+function toggleClassificationPanel(){
+  const panel=$('classificationPanel'); if(!panel) return;
+  panel.hidden=!panel.hidden;
+  $('toggleClassificationBtn').textContent=panel.hidden?'Clasificar sedes':'Cerrar clasificación';
+  if(!panel.hidden) renderClassificationTable();
+}
+function renderClassificationTable(){
+  if(!$('classificationBody')) return;
+  const sites=getSiteOptions();
+  $('classificationBody').innerHTML=sites.map(s=>{
+    const key=siteKey(s.site,s.address), meta=getSiteMeta(key);
+    const communeOpts=COMMUNES.map(x=>`<option value="${escapeHtml(x)}" ${x===meta.commune?'selected':''}>${escapeHtml(x)}</option>`).join('');
+    return `<tr><td><strong>${escapeHtml(s.site)}</strong></td><td>${escapeHtml(s.address||'')}</td><td><select class="meta-commune" data-site-key="${escapeHtml(key)}">${communeOpts}</select></td><td><input class="meta-nucleus" data-site-key="${escapeHtml(key)}" value="${escapeHtml(meta.nucleus||'Sin clasificar')}" placeholder="Ej. Núcleo 935" /></td></tr>`;
+  }).join('') || '<tr><td colspan="4">Carga datos para clasificar las sedes.</td></tr>';
+}
+function handleClassificationChange(e){
+  const key=e.target?.dataset?.siteKey; if(!key) return;
+  siteMetadata[key] ||= {commune:'Sin clasificar',nucleus:'Sin clasificar'};
+  if(e.target.classList.contains('meta-commune')) siteMetadata[key].commune=e.target.value||'Sin clasificar';
+  if(e.target.classList.contains('meta-nucleus')) siteMetadata[key].nucleus=e.target.value.trim()||'Sin clasificar';
+  saveSiteMetadata(); renderAdvancedFilterControls(); applyAdvancedSiteFilters();
+}
+
 function filteredRecords(){
   const q = loose($('siteSearch').value||'');
   const p = $('periodFilter').value;
   const s = $('serviceFilter').value;
-  return state.records.filter(r=>{
+  return advancedFilteredRecords(state.records).filter(r=>{
     if(q && !(`${loose(r.site)} ${loose(r.address)}`.includes(q))) return false;
     if(p && r.period!==p) return false;
     if(s==='energia' && !r.energyKwh) return false;
@@ -423,7 +529,7 @@ function filteredRecords(){
     return true;
   });
 }
-function renderAll(){ recalculateCo2(); renderControls(); renderCards(); renderExecutiveSummary(); renderProjectImpact(); renderDashboard(); renderTable(); drawChart(aggregateByPeriod(state.records)); }
+function renderAll(){ recalculateCo2(); renderControls(); renderAdvancedFilterControls(); renderCards(); renderExecutiveSummary(); renderProjectImpact(); renderDashboard(); renderTable(); drawChart(aggregateByPeriod(advancedFilteredRecords())); }
 function renderControls(){
   const periods = [...new Set(state.records.map(r=>r.period))].sort();
   const options = '<option value="">Todos</option>'+periods.map(p=>`<option value="${p}">${p}</option>`).join('');
@@ -450,8 +556,10 @@ function renderTable(){
   const recs = filteredRecords();
   $('recordsBody').innerHTML = recs.map(r=>`<tr>
     <td data-label="Periodo">${r.period}</td>
-    <td data-label="Sede">${escapeHtml(r.site)}</td>
+    <td data-label="Sede"><strong>${escapeHtml(r.site)}</strong><small class="site-meta-line">${escapeHtml(getSiteMeta(siteKey(r.site,r.address)).commune)} · ${escapeHtml(getSiteMeta(siteKey(r.site,r.address)).nucleus)}</small></td>
     <td data-label="Dirección">${escapeHtml(r.address||'')}</td>
+    <td data-label="Comuna">${escapeHtml(getSiteMeta(r).commune)}</td>
+    <td data-label="Núcleo">${escapeHtml(getSiteMeta(r).nucleus)}</td>
     <td data-label="Agua m³">${num(r.waterM3)}</td>
     <td data-label="Alc. m³">${num(r.alcM3)}</td>
     <td data-label="Energía kWh">${num(r.energyKwh)}</td>
@@ -460,7 +568,7 @@ function renderTable(){
     <td data-label="Residuos t">${num(r.wasteTon)}</td>
     <td data-label="CO₂ kg">${num(r.co2kg)}</td>
     <td data-label="Fuente">${escapeHtml(r.source||'')}</td>
-  </tr>`).join('') || `<tr><td colspan="11">No hay registros para los filtros seleccionados.</td></tr>`;
+  </tr>`).join('') || `<tr><td colspan="13">No hay registros para los filtros seleccionados.</td></tr>`;
 }
 function aggregateByPeriod(records){
   const map = {};
@@ -507,7 +615,7 @@ function compareModeLabel(mode){
 }
 function recordsForCompareScope(){
   const site = $('compareSite') ? $('compareSite').value : '';
-  return state.records.filter(r=>!site || siteKey(r.site,r.address) === site);
+  return advancedFilteredRecords(state.records).filter(r=>!site || siteKey(r.site,r.address) === site);
 }
 function aggregateByComparison(records, mode){
   const map = {};
@@ -524,7 +632,8 @@ function renderCompareControls(opts={}){
   if(!$('compareA') || !$('compareB')) return;
   const currentSite = opts.keepSite && $('compareSite') ? $('compareSite').value : ($('compareSite') ? $('compareSite').value : '');
   if($('compareSite')){
-    const siteOptions = getSiteOptions();
+    const allowedKeys=new Set(advancedFilteredRecords(state.records).map(r=>siteKey(r.site,r.address)));
+    const siteOptions = getSiteOptions().filter(s=>allowedKeys.has(siteKey(s.site,s.address)));
     $('compareSite').innerHTML = '<option value="">Todas las sedes</option>' + siteOptions.map(s=>{
       const key = siteKey(s.site,s.address);
       const label = `${s.site}${s.address ? ' · '+s.address : ''}`;
@@ -587,11 +696,11 @@ function drawChart(data){
 function roundRect(ctx,x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
 function exportCsv(){
   const recs=filteredRecords();
-  const headers=['periodo','sede','direccion','agua_m3','alcantarillado_m3','energia_kwh','gas_m3','aseo_valor','residuos_t','co2_kg','fuente'];
-  const rows=recs.map(r=>[r.period,r.site,r.address,r.waterM3,r.alcM3,r.energyKwh,r.gasM3,r.wasteValue,r.wasteTon,r.co2kg,r.source]);
+  const headers=['periodo','sede','direccion','comuna_corregimiento','nucleo_educativo','agua_m3','alcantarillado_m3','energia_kwh','gas_m3','aseo_valor','residuos_t','co2_kg','fuente'];
+  const rows=recs.map(r=>[r.period,r.site,r.address,getSiteMeta(r).commune,getSiteMeta(r).nucleus,r.waterM3,r.alcM3,r.energyKwh,r.gasM3,r.wasteValue,r.wasteTon,r.co2kg,r.source]);
   downloadBlob([headers,...rows].map(row=>row.map(csvCell).join(',')).join('\n'),'simeco2_servicios.csv','text/csv;charset=utf-8');
 }
-function exportJson(){ downloadBlob(JSON.stringify(state,null,2),'simeco2_servicios.json','application/json'); }
+function exportJson(){ downloadBlob(JSON.stringify({...state,siteMetadata},null,2),'simeco2_servicios.json','application/json'); }
 function downloadBlob(content,name,type){ const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([content],{type})); a.download=name; a.click(); URL.revokeObjectURL(a.href); }
 function csvCell(v){ const s=(v??'').toString(); return '"'+s.replace(/"/g,'""')+'"'; }
 
@@ -685,7 +794,7 @@ function money(n){ return n==null||n==='' ? '—' : '$ '+fmt(n); }
 function dashboardRecords(){
   const q = $('siteSearch') ? loose($('siteSearch').value||'') : '';
   const p = $('periodFilter') ? $('periodFilter').value : '';
-  return state.records.filter(r=>{
+  return advancedFilteredRecords(state.records).filter(r=>{
     if(q && !(`${loose(r.site)} ${loose(r.address)}`.includes(q))) return false;
     if(p && r.period!==p) return false;
     return Number(r.energyKwh) > 0;
@@ -726,7 +835,7 @@ function renderDashboard(){
     const priority = classifyEnergyIntensity(r.avgKwhMonth);
     return `<tr>
     <td data-label="#">${i+1}</td>
-    <td data-label="Sede">${escapeHtml(r.site)}</td>
+    <td data-label="Sede"><strong>${escapeHtml(r.site)}</strong><small class="site-meta-line">${escapeHtml(getSiteMeta(siteKey(r.site,r.address)).commune)} · ${escapeHtml(getSiteMeta(siteKey(r.site,r.address)).nucleus)}</small></td>
     <td data-label="Dirección">${escapeHtml(r.address)}</td>
     <td data-label="Periodos">${fmt(r.periodCount)}</td>
     <td data-label="Energía total kWh"><strong>${fmt(r.energyKwh)}</strong></td>

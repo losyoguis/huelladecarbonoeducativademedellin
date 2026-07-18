@@ -950,3 +950,20 @@ body.data-gate-opening #importacion {
   body.data-gate #importacion .update-status-card { min-height: 390px; }
   body.data-gate #logBox { min-height: 220px; max-height: 38vh; }
 }
+
+
+/* Filtros territoriales y clasificación de sedes - v34 */
+.advanced-site-filters{border-top:5px solid var(--primary,#079a78)}
+.site-filter-grid{display:grid;grid-template-columns:repeat(3,minmax(190px,1fr));gap:16px;margin-top:18px}
+.site-filter-grid label{display:flex;flex-direction:column;gap:7px;font-weight:800;color:#173b35}
+.site-filter-grid input,.site-filter-grid select,.classification-table input,.classification-table select{width:100%;min-height:48px;border:1px solid #c9ded9;border-radius:14px;background:#fff;padding:10px 13px;color:#153a34;font:inherit}
+.site-filter-grid input:focus,.site-filter-grid select:focus,.classification-table input:focus,.classification-table select:focus{outline:3px solid rgba(10,168,132,.16);border-color:#0aa884}
+.filter-actions{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-top:18px;padding:14px 16px;border-radius:16px;background:#effaf7}
+.filter-summary{color:#486761}
+.classification-panel{margin-top:20px;padding:18px;border:1px solid #cfe4df;border-radius:20px;background:#fbfefd}
+.classification-panel[hidden]{display:none!important}
+.classification-help{margin-bottom:14px}.classification-help p{margin:.35rem 0 0;color:#637772}
+.classification-table td{vertical-align:middle;min-width:190px}.classification-table td:first-child{min-width:260px}
+.site-meta-line{display:block;margin-top:5px;color:#667c77;font-weight:600;font-size:.75rem;line-height:1.25}
+@media(max-width:1000px){.site-filter-grid{grid-template-columns:repeat(2,minmax(170px,1fr))}}
+@media(max-width:650px){.site-filter-grid{grid-template-columns:1fr}.filter-actions{align-items:stretch;flex-direction:column}.filter-actions button{width:100%}}

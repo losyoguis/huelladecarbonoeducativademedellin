@@ -85,3 +85,10 @@ Archivos actualizados:
 
 - Se agregó movimiento al botón principal **Actualizar datos ahora** mediante pulso, brillo, barrido luminoso e ícono de actualización animado.
 - El botón conserva accesibilidad con `aria-label` y respeta `prefers-reduced-motion`.
+
+
+## Filtros territoriales de sedes (v34)
+
+La plataforma incluye filtros globales por nombre o dirección, comuna/corregimiento, núcleo educativo, periodo, servicio disponible y prioridad energética. Los filtros se aplican al comparador, ranking, dashboard y registros.
+
+Como las facturas de servicios públicos no incluyen comuna ni núcleo, el botón **Clasificar sedes** permite asignarlos manualmente. La clasificación se conserva en el almacenamiento local del navegador y se incluye en las exportaciones CSV y JSON.
