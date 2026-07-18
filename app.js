@@ -4,8 +4,8 @@ let TREE_CO2_KG_YEAR = 22; // kg CO2e capturados por árbol al año. Ajustable d
 const FACTOR_KEY = 'simeco2_factores_ambientales_v8';
 const STORE_KEY = 'simeco2_servicios_v7';
 const CONFIG_KEY = 'simeco2_repo_config_v7';
-const SITE_META_KEY = 'simeco2_clasificacion_sedes_v2';
-const TERRITORIAL_DIRECTORY = Array.isArray(window.INSTITUCIONES_MEDELLIN) ? window.INSTITUCIONES_MEDELLIN : [];
+const SITE_META_KEY = 'simeco2_clasificacion_sedes_energia_v1';
+const TERRITORIAL_DIRECTORY = []; // Las sedes provienen exclusivamente de las facturas de energía.
 const EMPTY_META = {zone:'Sin clasificar', territoryType:'Sin clasificar', commune:'Sin clasificar', neighborhood:'Sin clasificar', nucleus:'Sin clasificar', siteType:'Sin clasificar', directoryId:'', source:'Manual', confidence:'Pendiente'};
 let siteMetadata = loadSiteMetadata();
 
@@ -78,29 +78,43 @@ function normalizeLoadedRecords(records){
 async function ensureInitialData(){
   if(hasUsableRecords(state.records)){
     state.records=normalizeLoadedRecords(state.records);
+    rebuildSiteIndex();
     log(`Recuperados ${state.records.length} registros guardados en este dispositivo.`);
     return true;
   }
   state.records=[]; state.sites={};
+
+  // Fuente primaria: registros consolidados extraídos de las facturas de servicios públicos.
+  if(Array.isArray(window.SIMECO_REGISTROS) && window.SIMECO_REGISTROS.length){
+    state.records=normalizeLoadedRecords(window.SIMECO_REGISTROS);
+    rebuildSiteIndex();
+    log(`Facturas consolidadas cargadas: ${state.records.length} registros de ${Object.keys(state.sites).length} sedes.`);
+    return true;
+  }
+
+  // Respaldo para servidores web: JSON equivalente.
   try{
-    log('Cargando la base de datos ambiental consolidada...');
+    log('Cargando los registros consolidados de las facturas de energía...');
     const response = await fetch('data/registros.json', {cache:'force-cache'});
     if(!response.ok) throw new Error(`${response.status} ${response.statusText}`);
     const payload = await response.json();
     const records = Array.isArray(payload) ? payload : payload.records;
     if(!Array.isArray(records) || !records.length) throw new Error('El archivo registros.json está vacío.');
     state.records = normalizeLoadedRecords(records);
-    state.files = state.files || {};
-    state.sites = state.sites || {};
-    for(const r of state.records){
-      if(r.site) state.sites[siteKey(r.site,r.address)] = {site:r.site,address:r.address};
-      if(r.source) state.files['manifest:'+r.source] = {name:r.source,period:r.period,importedAt:'incluido en el proyecto',count:0};
-    }
-    log(`Base consolidada cargada: ${state.records.length} registros de ${Object.keys(state.sites).length} sedes.`);
+    rebuildSiteIndex();
+    log(`Facturas consolidadas cargadas: ${state.records.length} registros de ${Object.keys(state.sites).length} sedes.`);
     return true;
   }catch(err){
-    log(`No se pudo cargar data/registros.json: ${err.message}`);
+    log(`No se pudo cargar la base de facturas: ${err.message}`);
     return false;
+  }
+}
+function rebuildSiteIndex(){
+  state.files=state.files||{};
+  state.sites={};
+  for(const r of state.records){
+    if(r.site) state.sites[siteKey(r.site,r.address)]={site:r.site,address:r.address||''};
+    if(r.source) state.files['manifest:'+r.source]={name:r.source,period:r.period,importedAt:'incluido en el proyecto',count:0};
   }
 }
 
@@ -653,41 +667,15 @@ function normalizedTokens(value){
   const stop=new Set(['institucion','institución','educativa','educativo','escuela','colegio','sede','centro','ie','i','e','de','del','la','las','el','los','y','n','no','numero']);
   return loose(value).replace(/\b(inst|educ|esc|col|jardin|inf|nro|num)\b/g,' ').split(/\s+/).filter(t=>t.length>1&&!stop.has(t));
 }
-function directoryMatchForSite(site,address=''){
-  if(!TERRITORIAL_DIRECTORY.length || !site) return null;
-  const nameNorm=loose(site), addressNorm=loose(address);
-  const aTokens=new Set(normalizedTokens(site));
-  let best=null, bestScore=0;
-  for(const d of TERRITORIAL_DIRECTORY){
-    const dName=loose(d.nombre||''), dBarrio=loose(d.barrio_vereda||'');
-    const bTokens=new Set(normalizedTokens(d.nombre||''));
-    let common=0; aTokens.forEach(t=>{if(bTokens.has(t)) common++});
-    const union=new Set([...aTokens,...bTokens]).size||1;
-    let score=common/union;
-    if(nameNorm && dName && (nameNorm.includes(dName)||dName.includes(nameNorm))) score+=0.48;
-    if(addressNorm && dBarrio && (addressNorm.includes(dBarrio)||dBarrio.includes(addressNorm))) score+=0.18;
-    if(common>=2) score+=0.12;
-    if(score>bestScore){bestScore=score;best=d;}
-  }
-  return bestScore>=0.38 ? {entry:best,score:bestScore} : null;
-}
-function metaFromDirectory(match){
-  const d=match.entry;
-  return {
-    zone:d.zona_territorial||'Sin clasificar', territoryType:d.tipo_territorio||'Sin clasificar',
-    commune:d.territorio||'Sin clasificar', neighborhood:d.barrio_vereda||'Sin clasificar',
-    nucleus:String(d.nucleo||'Sin clasificar'), siteType:d.tipo||'Sin clasificar',
-    directoryId:d.sede_id||'', source:'Directorio Red de Pluviómetros',
-    confidence:match.score>=0.72?'Alta':match.score>=0.52?'Media':'Revisar'
-  };
-}
+function directoryMatchForSite(){ return null; }
+function metaFromDirectory(){ return defaultMeta(); }
 function ensureSiteMetadata(){
   let changed=false;
   for(const s of getSiteOptions()){
     const key=siteKey(s.site,s.address);
     if(siteMetadata[key]) continue;
-    const match=directoryMatchForSite(s.site,s.address);
-    siteMetadata[key]=match?metaFromDirectory(match):defaultMeta(); changed=true;
+    siteMetadata[key]={...defaultMeta(),source:'Factura de energía',confidence:'Pendiente de clasificación'};
+    changed=true;
   }
   if(changed) saveSiteMetadata();
 }
@@ -766,7 +754,7 @@ function refreshTerritorialFilters(){
 }
 function applyAdvancedSiteFilters({refresh=true}={}){
   if(refresh) refreshTerritorialFilters();
-  renderFilterSummary(); renderCards(); renderExecutiveSummary(); renderProjectImpact(); renderCompareControls({keepSite:true}); comparePeriods(); renderDashboard(); renderTable(); drawChart(aggregateByPeriod(advancedFilteredRecords()));
+  renderFilterSummary(); renderTerritorialResults(); renderCards(); renderExecutiveSummary(); renderProjectImpact(); renderCompareControls({keepSite:true}); comparePeriods(); renderDashboard(); renderTable(); drawChart(aggregateByPeriod(advancedFilteredRecords()));
 }
 function clearAdvancedSiteFilters(){
   ['globalSiteSearch','zoneFilter','territoryTypeFilter','communeFilter','neighborhoodFilter','nucleusFilter','siteTypeFilter','specificSiteFilter','globalPeriodFilter','globalServiceFilter','priorityFilter'].forEach(id=>{if($(id)) $(id).value='';});
@@ -787,13 +775,31 @@ function toggleClassificationPanel(){
   $('toggleClassificationBtn').textContent=panel.hidden?'Revisar clasificación':'Cerrar clasificación'; if(!panel.hidden) renderClassificationTable();
 }
 function selectOptions(values,current){ return values.map(v=>`<option value="${escapeHtml(v)}" ${loose(v)===loose(current)?'selected':''}>${escapeHtml(v)}</option>`).join(''); }
+function renderTerritorialResults(){
+  const body=$('territorialResultsBody');
+  if(!body) return;
+  const records=advancedFilteredRecords(state.records).filter(r=>Number(r.energyKwh)>0);
+  const rows=aggregateBySite(records);
+  const totalKwh=rows.reduce((sum,r)=>sum+r.energyKwh,0);
+  const totalCo2=rows.reduce((sum,r)=>sum+r.co2kg,0);
+  const periods=new Set(records.map(r=>r.period)).size;
+  if($('territorialSitesCount')) $('territorialSitesCount').textContent=fmt(rows.length);
+  if($('territorialPeriodsCount')) $('territorialPeriodsCount').textContent=fmt(periods);
+  if($('territorialEnergyTotal')) $('territorialEnergyTotal').textContent=fmt(totalKwh)+' kWh';
+  if($('territorialCo2Total')) $('territorialCo2Total').textContent=fmt(totalCo2/1000)+' t CO₂e';
+  body.innerHTML=rows.slice(0,200).map((r,i)=>{
+    const meta=getSiteMeta(siteKey(r.site,r.address));
+    return `<tr><td>${i+1}</td><td><strong>${escapeHtml(r.site)}</strong><small class="site-meta-line">${escapeHtml(r.address||'Sin dirección')}</small></td><td>${escapeHtml(meta.zone)}</td><td>${escapeHtml(meta.commune)}</td><td>${escapeHtml(meta.nucleus)}</td><td>${fmt(r.periodCount)}</td><td><strong>${fmt(r.energyKwh)} kWh</strong></td><td>${fmt(r.co2kg/1000)} t</td></tr>`;
+  }).join('') || '<tr><td colspan="8">No hay consumos eléctricos para los filtros seleccionados.</td></tr>';
+}
+
 function renderClassificationTable(){
   if(!$('classificationBody')) return;
   const rows=siteRows();
-  const zones=[...new Set(TERRITORIAL_DIRECTORY.map(x=>x.zona_territorial).filter(Boolean)),'Sin clasificar'].sort((a,b)=>a.localeCompare(b,'es'));
-  const ttypes=[...new Set(TERRITORIAL_DIRECTORY.map(x=>x.tipo_territorio).filter(Boolean)),'Sin clasificar'].sort((a,b)=>a.localeCompare(b,'es'));
-  const communes=[...new Set(TERRITORIAL_DIRECTORY.map(x=>x.territorio).filter(Boolean)),'Sin clasificar'].sort((a,b)=>a.localeCompare(b,'es'));
-  const types=[...new Set(TERRITORIAL_DIRECTORY.map(x=>x.tipo).filter(Boolean)),'Sin clasificar'].sort((a,b)=>a.localeCompare(b,'es'));
+  const zones=[...new Set(Object.values(siteMetadata).map(x=>x.zone).filter(Boolean)),'Sin clasificar'].sort((a,b)=>a.localeCompare(b,'es'));
+  const ttypes=[...new Set(Object.values(siteMetadata).map(x=>x.territoryType).filter(Boolean)),'Sin clasificar'].sort((a,b)=>a.localeCompare(b,'es'));
+  const communes=[...new Set(Object.values(siteMetadata).map(x=>x.commune).filter(Boolean)),'Sin clasificar'].sort((a,b)=>a.localeCompare(b,'es'));
+  const types=[...new Set(Object.values(siteMetadata).map(x=>x.siteType).filter(Boolean)),'Sin clasificar'].sort((a,b)=>a.localeCompare(b,'es'));
   $('classificationBody').innerHTML=rows.map(r=>{const m=r.meta,k=escapeHtml(r.key);return `<tr><td><strong>${escapeHtml(r.site)}</strong><small class="site-meta-line">${escapeHtml(m.directoryId||'Sin código territorial')}</small></td><td>${escapeHtml(r.address||'')}</td><td><select class="meta-zone" data-site-key="${k}">${selectOptions(zones,m.zone)}</select></td><td><select class="meta-territory-type" data-site-key="${k}">${selectOptions(ttypes,m.territoryType)}</select></td><td><select class="meta-commune" data-site-key="${k}">${selectOptions(communes,m.commune)}</select></td><td><input class="meta-neighborhood" data-site-key="${k}" value="${escapeHtml(m.neighborhood)}"></td><td><input class="meta-nucleus" data-site-key="${k}" value="${escapeHtml(m.nucleus)}"></td><td><select class="meta-site-type" data-site-key="${k}">${selectOptions(types,m.siteType)}</select></td><td><strong>${escapeHtml(m.source)}</strong><small class="site-meta-line">Confianza: ${escapeHtml(m.confidence)}</small></td></tr>`;}).join('')||'<tr><td colspan="9">Carga datos para clasificar las sedes.</td></tr>';
 }
 function handleClassificationChange(e){
@@ -835,6 +841,7 @@ function renderAll(){
   if($('executiveSummary') || $('executiveCards')) safeRender('resumen ejecutivo', renderExecutiveSummary);
   if($('impactGrid') || $('smartAlerts')) safeRender('indicadores de impacto', renderProjectImpact);
   if($('siteChart') || $('environmentBody')) safeRender('dashboard y ranking', renderDashboard);
+  if($('territorialResultsBody')) safeRender('resultados territoriales de facturas', renderTerritorialResults);
   if($('recordsBody')) safeRender('tabla de registros', renderTable);
   if($('mainChart')) safeRender('gráfica temporal', ()=>drawChart(aggregateByPeriod(advancedFilteredRecords())));
   if($('compareA') && $('compareB')) safeRender('comparador de periodos', comparePeriods);

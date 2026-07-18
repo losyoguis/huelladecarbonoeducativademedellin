@@ -118,3 +118,9 @@ Todos incluyen un botón “Volver al inicio” que dirige a `index.html#inicio`
 - Se reparó el flujo carga → ranking → indicadores → portada.
 - Se forzó una nueva versión de CSS y JavaScript para evitar que el navegador use archivos antiguos en caché.
 - Las páginas publicadas usan los archivos fuente validados `app.js` y `styles.css`.
+
+
+## Corrección v60
+- La búsqueda territorial usa exclusivamente registros extraídos de las facturas de energía.
+- Se incluye `data/registros.js` para carga inmediata incluso al abrir el proyecto localmente.
+- Se añadió una tabla visible de resultados y totales energéticos.

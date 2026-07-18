@@ -1338,3 +1338,13 @@ main > section, .page-section, .platform-section {
 .module-card-features{display:block;margin-top:auto;padding:.7rem .8rem;border-radius:14px;background:rgba(9,157,126,.08);color:#24635a;font-size:.82rem;font-weight:800;line-height:1.45}
 .module-access-card b{margin-top:.25rem}
 .module-access-card{gap:.7rem}
+
+/* Resultados territoriales basados en facturas de energía */
+.territorial-results-panel{border-top:5px solid #0b9b7b}
+.territorial-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin:18px 0}
+.territorial-kpis article{padding:18px;border:1px solid #cfe5df;border-radius:18px;background:#f3fbf8}
+.territorial-kpis span{display:block;color:#58716c;font-weight:800;font-size:.8rem;text-transform:uppercase;letter-spacing:.06em}
+.territorial-kpis strong{display:block;margin-top:8px;color:#087c64;font-size:1.35rem}
+.territorial-results-panel table{min-width:1100px}
+.territorial-results-panel tbody tr:nth-child(even){background:#f7fbfa}
+@media(max-width:800px){.territorial-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
