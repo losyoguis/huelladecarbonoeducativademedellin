@@ -118,3 +118,9 @@ Todos incluyen un botón “Volver al inicio” que dirige a `index.html#inicio`
 - Se reparó el flujo carga → ranking → indicadores → portada.
 - Se forzó una nueva versión de CSS y JavaScript para evitar que el navegador use archivos antiguos en caché.
 - Las páginas publicadas usan los archivos fuente validados `app.js` y `styles.css`.
+
+## Corrección de carga de datos (v60)
+- Se corrigió una declaración duplicada de `isServiceMarker` que dejaba las funciones de análisis de PDF fuera del alcance global.
+- Se añadió `data/registros.json` con la base consolidada para que gráficas e informes carguen de inmediato sin esperar el reprocesamiento de miles de páginas PDF.
+- Si la base consolidada no está disponible, el sistema conserva el procesamiento directo de las facturas como respaldo.
+- Se corrigió la interpretación numérica colombiana: `12.384` se procesa como 12 384 y `12.384,50` como 12 384,50.

@@ -13,46 +13,77 @@ const $ = (id)=>document.getElementById(id);
 const state = loadStore();
 let chartData = [];
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   initPdfJs();
   initConfig();
   initFactors();
   bindEvents();
-  renderAll();
+
   const standalonePage = document.body.classList.contains('standalone-page');
-  if(standalonePage){
-    document.body.classList.remove('data-gate','data-gate-opening','intro-ranking','intro-impact');
-    document.body.classList.add('app-ready');
-    document.documentElement.classList.remove('data-gate-active');
-    const page = document.body.dataset.page;
-    const target = page === 'dashboard' ? $('dashboard-ambiental') : $('aula-climatica');
-    requestAnimationFrame(()=>target?.scrollIntoView({block:'start',behavior:'auto'}));
-    if(page === 'dashboard' && !state.records.length){
-      const panel = $('dashboard-ambiental');
-      if(panel){
-        const note=document.createElement('div');
-        note.className='module-empty-notice';
-        note.innerHTML='No hay datos cargados en este dispositivo. <a href="index.html#importacion">Volver al inicio para cargar las facturas</a>.';
-        panel.insertBefore(note,panel.firstChild);
+  if(!standalonePage) activateDataGate();
+  setLoadingState(true);
+
+  try{
+    const loaded = await ensureInitialData();
+    renderAll();
+
+    if(standalonePage){
+      document.body.classList.remove('data-gate','data-gate-opening','intro-ranking','intro-impact');
+      document.body.classList.add('app-ready');
+      document.documentElement.classList.remove('data-gate-active');
+      const page = document.body.dataset.page;
+      const target = page === 'dashboard' ? $('dashboard-ambiental') : page === 'territorial' ? $('filtros-sedes') : $('aula-climatica');
+      requestAnimationFrame(()=>target?.scrollIntoView({block:'start',behavior:'auto'}));
+      if(!state.records.length){
+        const panel = target;
+        if(panel){
+          const note=document.createElement('div');
+          note.className='module-empty-notice';
+          note.innerHTML='No fue posible cargar los datos. <a href="index.html#importacion">Volver al inicio e intentar nuevamente</a>.';
+          panel.insertBefore(note,panel.firstChild);
+        }
       }
-    }
-    log('Módulo independiente listo.');
-  } else {
-    activateDataGate();
-    if(state.records.length){
-      setLoadingState(true);
-      log(`Cargando ${state.records.length} registros guardados en este dispositivo...`);
-      requestAnimationFrame(()=>requestAnimationFrame(()=>{
-        renderAll();
-        setLoadingState(false);
-        unlockDataView('Datos guardados recuperados correctamente. Mostrando los resultados sin volver a procesar las facturas...');
-      }));
+      log(loaded ? `Módulo listo con ${state.records.length} registros.` : 'Módulo listo, sin registros disponibles.');
+    } else if(state.records.length){
+      unlockDataView(`Datos cargados correctamente: ${state.records.length} registros disponibles. Mostrando los informes...`);
     } else {
-      log('No hay datos guardados. Iniciando la carga automática de las facturas...');
-      setTimeout(()=>scanDataFolder({automatic:true}), 180);
+      log('No fue posible cargar el archivo de datos. Intentando leer las facturas PDF...');
+      await scanDataFolder({automatic:true});
     }
+  } catch(err){
+    log(`Error durante el inicio: ${err.message}`);
+    if(!standalonePage) await scanDataFolder({automatic:true});
+  } finally {
+    setLoadingState(false);
   }
 });
+
+async function ensureInitialData(){
+  if(Array.isArray(state.records) && state.records.length){
+    log(`Recuperados ${state.records.length} registros guardados en este dispositivo.`);
+    return true;
+  }
+  try{
+    log('Cargando la base de datos ambiental consolidada...');
+    const response = await fetch('data/registros.json', {cache:'force-cache'});
+    if(!response.ok) throw new Error(`${response.status} ${response.statusText}`);
+    const payload = await response.json();
+    const records = Array.isArray(payload) ? payload : payload.records;
+    if(!Array.isArray(records) || !records.length) throw new Error('El archivo registros.json está vacío.');
+    state.records = records;
+    state.files = state.files || {};
+    state.sites = state.sites || {};
+    for(const r of records){
+      if(r.site) state.sites[siteKey(r.site,r.address)] = {site:r.site,address:r.address};
+      if(r.source) state.files['manifest:'+r.source] = {name:r.source,period:r.period,importedAt:'incluido en el proyecto',count:0};
+    }
+    log(`Base consolidada cargada: ${records.length} registros de ${Object.keys(state.sites).length} sedes.`);
+    return true;
+  }catch(err){
+    log(`No se pudo cargar data/registros.json: ${err.message}`);
+    return false;
+  }
+}
 
 const INTRO_STAGE_DURATION = 4200;
 let introSequenceTimer = null;
@@ -584,8 +615,9 @@ function parseNumber(v){
   if(v==null) return null;
   let s=String(v).trim().replace(/\s/g,'');
   if(!s) return null;
-  if(s.includes(',') && s.includes('.')) s=s.replace(/\./g,'').replace(',','.');
-  else if(s.includes(',')) s=s.replace(',','.');
+  // Formato colombiano: punto para miles y coma para decimales.
+  if(s.includes(',')) s=s.replace(/\./g,'').replace(',','.');
+  else if(/^[-+]?\d{1,3}(?:\.\d{3})+$/.test(s)) s=s.replace(/\./g,'');
   const n=parseFloat(s); return Number.isFinite(n)?n:null;
 }
 function parseMoney(v){ return parseNumber(v); }
