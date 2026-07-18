@@ -7,7 +7,7 @@
   <meta name="description" content="Sistema interactivo para medir, interpretar y gestionar la huella de carbono educativa a partir del consumo de servicios públicos." />
   <link rel="icon" type="image/png" href="assets/los-yoguis-logo.png" />
   <link rel="apple-touch-icon" href="assets/los-yoguis-logo.png" />
-  <link rel="stylesheet" href="styles.css?v=34-carga-despues-header" />
+  <link rel="stylesheet" href="styles.css?v=35-cuatro-secciones" />
 </head>
 <body>
   <header class="hero hero-mjb hero-yoguis" id="inicio">
@@ -39,17 +39,15 @@
   </header>
 
 
-  <nav class="sticky-nav" aria-label="Menú interno de SiMeCO₂">
-    <a href="#inicio">Inicio</a>
-    <a href="#resumen-ejecutivo">Resumen</a>
-    <a href="#comparar-periodos">Comparar</a>
-    <a href="#ranking-sedes">Ranking</a>
-    <a href="#dashboard-ambiental">Dashboard</a>
-    <a href="#planPanel">Planes</a>
-    <a href="#aula-climatica">Aula</a>
+  <nav class="section-switcher" aria-label="Secciones principales de SiMeCO₂">
+    <button type="button" class="section-tab active" data-section="seccion-1" aria-selected="true"><span>1</span><strong>Resumen institucional</strong><small>Carga, lectura e indicadores</small></button>
+    <button type="button" class="section-tab" data-section="seccion-2" aria-selected="false"><span>2</span><strong>Análisis temporal</strong><small>Comparación y ranking</small></button>
+    <button type="button" class="section-tab" data-section="seccion-3" aria-selected="false"><span>3</span><strong>Gestión por sede</strong><small>Dashboard y planes</small></button>
+    <button type="button" class="section-tab" data-section="seccion-4" aria-selected="false"><span>4</span><strong>Aula y registros</strong><small>Aprendizaje, filtros y datos</small></button>
   </nav>
 
   <main>
+    <div class="app-section active" id="seccion-1" data-page-title="Resumen institucional">
     <section class="panel grid-2 import-panel update-spotlight" id="importacion">
       <div class="update-copy">
         <span class="section-kicker">Actualizando los datos</span>
@@ -115,6 +113,9 @@
 
 
 
+    </div>
+
+    <div class="app-section" id="seccion-2" data-page-title="Análisis temporal">
     <section class="panel" id="comparar-periodos">
       <div class="section-head">
         <div>
@@ -164,6 +165,9 @@
       </div>
     </section>
 
+    </div>
+
+    <div class="app-section" id="seccion-3" data-page-title="Gestión por sede">
     <section class="panel dashboard-panel" id="dashboard-ambiental">
       <div class="section-head">
         <div>
@@ -222,6 +226,9 @@
       <div id="planReport" class="plan-empty">Aún no se ha seleccionado una sede. Usa el botón <strong>Plan de Gestión</strong> en la tabla del Dashboard ambiental por sede.</div>
     </section>
 
+    </div>
+
+    <div class="app-section" id="seccion-4" data-page-title="Aula y registros">
     <section class="panel aula-panel" id="aula-climatica">
       <div class="section-head">
         <div>
@@ -300,14 +307,14 @@
         </table>
       </div>
     </section>
+    </div>
   </main>
 
-  <nav class="mobile-bottom-nav" aria-label="Navegación móvil">
-    <a href="#inicio">Inicio</a>
-    <a href="#resumen-ejecutivo">Resumen</a>
-    <a href="#dashboard-ambiental">Sedes</a>
-    <a href="#planPanel">Plan</a>
-    <a href="#aula-climatica">Aula</a>
+  <nav class="mobile-bottom-nav section-mobile-nav" aria-label="Navegación móvil por secciones">
+    <button type="button" class="mobile-section-tab active" data-section="seccion-1">Resumen</button>
+    <button type="button" class="mobile-section-tab" data-section="seccion-2">Análisis</button>
+    <button type="button" class="mobile-section-tab" data-section="seccion-3">Gestión</button>
+    <button type="button" class="mobile-section-tab" data-section="seccion-4">Aula</button>
   </nav>
 
   <footer class="brand-footer" aria-label="Pie de página Los Yoguis">
@@ -317,7 +324,65 @@
     </div>
   </footer>
 
+  <script>
+    (() => {
+      const sectionForTarget = {
+        inicio: 'seccion-1', importacion: 'seccion-1', 'resumen-ejecutivo': 'seccion-1', cards: 'seccion-1',
+        'comparar-periodos': 'seccion-2', 'ranking-sedes': 'seccion-2',
+        'dashboard-ambiental': 'seccion-3', planPanel: 'seccion-3',
+        'aula-climatica': 'seccion-4', registros: 'seccion-4'
+      };
+
+      function openSection(sectionId, options = {}) {
+        const target = document.getElementById(sectionId);
+        if (!target) return;
+        document.querySelectorAll('.app-section').forEach(section => {
+          const active = section.id === sectionId;
+          section.classList.toggle('active', active);
+          section.hidden = !active;
+        });
+        document.querySelectorAll('[data-section]').forEach(control => {
+          const active = control.dataset.section === sectionId;
+          control.classList.toggle('active', active);
+          if (control.classList.contains('section-tab')) control.setAttribute('aria-selected', String(active));
+        });
+        if (!options.keepHash) history.replaceState(null, '', '#' + sectionId);
+        if (options.scroll !== false) {
+          document.querySelector('.section-switcher')?.scrollIntoView({ behavior: options.instant ? 'auto' : 'smooth', block: 'start' });
+        }
+        window.dispatchEvent(new Event('resize'));
+      }
+
+      window.simecoOpenSection = openSection;
+
+      document.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll('.app-section').forEach((section, index) => {
+          section.hidden = index !== 0;
+        });
+        document.querySelectorAll('[data-section]').forEach(control => {
+          control.addEventListener('click', () => openSection(control.dataset.section));
+        });
+        document.querySelectorAll('a[href^="#"]').forEach(link => {
+          link.addEventListener('click', event => {
+            const id = decodeURIComponent(link.getAttribute('href').slice(1));
+            const sectionId = sectionForTarget[id];
+            if (!sectionId) return;
+            event.preventDefault();
+            openSection(sectionId, { scroll: false });
+            requestAnimationFrame(() => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+          });
+        });
+        const hash = decodeURIComponent(location.hash.slice(1));
+        const initial = document.getElementById(hash)?.classList.contains('app-section') ? hash : sectionForTarget[hash];
+        if (initial) {
+          openSection(initial, { scroll: false, keepHash: true, instant: true });
+          if (hash !== initial) requestAnimationFrame(() => document.getElementById(hash)?.scrollIntoView({ block: 'start' }));
+        }
+      });
+    })();
+  </script>
+
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-  <script src="app.js?v=34-carga-despues-header"></script>
+  <script src="app.js?v=35-cuatro-secciones"></script>
 </body>
 </html>

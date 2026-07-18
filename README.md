@@ -105,3 +105,14 @@ Archivos actualizados:
 ## Ajuste v34
 - El módulo de carga y actualización de facturas se ubicó como primera sección después del encabezado y la navegación principal.
 - Se eliminó el módulo “Indicadores de avance y alertas inteligentes”.
+
+## Versión 35 · Organización en cuatro secciones
+
+La plataforma se reorganizó como una aplicación de cuatro secciones internas, sin recargar la página y conservando todos los cálculos y controles:
+
+1. Resumen institucional: carga de facturas, lectura ejecutiva e indicadores generales.
+2. Análisis temporal: comparación de periodos y ranking de sedes.
+3. Gestión por sede: dashboard ambiental y planes de gestión institucional.
+4. Aula y registros: Guardianes Climáticos, autocompletado, filtros, exportaciones y tabla de registros.
+
+La navegación funciona mediante pestañas superiores y una barra móvil. Los enlaces directos y los botones de generación de planes activan automáticamente la sección correspondiente.

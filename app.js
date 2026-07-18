@@ -912,7 +912,8 @@ function generateManagementPlan(key){
   $('planReport').innerHTML = CURRENT_PLAN_HTML;
   $('printPlanBtn').disabled = false;
   $('downloadPlanBtn').disabled = false;
-  $('planPanel').scrollIntoView({behavior:'smooth', block:'start'});
+  if(window.simecoOpenSection) window.simecoOpenSection('seccion-3', {scroll:false});
+  requestAnimationFrame(()=>$('planPanel').scrollIntoView({behavior:'smooth', block:'start'}));
   log(`Plan de Gestión generado para ${site}.`);
 }
 
