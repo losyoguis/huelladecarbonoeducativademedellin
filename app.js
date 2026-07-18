@@ -1,4 +1,4 @@
-/* SiMeCO2 Servicios Públicos - v32 sin botón de modo presentación */
+/* SiMeCO2 Servicios Públicos - v33 pantalla inicial de carga */
 let FACTOR_CO2_KG_KWH = 0.126; // kg CO2e/kWh. Ajustable desde el dashboard.
 let TREE_CO2_KG_YEAR = 22; // kg CO2e capturados por árbol al año. Ajustable desde el dashboard.
 const FACTOR_KEY = 'simeco2_factores_ambientales_v8';
@@ -15,8 +15,44 @@ window.addEventListener('load', () => {
   initFactors();
   bindEvents();
   renderAll();
+  activateDataGate();
   log('Sistema listo. Actualiza la información del sistema o carga un PDF local para iniciar el análisis.');
 });
+
+function activateDataGate(){
+  document.body.classList.add('data-gate');
+  document.documentElement.classList.add('data-gate-active');
+  history.replaceState(null, '', location.pathname + location.search + '#importacion');
+  requestAnimationFrame(() => $('importacion')?.scrollIntoView({block:'start'}));
+}
+
+function unlockDataView(message='Datos cargados correctamente. Abriendo la plataforma completa...'){
+  if(!state.records.length){
+    log('La plataforma permanecerá en la pantalla de carga porque todavía no hay registros válidos.');
+    return false;
+  }
+  log(message);
+  document.body.classList.add('data-gate-opening');
+  setTimeout(() => {
+    document.body.classList.remove('data-gate', 'data-gate-opening');
+    document.documentElement.classList.remove('data-gate-active');
+    history.replaceState(null, '', location.pathname + location.search + '#resumen-ejecutivo');
+    window.scrollTo({top:0, behavior:'smooth'});
+  }, 450);
+  return true;
+}
+
+function setLoadingState(isLoading){
+  const btn = $('scanDataBtn');
+  const input = $('localPdfInput');
+  if(btn){
+    btn.disabled = isLoading;
+    btn.classList.toggle('is-loading', isLoading);
+    const label = btn.querySelector('span:nth-child(2)');
+    if(label) label.textContent = isLoading ? 'Procesando facturas...' : 'Actualizar datos ahora';
+  }
+  if(input) input.disabled = isLoading;
+}
 
 function initPdfJs(){
   const pdfStatus = $('pdfStatus');
@@ -111,6 +147,7 @@ function log(msg){
 }
 
 async function scanDataFolder(){
+  setLoadingState(true);
   log('Buscando PDFs nuevos en carpeta /data...');
   const cfg = getRepoConfig();
   let files = [];
@@ -139,6 +176,8 @@ async function scanDataFolder(){
   }
   if(!files.length){
     log('No se encontraron PDF. En GitHub público basta subir los PDF a /data. En local usa data/manifest.json.');
+    setLoadingState(false);
+    if(state.records.length) unlockDataView('Se conservaron los datos disponibles en este dispositivo. Abriendo la plataforma completa...');
     return;
   }
   let imported=0, skipped=0, failed=0;
@@ -161,9 +200,12 @@ async function scanDataFolder(){
   }
   log(`Proceso terminado. Importados: ${imported}. Omitidos ya existentes: ${skipped}. Fallidos: ${failed}.`);
   saveStore(); renderAll();
+  setLoadingState(false);
+  unlockDataView();
 }
 async function handleLocalPdf(ev){
   const file = ev.target.files[0]; if(!file) return;
+  setLoadingState(true);
   log(`Leyendo PDF local: ${file.name}`);
   const buf = await file.arrayBuffer();
   const result = await parsePdfArrayBuffer(buf, file.name, 'local');
@@ -172,11 +214,13 @@ async function handleLocalPdf(ev){
     addImport(result, fingerprint);
     saveStore(); renderAll();
     log(`PDF local importado: ${result.records.length} registros, periodo ${result.period}.`);
+    unlockDataView();
   } else {
     log(`PDF abierto, pero no se estructuraron registros. Muestra: ${result.sample.slice(0,1000).replace(/\s+/g,' ')}`);
     alert('El PDF fue abierto, pero no se pudieron estructurar registros. Revisa el diagnóstico.');
   }
   ev.target.value='';
+  setLoadingState(false);
 }
 function addImport(result, fingerprint){
   const existingKeys = new Set(state.records.map(r=>r.key));

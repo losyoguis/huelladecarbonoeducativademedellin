@@ -843,3 +843,110 @@ canvas{max-width:100%;height:auto;border-radius:16px;}
   .update-actions .primary.update-cta .cta-icon,
   .update-actions .primary.update-cta .cta-pulse-dot{animation:none;}
 }
+
+
+/* =========================================================
+   V33 · Pantalla inicial obligatoria para cargar datos
+   ========================================================= */
+html.data-gate-active,
+html.data-gate-active body {
+  scroll-behavior: auto;
+}
+
+body.data-gate {
+  min-height: 100vh;
+  overflow-x: hidden;
+  background:
+    radial-gradient(circle at 12% 18%, rgba(37, 211, 169, .12), transparent 34%),
+    radial-gradient(circle at 88% 12%, rgba(244, 214, 92, .10), transparent 30%),
+    #eef9f6;
+}
+
+body.data-gate > header,
+body.data-gate > .sticky-nav,
+body.data-gate > footer,
+body.data-gate .mobile-bottom-nav,
+body.data-gate main > :not(#importacion) {
+  display: none !important;
+}
+
+body.data-gate main {
+  width: 100%;
+  max-width: none;
+  min-height: 100vh;
+  margin: 0;
+  padding: clamp(16px, 2.2vw, 34px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+body.data-gate #importacion {
+  width: min(1800px, 100%);
+  min-height: calc(100vh - clamp(32px, 4.4vw, 68px));
+  margin: 0;
+  padding: clamp(30px, 3.5vw, 64px);
+  border-left: 14px solid #079a78;
+  border-radius: 34px;
+  box-shadow: 0 28px 70px rgba(16, 73, 61, .14);
+  animation: dataGateEnter .65s cubic-bezier(.2,.8,.2,1) both;
+}
+
+body.data-gate #importacion .update-copy,
+body.data-gate #importacion .update-status-card {
+  align-self: stretch;
+}
+
+body.data-gate #importacion .update-copy {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+body.data-gate #importacion .update-status-card {
+  min-height: 560px;
+}
+
+body.data-gate #logBox {
+  min-height: 300px;
+  max-height: 48vh;
+}
+
+body.data-gate-opening #importacion {
+  animation: dataGateExit .45s ease both;
+}
+
+#scanDataBtn:disabled,
+#scanDataBtn.is-loading {
+  cursor: wait;
+  opacity: .88;
+}
+
+#scanDataBtn.is-loading .cta-icon {
+  animation: dataGateSpin .85s linear infinite;
+}
+
+@keyframes dataGateEnter {
+  from { opacity: 0; transform: translateY(18px) scale(.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes dataGateExit {
+  to { opacity: 0; transform: translateY(-12px) scale(.985); }
+}
+
+@keyframes dataGateSpin {
+  to { transform: rotate(360deg); }
+}
+
+@media (max-width: 900px) {
+  body.data-gate main { align-items: flex-start; padding: 10px; }
+  body.data-gate #importacion {
+    min-height: calc(100vh - 20px);
+    padding: 24px 18px;
+    border-left-width: 8px;
+    border-radius: 24px;
+  }
+  body.data-gate #importacion .update-status-card { min-height: 390px; }
+  body.data-gate #logBox { min-height: 220px; max-height: 38vh; }
+}
