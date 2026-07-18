@@ -1,14 +1,102 @@
-# SiMeCO₂ — versión integrada en index.html
+# SiMeCO₂ · Plataforma de Huella de Carbono Educativa v32
 
-La plataforma completa funciona en una sola página (`index.html`).
+Sistema web en HTML, CSS y JavaScript para medir, visualizar e interpretar la huella de carbono educativa a partir del consumo de servicios públicos de sedes educativas.
 
-## Secuencia de inicio
-1. Carga y actualización de datos.
-2. Ranking de sedes.
-3. Indicadores de avance y alertas.
-4. Apertura de la plataforma completa.
+## Propósito
 
-Al finalizar la presentación se muestran, en el mismo `index.html`, el resumen ejecutivo, comparación de periodos, Plan de Gestión Ambiental por Sede, filtros, resultados, planes y registros.
+SiMeCO₂ transforma información de facturas en indicadores ambientales comprensibles para directivos, docentes, estudiantes y aliados técnicos. La plataforma permite estimar emisiones de CO₂e en alcance 2, priorizar sedes con mayor consumo eléctrico y generar planes de gestión ambiental escolar.
 
-## Publicación
-Sube todos los archivos y carpetas a la raíz de GitHub Pages. Para Google Sites, incorpora la URL pública de `index.html`.
+## Mejoras incorporadas en v32
+
+- Portada institucional con enfoque de proyecto educativo ambiental.
+- Resumen ejecutivo automático con lectura interpretativa.
+- Indicadores de impacto del proyecto.
+- Alertas inteligentes sobre sedes prioritarias, aumentos o reducciones de consumo.
+- Comparación de periodos con interpretación automática.
+- Ranking de sedes con clasificación de prioridad: alta, media y preventiva.
+- Dashboard por sede con chips de prioridad.
+- Plan de Gestión fortalecido con matriz operativa, responsables, indicadores y evidencias.
+- Módulo pedagógico “Aula climática / Guardianes Climáticos”.
+- Se elimina el botón de modo presentación de la portada para una interfaz más limpia.
+- Mejoras responsive tipo app móvil: navegación inferior y tablas convertidas en tarjetas.
+- Textos institucionales más claros y orientados a toma de decisiones.
+
+## Archivos principales
+
+```text
+index.html        Estructura de la plataforma
+styles.css        Diseño visual, responsive y experiencia móvil
+app.js            Lógica de lectura, cálculos, visualizaciones, planes e interpretaciones
+data/             Carpeta con archivos de soporte y PDF existentes
+```
+
+## Uso básico
+
+1. Publicar el proyecto en GitHub Pages o abrirlo en un servidor local.
+2. Entrar a la web.
+3. Presionar **Actualizar datos ahora** o usar **Cargar factura PDF local** para pruebas.
+4. Revisar el resumen ejecutivo, dashboard, ranking y comparación de periodos.
+5. En el dashboard por sede, presionar **Generar informe / Plan de Gestión**.
+6. Descargar o imprimir el informe institucional.
+
+## Metodología ambiental
+
+Las emisiones se calculan con la fórmula:
+
+```text
+Emisiones CO₂e = consumo eléctrico en kWh × factor de emisión kg CO₂e/kWh
+```
+
+El sistema permite modificar el factor de emisión y la equivalencia de captura anual por árbol desde el dashboard ambiental.
+
+## Recomendación de publicación
+
+Para GitHub Pages, subir todos los archivos conservando esta estructura. El archivo principal debe llamarse `index.html`.
+
+
+
+## Actualización v31 · Footer institucional Los Yoguis
+
+Esta versión incorpora un pie de página institucional con la imagen oficial de Los Yoguis y el enlace central a `www.losyoguis.com`.
+
+Archivos actualizados:
+
+- `index.html`
+- `styles.css`
+- `assets/los-yoguis-footer.png`
+
+## Mejoras incorporadas en v32
+
+- Se rediseñó el bloque **Actualizando los datos** con una apariencia más llamativa e institucional.
+- Se incorporó el mensaje: carga de facturas de servicios públicos de todas las Instituciones Educativas de Medellín desde el año 2025.
+- Se añadieron distintivos visuales de alcance: Medellín, Instituciones Educativas y Desde 2025.
+- Se conservaron los identificadores funcionales de botones y lectura PDF para mantener la compatibilidad del sistema.
+
+
+## Cabecera Los Yoguis v31
+
+- Cabecera adaptada al estilo visual Guardianes Climáticos / Los Yoguis.
+- Botón principal hacia **Red Escolar de Pluviómetros de Medellín**.
+- Logo Los Yoguis integrado en cabecera y favicon.
+- Se mantiene la tarjeta destacada de **Huella de Carbono Educativa de Medellín**.
+
+
+## Ajuste visual v31
+
+- Se agregó movimiento al botón principal **Actualizar datos ahora** mediante pulso, brillo, barrido luminoso e ícono de actualización animado.
+- El botón conserva accesibilidad con `aria-label` y respeta `prefers-reduced-motion`.
+
+
+## Actualización v33 — Autocompletado y filtros
+
+- Buscador inteligente por institución, sede y dirección.
+- Coincidencias sin depender de tildes y con múltiples palabras.
+- Sugerencias ordenadas por relevancia, dirección y periodos disponibles.
+- Navegación del autocompletado con teclado (flechas, Enter y Escape).
+- Selección exacta de una sede.
+- Filtros combinables por periodo y servicio con datos.
+- Ordenamiento por periodo, sede, energía y CO₂e.
+- Contador de registros y sedes visibles.
+- Etiquetas de filtros activos y limpieza individual o general.
+- Estado vacío con orientación para recuperar resultados.
+- `manifest.json` actualizado con todos los PDF incluidos.

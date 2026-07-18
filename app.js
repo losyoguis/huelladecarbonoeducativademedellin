@@ -1,245 +1,24 @@
-/* SiMeCO2 Servicios Públicos - v42 renderizado modular estable */
+/* SiMeCO2 Servicios Públicos - v32 sin botón de modo presentación */
 let FACTOR_CO2_KG_KWH = 0.126; // kg CO2e/kWh. Ajustable desde el dashboard.
 let TREE_CO2_KG_YEAR = 22; // kg CO2e capturados por árbol al año. Ajustable desde el dashboard.
 const FACTOR_KEY = 'simeco2_factores_ambientales_v8';
 const STORE_KEY = 'simeco2_servicios_v7';
 const CONFIG_KEY = 'simeco2_repo_config_v7';
-const SITE_META_KEY = 'simeco2_clasificacion_sedes_energia_v2';
-const LEGACY_SITE_META_KEY = 'simeco2_clasificacion_sedes_energia_v1';
-// Los consumos y las sedes siempre provienen de las facturas. Este mapa solo aporta contexto territorial de referencia.
-const TERRITORIAL_SYNC = window.SIMECO_TERRITORIAL_SYNC || {};
-const EMPTY_META = {zone:'Sin clasificar', territoryType:'Sin clasificar', commune:'Sin clasificar', neighborhood:'Sin clasificar', nucleus:'Sin clasificar', siteType:'Sin clasificar', directoryId:'', source:'Manual', confidence:'Pendiente'};
-let siteMetadata = loadSiteMetadata();
 
 const $ = (id)=>document.getElementById(id);
 const state = loadStore();
 let chartData = [];
+let selectedSiteKey = "";
+let autocompleteIndex = -1;
 
-document.addEventListener('DOMContentLoaded', async () => {
+window.addEventListener('load', () => {
   initPdfJs();
   initConfig();
   initFactors();
   bindEvents();
-
-  const standalonePage = document.body.classList.contains('standalone-page');
-  if(!standalonePage) activateDataGate();
-  setLoadingState(true);
-
-  try{
-    const loaded = await ensureInitialData();
-    renderAll();
-
-    if(standalonePage){
-      document.body.classList.remove('data-gate','data-gate-opening','intro-ranking','intro-impact');
-      document.body.classList.add('app-ready');
-      document.documentElement.classList.remove('data-gate-active');
-      const page = document.body.dataset.page;
-      const target = page === 'dashboard' ? $('dashboard-ambiental') : page === 'territorial' ? $('filtros-sedes') : $('aula-climatica');
-      requestAnimationFrame(()=>target?.scrollIntoView({block:'start',behavior:'auto'}));
-      if(!state.records.length){
-        const panel = target;
-        if(panel){
-          const note=document.createElement('div');
-          note.className='module-empty-notice';
-          note.innerHTML='No fue posible cargar los datos. <a href="index.html#importacion">Volver al inicio e intentar nuevamente</a>.';
-          panel.insertBefore(note,panel.firstChild);
-        }
-      }
-      log(loaded ? `Módulo listo con ${state.records.length} registros.` : 'Módulo listo, sin registros disponibles.');
-    } else if(state.records.length){
-      setLoadingState(false); unlockDataView(`Datos cargados correctamente: ${state.records.length} registros disponibles. Mostrando los informes...`);
-    } else {
-      log('No fue posible cargar el archivo de datos. Intentando leer las facturas PDF...');
-      await scanDataFolder({automatic:true});
-    }
-  } catch(err){
-    log(`Error durante el inicio: ${err.message}`);
-    if(!standalonePage) await scanDataFolder({automatic:true});
-  } finally {
-    setLoadingState(false);
-  }
-});
-
-function hasUsableRecords(records){
-  return Array.isArray(records) && records.some(r=>r && r.period && r.site && [r.energyKwh,r.waterM3,r.alcM3,r.gasM3,r.wasteTon].some(v=>Number(v)>0));
-}
-function normalizeLoadedRecords(records){
-  return (Array.isArray(records)?records:[]).filter(r=>r && r.period && r.site).map((r,index)=>({
-    ...r,
-    key:r.key || `${r.period}|${siteKey(r.site,r.address)}|${index}`,
-    address:r.address || '',
-    energyKwh:Number(r.energyKwh)||0,
-    waterM3:Number(r.waterM3)||0,
-    alcM3:Number(r.alcM3)||0,
-    gasM3:Number(r.gasM3)||0,
-    wasteTon:Number(r.wasteTon)||0,
-    wasteValue:Number(r.wasteValue)||0,
-    co2kg:Number(r.co2kg)||round((Number(r.energyKwh)||0)*FACTOR_CO2_KG_KWH,2)
-  }));
-}
-async function ensureInitialData(){
-  if(hasUsableRecords(state.records)){
-    state.records=normalizeLoadedRecords(state.records);
-    rebuildSiteIndex();
-    log(`Recuperados ${state.records.length} registros guardados en este dispositivo.`);
-    return true;
-  }
-  state.records=[]; state.sites={};
-
-  // Fuente primaria: registros consolidados extraídos de las facturas de servicios públicos.
-  if(Array.isArray(window.SIMECO_REGISTROS) && window.SIMECO_REGISTROS.length){
-    state.records=normalizeLoadedRecords(window.SIMECO_REGISTROS);
-    rebuildSiteIndex();
-    log(`Facturas consolidadas cargadas: ${state.records.length} registros de ${Object.keys(state.sites).length} sedes.`);
-    return true;
-  }
-
-  // Respaldo para servidores web: JSON equivalente.
-  try{
-    log('Cargando los registros consolidados de las facturas de energía...');
-    const response = await fetch('data/registros.json', {cache:'force-cache'});
-    if(!response.ok) throw new Error(`${response.status} ${response.statusText}`);
-    const payload = await response.json();
-    const records = Array.isArray(payload) ? payload : payload.records;
-    if(!Array.isArray(records) || !records.length) throw new Error('El archivo registros.json está vacío.');
-    state.records = normalizeLoadedRecords(records);
-    rebuildSiteIndex();
-    log(`Facturas consolidadas cargadas: ${state.records.length} registros de ${Object.keys(state.sites).length} sedes.`);
-    return true;
-  }catch(err){
-    log(`No se pudo cargar la base de facturas: ${err.message}`);
-    return false;
-  }
-}
-function rebuildSiteIndex(){
-  state.files=state.files||{};
-  state.sites={};
-  for(const r of state.records){
-    if(r.site) state.sites[siteKey(r.site,r.address)]={site:r.site,address:r.address||''};
-    if(r.source) state.files['manifest:'+r.source]={name:r.source,period:r.period,importedAt:'incluido en el proyecto',count:0};
-  }
-}
-
-const INTRO_STAGE_DURATION = 4200;
-let introSequenceTimer = null;
-let introStage = 0; // 0 carga, 1 ranking, 2 impacto, 3 aplicación
-let introPaused = false;
-
-function clearIntroSequenceTimer(){
-  if(introSequenceTimer){ clearTimeout(introSequenceTimer); introSequenceTimer = null; }
-}
-function updateIntroControls(){
-  document.querySelectorAll('[data-intro-action="back"]').forEach(btn=>btn.disabled=introStage<=0);
-  document.querySelectorAll('[data-intro-action="next"]').forEach(btn=>btn.disabled=introStage===0 && !state.records.length);
-  document.querySelectorAll('[data-intro-action="pause"]').forEach(btn=>{
-    btn.classList.toggle('is-paused',introPaused);
-    btn.setAttribute('aria-label',introPaused?'Reanudar presentación':'Pausar presentación');
-    btn.innerHTML=introPaused?'▶ <span>Reanudar</span>':'⏸ <span>Pausa</span>';
-  });
-}
-function activateDataGate(){
-  clearIntroSequenceTimer(); introStage=0; introPaused=false;
-  document.body.classList.remove('intro-ranking','intro-impact','app-ready');
-  document.body.classList.add('data-gate');
-  document.documentElement.classList.add('data-gate-active');
-  history.replaceState(null,'',location.pathname+location.search+'#importacion');
-  requestAnimationFrame(()=>$('importacion')?.scrollIntoView({block:'start'}));
-  updateIntroControls();
-}
-function showIntroStage(stage){
-  clearIntroSequenceTimer();
-  document.body.classList.remove('data-gate','data-gate-opening','intro-ranking','intro-impact','app-ready');
-  document.documentElement.classList.remove('data-gate-active');
-  document.body.classList.add(stage);
-  introStage=stage==='intro-ranking'?1:2;
-  const target=introStage===1?$('ranking-sedes'):$('impacto-proyecto');
-  const hash=introStage===1?'#ranking-sedes':'#impacto-proyecto';
-  history.replaceState(null,'',location.pathname+location.search+hash);
-  target?.scrollIntoView({block:'start',behavior:'auto'});
-  target?.classList.add('intro-stage-focus');
-  setTimeout(()=>target?.classList.remove('intro-stage-focus'),1100);
-  updateIntroControls();
-}
-function finishIntroSequence(){
-  clearIntroSequenceTimer(); introStage=3; introPaused=false;
-  document.body.classList.remove('data-gate','data-gate-opening','intro-ranking','intro-impact');
-  document.body.classList.add('app-ready');
-  document.documentElement.classList.remove('data-gate-active');
-  history.replaceState(null,'',location.pathname+location.search+'#inicio');
-  window.scrollTo({top:0,behavior:'auto'}); updateIntroControls();
-  log('Presentación inicial finalizada. Plataforma completa disponible.');
-}
-function scheduleNextIntroStage(){
-  clearIntroSequenceTimer();
-  if(introPaused || introStage===0 || introStage>=3) return;
-  introSequenceTimer=setTimeout(()=>goToIntroStage(introStage+1,true),INTRO_STAGE_DURATION);
-}
-function goToIntroStage(target,automatic=false){
-  clearIntroSequenceTimer();
-  if(target<=0){ activateDataGate(); return; }
-  if(target===1){ if(!state.records.length){log('Primero debes cargar datos válidos para continuar.');return;} showIntroStage('intro-ranking'); }
-  else if(target===2) showIntroStage('intro-impact');
-  else { finishIntroSequence(); return; }
-  if(!introPaused) scheduleNextIntroStage();
-  if(!automatic) log(`Presentación: diapositiva ${introStage} de 3.`);
-}
-function handleIntroControl(e){
-  const btn=e.target.closest('[data-intro-action]'); if(!btn) return;
-  const action=btn.dataset.introAction;
-  if(action==='back') goToIntroStage(Math.max(0,introStage-1));
-  if(action==='next') goToIntroStage(introStage+1);
-  if(action==='pause'){
-    introPaused=!introPaused;
-    if(introPaused) clearIntroSequenceTimer(); else scheduleNextIntroStage();
-    updateIntroControls();
-    log(introPaused?'Presentación pausada.':'Presentación reanudada.');
-  }
-}
-function unlockDataView(message='Datos cargados correctamente. Iniciando presentación de resultados...'){
-  if(!state.records.length){ log('La plataforma permanecerá en la pantalla de carga porque todavía no hay registros válidos.'); updateIntroControls(); return false; }
-  clearIntroSequenceTimer(); introPaused=false; log(message);
-  // Garantiza que ranking e indicadores estén dibujados antes de cambiar de diapositiva.
   renderAll();
-  document.body.classList.add('data-gate-opening');
-  introSequenceTimer=setTimeout(()=>{
-    if(!$('ranking-sedes')){
-      log('No se encontró la diapositiva de ranking. Abriendo la plataforma completa.');
-      finishIntroSequence();
-      return;
-    }
-    log('Etapa 2 de 3: mostrando el ranking de sedes por consumo eléctrico total.');
-    goToIntroStage(1,true);
-  },500);
-  return true;
-}
-
-function setLoadingState(isLoading){
-  const btn = $('scanDataBtn');
-  const input = $('localPdfInput');
-  const loadingMessage = $('loadingMessage');
-  if(btn){
-    btn.disabled = isLoading;
-    btn.classList.toggle('is-loading', isLoading);
-    const label = btn.querySelector('span:nth-child(2)');
-    if(label) label.textContent = isLoading ? 'Cargando datos...' : 'Actualizar datos ahora';
-  }
-  if(input) input.disabled = isLoading;
-  if(loadingMessage){
-    loadingMessage.hidden = !isLoading;
-    loadingMessage.classList.toggle('is-visible', isLoading);
-  }
-  document.body.classList.toggle('is-processing-data', isLoading);
-  if(isLoading) log('Cargando datos, espera por favor....');
-}
-
-function setLoadingProgress(current,total,fileName=''){
-  const btn=$('scanDataBtn');
-  const label=btn?.querySelector('span:nth-child(2)');
-  if(label && total) label.textContent=`Cargando ${current} de ${total}`;
-  const loadingMessage=$('loadingMessage');
-  const detail=loadingMessage?.querySelector('small');
-  if(detail) detail.textContent=fileName ? `Procesando ${fileName}. No cierres esta página.` : 'Estamos preparando la información ambiental.';
-}
+  log('Sistema listo. Actualiza la información del sistema o carga un PDF local para iniciar el análisis.');
+});
 
 function initPdfJs(){
   const pdfStatus = $('pdfStatus');
@@ -252,58 +31,27 @@ function initPdfJs(){
   }
 }
 function bindEvents(){
-  document.addEventListener("click", handleIntroControl);
-  if($("scanDataBtn")) $("scanDataBtn").addEventListener("click", ()=>scanDataFolder({automatic:false}));
-  if($("localPdfInput")) $("localPdfInput").addEventListener("change", handleLocalPdf);
-  if($("clearBtn")) $("clearBtn").addEventListener("click", ()=>{ if(confirm("¿Reiniciar todos los datos importados?")){ localStorage.removeItem(STORE_KEY); localStorage.removeItem(SITE_META_KEY); location.reload(); }});
+  $("scanDataBtn").addEventListener("click", scanDataFolder);
+  $("localPdfInput").addEventListener("change", handleLocalPdf);
+  $("clearBtn").addEventListener("click", ()=>{ if(confirm("¿Reiniciar todos los datos importados?")){ localStorage.removeItem(STORE_KEY); location.reload(); }});
   if($("saveRepoBtn")) $("saveRepoBtn").addEventListener("click", saveConfig);
   if($("updateFactorsBtn")) $("updateFactorsBtn").addEventListener("click", updateFactors);
-  let basicFilterTimer = null;
-  ["siteSearch","periodFilter","serviceFilter"].forEach(id=>{
-    const el=$(id); if(!el) return;
-    const run=()=>{ renderTable(); renderDashboard(); };
-    if(el.tagName === 'INPUT'){
-      el.addEventListener('input', ()=>{ clearTimeout(basicFilterTimer); basicFilterTimer=setTimeout(run,120); }, {passive:true});
-    } else el.addEventListener('change', run);
-  });
-  let advancedFilterTimer = null;
-  ["globalSiteSearch","zoneFilter","territoryTypeFilter","communeFilter","neighborhoodFilter","nucleusFilter","siteTypeFilter","specificSiteFilter","globalPeriodFilter","globalServiceFilter","priorityFilter"].forEach(id=>{
-    const el=$(id); if(!el) return;
-    const run=()=>applyAdvancedSiteFilters({refresh:true});
-    if(el.tagName === 'INPUT'){
-      el.addEventListener('input', ()=>{
-        clearTimeout(advancedFilterTimer);
-        advancedFilterTimer=setTimeout(run, 140);
-      }, {passive:true});
-      el.addEventListener('change', run);
-    } else {
-      el.addEventListener('change', run);
-    }
-  });
-  if($("clearSiteFiltersBtn")) $("clearSiteFiltersBtn").addEventListener("click", clearAdvancedSiteFilters);
-  if($("toggleClassificationBtn")) $("toggleClassificationBtn").addEventListener("click", toggleClassificationPanel);
-  if($("classificationBody")) $("classificationBody").addEventListener("change", handleClassificationChange);
-  if($("exportCsvBtn")) $("exportCsvBtn").addEventListener("click", exportCsv);
-  if($("exportJsonBtn")) $("exportJsonBtn").addEventListener("click", exportJson);
-  if($("compareMode")) $("compareMode").addEventListener("change", ()=>{ renderCompareControls({keepSite:true}); comparePeriods(); });
-  if($("compareSiteSearch")){
-    let compareSearchTimer;
-    $("compareSiteSearch").addEventListener("input", ()=>{
-      clearTimeout(compareSearchTimer);
-      compareSearchTimer=setTimeout(()=>selectCompareSiteFromSearch(false), 180);
-    });
-    $("compareSiteSearch").addEventListener("change", ()=>selectCompareSiteFromSearch(true));
-    $("compareSiteSearch").addEventListener("keydown", event=>{
-      if(event.key==='Enter'){
-        event.preventDefault();
-        selectCompareSiteFromSearch(true);
-      }
-    });
-  }
-  if($("clearCompareSite")) $("clearCompareSite").addEventListener("click", clearCompareSiteSearch);
-  if($("compareBtn")) $("compareBtn").addEventListener("click", ()=>{ selectCompareSiteFromSearch(true, false); comparePeriods(); });
+  ["periodFilter","serviceFilter","sortFilter"].forEach(id=>$(id).addEventListener("change", applyFilters));
+  $("siteSearch").addEventListener("input", handleSiteSearchInput);
+  $("siteSearch").addEventListener("keydown", handleAutocompleteKeydown);
+  $("siteSearch").addEventListener("focus", ()=>renderAutocompleteSuggestions($("siteSearch").value));
+  $("clearSearchBtn").addEventListener("click", clearSiteSearch);
+  $("clearFiltersBtn").addEventListener("click", clearAllFilters);
+  $("siteSuggestions").addEventListener("mousedown", handleSuggestionClick);
+  document.addEventListener("click", e=>{ if(!$("siteAutocomplete").contains(e.target)) closeAutocomplete(); });
+  $("exportCsvBtn").addEventListener("click", exportCsv);
+  $("exportJsonBtn").addEventListener("click", exportJson);
+  if($("compareMode")) $("compareMode").addEventListener("change", ()=>{ renderCompareControls(); comparePeriods(); });
+  if($("compareSite")) $("compareSite").addEventListener("change", ()=>{ renderCompareControls({keepSite:true}); comparePeriods(); });
+  $("compareBtn").addEventListener("click", comparePeriods);
   if($("printPlanBtn")) $("printPlanBtn").addEventListener("click", printCurrentPlan);
   if($("downloadPlanBtn")) $("downloadPlanBtn").addEventListener("click", downloadCurrentPlan);
+  if($("environmentBody")) $("environmentBody").addEventListener("click", handlePlanButtonClick);
   document.addEventListener("click", handlePlanButtonClick);
 }
 function initConfig(){
@@ -364,98 +112,67 @@ function loadStore(){
   try{ return JSON.parse(localStorage.getItem(STORE_KEY)) || {records:[], files:{}, sites:{}}; }
   catch{ return {records:[], files:{}, sites:{}}; }
 }
-function saveStore(){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(state)); }catch(error){ console.warn('[SiMeCO2] No fue posible guardar toda la base en localStorage:',error); } }
+function saveStore(){ localStorage.setItem(STORE_KEY, JSON.stringify(state)); }
 function log(msg){
-  const box=$('logBox'); if(!box) return;
-  const t=new Date().toLocaleTimeString();
-  box.textContent += `[${t}] ${msg}\n`;
-  box.scrollTop=box.scrollHeight;
+  const t = new Date().toLocaleTimeString();
+  $('logBox').textContent += `[${t}] ${msg}\n`;
+  $('logBox').scrollTop = $('logBox').scrollHeight;
 }
 
-async function getDataPdfFiles(){
-  // El manifiesto local es la fuente más rápida y estable en GitHub Pages.
-  try{
-    const res=await fetch('data/manifest.json', {cache:'default'});
-    if(res.ok){
-      const manifest=await res.json();
-      const arr=Array.isArray(manifest)?manifest:(manifest.files||[]);
-      const files=arr.filter(x=>String(typeof x==='string'?x:x.name).toLowerCase().endsWith('.pdf')).map(x=>{
-        if(typeof x==='string') return {name:x,url:'data/'+encodeURIComponent(x),sha:'manifest:'+x};
-        return {name:x.name,url:x.url||('data/'+encodeURIComponent(x.name)),sha:x.sha||x.version||('manifest:'+x.name)};
-      });
-      if(files.length){ log(`Manifest local: ${files.length} PDF disponibles.`); return files; }
-    }
-  }catch(err){ log(`No se pudo leer manifest.json: ${err.message}`); }
-
-  const cfg=getRepoConfig();
+async function scanDataFolder(){
+  log('Buscando PDFs nuevos en carpeta /data...');
+  const cfg = getRepoConfig();
+  let files = [];
   if(cfg.owner && cfg.repo){
     try{
-      const api=`https://api.github.com/repos/${encodeURIComponent(cfg.owner)}/${encodeURIComponent(cfg.repo)}/contents/data?ref=${encodeURIComponent(cfg.branch)}`;
-      const res=await fetch(api,{cache:'default'});
+      const api = `https://api.github.com/repos/${encodeURIComponent(cfg.owner)}/${encodeURIComponent(cfg.repo)}/contents/data?ref=${encodeURIComponent(cfg.branch)}`;
+      const res = await fetch(api, {cache:'no-store'});
       if(!res.ok) throw new Error(`${res.status} ${res.statusText}`);
-      const json=await res.json();
-      const files=json.filter(f=>f.type==='file'&&f.name.toLowerCase().endsWith('.pdf')).map(f=>({name:f.name,url:f.download_url,sha:f.sha}));
-      log(`GitHub API: ${files.length} PDF encontrados.`);
-      return files;
-    }catch(err){ log(`No se pudo consultar GitHub API: ${err.message}`); }
+      const json = await res.json();
+      files = json.filter(f=>f.type==='file' && f.name.toLowerCase().endsWith('.pdf')).map(f=>({name:f.name,url:f.download_url,sha:f.sha}));
+      log(`GitHub API: ${files.length} PDF encontrados en /data.`);
+    } catch(err){
+      log(`No se pudo leer GitHub API (${err.message}). Intentando data/manifest.json...`);
+    }
   }
-  return [];
-}
-
-async function scanDataFolder(options={}){
-  if(document.body.classList.contains('is-processing-data')) return;
-  setLoadingState(true);
-  log(options.automatic?'Carga automática iniciada...':'Buscando actualizaciones en las facturas...');
-  try{
-    const files=await getDataPdfFiles();
-    if(!files.length){
-      log('No se encontraron archivos PDF en data/manifest.json ni en GitHub.');
-      if(state.records.length) unlockDataView('Se conservaron los datos disponibles en este dispositivo.');
-      return;
-    }
-
-    const pending=[]; let skipped=0;
-    for(const file of files){
-      const fingerprint=file.sha||file.url||file.name;
-      if(state.files[fingerprint]) skipped++; else pending.push({...file,fingerprint});
-    }
-    if(!pending.length){
-      log(`Los ${skipped} PDF ya estaban procesados. No fue necesario descargarlos nuevamente.`);
-      renderAll();
-      unlockDataView('Datos recuperados desde la memoria local. La plataforma está lista.');
-      return;
-    }
-
-    let imported=0,failed=0,completed=0;
-    const concurrency=Math.min(3,pending.length);
-    let nextIndex=0;
-    async function worker(){
-      while(true){
-        const i=nextIndex++; if(i>=pending.length) return;
-        const file=pending[i];
-        setLoadingProgress(completed+1,pending.length,file.name);
-        try{
-          const response=await fetch(file.url,{cache:'force-cache'});
-          if(!response.ok) throw new Error(`${response.status} ${response.statusText}`);
-          const result=await parsePdfArrayBuffer(await response.arrayBuffer(),file.name,file.url);
-          if(result.records.length){ addImport(result,file.fingerprint); imported++; }
-          else { failed++; log(`Sin registros estructurados en ${file.name}.`); }
-        }catch(err){ failed++; log(`Error importando ${file.name}: ${err.message}`); }
-        completed++;
-        setLoadingProgress(completed,pending.length,file.name);
+  if(!files.length){
+    try{
+      const res = await fetch('data/manifest.json?ts='+Date.now(), {cache:'no-store'});
+      if(res.ok){
+        const manifest = await res.json();
+        const arr = Array.isArray(manifest) ? manifest : manifest.files || [];
+        files = arr.filter(x => String(typeof x==='string'?x:x.name).toLowerCase().endsWith('.pdf')).map(x=> typeof x==='string' ? {name:x,url:'data/'+encodeURIComponent(x)} : {name:x.name,url:x.url||('data/'+encodeURIComponent(x.name))});
+        log(`Manifest: ${files.length} PDF encontrados.`);
       }
-    }
-    await Promise.all(Array.from({length:concurrency},worker));
-    saveStore(); renderAll();
-    log(`Carga terminada. Nuevos PDF: ${imported}. Ya procesados: ${skipped}. Fallidos: ${failed}.`);
-    if(state.records.length) unlockDataView('Datos cargados correctamente. Mostrando el ranking y los indicadores...');
-  } finally {
-    setLoadingState(false);
+    }catch(err){ log(`No se pudo leer manifest.json: ${err.message}`); }
   }
+  if(!files.length){
+    log('No se encontraron PDF. En GitHub público basta subir los PDF a /data. En local usa data/manifest.json.');
+    return;
+  }
+  let imported=0, skipped=0, failed=0;
+  for(const file of files){
+    const fingerprint = file.sha || file.url || file.name;
+    if(state.files[fingerprint]){ skipped++; continue; }
+    try{
+      log(`Importando ${file.name}...`);
+      const buf = await (await fetch(file.url, {cache:'no-store'})).arrayBuffer();
+      const result = await parsePdfArrayBuffer(buf, file.name, file.url);
+      if(result.records.length){
+        addImport(result, fingerprint);
+        imported++;
+        log(`OK ${file.name}: ${result.records.length} registros, periodo ${result.period}.`);
+      }else{
+        failed++;
+        log(`Sin registros estructurados en ${file.name}. Muestra: ${result.sample.slice(0,500).replace(/\s+/g,' ')}`);
+      }
+    }catch(err){ failed++; log(`Error importando ${file.name}: ${err.message}`); }
+  }
+  log(`Proceso terminado. Importados: ${imported}. Omitidos ya existentes: ${skipped}. Fallidos: ${failed}.`);
+  saveStore(); renderAll();
 }
 async function handleLocalPdf(ev){
   const file = ev.target.files[0]; if(!file) return;
-  setLoadingState(true);
   log(`Leyendo PDF local: ${file.name}`);
   const buf = await file.arrayBuffer();
   const result = await parsePdfArrayBuffer(buf, file.name, 'local');
@@ -464,14 +181,11 @@ async function handleLocalPdf(ev){
     addImport(result, fingerprint);
     saveStore(); renderAll();
     log(`PDF local importado: ${result.records.length} registros, periodo ${result.period}.`);
-    log('Datos cargados. Generando el ranking de sedes educativas...');
-    unlockDataView();
   } else {
     log(`PDF abierto, pero no se estructuraron registros. Muestra: ${result.sample.slice(0,1000).replace(/\s+/g,' ')}`);
     alert('El PDF fue abierto, pero no se pudieron estructurar registros. Revisa el diagnóstico.');
   }
   ev.target.value='';
-  setLoadingState(false);
 }
 function addImport(result, fingerprint){
   const existingKeys = new Set(state.records.map(r=>r.key));
@@ -650,9 +364,8 @@ function parseNumber(v){
   if(v==null) return null;
   let s=String(v).trim().replace(/\s/g,'');
   if(!s) return null;
-  // Formato colombiano: punto para miles y coma para decimales.
-  if(s.includes(',')) s=s.replace(/\./g,'').replace(',','.');
-  else if(/^[-+]?\d{1,3}(?:\.\d{3})+$/.test(s)) s=s.replace(/\./g,'');
+  if(s.includes(',') && s.includes('.')) s=s.replace(/\./g,'').replace(',','.');
+  else if(s.includes(',')) s=s.replace(',','.');
   const n=parseFloat(s); return Number.isFinite(n)?n:null;
 }
 function parseMoney(v){ return parseNumber(v); }
@@ -660,55 +373,15 @@ function round(n,d=2){ return Number.isFinite(n) ? Math.round(n*Math.pow(10,d))/
 function hasAnyMeasure(r){ return [r.waterM3,r.alcM3,r.energyKwh,r.gasM3,r.wasteValue,r.wasteTon].some(v=>v!==null && v!==undefined && v!==0); }
 function siteKey(site,address=''){ return `${loose(site)}|${loose(address)}`; }
 
-function loadSiteMetadata(){
-  try{
-    const current=JSON.parse(localStorage.getItem(SITE_META_KEY)||'{}')||{};
-    if(Object.keys(current).length) return current;
-    const legacy=JSON.parse(localStorage.getItem(LEGACY_SITE_META_KEY)||'{}')||{};
-    // Solo migramos correcciones manuales; las asociaciones automáticas se reconstruyen desde la sincronización actual.
-    return Object.fromEntries(Object.entries(legacy).filter(([,m])=>m && (m.source==='Revisión manual' || m.confidence==='Confirmada')));
-  }catch{return {}}
+function searchTokens(value){ return loose(value).split(/\s+/).filter(Boolean); }
+function recordMatchesSearch(r, query){
+  if(selectedSiteKey) return siteKey(r.site,r.address)===selectedSiteKey;
+  const tokens = searchTokens(query);
+  if(!tokens.length) return true;
+  const haystack = loose(`${r.site||''} ${r.address||''}`);
+  return tokens.every(token=>haystack.includes(token));
 }
-function saveSiteMetadata(){ localStorage.setItem(SITE_META_KEY, JSON.stringify(siteMetadata)); }
-function defaultMeta(){ return {...EMPTY_META}; }
-function normalizedTokens(value){
-  const stop=new Set(['institucion','institución','educativa','educativo','escuela','colegio','sede','centro','ie','i','e','de','del','la','las','el','los','y','n','no','numero']);
-  return loose(value).replace(/\b(inst|educ|esc|col|jardin|inf|nro|num)\b/g,' ').split(/\s+/).filter(t=>t.length>1&&!stop.has(t));
-}
-function directoryMatchForSite(site,address=''){
-  return TERRITORIAL_SYNC[siteKey(site,address)] || null;
-}
-function metaFromDirectory(match){
-  return match ? {...defaultMeta(),...match} : {...defaultMeta(),source:'Factura de servicios públicos',confidence:'Pendiente de clasificación'};
-}
-function ensureSiteMetadata(){
-  let changed=false;
-  for(const s of getSiteOptions()){
-    const key=siteKey(s.site,s.address);
-    const existing=siteMetadata[key];
-    // Las correcciones confirmadas por el usuario tienen prioridad permanente.
-    if(existing && (existing.source==='Revisión manual' || existing.confidence==='Confirmada')) continue;
-    const match=directoryMatchForSite(s.site,s.address);
-    const next=metaFromDirectory(match);
-    if(!existing || JSON.stringify(existing)!==JSON.stringify(next)){
-      siteMetadata[key]=next;
-      changed=true;
-    }
-  }
-  if(changed) saveSiteMetadata();
-}
-function getSiteMeta(recordOrKey){
-  const key = typeof recordOrKey==='string' ? recordOrKey : siteKey(recordOrKey.site, recordOrKey.address);
-  return {...EMPTY_META,...(siteMetadata[key]||{})};
-}
-function sitePriorityClass(record){
-  const key=siteKey(record.site,record.address);
-  const relevant=state.records.filter(r=>siteKey(r.site,r.address)===key && Number(r.energyKwh)>0);
-  const periods=new Set(relevant.map(r=>r.period)).size || 1;
-  const avg=relevant.reduce((a,r)=>a+(Number(r.energyKwh)||0),0)/periods;
-  return classifyEnergyIntensity(avg).cls;
-}
-function matchesService(r, service){
+function serviceHasValue(r, service){
   if(!service) return true;
   if(service==='energia') return Number(r.energyKwh)>0;
   if(service==='agua') return Number(r.waterM3)>0;
@@ -717,166 +390,93 @@ function matchesService(r, service){
   if(service==='aseo') return Number(r.wasteValue)>0 || Number(r.wasteTon)>0;
   return true;
 }
-function currentTerritorialFilters(){
-  return {q:loose($('globalSiteSearch')?.value||''), zone:$('zoneFilter')?.value||'', territoryType:$('territoryTypeFilter')?.value||'', commune:$('communeFilter')?.value||'', neighborhood:$('neighborhoodFilter')?.value||'', nucleus:$('nucleusFilter')?.value||'', siteType:$('siteTypeFilter')?.value||'', siteKey:$('specificSiteFilter')?.value||'', period:$('globalPeriodFilter')?.value||'', service:$('globalServiceFilter')?.value||'', priority:$('priorityFilter')?.value||''};
-}
-function siteRows(){
-  ensureSiteMetadata();
-  return getSiteOptions().map(s=>({ ...s, key:siteKey(s.site,s.address), meta:getSiteMeta(siteKey(s.site,s.address)) }));
-}
-function siteSearchText(row){ const m=row.meta; return loose(`${row.site} ${row.address} ${m.zone} ${m.territoryType} ${m.commune} ${m.neighborhood} ${m.nucleus} ${m.siteType} ${m.directoryId}`); }
-function siteMatchesTerritorial(row,f=currentTerritorialFilters(),ignore=''){
-  const m=row.meta;
-  return (!f.q||siteSearchText(row).includes(f.q)) &&
-    (ignore==='zone'||!f.zone||loose(m.zone)===loose(f.zone)) &&
-    (ignore==='territoryType'||!f.territoryType||loose(m.territoryType)===loose(f.territoryType)) &&
-    (ignore==='commune'||!f.commune||loose(m.commune)===loose(f.commune)) &&
-    (ignore==='neighborhood'||!f.neighborhood||loose(m.neighborhood)===loose(f.neighborhood)) &&
-    (ignore==='nucleus'||!f.nucleus||loose(m.nucleus)===loose(f.nucleus)) &&
-    (ignore==='siteType'||!f.siteType||loose(m.siteType)===loose(f.siteType)) &&
-    (ignore==='siteKey'||!f.siteKey||row.key===f.siteKey);
-}
-function advancedFilteredRecords(records=state.records){
-  const f=currentTerritorialFilters();
-  const allowed=new Set(siteRows().filter(row=>siteMatchesTerritorial(row,f)).map(row=>row.key));
-  return records.filter(r=>{
-    if(!allowed.has(siteKey(r.site,r.address))) return false;
-    if(f.period && String(r.period)!==String(f.period)) return false;
-    if(!matchesService(r,f.service)) return false;
-    if(f.priority && sitePriorityClass(r)!==f.priority) return false;
-    return true;
+function sortRecords(records){
+  const mode = $('sortFilter')?.value || 'period-desc';
+  return [...records].sort((a,b)=>{
+    if(mode==='period-asc') return String(a.period).localeCompare(String(b.period)) || String(a.site).localeCompare(String(b.site),'es');
+    if(mode==='site-asc') return String(a.site).localeCompare(String(b.site),'es') || String(b.period).localeCompare(String(a.period));
+    if(mode==='energy-desc') return (Number(b.energyKwh)||0)-(Number(a.energyKwh)||0);
+    if(mode==='co2-desc') return (Number(b.co2kg)||0)-(Number(a.co2kg)||0);
+    return String(b.period).localeCompare(String(a.period)) || String(a.site).localeCompare(String(b.site),'es');
   });
 }
-function optionValues(rows,field){ return [...new Set(rows.map(r=>String(r.meta[field]||'Sin clasificar').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'es',{numeric:true})); }
-function fillDependentSelect(id,values,label,keep){
-  const el=$(id); if(!el) return;
-  el.innerHTML=`<option value="">${label}</option>`+values.map(v=>`<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`).join('');
-  const found=[...el.options].find(o=>loose(o.value)===loose(keep)); if(found) el.value=found.value;
+function filteredRecords(){
+  const q = $('siteSearch').value||'';
+  const p = $('periodFilter').value;
+  const service = $('serviceFilter').value;
+  return sortRecords(state.records.filter(r=>recordMatchesSearch(r,q) && (!p || r.period===p) && serviceHasValue(r,service)));
 }
-function refreshTerritorialFilters(){
-  ensureSiteMetadata();
-  const f=currentTerritorialFilters(), rows=siteRows();
-  fillDependentSelect('zoneFilter', optionValues(rows.filter(r=>siteMatchesTerritorial(r,f,'zone')), 'zone'), 'Todas', f.zone);
-  fillDependentSelect('territoryTypeFilter', optionValues(rows.filter(r=>siteMatchesTerritorial(r,f,'territoryType')), 'territoryType'), 'Todos', f.territoryType);
-  fillDependentSelect('communeFilter', optionValues(rows.filter(r=>siteMatchesTerritorial(r,f,'commune')), 'commune'), 'Todas', f.commune);
-  fillDependentSelect('neighborhoodFilter', optionValues(rows.filter(r=>siteMatchesTerritorial(r,f,'neighborhood')), 'neighborhood'), 'Todos', f.neighborhood);
-  fillDependentSelect('nucleusFilter', optionValues(rows.filter(r=>siteMatchesTerritorial(r,f,'nucleus')), 'nucleus'), 'Todos', f.nucleus);
-  fillDependentSelect('siteTypeFilter', optionValues(rows.filter(r=>siteMatchesTerritorial(r,f,'siteType')), 'siteType'), 'Todos', f.siteType);
-  const matching=rows.filter(r=>siteMatchesTerritorial(r,f,'siteKey')).sort((a,b)=>a.site.localeCompare(b.site,'es'));
-  const siteSel=$('specificSiteFilter');
-  siteSel.innerHTML='<option value="">Todas</option>'+matching.map(r=>`<option value="${escapeHtml(r.key)}">${escapeHtml(r.site)}${r.meta.commune!=='Sin clasificar'?` · ${escapeHtml(r.meta.commune)}`:''}</option>`).join('');
-  if(matching.some(r=>r.key===f.siteKey)) siteSel.value=f.siteKey;
-  const periods=[...new Set(state.records.map(r=>r.period).filter(Boolean))].sort();
-  fillDependentSelect('globalPeriodFilter',periods,'Todos',f.period);
-  const suggestions=$('siteSearchSuggestions'); if(suggestions) suggestions.innerHTML=matching.slice(0,200).map(r=>`<option value="${escapeHtml(r.site)}">${escapeHtml([r.meta.commune,r.meta.neighborhood,r.meta.nucleus].filter(x=>x&&x!=='Sin clasificar').join(' · '))}</option>`).join('');
+function applyFilters(){ renderTable(); renderDashboard(); renderFilterSummary(); }
+function clearSiteSearch(){
+  $('siteSearch').value=''; selectedSiteKey=''; $('clearSearchBtn').classList.remove('visible'); closeAutocomplete(); applyFilters(); $('siteSearch').focus();
 }
-function applyAdvancedSiteFilters({refresh=true}={}){
-  if(refresh) refreshTerritorialFilters();
-  renderFilterSummary(); renderTerritorialResults(); renderCards(); renderExecutiveSummary(); renderProjectImpact(); renderCompareControls({keepSite:true}); comparePeriods(); renderDashboard(); renderTable(); drawChart(aggregateByPeriod(advancedFilteredRecords()));
+function clearAllFilters(){
+  $('siteSearch').value=''; selectedSiteKey=''; $('periodFilter').value=''; $('serviceFilter').value=''; $('sortFilter').value='period-desc'; $('clearSearchBtn').classList.remove('visible'); closeAutocomplete(); applyFilters();
 }
-function clearAdvancedSiteFilters(){
-  ['globalSiteSearch','zoneFilter','territoryTypeFilter','communeFilter','neighborhoodFilter','nucleusFilter','siteTypeFilter','specificSiteFilter','globalPeriodFilter','globalServiceFilter','priorityFilter'].forEach(id=>{if($(id)) $(id).value='';});
-  refreshTerritorialFilters(); applyAdvancedSiteFilters({refresh:false});
+function handleSiteSearchInput(){
+  selectedSiteKey=''; $('clearSearchBtn').classList.toggle('visible',Boolean($('siteSearch').value)); renderAutocompleteSuggestions($('siteSearch').value); applyFilters();
 }
-function renderAdvancedFilterControls(){
-  refreshTerritorialFilters(); renderClassificationTable(); renderFilterSummary();
+function siteSearchOptions(){
+  const map = new Map();
+  for(const r of state.records){ const key=siteKey(r.site,r.address); if(!map.has(key)) map.set(key,{key,site:r.site||'Sin nombre',address:r.address||'',periods:new Set()}); map.get(key).periods.add(r.period); }
+  return [...map.values()].map(x=>({...x,periodCount:x.periods.size}));
+}
+function suggestionScore(item, query){
+  const q=loose(query), site=loose(item.site), address=loose(item.address), all=`${site} ${address}`;
+  if(!q) return 1;
+  const tokens=searchTokens(q); if(!tokens.every(t=>all.includes(t))) return -1;
+  let score=0; if(site===q) score+=1000; if(site.startsWith(q)) score+=600; if(site.includes(q)) score+=300; if(address.startsWith(q)) score+=120;
+  tokens.forEach(t=>{ if(site.split(' ').some(w=>w.startsWith(t))) score+=40; else if(site.includes(t)) score+=20; else score+=5; });
+  return score;
+}
+function highlightMatch(text, query){
+  let safe=escapeHtml(text||''); const tokens=[...new Set(searchTokens(query))].sort((a,b)=>b.length-a.length); if(!tokens.length) return safe;
+  for(const token of tokens){ const re=new RegExp(`(${token.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`,'gi'); safe=safe.replace(re,'<mark>$1</mark>'); }
+  return safe;
+}
+function renderAutocompleteSuggestions(query=''){
+  const box=$('siteSuggestions'); const q=String(query||'').trim();
+  const options=siteSearchOptions().map(x=>({...x,score:suggestionScore(x,q)})).filter(x=>x.score>=0).sort((a,b)=>b.score-a.score || a.site.localeCompare(b.site,'es')).slice(0,10);
+  autocompleteIndex=-1;
+  if(!options.length){ box.innerHTML='<div class="autocomplete-empty">No se encontraron sedes. Prueba con otra palabra.</div>'; box.hidden=false; $('siteSearch').setAttribute('aria-expanded','true'); return; }
+  box.innerHTML=options.map((x,i)=>`<button type="button" class="autocomplete-option" role="option" data-key="${escapeHtml(x.key)}" data-index="${i}"><span><strong>${highlightMatch(x.site,q)}</strong><small>${highlightMatch(x.address||'Sin dirección registrada',q)}</small></span><em>${x.periodCount} periodo${x.periodCount===1?'':'s'}</em></button>`).join('');
+  box.hidden=false; $('siteSearch').setAttribute('aria-expanded','true');
+}
+function closeAutocomplete(){ $('siteSuggestions').hidden=true; $('siteSearch').setAttribute('aria-expanded','false'); autocompleteIndex=-1; }
+function chooseSuggestion(button){
+  const item=siteSearchOptions().find(x=>x.key===button.dataset.key); if(!item) return;
+  selectedSiteKey=item.key; $('siteSearch').value=item.site; $('clearSearchBtn').classList.add('visible'); closeAutocomplete(); applyFilters();
+}
+function handleSuggestionClick(e){ const btn=e.target.closest('.autocomplete-option'); if(btn) chooseSuggestion(btn); }
+function handleAutocompleteKeydown(e){
+  const box=$('siteSuggestions'); const opts=[...box.querySelectorAll('.autocomplete-option')];
+  if(e.key==='Escape'){ closeAutocomplete(); return; }
+  if((e.key==='ArrowDown'||e.key==='ArrowUp') && box.hidden){ renderAutocompleteSuggestions($('siteSearch').value); }
+  if(!opts.length) return;
+  if(e.key==='ArrowDown'){ e.preventDefault(); autocompleteIndex=(autocompleteIndex+1)%opts.length; }
+  else if(e.key==='ArrowUp'){ e.preventDefault(); autocompleteIndex=(autocompleteIndex-1+opts.length)%opts.length; }
+  else if(e.key==='Enter' && autocompleteIndex>=0){ e.preventDefault(); chooseSuggestion(opts[autocompleteIndex]); return; }
+  else return;
+  opts.forEach((o,i)=>o.classList.toggle('active',i===autocompleteIndex)); opts[autocompleteIndex].scrollIntoView({block:'nearest'});
 }
 function renderFilterSummary(){
-  if(!$('filterSummary')) return;
-  const recs=advancedFilteredRecords(), sites=new Set(recs.map(r=>siteKey(r.site,r.address))).size, f=currentTerritorialFilters();
-  const labels=[]; if(f.q)labels.push('búsqueda'); if(f.zone)labels.push('zona'); if(f.territoryType)labels.push('tipo de territorio'); if(f.commune)labels.push('comuna/corregimiento'); if(f.neighborhood)labels.push('barrio/vereda'); if(f.nucleus)labels.push('núcleo'); if(f.siteType)labels.push('tipo de sede'); if(f.siteKey)labels.push('sede'); if(f.period)labels.push('periodo'); if(f.service)labels.push('servicio'); if(f.priority)labels.push('prioridad');
-  const synchronized=new Set(recs.map(r=>siteKey(r.site,r.address)).filter(k=>getSiteMeta(k).directoryId)).size;
-  $('filterSummary').innerHTML=`Mostrando <strong>${fmt(sites)} sede(s)</strong> y <strong>${fmt(recs.length)} registro(s)</strong> extraídos de las facturas. <strong>${fmt(synchronized)}</strong> sede(s) cuentan con asociación territorial de referencia.`;
-  if($('filterStatus')) $('filterStatus').textContent=labels.length?`Filtros activos: ${labels.join(', ')}.`:`Filtros listos · mostrando todas las sedes con datos.`;
+  const recs=filteredRecords(); const uniqueSites=new Set(recs.map(r=>siteKey(r.site,r.address))).size;
+  $('filterResultCount').textContent=`${recs.length} registro${recs.length===1?'':'s'} · ${uniqueSites} sede${uniqueSites===1?'':'s'}`;
+  const chips=[]; const q=$('siteSearch').value.trim(); const p=$('periodFilter').value; const service=$('serviceFilter');
+  if(q) chips.push(`<button type="button" data-clear="search">Búsqueda: ${escapeHtml(q)} ×</button>`);
+  if(p) chips.push(`<button type="button" data-clear="period">Periodo: ${escapeHtml(p)} ×</button>`);
+  if(service.value) chips.push(`<button type="button" data-clear="service">${escapeHtml(service.selectedOptions[0].textContent)} ×</button>`);
+  $('activeFilters').innerHTML=chips.join('') || '<span>Mostrando toda la información disponible.</span>';
+  $('activeFilters').querySelectorAll('button').forEach(btn=>btn.addEventListener('click',()=>{ const t=btn.dataset.clear; if(t==='search') clearSiteSearch(); else { $(t==='period'?'periodFilter':'serviceFilter').value=''; applyFilters(); } }));
 }
-function toggleClassificationPanel(){
-  const panel=$('classificationPanel'); if(!panel) return; panel.hidden=!panel.hidden;
-  $('toggleClassificationBtn').textContent=panel.hidden?'Revisar clasificación':'Cerrar clasificación'; if(!panel.hidden) renderClassificationTable();
-}
-function selectOptions(values,current){ return values.map(v=>`<option value="${escapeHtml(v)}" ${loose(v)===loose(current)?'selected':''}>${escapeHtml(v)}</option>`).join(''); }
-function renderTerritorialResults(){
-  const body=$('territorialResultsBody');
-  if(!body) return;
-  const records=advancedFilteredRecords(state.records).filter(r=>Number(r.energyKwh)>0);
-  const rows=aggregateBySite(records);
-  const totalKwh=rows.reduce((sum,r)=>sum+r.energyKwh,0);
-  const totalCo2=rows.reduce((sum,r)=>sum+r.co2kg,0);
-  const periods=new Set(records.map(r=>r.period)).size;
-  if($('territorialSitesCount')) $('territorialSitesCount').textContent=fmt(rows.length);
-  if($('territorialPeriodsCount')) $('territorialPeriodsCount').textContent=fmt(periods);
-  if($('territorialEnergyTotal')) $('territorialEnergyTotal').textContent=fmt(totalKwh)+' kWh';
-  if($('territorialCo2Total')) $('territorialCo2Total').textContent=fmt(totalCo2/1000)+' t CO₂e';
-  body.innerHTML=rows.slice(0,200).map((r,i)=>{
-    const meta=getSiteMeta(siteKey(r.site,r.address));
-    return `<tr><td>${i+1}</td><td><strong>${escapeHtml(r.site)}</strong><small class="site-meta-line">${escapeHtml(r.address||'Sin dirección')}</small></td><td>${escapeHtml(meta.zone)}</td><td>${escapeHtml(meta.commune)}</td><td>${escapeHtml(meta.nucleus)}</td><td>${fmt(r.periodCount)}</td><td><strong>${fmt(r.energyKwh)} kWh</strong></td><td>${fmt(r.co2kg/1000)} t</td></tr>`;
-  }).join('') || '<tr><td colspan="8">No hay consumos eléctricos para los filtros seleccionados.</td></tr>';
-}
-
-function renderClassificationTable(){
-  if(!$('classificationBody')) return;
-  const rows=siteRows();
-  const zones=[...new Set(Object.values(siteMetadata).map(x=>x.zone).filter(Boolean)),'Sin clasificar'].sort((a,b)=>a.localeCompare(b,'es'));
-  const ttypes=[...new Set(Object.values(siteMetadata).map(x=>x.territoryType).filter(Boolean)),'Sin clasificar'].sort((a,b)=>a.localeCompare(b,'es'));
-  const communes=[...new Set(Object.values(siteMetadata).map(x=>x.commune).filter(Boolean)),'Sin clasificar'].sort((a,b)=>a.localeCompare(b,'es'));
-  const types=[...new Set(Object.values(siteMetadata).map(x=>x.siteType).filter(Boolean)),'Sin clasificar'].sort((a,b)=>a.localeCompare(b,'es'));
-  $('classificationBody').innerHTML=rows.map(r=>{const m=r.meta,k=escapeHtml(r.key);return `<tr><td><strong>${escapeHtml(r.site)}</strong><small class="site-meta-line">${escapeHtml(m.directoryId||'Sin código territorial')}</small></td><td>${escapeHtml(r.address||'')}</td><td><select class="meta-zone" data-site-key="${k}">${selectOptions(zones,m.zone)}</select></td><td><select class="meta-territory-type" data-site-key="${k}">${selectOptions(ttypes,m.territoryType)}</select></td><td><select class="meta-commune" data-site-key="${k}">${selectOptions(communes,m.commune)}</select></td><td><input class="meta-neighborhood" data-site-key="${k}" value="${escapeHtml(m.neighborhood)}"></td><td><input class="meta-nucleus" data-site-key="${k}" value="${escapeHtml(m.nucleus)}"></td><td><select class="meta-site-type" data-site-key="${k}">${selectOptions(types,m.siteType)}</select></td><td><strong>${escapeHtml(m.source)}</strong><small class="site-meta-line">Confianza: ${escapeHtml(m.confidence)}</small></td></tr>`;}).join('')||'<tr><td colspan="9">Carga datos para clasificar las sedes.</td></tr>';
-}
-function handleClassificationChange(e){
-  const key=e.target?.dataset?.siteKey; if(!key) return;
-  siteMetadata[key]={...EMPTY_META,...(siteMetadata[key]||{})}; const m=siteMetadata[key];
-  if(e.target.classList.contains('meta-zone'))m.zone=e.target.value||'Sin clasificar';
-  if(e.target.classList.contains('meta-territory-type'))m.territoryType=e.target.value||'Sin clasificar';
-  if(e.target.classList.contains('meta-commune'))m.commune=e.target.value||'Sin clasificar';
-  if(e.target.classList.contains('meta-neighborhood'))m.neighborhood=e.target.value.trim()||'Sin clasificar';
-  if(e.target.classList.contains('meta-nucleus'))m.nucleus=e.target.value.trim()||'Sin clasificar';
-  if(e.target.classList.contains('meta-site-type'))m.siteType=e.target.value||'Sin clasificar';
-  m.source='Revisión manual'; m.confidence='Confirmada'; saveSiteMetadata(); refreshTerritorialFilters(); applyAdvancedSiteFilters({refresh:false});
-}
-
-function filteredRecords(){
-  const q = loose($('siteSearch').value||'');
-  const p = $('periodFilter').value;
-  const s = $('serviceFilter').value;
-  return advancedFilteredRecords(state.records).filter(r=>{
-    if(q && !(`${loose(r.site)} ${loose(r.address)}`.includes(q))) return false;
-    if(p && r.period!==p) return false;
-    if(s==='energia' && !r.energyKwh) return false;
-    if(s==='agua' && !r.waterM3) return false;
-    if(s==='alcantarillado' && !r.alcM3) return false;
-    if(s==='gas' && !r.gasM3) return false;
-    if(s==='aseo' && !(r.wasteValue||r.wasteTon)) return false;
-    return true;
-  });
-}
-function safeRender(name, fn){
-  try{ fn(); }
-  catch(error){ console.error(`[SiMeCO2] Error en ${name}:`, error); log(`Aviso: no se pudo actualizar ${name}.`); }
-}
-function renderAll(){
-  safeRender('cálculos de CO₂', recalculateCo2);
-  if($('periodFilter') || $('compareA')) safeRender('controles de periodos', renderControls);
-  if($('globalSiteSearch') || $('zoneFilter')) safeRender('filtros territoriales', renderAdvancedFilterControls);
-  if($('kPeriods')) safeRender('indicadores generales', renderCards);
-  if($('executiveSummary') || $('executiveCards')) safeRender('resumen ejecutivo', renderExecutiveSummary);
-  if($('impactGrid') || $('smartAlerts')) safeRender('indicadores de impacto', renderProjectImpact);
-  if($('siteChart') || $('environmentBody')) safeRender('dashboard y ranking', renderDashboard);
-  if($('territorialResultsBody')) safeRender('resultados territoriales de facturas', renderTerritorialResults);
-  if($('recordsBody')) safeRender('tabla de registros', renderTable);
-  if($('mainChart')) safeRender('gráfica temporal', ()=>drawChart(aggregateByPeriod(advancedFilteredRecords())));
-  if($('compareA') && $('compareB')) safeRender('comparador de periodos', comparePeriods);
-}
+function renderAll(){ recalculateCo2(); renderControls(); renderCards(); renderExecutiveSummary(); renderProjectImpact(); renderDashboard(); renderTable(); drawChart(aggregateByPeriod(state.records)); }
 function renderControls(){
-  const periods = [...new Set(state.records.map(r=>r.period).filter(Boolean))].sort();
-  if($('periodFilter')){
-    const options = '<option value="">Todos</option>'+periods.map(p=>`<option value="${p}">${p}</option>`).join('');
-    const current = $('periodFilter').value;
-    $('periodFilter').innerHTML = options; $('periodFilter').value = periods.includes(current)?current:'';
-  }
-  if($('siteList')){
-    const siteValues = Object.values(state.sites||{}).sort((a,b)=>String(a.site).localeCompare(String(b.site),'es'));
-    $('siteList').innerHTML = siteValues.map(s=>`<option value="${escapeHtml(s.site)}${s.address?' · '+escapeHtml(s.address):''}"></option>`).join('');
-  }
-  if($('compareA') && $('compareB')) renderCompareControls();
+  const periods = [...new Set(state.records.map(r=>r.period))].sort();
+  const options = '<option value="">Todos los periodos</option>'+periods.map(p=>`<option value="${p}">${p}</option>`).join('');
+  const current = $('periodFilter').value;
+  $('periodFilter').innerHTML = options; $('periodFilter').value = current;
+  renderCompareControls();
+  renderFilterSummary();
 }
 function renderCards(){
   const recs = state.records;
@@ -893,12 +493,11 @@ function renderCards(){
 }
 function renderTable(){
   const recs = filteredRecords();
+  renderFilterSummary();
   $('recordsBody').innerHTML = recs.map(r=>`<tr>
     <td data-label="Periodo">${r.period}</td>
-    <td data-label="Sede"><strong>${escapeHtml(r.site)}</strong><small class="site-meta-line">${escapeHtml(getSiteMeta(siteKey(r.site,r.address)).commune)} · ${escapeHtml(getSiteMeta(siteKey(r.site,r.address)).nucleus)}</small></td>
+    <td data-label="Sede">${escapeHtml(r.site)}</td>
     <td data-label="Dirección">${escapeHtml(r.address||'')}</td>
-    <td data-label="Comuna">${escapeHtml(getSiteMeta(r).commune)}</td>
-    <td data-label="Núcleo">${escapeHtml(getSiteMeta(r).nucleus)}</td>
     <td data-label="Agua m³">${num(r.waterM3)}</td>
     <td data-label="Alc. m³">${num(r.alcM3)}</td>
     <td data-label="Energía kWh">${num(r.energyKwh)}</td>
@@ -907,7 +506,7 @@ function renderTable(){
     <td data-label="Residuos t">${num(r.wasteTon)}</td>
     <td data-label="CO₂ kg">${num(r.co2kg)}</td>
     <td data-label="Fuente">${escapeHtml(r.source||'')}</td>
-  </tr>`).join('') || `<tr><td colspan="13">No hay registros para los filtros seleccionados.</td></tr>`;
+  </tr>`).join('') || `<tr><td colspan="11"><div class="empty-filter-state"><strong>No hay coincidencias</strong><span>Prueba con menos palabras, cambia el periodo o limpia los filtros.</span><button type="button" onclick="clearAllFilters()" class="secondary">Limpiar filtros</button></div></td></tr>`;
 }
 function aggregateByPeriod(records){
   const map = {};
@@ -954,7 +553,7 @@ function compareModeLabel(mode){
 }
 function recordsForCompareScope(){
   const site = $('compareSite') ? $('compareSite').value : '';
-  return advancedFilteredRecords(state.records).filter(r=>!site || siteKey(r.site,r.address) === site);
+  return state.records.filter(r=>!site || siteKey(r.site,r.address) === site);
 }
 function aggregateByComparison(records, mode){
   const map = {};
@@ -967,69 +566,17 @@ function aggregateByComparison(records, mode){
   }
   return Object.values(map).sort((a,b)=>a.key.localeCompare(b.key));
 }
-let compareSiteChoices=[];
-function normalizedSearchText(value){
-  return String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
-}
-function updateCompareSiteHint(message, isError=false){
-  const hint=$('compareSiteHint');
-  if(!hint) return;
-  hint.textContent=message;
-  hint.classList.toggle('bad', Boolean(isError));
-}
-function selectCompareSiteFromSearch(commit=false, refresh=true){
-  const input=$('compareSiteSearch'), hidden=$('compareSite');
-  if(!input || !hidden) return;
-  const raw=input.value.trim();
-  const query=normalizedSearchText(raw);
-  if(!query){
-    hidden.value='';
-    updateCompareSiteHint('Todas las sedes');
-    if(refresh){ renderCompareControls({keepSite:true, keepSearch:true}); comparePeriods(); }
-    return;
-  }
-  let match=compareSiteChoices.find(item=>normalizedSearchText(item.label)===query || normalizedSearchText(item.site)===query);
-  if(!match && commit){
-    const starts=compareSiteChoices.filter(item=>normalizedSearchText(item.site).startsWith(query));
-    const contains=compareSiteChoices.filter(item=>normalizedSearchText(item.site).includes(query));
-    match=starts.length===1 ? starts[0] : (contains.length===1 ? contains[0] : null);
-  }
-  if(match){
-    hidden.value=match.key;
-    input.value=match.label;
-    updateCompareSiteHint(`Sede seleccionada: ${match.site}`);
-  }else{
-    hidden.value='';
-    const suggestions=compareSiteChoices.filter(item=>normalizedSearchText(item.site).includes(query));
-    updateCompareSiteHint(suggestions.length ? `${suggestions.length} coincidencia(s). Selecciona una sede de la lista.` : 'No se encontró una sede con ese nombre.', !suggestions.length);
-  }
-  if(refresh){ renderCompareControls({keepSite:true, keepSearch:true}); comparePeriods(); }
-}
-function clearCompareSiteSearch(){
-  if($('compareSiteSearch')) $('compareSiteSearch').value='';
-  if($('compareSite')) $('compareSite').value='';
-  updateCompareSiteHint('Todas las sedes');
-  renderCompareControls({keepSite:true, keepSearch:true});
-  comparePeriods();
-  if($('compareSiteSearch')) $('compareSiteSearch').focus();
-}
 function renderCompareControls(opts={}){
   if(!$('compareA') || !$('compareB')) return;
-  const currentSite = $('compareSite') ? $('compareSite').value : '';
-  const currentSearch = $('compareSiteSearch') ? $('compareSiteSearch').value : '';
-  const allowedKeys=new Set(advancedFilteredRecords(state.records).map(r=>siteKey(r.site,r.address)));
-  compareSiteChoices = getSiteOptions().filter(s=>allowedKeys.has(siteKey(s.site,s.address))).map(s=>({
-    key:siteKey(s.site,s.address), site:s.site, address:s.address||'', label:`${s.site}${s.address ? ' · '+s.address : ''}`
-  })).sort((a,b)=>a.site.localeCompare(b.site,'es',{sensitivity:'base'}));
-  if($('compareSiteOptions')) $('compareSiteOptions').innerHTML=compareSiteChoices.map(item=>`<option value="${escapeHtml(item.label)}"></option>`).join('');
+  const currentSite = opts.keepSite && $('compareSite') ? $('compareSite').value : ($('compareSite') ? $('compareSite').value : '');
   if($('compareSite')){
-    const valid=compareSiteChoices.some(item=>item.key===currentSite);
-    $('compareSite').value=valid ? currentSite : '';
-    if(!valid && currentSite && $('compareSiteSearch')) $('compareSiteSearch').value='';
-  }
-  if($('compareSiteSearch') && !opts.keepSearch){
-    const selected=compareSiteChoices.find(item=>item.key===$('compareSite').value);
-    $('compareSiteSearch').value=selected ? selected.label : currentSearch;
+    const siteOptions = getSiteOptions();
+    $('compareSite').innerHTML = '<option value="">Todas las sedes</option>' + siteOptions.map(s=>{
+      const key = siteKey(s.site,s.address);
+      const label = `${s.site}${s.address ? ' · '+s.address : ''}`;
+      return `<option value="${escapeHtml(key)}">${escapeHtml(label)}</option>`;
+    }).join('');
+    if([...$('compareSite').options].some(o=>o.value===currentSite)) $('compareSite').value = currentSite;
   }
   const mode = $('compareMode') ? $('compareMode').value : 'month';
   const currentA = $('compareA').value;
@@ -1055,8 +602,7 @@ function comparePeriods(){
     drawChart(agg);
     return;
   }
-  const selectedSite=compareSiteChoices.find(item=>item.key===site);
-  const siteText = selectedSite ? selectedSite.label : 'Todas las sedes';
+  const siteText = site ? (($('compareSite').selectedOptions[0]||{}).textContent || 'Sede seleccionada') : 'Todas las sedes';
   const metrics=[['energyKwh','Energía','kWh'],['waterM3','Agua','m³'],['co2kg','CO₂','kg'],['wasteTon','Residuos','t']];
   const summary = `<div class="compare-summary"><strong>${escapeHtml(compareModeLabel(mode))}</strong><span>${escapeHtml(siteText)}</span><small>${escapeHtml(A.period)} vs ${escapeHtml(B.period)}</small></div>`;
   $('compareResult').innerHTML = summary + metrics.map(([k,label,unit])=>{
@@ -1087,11 +633,11 @@ function drawChart(data){
 function roundRect(ctx,x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
 function exportCsv(){
   const recs=filteredRecords();
-  const headers=['periodo','sede','direccion','zona_territorial','tipo_territorio','comuna_corregimiento','barrio_vereda','nucleo_educativo','tipo_sede','agua_m3','alcantarillado_m3','energia_kwh','gas_m3','aseo_valor','residuos_t','co2_kg','fuente'];
-  const rows=recs.map(r=>{const m=getSiteMeta(r);return [r.period,r.site,r.address,m.zone,m.territoryType,m.commune,m.neighborhood,m.nucleus,m.siteType,r.waterM3,r.alcM3,r.energyKwh,r.gasM3,r.wasteValue,r.wasteTon,r.co2kg,r.source]});
+  const headers=['periodo','sede','direccion','agua_m3','alcantarillado_m3','energia_kwh','gas_m3','aseo_valor','residuos_t','co2_kg','fuente'];
+  const rows=recs.map(r=>[r.period,r.site,r.address,r.waterM3,r.alcM3,r.energyKwh,r.gasM3,r.wasteValue,r.wasteTon,r.co2kg,r.source]);
   downloadBlob([headers,...rows].map(row=>row.map(csvCell).join(',')).join('\n'),'simeco2_servicios.csv','text/csv;charset=utf-8');
 }
-function exportJson(){ downloadBlob(JSON.stringify({...state,siteMetadata},null,2),'simeco2_servicios.json','application/json'); }
+function exportJson(){ downloadBlob(JSON.stringify(state,null,2),'simeco2_servicios.json','application/json'); }
 function downloadBlob(content,name,type){ const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([content],{type})); a.download=name; a.click(); URL.revokeObjectURL(a.href); }
 function csvCell(v){ const s=(v??'').toString(); return '"'+s.replace(/"/g,'""')+'"'; }
 
@@ -1182,39 +728,11 @@ function num(n){ return n==null||n==='' ? '—' : fmt(n); }
 function money(n){ return n==null||n==='' ? '—' : '$ '+fmt(n); }
 
 /* Dashboard ambiental por sede - v8 */
-function renderRankingTerritorialSummary(rows=[]){
-  const box=$('rankingTerritorialSummary');
-  if(!box) return;
-  const f=currentTerritorialFilters();
-  const metas=rows.map(r=>getSiteMeta(siteKey(r.site,r.address)));
-  const unique=(field)=>[...new Set(metas.map(m=>String(m[field]||'Sin clasificar').trim()).filter(Boolean))];
-  const describe=(selected,values,allLabel='Todos')=>{
-    if(selected) return selected;
-    if(!values.length) return 'Sin información';
-    if(values.length===1) return values[0];
-    return `${allLabel} (${values.length})`;
-  };
-  const zone=describe(f.zone,unique('zone'),'Todas');
-  const commune=describe(f.commune,unique('commune'),'Todos');
-  const nucleus=describe(f.nucleus,unique('nucleus'),'Todos');
-  const neighborhood=describe(f.neighborhood,unique('neighborhood'),'Todos');
-  box.innerHTML=`
-    <div class="ranking-summary-title">Contexto territorial del informe · ${fmt(rows.length)} sede(s)</div>
-    <div class="ranking-summary-chips">
-      <span class="ranking-summary-chip"><strong>Zona:</strong> ${escapeHtml(zone)}</span>
-      <span class="ranking-summary-chip"><strong>Comuna o corregimiento:</strong> ${escapeHtml(commune)}</span>
-      <span class="ranking-summary-chip"><strong>Núcleo educativo:</strong> ${escapeHtml(nucleus)}</span>
-      <span class="ranking-summary-chip"><strong>Barrio o vereda:</strong> ${escapeHtml(neighborhood)}</span>
-    </div>`;
-}
 function dashboardRecords(){
-  const q = $('siteSearch') ? loose($('siteSearch').value||'') : '';
+  const q = $('siteSearch') ? $('siteSearch').value||'' : '';
   const p = $('periodFilter') ? $('periodFilter').value : '';
-  return advancedFilteredRecords(state.records).filter(r=>{
-    if(q && !(`${loose(r.site)} ${loose(r.address)}`.includes(q))) return false;
-    if(p && r.period!==p) return false;
-    return Number(r.energyKwh) > 0;
-  });
+  const service = $('serviceFilter') ? $('serviceFilter').value : '';
+  return state.records.filter(r=>recordMatchesSearch(r,q) && (!p || r.period===p) && serviceHasValue(r,service) && Number(r.energyKwh)>0);
 }
 function aggregateBySite(records){
   const map = {};
@@ -1234,10 +752,8 @@ function aggregateBySite(records){
   })).sort((a,b)=>b.energyKwh-a.energyKwh);
 }
 function renderDashboard(){
-  const rows = aggregateBySite(dashboardRecords());
-  renderRankingTerritorialSummary(rows);
-  drawSiteChart(rows.slice(0,12));
   if(!$('environmentBody')) return;
+  const rows = aggregateBySite(dashboardRecords());
   const totalKwh = rows.reduce((a,r)=>a+r.energyKwh,0);
   const totalCo2kg = rows.reduce((a,r)=>a+r.co2kg,0);
   const totalTrees = Math.ceil(totalCo2kg / TREE_CO2_KG_YEAR);
@@ -1253,7 +769,7 @@ function renderDashboard(){
     const priority = classifyEnergyIntensity(r.avgKwhMonth);
     return `<tr>
     <td data-label="#">${i+1}</td>
-    <td data-label="Sede"><strong>${escapeHtml(r.site)}</strong><small class="site-meta-line">${escapeHtml(getSiteMeta(siteKey(r.site,r.address)).commune)} · ${escapeHtml(getSiteMeta(siteKey(r.site,r.address)).nucleus)}</small></td>
+    <td data-label="Sede">${escapeHtml(r.site)}</td>
     <td data-label="Dirección">${escapeHtml(r.address)}</td>
     <td data-label="Periodos">${fmt(r.periodCount)}</td>
     <td data-label="Energía total kWh"><strong>${fmt(r.energyKwh)}</strong></td>
@@ -1266,101 +782,56 @@ function renderDashboard(){
   }).join('');
   const totalRow = `<tr class="total-row"><td colspan="4">TOTAL</td><td>${fmt(totalKwh)}</td><td>${fmt(totalCo2kg/1000)}</td><td>${fmt(totalTrees)}</td><td>—</td><td>—</td><td>—</td></tr>`;
   $('environmentBody').innerHTML = totalRow + body;
+  drawSiteChart(rows.slice(0,12));
 }
 
 function drawSiteChart(rows){
   const c = $('siteChart');
   if(!c) return;
-  const displayRows = rows.slice(0,12);
-  const rowH = 38;
-  const headerY = 84;
-  const top = 104;
-
-  // El informe usa un lienzo amplio para organizar la información en columnas.
-  c.width = 1600;
-  c.height = Math.max(390, 132 + displayRows.length * rowH);
   const ctx = c.getContext('2d');
   ctx.clearRect(0,0,c.width,c.height);
+  ctx.fillStyle='#13312d';
+  ctx.font='bold 17px Arial';
+  ctx.textAlign='left';
+  ctx.fillText('Ranking de sedes por consumo eléctrico total (kWh)',24,34);
+  ctx.font='12px Arial';
+  ctx.fillStyle='#637772';
+  ctx.fillText('Dato visible por sede: kWh acumulados · t CO₂e · árboles requeridos.',24,54);
+  if(!rows.length){ ctx.fillStyle='#13312d'; ctx.fillText('Sin datos para graficar',24,92); return; }
 
-  ctx.fillStyle = '#13312d';
-  ctx.font = 'bold 18px Arial';
-  ctx.textAlign = 'left';
-  ctx.fillText('Ranking de sedes por consumo eléctrico total (kWh)',24,32);
-  ctx.font = '12px Arial';
-  ctx.fillStyle = '#637772';
-  ctx.fillText('Información organizada por sede, zona, comuna o corregimiento, núcleo educativo e indicadores ambientales.',24,53);
+  // v11: barras más cortas y columna fija para que siempre se vean kWh, CO₂e y árboles.
+  const padL = 255;
+  const padR = 28;
+  const valueX = Math.max(735, c.width - 330);
+  const top = 82;
+  const rowH = 32;
+  const barH = 18;
+  const max = Math.max(...rows.map(r=>r.energyKwh),1);
+  const maxBarW = Math.max(180, valueX - padL - 18);
 
-  const columns = {
-    site: {x:24, w:250, title:'Sede educativa'},
-    zone: {x:286, w:170, title:'Zona'},
-    commune: {x:468, w:190, title:'Comuna o corregimiento'},
-    nucleus: {x:670, w:120, title:'Núcleo'},
-    bar: {x:805, w:430, title:'Consumo eléctrico'},
-    metrics: {x:1252, w:320, title:'kWh · CO₂e · árboles'}
-  };
-
-  // Encabezados y separadores de columnas.
-  ctx.font = 'bold 11px Arial';
-  ctx.fillStyle = '#315650';
-  Object.values(columns).forEach(col=>ctx.fillText(col.title,col.x,headerY));
-  ctx.strokeStyle = '#d7e7e2';
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.moveTo(24,headerY+10);
-  ctx.lineTo(c.width-24,headerY+10);
-  ctx.stroke();
-
-  if(!displayRows.length){
-    ctx.fillStyle='#13312d';
-    ctx.font='13px Arial';
-    ctx.fillText('Sin datos para graficar',24,top+28);
-    return;
-  }
-
-  const max = Math.max(...displayRows.map(r=>r.energyKwh),1);
-  const barH = 16;
-
-  displayRows.forEach((r,i)=>{
+  ctx.font='12px Arial';
+  rows.forEach((r,i)=>{
     const y = top + i*rowH;
-    const meta = getSiteMeta(siteKey(r.site,r.address));
-    const zone = meta.zone || 'Sin clasificar';
-    const commune = meta.commune || 'Sin clasificar';
-    const nucleus = meta.nucleus || 'Sin clasificar';
+    const label = (r.site||'').length>34 ? r.site.slice(0,34)+'…' : r.site;
 
-    if(i % 2 === 0){
-      ctx.fillStyle = '#f7fbfa';
-      ctx.fillRect(18,y-8,c.width-36,rowH);
-    }
+    ctx.fillStyle='#315650';
+    ctx.textAlign='right';
+    ctx.fillText(label, padL-12, y+14);
 
-    ctx.textAlign='left';
-    ctx.fillStyle='#244b45';
-    ctx.font='bold 11px Arial';
-    ctx.fillText(fitCanvasText(ctx,r.site||'Sin nombre',columns.site.w),columns.site.x,y+13);
-
-    ctx.font='10.5px Arial';
-    ctx.fillStyle='#58716c';
-    ctx.fillText(fitCanvasText(ctx,zone,columns.zone.w),columns.zone.x,y+13);
-    ctx.fillText(fitCanvasText(ctx,commune,columns.commune.w),columns.commune.x,y+13);
-    ctx.fillText(fitCanvasText(ctx,nucleus,columns.nucleus.w),columns.nucleus.x,y+13);
-
-    const bw = Math.max(8,(r.energyKwh/max)*columns.bar.w);
-    const grad = ctx.createLinearGradient(columns.bar.x,0,columns.bar.x+bw,0);
+    const bw = Math.max(8, (r.energyKwh/max)*maxBarW);
+    const grad = ctx.createLinearGradient(padL,0,padL+bw,0);
     grad.addColorStop(0,'#0b9878');
     grad.addColorStop(1,'#0fc39a');
     ctx.fillStyle=grad;
-    roundRect(ctx,columns.bar.x,y,bw,barH,8);
-    ctx.fill();
+    roundRect(ctx,padL,y,bw,barH,8); ctx.fill();
 
-    const metricText = `${fmt(r.energyKwh)} kWh · ${fmt(r.co2kg/1000)} t CO₂e · ${fmt(r.trees)} árboles`;
+    const textX = valueX;
+    const available = c.width - textX - padR;
+    const fullLabel = `${fmt(r.energyKwh)} kWh · ${fmt(r.co2kg/1000)} t CO₂e · ${fmt(r.trees)} árboles`;
     ctx.fillStyle='#13312d';
-    ctx.font='bold 10.5px Arial';
-    ctx.fillText(fitCanvasText(ctx,metricText,columns.metrics.w),columns.metrics.x,y+13);
-
-    ctx.strokeStyle='#e7f0ed';
-    ctx.beginPath();
-    ctx.moveTo(24,y+29);
-    ctx.lineTo(c.width-24,y+29);
-    ctx.stroke();
+    ctx.textAlign='left';
+    ctx.font='bold 11.5px Arial';
+    ctx.fillText(fitCanvasText(ctx, fullLabel, available), textX, y+14);
   });
   ctx.textAlign='left';
 }
