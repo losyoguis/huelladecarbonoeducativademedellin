@@ -173,9 +173,23 @@ function bindEvents(){
   if($("classificationBody")) $("classificationBody").addEventListener("change", handleClassificationChange);
   $("exportCsvBtn").addEventListener("click", exportCsv);
   $("exportJsonBtn").addEventListener("click", exportJson);
-  if($("compareMode")) $("compareMode").addEventListener("change", ()=>{ renderCompareControls(); comparePeriods(); });
-  if($("compareSite")) $("compareSite").addEventListener("change", ()=>{ renderCompareControls({keepSite:true}); comparePeriods(); });
-  $("compareBtn").addEventListener("click", comparePeriods);
+  if($("compareMode")) $("compareMode").addEventListener("change", ()=>{ renderCompareControls({keepSite:true}); comparePeriods(); });
+  if($("compareSiteSearch")){
+    let compareSearchTimer;
+    $("compareSiteSearch").addEventListener("input", ()=>{
+      clearTimeout(compareSearchTimer);
+      compareSearchTimer=setTimeout(()=>selectCompareSiteFromSearch(false), 180);
+    });
+    $("compareSiteSearch").addEventListener("change", ()=>selectCompareSiteFromSearch(true));
+    $("compareSiteSearch").addEventListener("keydown", event=>{
+      if(event.key==='Enter'){
+        event.preventDefault();
+        selectCompareSiteFromSearch(true);
+      }
+    });
+  }
+  if($("clearCompareSite")) $("clearCompareSite").addEventListener("click", clearCompareSiteSearch);
+  $("compareBtn").addEventListener("click", ()=>{ selectCompareSiteFromSearch(true, false); comparePeriods(); });
   if($("printPlanBtn")) $("printPlanBtn").addEventListener("click", printCurrentPlan);
   if($("downloadPlanBtn")) $("downloadPlanBtn").addEventListener("click", downloadCurrentPlan);
   if($("environmentBody")) $("environmentBody").addEventListener("click", handlePlanButtonClick);
@@ -788,18 +802,69 @@ function aggregateByComparison(records, mode){
   }
   return Object.values(map).sort((a,b)=>a.key.localeCompare(b.key));
 }
+let compareSiteChoices=[];
+function normalizedSearchText(value){
+  return String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
+}
+function updateCompareSiteHint(message, isError=false){
+  const hint=$('compareSiteHint');
+  if(!hint) return;
+  hint.textContent=message;
+  hint.classList.toggle('bad', Boolean(isError));
+}
+function selectCompareSiteFromSearch(commit=false, refresh=true){
+  const input=$('compareSiteSearch'), hidden=$('compareSite');
+  if(!input || !hidden) return;
+  const raw=input.value.trim();
+  const query=normalizedSearchText(raw);
+  if(!query){
+    hidden.value='';
+    updateCompareSiteHint('Todas las sedes');
+    if(refresh){ renderCompareControls({keepSite:true, keepSearch:true}); comparePeriods(); }
+    return;
+  }
+  let match=compareSiteChoices.find(item=>normalizedSearchText(item.label)===query || normalizedSearchText(item.site)===query);
+  if(!match && commit){
+    const starts=compareSiteChoices.filter(item=>normalizedSearchText(item.site).startsWith(query));
+    const contains=compareSiteChoices.filter(item=>normalizedSearchText(item.site).includes(query));
+    match=starts.length===1 ? starts[0] : (contains.length===1 ? contains[0] : null);
+  }
+  if(match){
+    hidden.value=match.key;
+    input.value=match.label;
+    updateCompareSiteHint(`Sede seleccionada: ${match.site}`);
+  }else{
+    hidden.value='';
+    const suggestions=compareSiteChoices.filter(item=>normalizedSearchText(item.site).includes(query));
+    updateCompareSiteHint(suggestions.length ? `${suggestions.length} coincidencia(s). Selecciona una sede de la lista.` : 'No se encontró una sede con ese nombre.', !suggestions.length);
+  }
+  if(refresh){ renderCompareControls({keepSite:true, keepSearch:true}); comparePeriods(); }
+}
+function clearCompareSiteSearch(){
+  if($('compareSiteSearch')) $('compareSiteSearch').value='';
+  if($('compareSite')) $('compareSite').value='';
+  updateCompareSiteHint('Todas las sedes');
+  renderCompareControls({keepSite:true, keepSearch:true});
+  comparePeriods();
+  if($('compareSiteSearch')) $('compareSiteSearch').focus();
+}
 function renderCompareControls(opts={}){
   if(!$('compareA') || !$('compareB')) return;
-  const currentSite = opts.keepSite && $('compareSite') ? $('compareSite').value : ($('compareSite') ? $('compareSite').value : '');
+  const currentSite = $('compareSite') ? $('compareSite').value : '';
+  const currentSearch = $('compareSiteSearch') ? $('compareSiteSearch').value : '';
+  const allowedKeys=new Set(advancedFilteredRecords(state.records).map(r=>siteKey(r.site,r.address)));
+  compareSiteChoices = getSiteOptions().filter(s=>allowedKeys.has(siteKey(s.site,s.address))).map(s=>({
+    key:siteKey(s.site,s.address), site:s.site, address:s.address||'', label:`${s.site}${s.address ? ' · '+s.address : ''}`
+  })).sort((a,b)=>a.site.localeCompare(b.site,'es',{sensitivity:'base'}));
+  if($('compareSiteOptions')) $('compareSiteOptions').innerHTML=compareSiteChoices.map(item=>`<option value="${escapeHtml(item.label)}"></option>`).join('');
   if($('compareSite')){
-    const allowedKeys=new Set(advancedFilteredRecords(state.records).map(r=>siteKey(r.site,r.address)));
-    const siteOptions = getSiteOptions().filter(s=>allowedKeys.has(siteKey(s.site,s.address)));
-    $('compareSite').innerHTML = '<option value="">Todas las sedes</option>' + siteOptions.map(s=>{
-      const key = siteKey(s.site,s.address);
-      const label = `${s.site}${s.address ? ' · '+s.address : ''}`;
-      return `<option value="${escapeHtml(key)}">${escapeHtml(label)}</option>`;
-    }).join('');
-    if([...$('compareSite').options].some(o=>o.value===currentSite)) $('compareSite').value = currentSite;
+    const valid=compareSiteChoices.some(item=>item.key===currentSite);
+    $('compareSite').value=valid ? currentSite : '';
+    if(!valid && currentSite && $('compareSiteSearch')) $('compareSiteSearch').value='';
+  }
+  if($('compareSiteSearch') && !opts.keepSearch){
+    const selected=compareSiteChoices.find(item=>item.key===$('compareSite').value);
+    $('compareSiteSearch').value=selected ? selected.label : currentSearch;
   }
   const mode = $('compareMode') ? $('compareMode').value : 'month';
   const currentA = $('compareA').value;
@@ -825,7 +890,8 @@ function comparePeriods(){
     drawChart(agg);
     return;
   }
-  const siteText = site ? (($('compareSite').selectedOptions[0]||{}).textContent || 'Sede seleccionada') : 'Todas las sedes';
+  const selectedSite=compareSiteChoices.find(item=>item.key===site);
+  const siteText = selectedSite ? selectedSite.label : 'Todas las sedes';
   const metrics=[['energyKwh','Energía','kWh'],['waterM3','Agua','m³'],['co2kg','CO₂','kg'],['wasteTon','Residuos','t']];
   const summary = `<div class="compare-summary"><strong>${escapeHtml(compareModeLabel(mode))}</strong><span>${escapeHtml(siteText)}</span><small>${escapeHtml(A.period)} vs ${escapeHtml(B.period)}</small></div>`;
   $('compareResult').innerHTML = summary + metrics.map(([k,label,unit])=>{

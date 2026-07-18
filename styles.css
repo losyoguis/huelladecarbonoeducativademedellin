@@ -1168,3 +1168,13 @@ body.data-gate #importacion .intro-slide-controls,body.intro-ranking #ranking-se
   .module-back-button{justify-self:start}
   .module-page-links{justify-content:flex-start}
 }
+
+/* Autocompletado de sede en comparación de periodos */
+.compare-site-field{min-width:280px}
+.site-autocomplete{position:relative;display:flex;align-items:center}
+.site-autocomplete input[type="search"]{width:100%;padding-right:42px}
+.site-autocomplete-clear{position:absolute;right:7px;top:50%;transform:translateY(-50%);width:30px;height:30px;border:0;border-radius:50%;background:#e9f7f3;color:#087a67;font-size:22px;line-height:1;cursor:pointer}
+.site-autocomplete-clear:hover{background:#c9f1e7}
+.compare-site-hint{display:block;margin-top:6px;color:#56706b;font-weight:600;min-height:1.2em}
+.compare-site-hint.bad{color:#b43b32}
+@media(max-width:760px){.compare-site-field{min-width:100%}}

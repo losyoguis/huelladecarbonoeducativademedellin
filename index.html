@@ -156,10 +156,14 @@
             <option value="year">Año vs año</option>
           </select>
         </label>
-        <label class="compare-site-field">Sede
-          <select id="compareSite">
-            <option value="">Todas las sedes</option>
-          </select>
+        <label class="compare-site-field">Sede educativa
+          <div class="site-autocomplete">
+            <input id="compareSiteSearch" type="search" list="compareSiteOptions" placeholder="Escribe el nombre de la I.E." autocomplete="off" aria-label="Buscar sede educativa por nombre">
+            <datalist id="compareSiteOptions"></datalist>
+            <input id="compareSite" type="hidden" value="">
+            <button id="clearCompareSite" class="site-autocomplete-clear" type="button" aria-label="Limpiar sede" title="Mostrar todas las sedes">×</button>
+          </div>
+          <small id="compareSiteHint" class="compare-site-hint">Todas las sedes</small>
         </label>
         <label>Periodo A <select id="compareA"></select></label>
         <label>Periodo B <select id="compareB"></select></label>
