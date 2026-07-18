@@ -6,13 +6,13 @@
 <link crossorigin="" href="https://cdnjs.cloudflare.com" rel="preconnect"/><link href="//cdnjs.cloudflare.com" rel="dns-prefetch"/>
 <link href="assets/los-yoguis-logo.png" rel="icon" type="image/png"/><link href="styles.css?v=52-datos-render-estable" rel="stylesheet"/>
 </head><body class="standalone-page territorial-page app-ready" data-page="territorial">
-<header class="module-page-header" id="module-top"><a class="module-back-button" href="index.html#inicio">← Volver al inicio</a><div><span class="section-kicker">Búsqueda territorial</span><h1>Filtros territoriales de sedes educativas</h1><p>La base principal son las sedes, direcciones, periodos y consumos extraídos de las facturas de servicios públicos. El directorio de la Red Escolar de Pluviómetros se utiliza únicamente como referencia para asociar zona, comuna o corregimiento, barrio y núcleo educativo.</p></div><div class="module-page-links"><a href="dashboard.html">Dashboard</a><a aria-current="page" href="filtros-territoriales.html">Búsqueda territorial</a><a href="aula-climatica.html">Aula climática</a></div></header>
-<main class="standalone-module-main"><section class="module-intro-banner"><span aria-hidden="true">🔎</span><div><strong>Consulta territorial independiente</strong><p>Los filtros funcionan en cascada. Los consumos siempre provienen de las facturas; la información territorial asociada se identifica como referencia y puede revisarse manualmente.</p></div></section><section class="panel advanced-site-filters territorial-filter-panel embedded-filter-panel" id="filtros-sedes">
+<header class="module-page-header" id="module-top"><a class="module-back-button" href="index.html#inicio">← Volver al inicio</a><div><span class="section-kicker">Búsqueda territorial</span><h1>Filtros territoriales de sedes educativas</h1><p>Consulta exclusivamente las sedes y consumos extraídos de las facturas de energía. Filtra por nombre, periodo y clasificación territorial registrada.</p></div><div class="module-page-links"><a href="dashboard.html">Dashboard</a><a aria-current="page" href="filtros-territoriales.html">Búsqueda territorial</a><a href="aula-climatica.html">Aula climática</a></div></header>
+<main class="standalone-module-main"><section class="module-intro-banner"><span aria-hidden="true">🔎</span><div><strong>Consulta territorial independiente</strong><p>Los filtros funcionan en cascada y actualizan automáticamente el ranking de resultados.</p></div></section><section class="panel advanced-site-filters territorial-filter-panel embedded-filter-panel" id="filtros-sedes">
 <div class="section-head">
 <div>
 <span class="section-kicker">Búsqueda territorial</span>
 <h2>Filtros territoriales de sedes educativas</h2>
-<p class="muted">Sistema de búsqueda construido con los registros extraídos de las facturas de servicios públicos. La plataforma intenta sincronizar cada sede con el directorio territorial de referencia mediante el nombre de la institución, sin modificar los consumos facturados. Cada selección actualiza los resultados, los totales y el ranking eléctrico.</p>
+<p class="muted">Sistema de búsqueda construido con los datos extraídos de las facturas de energía de las instituciones educativas. Cada selección actualiza los resultados, los totales y el ranking de consumo eléctrico.</p>
 </div>
 <button class="secondary" id="toggleClassificationBtn" type="button">Revisar clasificación</button>
 </div>
@@ -71,7 +71,7 @@
 <div class="classification-panel" hidden="" id="classificationPanel">
 <div class="classification-help">
 <strong>Clasificación territorial de sedes</strong>
-<p>Las sedes, direcciones, periodos y consumos provienen de las facturas. Las coincidencias territoriales automáticas muestran su nivel de confianza. Puedes confirmar o corregir zona, comuna o corregimiento, barrio y núcleo educativo; tu revisión manual siempre tiene prioridad y queda guardada en este dispositivo.</p>
+<p>Las sedes, direcciones, periodos y consumos provienen de las facturas de energía. Puedes completar o corregir zona, comuna o corregimiento y núcleo educativo; los cambios quedan guardados en este dispositivo.</p>
 </div>
 <div class="table-wrap">
 <table class="classification-table">
@@ -112,7 +112,7 @@
 </section></main>
 <nav class="mobile-bottom-nav"><a href="index.html#inicio">Inicio</a><a href="dashboard.html">Dashboard</a><a href="#filtros-sedes">Filtros</a><a href="#ranking-sedes">Ranking</a><a href="aula-climatica.html">Aula</a></nav>
 <footer class="brand-footer"><div class="brand-footer-inner"><img alt="Los Yoguis" class="brand-footer-image" src="assets/los-yoguis-footer.png"/><a class="brand-footer-link" href="https://www.losyoguis.com" rel="noopener noreferrer" target="_blank">www.losyoguis.com</a></div></footer>
-<script defer src="data/sincronizacion-territorial.js?v=1"></script>
-<script defer src="data/registros.js?v=1"></script>
-  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script><script defer="" src="app.js?v=61-sync-facturas-territorio"></script>
+<script defer src="data/registros.js?v=2"></script>
+<script defer src="data/sincronizacion-territorial.js?v=2"></script>
+<script defer src="territorial.js?v=1"></script>
 </body></html>
