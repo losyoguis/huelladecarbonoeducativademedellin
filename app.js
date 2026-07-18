@@ -1,11 +1,12 @@
-/* SiMeCO2 Servicios Públicos - v35 carga, ranking inicial y filtros territoriales */
+/* SiMeCO2 Servicios Públicos - v37 secuencia inicial guiada */
 let FACTOR_CO2_KG_KWH = 0.126; // kg CO2e/kWh. Ajustable desde el dashboard.
 let TREE_CO2_KG_YEAR = 22; // kg CO2e capturados por árbol al año. Ajustable desde el dashboard.
 const FACTOR_KEY = 'simeco2_factores_ambientales_v8';
 const STORE_KEY = 'simeco2_servicios_v7';
 const CONFIG_KEY = 'simeco2_repo_config_v7';
-const SITE_META_KEY = 'simeco2_clasificacion_sedes_v1';
-const COMMUNES = ['Comuna 1 - Popular','Comuna 2 - Santa Cruz','Comuna 3 - Manrique','Comuna 4 - Aranjuez','Comuna 5 - Castilla','Comuna 6 - Doce de Octubre','Comuna 7 - Robledo','Comuna 8 - Villa Hermosa','Comuna 9 - Buenos Aires','Comuna 10 - La Candelaria','Comuna 11 - Laureles-Estadio','Comuna 12 - La América','Comuna 13 - San Javier','Comuna 14 - El Poblado','Comuna 15 - Guayabal','Comuna 16 - Belén','Corregimiento 50 - San Sebastián de Palmitas','Corregimiento 60 - San Cristóbal','Corregimiento 70 - Altavista','Corregimiento 80 - San Antonio de Prado','Corregimiento 90 - Santa Elena','Sin clasificar'];
+const SITE_META_KEY = 'simeco2_clasificacion_sedes_v2';
+const TERRITORIAL_DIRECTORY = Array.isArray(window.INSTITUCIONES_MEDELLIN) ? window.INSTITUCIONES_MEDELLIN : [];
+const EMPTY_META = {zone:'Sin clasificar', territoryType:'Sin clasificar', commune:'Sin clasificar', neighborhood:'Sin clasificar', nucleus:'Sin clasificar', siteType:'Sin clasificar', directoryId:'', source:'Manual', confidence:'Pendiente'};
 let siteMetadata = loadSiteMetadata();
 
 const $ = (id)=>document.getElementById(id);
@@ -22,28 +23,63 @@ window.addEventListener('load', () => {
   log('Sistema listo. Actualiza la información del sistema o carga un PDF local para iniciar el análisis.');
 });
 
+const INTRO_STAGE_DURATION = 4200;
+let introSequenceTimer = null;
+
+function clearIntroSequenceTimer(){
+  if(introSequenceTimer){
+    clearTimeout(introSequenceTimer);
+    introSequenceTimer = null;
+  }
+}
+
 function activateDataGate(){
+  clearIntroSequenceTimer();
+  document.body.classList.remove('intro-ranking', 'intro-impact', 'app-ready');
   document.body.classList.add('data-gate');
   document.documentElement.classList.add('data-gate-active');
   history.replaceState(null, '', location.pathname + location.search + '#importacion');
   requestAnimationFrame(() => $('importacion')?.scrollIntoView({block:'start'}));
 }
 
-function unlockDataView(message='Datos cargados correctamente. Abriendo primero el informe de ranking...'){
+function showIntroStage(stage){
+  document.body.classList.remove('data-gate', 'data-gate-opening', 'intro-ranking', 'intro-impact', 'app-ready');
+  document.documentElement.classList.remove('data-gate-active');
+  document.body.classList.add(stage);
+  const target = stage === 'intro-ranking' ? $('ranking-sedes') : $('impacto-proyecto');
+  const hash = stage === 'intro-ranking' ? '#ranking-sedes' : '#impacto-proyecto';
+  history.replaceState(null, '', location.pathname + location.search + hash);
+  target?.scrollIntoView({block:'start', behavior:'auto'});
+  target?.classList.add('intro-stage-focus');
+  setTimeout(() => target?.classList.remove('intro-stage-focus'), 1100);
+}
+
+function finishIntroSequence(){
+  clearIntroSequenceTimer();
+  document.body.classList.remove('data-gate', 'data-gate-opening', 'intro-ranking', 'intro-impact');
+  document.body.classList.add('app-ready');
+  document.documentElement.classList.remove('data-gate-active');
+  history.replaceState(null, '', location.pathname + location.search + '#inicio');
+  window.scrollTo({top:0, behavior:'auto'});
+  log('Presentación inicial finalizada. Plataforma completa disponible.');
+}
+
+function unlockDataView(message='Datos cargados correctamente. Iniciando presentación de resultados...'){
   if(!state.records.length){
     log('La plataforma permanecerá en la pantalla de carga porque todavía no hay registros válidos.');
     return false;
   }
+  clearIntroSequenceTimer();
   log(message);
   document.body.classList.add('data-gate-opening');
-  setTimeout(() => {
-    document.body.classList.remove('data-gate', 'data-gate-opening');
-    document.documentElement.classList.remove('data-gate-active');
-    history.replaceState(null, '', location.pathname + location.search + '#ranking-sedes');
-    const ranking=$('ranking-sedes');
-    ranking?.classList.add('post-load-focus');
-    ranking?.scrollIntoView({block:'start', behavior:'smooth'});
-    setTimeout(()=>ranking?.classList.remove('post-load-focus'), 2400);
+  introSequenceTimer = setTimeout(() => {
+    log('Etapa 2 de 3: mostrando el ranking de sedes por consumo eléctrico total.');
+    showIntroStage('intro-ranking');
+    introSequenceTimer = setTimeout(() => {
+      log('Etapa 3 de 3: mostrando los indicadores de avance y alertas inteligentes.');
+      showIntroStage('intro-impact');
+      introSequenceTimer = setTimeout(finishIntroSequence, INTRO_STAGE_DURATION);
+    }, INTRO_STAGE_DURATION);
   }, 450);
   return true;
 }
@@ -84,8 +120,10 @@ function bindEvents(){
   if($("saveRepoBtn")) $("saveRepoBtn").addEventListener("click", saveConfig);
   if($("updateFactorsBtn")) $("updateFactorsBtn").addEventListener("click", updateFactors);
   ["siteSearch","periodFilter","serviceFilter"].forEach(id=>$(id).addEventListener("input", ()=>{ renderTable(); renderDashboard(); }));
-  ["globalSiteSearch","communeFilter","nucleusFilter","globalPeriodFilter","globalServiceFilter","priorityFilter"].forEach(id=>{
-    if($(id)){ $(id).addEventListener('input', applyAdvancedSiteFilters); $(id).addEventListener('change', applyAdvancedSiteFilters); }
+  ["globalSiteSearch","zoneFilter","territoryTypeFilter","communeFilter","neighborhoodFilter","nucleusFilter","siteTypeFilter","specificSiteFilter","globalPeriodFilter","globalServiceFilter","priorityFilter"].forEach(id=>{
+    const el=$(id); if(!el) return;
+    const handler=()=>applyAdvancedSiteFilters({refresh: !["globalPeriodFilter","globalServiceFilter","priorityFilter"].includes(id)});
+    el.addEventListener('input', handler); el.addEventListener('change', handler);
   });
   if($("clearSiteFiltersBtn")) $("clearSiteFiltersBtn").addEventListener("click", clearAdvancedSiteFilters);
   if($("toggleClassificationBtn")) $("toggleClassificationBtn").addEventListener("click", toggleClassificationPanel);
@@ -433,9 +471,52 @@ function loadSiteMetadata(){
   try{return JSON.parse(localStorage.getItem(SITE_META_KEY)||'{}')||{}}catch{return {}}
 }
 function saveSiteMetadata(){ localStorage.setItem(SITE_META_KEY, JSON.stringify(siteMetadata)); }
+function defaultMeta(){ return {...EMPTY_META}; }
+function normalizedTokens(value){
+  const stop=new Set(['institucion','institución','educativa','educativo','escuela','colegio','sede','centro','ie','i','e','de','del','la','las','el','los','y','n','no','numero']);
+  return loose(value).replace(/\b(inst|educ|esc|col|jardin|inf|nro|num)\b/g,' ').split(/\s+/).filter(t=>t.length>1&&!stop.has(t));
+}
+function directoryMatchForSite(site,address=''){
+  if(!TERRITORIAL_DIRECTORY.length || !site) return null;
+  const nameNorm=loose(site), addressNorm=loose(address);
+  const aTokens=new Set(normalizedTokens(site));
+  let best=null, bestScore=0;
+  for(const d of TERRITORIAL_DIRECTORY){
+    const dName=loose(d.nombre||''), dBarrio=loose(d.barrio_vereda||'');
+    const bTokens=new Set(normalizedTokens(d.nombre||''));
+    let common=0; aTokens.forEach(t=>{if(bTokens.has(t)) common++});
+    const union=new Set([...aTokens,...bTokens]).size||1;
+    let score=common/union;
+    if(nameNorm && dName && (nameNorm.includes(dName)||dName.includes(nameNorm))) score+=0.48;
+    if(addressNorm && dBarrio && (addressNorm.includes(dBarrio)||dBarrio.includes(addressNorm))) score+=0.18;
+    if(common>=2) score+=0.12;
+    if(score>bestScore){bestScore=score;best=d;}
+  }
+  return bestScore>=0.38 ? {entry:best,score:bestScore} : null;
+}
+function metaFromDirectory(match){
+  const d=match.entry;
+  return {
+    zone:d.zona_territorial||'Sin clasificar', territoryType:d.tipo_territorio||'Sin clasificar',
+    commune:d.territorio||'Sin clasificar', neighborhood:d.barrio_vereda||'Sin clasificar',
+    nucleus:String(d.nucleo||'Sin clasificar'), siteType:d.tipo||'Sin clasificar',
+    directoryId:d.sede_id||'', source:'Directorio Red de Pluviómetros',
+    confidence:match.score>=0.72?'Alta':match.score>=0.52?'Media':'Revisar'
+  };
+}
+function ensureSiteMetadata(){
+  let changed=false;
+  for(const s of getSiteOptions()){
+    const key=siteKey(s.site,s.address);
+    if(siteMetadata[key]) continue;
+    const match=directoryMatchForSite(s.site,s.address);
+    siteMetadata[key]=match?metaFromDirectory(match):defaultMeta(); changed=true;
+  }
+  if(changed) saveSiteMetadata();
+}
 function getSiteMeta(recordOrKey){
   const key = typeof recordOrKey==='string' ? recordOrKey : siteKey(recordOrKey.site, recordOrKey.address);
-  return siteMetadata[key] || {commune:'Sin clasificar', nucleus:'Sin clasificar'};
+  return {...EMPTY_META,...(siteMetadata[key]||{})};
 }
 function sitePriorityClass(record){
   const key=siteKey(record.site,record.address);
@@ -453,102 +534,101 @@ function matchesService(r, service){
   if(service==='aseo') return Number(r.wasteValue)>0 || Number(r.wasteTon)>0;
   return true;
 }
+function currentTerritorialFilters(){
+  return {q:loose($('globalSiteSearch')?.value||''), zone:$('zoneFilter')?.value||'', territoryType:$('territoryTypeFilter')?.value||'', commune:$('communeFilter')?.value||'', neighborhood:$('neighborhoodFilter')?.value||'', nucleus:$('nucleusFilter')?.value||'', siteType:$('siteTypeFilter')?.value||'', siteKey:$('specificSiteFilter')?.value||'', period:$('globalPeriodFilter')?.value||'', service:$('globalServiceFilter')?.value||'', priority:$('priorityFilter')?.value||''};
+}
+function siteRows(){
+  ensureSiteMetadata();
+  return getSiteOptions().map(s=>({ ...s, key:siteKey(s.site,s.address), meta:getSiteMeta(siteKey(s.site,s.address)) }));
+}
+function siteSearchText(row){ const m=row.meta; return loose(`${row.site} ${row.address} ${m.zone} ${m.territoryType} ${m.commune} ${m.neighborhood} ${m.nucleus} ${m.siteType} ${m.directoryId}`); }
+function siteMatchesTerritorial(row,f=currentTerritorialFilters(),ignore=''){
+  const m=row.meta;
+  return (!f.q||siteSearchText(row).includes(f.q)) &&
+    (ignore==='zone'||!f.zone||loose(m.zone)===loose(f.zone)) &&
+    (ignore==='territoryType'||!f.territoryType||loose(m.territoryType)===loose(f.territoryType)) &&
+    (ignore==='commune'||!f.commune||loose(m.commune)===loose(f.commune)) &&
+    (ignore==='neighborhood'||!f.neighborhood||loose(m.neighborhood)===loose(f.neighborhood)) &&
+    (ignore==='nucleus'||!f.nucleus||loose(m.nucleus)===loose(f.nucleus)) &&
+    (ignore==='siteType'||!f.siteType||loose(m.siteType)===loose(f.siteType)) &&
+    (ignore==='siteKey'||!f.siteKey||row.key===f.siteKey);
+}
 function advancedFilteredRecords(records=state.records){
-  const q=loose($('globalSiteSearch')?.value||'');
-  const commune=$('communeFilter')?.value||'';
-  const nucleus=$('nucleusFilter')?.value||'';
-  const period=$('globalPeriodFilter')?.value||'';
-  const service=$('globalServiceFilter')?.value||'';
-  const priority=$('priorityFilter')?.value||'';
+  const f=currentTerritorialFilters();
+  const allowed=new Set(siteRows().filter(row=>siteMatchesTerritorial(row,f)).map(row=>row.key));
   return records.filter(r=>{
-    const meta=getSiteMeta(r);
-    if(q && !(`${loose(r.site)} ${loose(r.address)} ${loose(meta.commune)} ${loose(meta.nucleus)}`.includes(q))) return false;
-    if(commune && loose(meta.commune)!==loose(commune)) return false;
-    if(nucleus && loose(meta.nucleus)!==loose(nucleus)) return false;
-    if(period && String(r.period)!==String(period)) return false;
-    if(!matchesService(r,service)) return false;
-    if(priority && sitePriorityClass(r)!==priority) return false;
+    if(!allowed.has(siteKey(r.site,r.address))) return false;
+    if(f.period && String(r.period)!==String(f.period)) return false;
+    if(!matchesService(r,f.service)) return false;
+    if(f.priority && sitePriorityClass(r)!==f.priority) return false;
     return true;
   });
 }
-function applyAdvancedSiteFilters(){
-  renderFilterSummary();
-  renderCompareControls({keepSite:true});
-  comparePeriods();
-  renderDashboard();
-  renderTable();
-  drawChart(aggregateByPeriod(advancedFilteredRecords()));
+function optionValues(rows,field){ return [...new Set(rows.map(r=>String(r.meta[field]||'Sin clasificar').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'es',{numeric:true})); }
+function fillDependentSelect(id,values,label,keep){
+  const el=$(id); if(!el) return;
+  el.innerHTML=`<option value="">${label}</option>`+values.map(v=>`<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`).join('');
+  const found=[...el.options].find(o=>loose(o.value)===loose(keep)); if(found) el.value=found.value;
+}
+function refreshTerritorialFilters(){
+  ensureSiteMetadata();
+  const f=currentTerritorialFilters(), rows=siteRows();
+  fillDependentSelect('zoneFilter',optionValues(rows.filter(r=>siteMatchesTerritorial(r,f,'zone')),'zone'),'Todas',f.zone);
+  fillDependentSelect('territoryTypeFilter',optionValues(rows.filter(r=>siteMatchesTerritorial(r,f,'territoryType')),'territoryType'),'Todos',f.territoryType);
+  fillDependentSelect('communeFilter',optionValues(rows.filter(r=>siteMatchesTerritorial(r,f,'commune')),'commune'),'Todos',f.commune);
+  fillDependentSelect('neighborhoodFilter',optionValues(rows.filter(r=>siteMatchesTerritorial(r,f,'neighborhood')),'neighborhood'),'Todos',f.neighborhood);
+  fillDependentSelect('nucleusFilter',optionValues(rows.filter(r=>siteMatchesTerritorial(r,f,'nucleus')),'nucleus'),'Todos',f.nucleus);
+  fillDependentSelect('siteTypeFilter',optionValues(rows.filter(r=>siteMatchesTerritorial(r,f,'siteType')),'siteType'),'Todos',f.siteType);
+  const matching=rows.filter(r=>siteMatchesTerritorial(r,f,'siteKey')).sort((a,b)=>a.site.localeCompare(b.site,'es'));
+  const siteSel=$('specificSiteFilter');
+  siteSel.innerHTML='<option value="">Todas</option>'+matching.map(r=>`<option value="${escapeHtml(r.key)}">${escapeHtml(r.site)}${r.meta.commune!=='Sin clasificar'?` · ${escapeHtml(r.meta.commune)}`:''}</option>`).join('');
+  if(matching.some(r=>r.key===f.siteKey)) siteSel.value=f.siteKey;
+  const periods=[...new Set(state.records.map(r=>r.period).filter(Boolean))].sort();
+  fillDependentSelect('globalPeriodFilter',periods,'Todos',f.period);
+  const suggestions=$('siteSearchSuggestions'); if(suggestions) suggestions.innerHTML=matching.slice(0,200).map(r=>`<option value="${escapeHtml(r.site)}">${escapeHtml([r.meta.commune,r.meta.neighborhood,r.meta.nucleus].filter(x=>x&&x!=='Sin clasificar').join(' · '))}</option>`).join('');
+}
+function applyAdvancedSiteFilters({refresh=true}={}){
+  if(refresh) refreshTerritorialFilters();
+  renderFilterSummary(); renderCompareControls({keepSite:true}); comparePeriods(); renderDashboard(); renderTable(); drawChart(aggregateByPeriod(advancedFilteredRecords()));
 }
 function clearAdvancedSiteFilters(){
-  ['globalSiteSearch','communeFilter','nucleusFilter','globalPeriodFilter','globalServiceFilter','priorityFilter'].forEach(id=>{if($(id)) $(id).value='';});
-  applyAdvancedSiteFilters();
+  ['globalSiteSearch','zoneFilter','territoryTypeFilter','communeFilter','neighborhoodFilter','nucleusFilter','siteTypeFilter','specificSiteFilter','globalPeriodFilter','globalServiceFilter','priorityFilter'].forEach(id=>{if($(id)) $(id).value='';});
+  refreshTerritorialFilters(); applyAdvancedSiteFilters({refresh:false});
 }
 function renderAdvancedFilterControls(){
-  if(!$('communeFilter')) return;
-  const keepCommune=$('communeFilter').value;
-  const keepNucleus=$('nucleusFilter').value;
-  const keepPeriod=$('globalPeriodFilter').value;
-
-  // Solo se ofrecen clasificaciones que realmente existen en las sedes cargadas.
-  // Esto evita seleccionar una comuna o un núcleo sin registros asociados.
-  const siteRows=getSiteOptions();
-  const metaRows=siteRows.map(s=>getSiteMeta(siteKey(s.site,s.address)));
-  const communeCounts=new Map();
-  const nucleusCounts=new Map();
-  for(const meta of metaRows){
-    const commune=(meta.commune||'Sin clasificar').trim()||'Sin clasificar';
-    const nucleus=(meta.nucleus||'Sin clasificar').trim()||'Sin clasificar';
-    communeCounts.set(commune,(communeCounts.get(commune)||0)+1);
-    nucleusCounts.set(nucleus,(nucleusCounts.get(nucleus)||0)+1);
-  }
-  if(!communeCounts.size) communeCounts.set('Sin clasificar',0);
-  if(!nucleusCounts.size) nucleusCounts.set('Sin clasificar',0);
-  const communes=[...communeCounts.keys()].sort((a,b)=>a.localeCompare(b,'es'));
-  const nuclei=[...nucleusCounts.keys()].sort((a,b)=>a.localeCompare(b,'es'));
-
-  $('communeFilter').innerHTML='<option value="">Todas las comunas/corregimientos</option>'+communes.map(x=>`<option value="${escapeHtml(x)}">${escapeHtml(x)} (${fmt(communeCounts.get(x))} sedes)</option>`).join('');
-  $('nucleusFilter').innerHTML='<option value="">Todos los núcleos</option>'+nuclei.map(x=>`<option value="${escapeHtml(x)}">${escapeHtml(x)} (${fmt(nucleusCounts.get(x))} sedes)</option>`).join('');
-  const periods=[...new Set(state.records.map(r=>r.period).filter(Boolean))].sort();
-  $('globalPeriodFilter').innerHTML='<option value="">Todos</option>'+periods.map(x=>`<option value="${escapeHtml(x)}">${escapeHtml(x)}</option>`).join('');
-
-  const restoreNormalized=(select,value)=>{
-    if(!value) return;
-    const found=[...select.options].find(o=>loose(o.value)===loose(value));
-    if(found) select.value=found.value;
-  };
-  restoreNormalized($('communeFilter'),keepCommune);
-  restoreNormalized($('nucleusFilter'),keepNucleus);
-  restoreNormalized($('globalPeriodFilter'),keepPeriod);
-  renderClassificationTable();
-  renderFilterSummary();
-} 
+  refreshTerritorialFilters(); renderClassificationTable(); renderFilterSummary();
+}
 function renderFilterSummary(){
   if(!$('filterSummary')) return;
-  const recs=advancedFilteredRecords();
-  const sites=new Set(recs.map(r=>siteKey(r.site,r.address))).size;
+  const recs=advancedFilteredRecords(), sites=new Set(recs.map(r=>siteKey(r.site,r.address))).size, f=currentTerritorialFilters();
+  const labels=[]; if(f.q)labels.push('búsqueda'); if(f.zone)labels.push('zona'); if(f.territoryType)labels.push('tipo de territorio'); if(f.commune)labels.push('comuna/corregimiento'); if(f.neighborhood)labels.push('barrio/vereda'); if(f.nucleus)labels.push('núcleo'); if(f.siteType)labels.push('tipo de sede'); if(f.siteKey)labels.push('sede'); if(f.period)labels.push('periodo'); if(f.service)labels.push('servicio'); if(f.priority)labels.push('prioridad');
   $('filterSummary').innerHTML=`Mostrando <strong>${fmt(sites)} sede(s)</strong> y <strong>${fmt(recs.length)} registro(s)</strong> según los filtros seleccionados.`;
+  if($('filterStatus')) $('filterStatus').textContent=labels.length?`Filtros activos: ${labels.join(', ')}.`:`Filtros listos · mostrando todas las sedes con datos.`;
 }
 function toggleClassificationPanel(){
-  const panel=$('classificationPanel'); if(!panel) return;
-  panel.hidden=!panel.hidden;
-  $('toggleClassificationBtn').textContent=panel.hidden?'Clasificar sedes':'Cerrar clasificación';
-  if(!panel.hidden) renderClassificationTable();
+  const panel=$('classificationPanel'); if(!panel) return; panel.hidden=!panel.hidden;
+  $('toggleClassificationBtn').textContent=panel.hidden?'Revisar clasificación':'Cerrar clasificación'; if(!panel.hidden) renderClassificationTable();
 }
+function selectOptions(values,current){ return values.map(v=>`<option value="${escapeHtml(v)}" ${loose(v)===loose(current)?'selected':''}>${escapeHtml(v)}</option>`).join(''); }
 function renderClassificationTable(){
   if(!$('classificationBody')) return;
-  const sites=getSiteOptions();
-  $('classificationBody').innerHTML=sites.map(s=>{
-    const key=siteKey(s.site,s.address), meta=getSiteMeta(key);
-    const communeOpts=COMMUNES.map(x=>`<option value="${escapeHtml(x)}" ${x===meta.commune?'selected':''}>${escapeHtml(x)}</option>`).join('');
-    return `<tr><td><strong>${escapeHtml(s.site)}</strong></td><td>${escapeHtml(s.address||'')}</td><td><select class="meta-commune" data-site-key="${escapeHtml(key)}">${communeOpts}</select></td><td><input class="meta-nucleus" data-site-key="${escapeHtml(key)}" value="${escapeHtml(meta.nucleus||'Sin clasificar')}" placeholder="Ej. Núcleo 935" /></td></tr>`;
-  }).join('') || '<tr><td colspan="4">Carga datos para clasificar las sedes.</td></tr>';
+  const rows=siteRows();
+  const zones=[...new Set(TERRITORIAL_DIRECTORY.map(x=>x.zona_territorial).filter(Boolean)),'Sin clasificar'].sort((a,b)=>a.localeCompare(b,'es'));
+  const ttypes=[...new Set(TERRITORIAL_DIRECTORY.map(x=>x.tipo_territorio).filter(Boolean)),'Sin clasificar'].sort((a,b)=>a.localeCompare(b,'es'));
+  const communes=[...new Set(TERRITORIAL_DIRECTORY.map(x=>x.territorio).filter(Boolean)),'Sin clasificar'].sort((a,b)=>a.localeCompare(b,'es'));
+  const types=[...new Set(TERRITORIAL_DIRECTORY.map(x=>x.tipo).filter(Boolean)),'Sin clasificar'].sort((a,b)=>a.localeCompare(b,'es'));
+  $('classificationBody').innerHTML=rows.map(r=>{const m=r.meta,k=escapeHtml(r.key);return `<tr><td><strong>${escapeHtml(r.site)}</strong><small class="site-meta-line">${escapeHtml(m.directoryId||'Sin código territorial')}</small></td><td>${escapeHtml(r.address||'')}</td><td><select class="meta-zone" data-site-key="${k}">${selectOptions(zones,m.zone)}</select></td><td><select class="meta-territory-type" data-site-key="${k}">${selectOptions(ttypes,m.territoryType)}</select></td><td><select class="meta-commune" data-site-key="${k}">${selectOptions(communes,m.commune)}</select></td><td><input class="meta-neighborhood" data-site-key="${k}" value="${escapeHtml(m.neighborhood)}"></td><td><input class="meta-nucleus" data-site-key="${k}" value="${escapeHtml(m.nucleus)}"></td><td><select class="meta-site-type" data-site-key="${k}">${selectOptions(types,m.siteType)}</select></td><td><strong>${escapeHtml(m.source)}</strong><small class="site-meta-line">Confianza: ${escapeHtml(m.confidence)}</small></td></tr>`;}).join('')||'<tr><td colspan="9">Carga datos para clasificar las sedes.</td></tr>';
 }
 function handleClassificationChange(e){
   const key=e.target?.dataset?.siteKey; if(!key) return;
-  siteMetadata[key] ||= {commune:'Sin clasificar',nucleus:'Sin clasificar'};
-  if(e.target.classList.contains('meta-commune')) siteMetadata[key].commune=e.target.value||'Sin clasificar';
-  if(e.target.classList.contains('meta-nucleus')) siteMetadata[key].nucleus=e.target.value.trim()||'Sin clasificar';
-  saveSiteMetadata(); renderAdvancedFilterControls(); applyAdvancedSiteFilters();
+  siteMetadata[key]={...EMPTY_META,...(siteMetadata[key]||{})}; const m=siteMetadata[key];
+  if(e.target.classList.contains('meta-zone'))m.zone=e.target.value||'Sin clasificar';
+  if(e.target.classList.contains('meta-territory-type'))m.territoryType=e.target.value||'Sin clasificar';
+  if(e.target.classList.contains('meta-commune'))m.commune=e.target.value||'Sin clasificar';
+  if(e.target.classList.contains('meta-neighborhood'))m.neighborhood=e.target.value.trim()||'Sin clasificar';
+  if(e.target.classList.contains('meta-nucleus'))m.nucleus=e.target.value.trim()||'Sin clasificar';
+  if(e.target.classList.contains('meta-site-type'))m.siteType=e.target.value||'Sin clasificar';
+  m.source='Revisión manual'; m.confidence='Confirmada'; saveSiteMetadata(); refreshTerritorialFilters(); applyAdvancedSiteFilters({refresh:false});
 }
 
 function filteredRecords(){
@@ -733,8 +813,8 @@ function drawChart(data){
 function roundRect(ctx,x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
 function exportCsv(){
   const recs=filteredRecords();
-  const headers=['periodo','sede','direccion','comuna_corregimiento','nucleo_educativo','agua_m3','alcantarillado_m3','energia_kwh','gas_m3','aseo_valor','residuos_t','co2_kg','fuente'];
-  const rows=recs.map(r=>[r.period,r.site,r.address,getSiteMeta(r).commune,getSiteMeta(r).nucleus,r.waterM3,r.alcM3,r.energyKwh,r.gasM3,r.wasteValue,r.wasteTon,r.co2kg,r.source]);
+  const headers=['periodo','sede','direccion','zona_territorial','tipo_territorio','comuna_corregimiento','barrio_vereda','nucleo_educativo','tipo_sede','agua_m3','alcantarillado_m3','energia_kwh','gas_m3','aseo_valor','residuos_t','co2_kg','fuente'];
+  const rows=recs.map(r=>{const m=getSiteMeta(r);return [r.period,r.site,r.address,m.zone,m.territoryType,m.commune,m.neighborhood,m.nucleus,m.siteType,r.waterM3,r.alcM3,r.energyKwh,r.gasM3,r.wasteValue,r.wasteTon,r.co2kg,r.source]});
   downloadBlob([headers,...rows].map(row=>row.map(csvCell).join(',')).join('\n'),'simeco2_servicios.csv','text/csv;charset=utf-8');
 }
 function exportJson(){ downloadBlob(JSON.stringify({...state,siteMetadata},null,2),'simeco2_servicios.json','application/json'); }

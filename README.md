@@ -92,3 +92,7 @@ Archivos actualizados:
 La plataforma incluye filtros globales por nombre o dirección, comuna/corregimiento, núcleo educativo, periodo, servicio disponible y prioridad energética. Los filtros se aplican al comparador, ranking, dashboard y registros.
 
 Como las facturas de servicios públicos no incluyen comuna ni núcleo, el botón **Clasificar sedes** permite asignarlos manualmente. La clasificación se conserva en el almacenamiento local del navegador y se incluye en las exportaciones CSV y JSON.
+
+## Actualización v36 · filtros territoriales dependientes
+
+Se incorporó el directorio territorial de 422 sedes educativas usado por la Red Escolar de Pluviómetros de Medellín. La plataforma intenta relacionar automáticamente las sedes encontradas en las facturas y habilita filtros en cascada por zona, tipo de territorio, comuna o corregimiento, barrio o vereda, núcleo, tipo de sede y sede específica. La clasificación puede revisarse manualmente desde la interfaz y queda guardada en el navegador.

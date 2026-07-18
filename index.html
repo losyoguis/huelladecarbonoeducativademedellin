@@ -7,7 +7,7 @@
   <meta name="description" content="Sistema interactivo para medir, interpretar y gestionar la huella de carbono educativa a partir del consumo de servicios públicos." />
   <link rel="icon" type="image/png" href="assets/los-yoguis-logo.png" />
   <link rel="apple-touch-icon" href="assets/los-yoguis-logo.png" />
-  <link rel="stylesheet" href="styles.css?v=35-carga-ranking-filtros" />
+  <link rel="stylesheet" href="styles.css?v=37-secuencia-inicial-guiada" />
 </head>
 <body class="data-gate">
   <header class="hero hero-mjb hero-yoguis" id="inicio">
@@ -159,24 +159,46 @@
       <canvas id="chart" width="1100" height="420" aria-label="Gráfico comparativo"></canvas>
     </section>
 
-    <section class="panel advanced-site-filters" id="filtros-sedes">
+    <section class="panel advanced-site-filters territorial-filter-panel" id="filtros-sedes">
       <div class="section-head">
         <div>
           <span class="section-kicker">Búsqueda territorial</span>
-          <h2>Filtros avanzados de sedes educativas</h2>
-          <p class="muted">Estos filtros se aplican al comparador, ranking, dashboard y tabla de registros. La comuna y el núcleo pueden asignarse desde el administrador de clasificación.</p>
+          <h2>Filtros territoriales de sedes educativas</h2>
+          <p class="muted">Sistema de búsqueda inspirado en la Red Escolar de Pluviómetros. Los filtros son dependientes: cada selección reduce las opciones disponibles y actualiza el ranking, el dashboard, las comparaciones, las gráficas y los registros.</p>
         </div>
-        <button id="toggleClassificationBtn" class="secondary" type="button">Clasificar sedes</button>
+        <button id="toggleClassificationBtn" class="secondary" type="button">Revisar clasificación</button>
       </div>
-      <div class="site-filter-grid">
-        <label>Buscar sede o dirección
-          <input id="globalSiteSearch" type="search" placeholder="Ej. Manuel J. Betancur o dirección" autocomplete="off" />
+
+      <div class="territorial-filter-help">
+        <strong>Busca una sede por cualquier dato territorial</strong>
+        <span>Nombre, dirección, zona, comuna, corregimiento, barrio, vereda, núcleo educativo o tipo de sede.</span>
+      </div>
+
+      <div class="site-filter-grid territorial-filter-grid">
+        <label class="filter-search-wide">Buscar dentro de los filtros
+          <input id="globalSiteSearch" type="search" list="siteSearchSuggestions" placeholder="Escribe sede, núcleo, comuna, barrio o vereda" autocomplete="off" />
+          <datalist id="siteSearchSuggestions"></datalist>
+        </label>
+        <label>Zona territorial
+          <select id="zoneFilter"><option value="">Todas</option></select>
+        </label>
+        <label>Tipo de territorio
+          <select id="territoryTypeFilter"><option value="">Todos</option></select>
         </label>
         <label>Comuna o corregimiento
-          <select id="communeFilter"><option value="">Todas</option></select>
+          <select id="communeFilter"><option value="">Todos</option></select>
+        </label>
+        <label>Barrio o vereda probable
+          <select id="neighborhoodFilter"><option value="">Todos</option></select>
         </label>
         <label>Núcleo educativo
           <select id="nucleusFilter"><option value="">Todos</option></select>
+        </label>
+        <label>Tipo de sede
+          <select id="siteTypeFilter"><option value="">Todos</option></select>
+        </label>
+        <label>Sede educativa
+          <select id="specificSiteFilter"><option value="">Todas</option></select>
         </label>
         <label>Periodo
           <select id="globalPeriodFilter"><option value="">Todos</option></select>
@@ -194,17 +216,20 @@
         </label>
       </div>
       <div class="filter-actions">
-        <div id="filterSummary" class="filter-summary">Mostrando todas las sedes cargadas.</div>
-        <button id="clearSiteFiltersBtn" class="secondary" type="button">Limpiar filtros</button>
+        <div>
+          <div id="filterStatus" class="filter-status">Filtros listos · mostrando todas las sedes.</div>
+          <div id="filterSummary" class="filter-summary">Mostrando todas las sedes cargadas.</div>
+        </div>
+        <button id="clearSiteFiltersBtn" class="secondary" type="button">Limpiar todos los filtros</button>
       </div>
       <div id="classificationPanel" class="classification-panel" hidden>
         <div class="classification-help">
           <strong>Clasificación territorial de sedes</strong>
-          <p>Las facturas no incluyen comuna ni núcleo educativo. Selecciona estos datos para cada sede; la información queda guardada en este dispositivo.</p>
+          <p>El sistema intenta relacionar automáticamente las sedes de las facturas con el directorio territorial de 422 sedes usado por la Red Escolar de Pluviómetros. Puedes revisar o corregir cualquier dato; los cambios quedan guardados en este dispositivo.</p>
         </div>
         <div class="table-wrap">
           <table class="classification-table">
-            <thead><tr><th>Sede</th><th>Dirección</th><th>Comuna/corregimiento</th><th>Núcleo educativo</th></tr></thead>
+            <thead><tr><th>Sede</th><th>Dirección</th><th>Zona</th><th>Tipo territorio</th><th>Comuna/corregimiento</th><th>Barrio/vereda</th><th>Núcleo</th><th>Tipo de sede</th><th>Origen</th></tr></thead>
             <tbody id="classificationBody"></tbody>
           </table>
         </div>
@@ -363,7 +388,8 @@
     </div>
   </footer>
 
+  <script src="data/instituciones.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-  <script src="app.js?v=35-carga-ranking-filtros"></script>
+  <script src="app.js?v=37-secuencia-inicial-guiada"></script>
 </body>
 </html>
