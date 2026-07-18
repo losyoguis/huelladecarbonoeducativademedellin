@@ -132,8 +132,18 @@ function handleIntroControl(e){
 function unlockDataView(message='Datos cargados correctamente. Iniciando presentación de resultados...'){
   if(!state.records.length){ log('La plataforma permanecerá en la pantalla de carga porque todavía no hay registros válidos.'); updateIntroControls(); return false; }
   clearIntroSequenceTimer(); introPaused=false; log(message);
+  // Garantiza que ranking e indicadores estén dibujados antes de cambiar de diapositiva.
+  renderAll();
   document.body.classList.add('data-gate-opening');
-  introSequenceTimer=setTimeout(()=>{ log('Etapa 2 de 3: mostrando el ranking de sedes por consumo eléctrico total.'); goToIntroStage(1,true); },450);
+  introSequenceTimer=setTimeout(()=>{
+    if(!$('ranking-sedes')){
+      log('No se encontró la diapositiva de ranking. Abriendo la plataforma completa.');
+      finishIntroSequence();
+      return;
+    }
+    log('Etapa 2 de 3: mostrando el ranking de sedes por consumo eléctrico total.');
+    goToIntroStage(1,true);
+  },500);
   return true;
 }
 
@@ -1128,9 +1138,10 @@ function aggregateBySite(records){
   })).sort((a,b)=>b.energyKwh-a.energyKwh);
 }
 function renderDashboard(){
-  if(!$('environmentBody')) return;
   const rows = aggregateBySite(dashboardRecords());
   renderRankingTerritorialSummary(rows);
+  drawSiteChart(rows.slice(0,12));
+  if(!$('environmentBody')) return;
   const totalKwh = rows.reduce((a,r)=>a+r.energyKwh,0);
   const totalCo2kg = rows.reduce((a,r)=>a+r.co2kg,0);
   const totalTrees = Math.ceil(totalCo2kg / TREE_CO2_KG_YEAR);
@@ -1159,7 +1170,6 @@ function renderDashboard(){
   }).join('');
   const totalRow = `<tr class="total-row"><td colspan="4">TOTAL</td><td>${fmt(totalKwh)}</td><td>${fmt(totalCo2kg/1000)}</td><td>${fmt(totalTrees)}</td><td>—</td><td>—</td><td>—</td></tr>`;
   $('environmentBody').innerHTML = totalRow + body;
-  drawSiteChart(rows.slice(0,12));
 }
 
 function drawSiteChart(rows){

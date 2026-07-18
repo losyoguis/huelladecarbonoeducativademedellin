@@ -104,3 +104,9 @@ Se incorporó el directorio territorial de 422 sedes educativas usado por la Red
 - `aula-climatica.html`: Aula climática.
 
 Todos incluyen un botón “Volver al inicio” que dirige a `index.html#inicio`.
+
+## Corrección de secuencia inicial
+- Se restauró la diapositiva de ranking en `index.html`.
+- El ranking se dibuja aunque la tabla completa del Dashboard esté en una página independiente.
+- La secuencia continúa automáticamente: carga → ranking → indicadores → portada.
+- Se añadió una salida segura hacia la portada si una diapositiva no está disponible.

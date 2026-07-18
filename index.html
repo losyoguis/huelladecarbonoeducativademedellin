@@ -112,6 +112,36 @@
 <button aria-label="Diapositiva siguiente" class="intro-control intro-next" data-intro-action="next" type="button"><span>Adelante</span> →</button>
 </div>
 </section>
+<section class="panel ranking-panel" id="ranking-sedes">
+<div class="section-head">
+<div>
+<span class="section-kicker">Priorización</span>
+<h2>Ranking de sedes por consumo eléctrico total</h2>
+<p class="muted">Visualización principal con sede, zona, comuna o corregimiento, núcleo educativo, kWh acumulados, toneladas de CO₂e y árboles equivalentes.</p>
+</div>
+</div>
+<div aria-label="Leyenda de prioridad" class="priority-legend">
+<span class="priority-chip high">Alta prioridad</span>
+<span class="priority-chip medium">Prioridad media</span>
+<span class="priority-chip low">Prioridad preventiva</span>
+</div>
+<div aria-live="polite" class="ranking-territorial-summary" id="rankingTerritorialSummary">
+<div class="ranking-summary-title">Contexto territorial del informe</div>
+<div class="ranking-summary-chips">
+<span class="ranking-summary-chip"><strong>Zona:</strong> Todas</span>
+<span class="ranking-summary-chip"><strong>Comuna o corregimiento:</strong> Todos</span>
+<span class="ranking-summary-chip"><strong>Núcleo educativo:</strong> Todos</span>
+</div>
+</div>
+<div class="chart-card environmental-ranking-chart">
+<canvas aria-label="Ranking de sedes por consumo eléctrico y contexto territorial" height="650" id="siteChart" width="1600"></canvas>
+</div>
+<div aria-label="Controles de presentación inicial" class="intro-slide-controls">
+<button aria-label="Diapositiva anterior" class="intro-control intro-back" data-intro-action="back" type="button">← <span>Atrás</span></button>
+<button aria-label="Pausar presentación" class="intro-control intro-pause" data-intro-action="pause" type="button">⏸ <span>Pausa</span></button>
+<button aria-label="Diapositiva siguiente" class="intro-control intro-next" data-intro-action="next" type="button"><span>Adelante</span> →</button>
+</div>
+</section>
 <section class="panel insights-panel" id="impacto-proyecto">
 <div class="section-head">
 <div>
