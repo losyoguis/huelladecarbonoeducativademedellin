@@ -211,7 +211,53 @@
       </div>
     </section>
 
-    <section class="panel advanced-site-filters territorial-filter-panel" id="filtros-sedes">
+    <section class="panel ranking-panel" id="ranking-sedes">
+      <div class="section-head">
+        <div>
+          <span class="section-kicker">Priorización</span>
+          <h2>Ranking de sedes por consumo eléctrico total</h2>
+          <p class="muted">Visualización principal con kWh acumulados, toneladas de CO₂e y árboles requeridos por sede.</p>
+        </div>
+      </div>
+      <div class="priority-legend" aria-label="Leyenda de prioridad">
+        <span class="priority-chip high">Alta prioridad</span>
+        <span class="priority-chip medium">Prioridad media</span>
+        <span class="priority-chip low">Prioridad preventiva</span>
+      </div>
+      <div class="chart-card environmental-ranking-chart">
+        <canvas id="siteChart" width="1100" height="500" aria-label="Ranking de sedes por consumo eléctrico y árboles requeridos"></canvas>
+      </div>
+      <div class="intro-slide-controls" aria-label="Controles de presentación inicial">
+        <button type="button" class="intro-control intro-back" data-intro-action="back" aria-label="Diapositiva anterior">← <span>Atrás</span></button>
+        <button type="button" class="intro-control intro-pause" data-intro-action="pause" aria-label="Pausar presentación">⏸ <span>Pausa</span></button>
+        <button type="button" class="intro-control intro-next" data-intro-action="next" aria-label="Diapositiva siguiente"><span>Adelante</span> →</button>
+      </div>
+    </section>
+
+    <section class="panel dashboard-panel organized-page-section" id="dashboard-ambiental">
+      <div class="section-head">
+        <div>
+          <span class="section-kicker">Gestión por sede</span>
+          <h2>Dashboard ambiental por sede</h2>
+          <p class="muted">Consumo total de energía eléctrica, toneladas de CO₂ equivalente, árboles requeridos y prioridad de intervención.</p>
+        </div>
+        <div class="factor-box">
+          <label>Factor CO₂ kg/kWh
+            <input id="factorCo2Input" type="number" step="0.001" min="0" value="0.126" />
+          </label>
+          <label>kg CO₂ capturados por árbol/año
+            <input id="treeFactorInput" type="number" step="0.1" min="0.1" value="22" />
+          </label>
+          <button id="updateFactorsBtn" class="secondary">Actualizar cálculos</button>
+        </div>
+      </div>
+
+      <div class="dashboard-section-block dashboard-filter-block">
+        <div class="dashboard-subsection-title">
+          <span>1</span>
+          <div><strong>Filtrar sedes educativas</strong><small>Selecciona criterios territoriales y energéticos antes de consultar los resultados.</small></div>
+        </div>
+        <div class="advanced-site-filters territorial-filter-panel embedded-filter-panel" id="filtros-sedes">
       <div class="section-head">
         <div>
           <span class="section-kicker">Búsqueda territorial</span>
@@ -286,53 +332,27 @@
           </table>
         </div>
       </div>
-    </section>
+        </div>
 
-    <section class="panel ranking-panel" id="ranking-sedes">
-      <div class="section-head">
-        <div>
-          <span class="section-kicker">Priorización</span>
-          <h2>Ranking de sedes por consumo eléctrico total</h2>
-          <p class="muted">Visualización principal con kWh acumulados, toneladas de CO₂e y árboles requeridos por sede.</p>
-        </div>
       </div>
-      <div class="priority-legend" aria-label="Leyenda de prioridad">
-        <span class="priority-chip high">Alta prioridad</span>
-        <span class="priority-chip medium">Prioridad media</span>
-        <span class="priority-chip low">Prioridad preventiva</span>
-      </div>
-      <div class="chart-card environmental-ranking-chart">
-        <canvas id="siteChart" width="1100" height="500" aria-label="Ranking de sedes por consumo eléctrico y árboles requeridos"></canvas>
-      </div>
-      <div class="intro-slide-controls" aria-label="Controles de presentación inicial">
-        <button type="button" class="intro-control intro-back" data-intro-action="back" aria-label="Diapositiva anterior">← <span>Atrás</span></button>
-        <button type="button" class="intro-control intro-pause" data-intro-action="pause" aria-label="Pausar presentación">⏸ <span>Pausa</span></button>
-        <button type="button" class="intro-control intro-next" data-intro-action="next" aria-label="Diapositiva siguiente"><span>Adelante</span> →</button>
-      </div>
-    </section>
 
-    <section class="panel dashboard-panel" id="dashboard-ambiental">
-      <div class="section-head">
-        <div>
-          <span class="section-kicker">Gestión por sede</span>
-          <h2>Dashboard ambiental por sede</h2>
-          <p class="muted">Consumo total de energía eléctrica, toneladas de CO₂ equivalente, árboles requeridos y prioridad de intervención.</p>
+      <div class="dashboard-section-block dashboard-summary-block">
+        <div class="dashboard-subsection-title">
+          <span>2</span>
+          <div><strong>Resumen ambiental filtrado</strong><small>Los indicadores se actualizan automáticamente según los filtros seleccionados.</small></div>
         </div>
-        <div class="factor-box">
-          <label>Factor CO₂ kg/kWh
-            <input id="factorCo2Input" type="number" step="0.001" min="0" value="0.126" />
-          </label>
-          <label>kg CO₂ capturados por árbol/año
-            <input id="treeFactorInput" type="number" step="0.1" min="0.1" value="22" />
-          </label>
-          <button id="updateFactorsBtn" class="secondary">Actualizar cálculos</button>
-        </div>
-      </div>
       <div class="dashboard-grid">
         <article class="big-total"><span>Total energía eléctrica</span><strong id="dashTotalKwh">0 kWh</strong></article>
         <article class="big-total"><span>Total CO₂ equivalente</span><strong id="dashTotalCo2">0 t CO₂e</strong></article>
         <article class="big-total"><span>Árboles necesarios</span><strong id="dashTotalTrees">0 árboles</strong></article>
       </div>
+      </div>
+
+      <div class="dashboard-section-block dashboard-results-block">
+        <div class="dashboard-subsection-title">
+          <span>3</span>
+          <div><strong>Resultados por sede</strong><small>Consulta consumos, emisiones, prioridad y genera el plan de gestión de cada institución.</small></div>
+        </div>
       <div class="table-wrap dashboard-table-wrap">
         <table>
           <thead>
@@ -352,9 +372,10 @@
           <tbody id="environmentBody"></tbody>
         </table>
       </div>
+      </div>
     </section>
 
-    <section class="panel plan-panel" id="planPanel">
+    <section class="panel plan-panel organized-page-section" id="planPanel">
       <div class="section-head">
         <div>
           <span class="section-kicker">Informe institucional</span>
@@ -367,26 +388,6 @@
         </div>
       </div>
       <div id="planReport" class="plan-empty">Aún no se ha seleccionado una sede. Usa el botón <strong>Plan de Gestión</strong> en la tabla del Dashboard ambiental por sede.</div>
-    </section>
-
-    <section class="panel aula-panel" id="aula-climatica">
-      <div class="section-head">
-        <div>
-          <span class="section-kicker">Aula climática</span>
-          <h2>Guardianes Climáticos: aprender, medir y actuar</h2>
-          <p class="muted">Módulo pedagógico para que estudiantes y docentes comprendan la huella de carbono y conviertan los datos en misiones ambientales.</p>
-        </div>
-      </div>
-      <div class="learning-grid">
-        <article><strong>¿Qué es la huella de carbono?</strong><p>Es la estimación de gases de efecto invernadero asociados a una actividad. En esta plataforma se mide principalmente el impacto del consumo eléctrico institucional.</p></article>
-        <article><strong>¿Qué significa CO₂e?</strong><p>CO₂ equivalente permite expresar diferentes gases de efecto invernadero en una unidad común para facilitar la comparación y la toma de decisiones.</p></article>
-        <article><strong>¿Qué es alcance 2?</strong><p>Corresponde a las emisiones indirectas generadas por la energía eléctrica comprada y consumida por la institución educativa.</p></article>
-      </div>
-      <div class="mission-grid">
-        <article><span>Misión 1</span><strong>Detectar puntos de consumo</strong><p>Identifica aulas, oficinas o equipos donde se usa más energía y registra evidencias fotográficas.</p></article>
-        <article><span>Misión 2</span><strong>Proponer acciones</strong><p>Diseña tres acciones concretas con responsable, fecha e indicador de seguimiento.</p></article>
-        <article><span>Misión 3</span><strong>Socializar resultados</strong><p>Presenta el ranking, las emisiones y el plan de gestión a la comunidad educativa.</p></article>
-      </div>
     </section>
 
     <section class="panel data-panel" id="registros">
