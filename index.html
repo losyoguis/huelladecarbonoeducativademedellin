@@ -7,7 +7,7 @@
   <meta name="description" content="Sistema interactivo para medir, interpretar y gestionar la huella de carbono educativa a partir del consumo de servicios públicos." />
   <link rel="icon" type="image/png" href="assets/los-yoguis-logo.png" />
   <link rel="apple-touch-icon" href="assets/los-yoguis-logo.png" />
-  <link rel="stylesheet" href="styles.css?v=33-autocompletar-filtros" />
+  <link rel="stylesheet" href="styles.css?v=34-carga-despues-header" />
 </head>
 <body>
   <header class="hero hero-mjb hero-yoguis" id="inicio">
@@ -38,6 +38,7 @@
     </div>
   </header>
 
+
   <nav class="sticky-nav" aria-label="Menú interno de SiMeCO₂">
     <a href="#inicio">Inicio</a>
     <a href="#resumen-ejecutivo">Resumen</a>
@@ -49,6 +50,33 @@
   </nav>
 
   <main>
+    <section class="panel grid-2 import-panel update-spotlight" id="importacion">
+      <div class="update-copy">
+        <span class="section-kicker">Actualizando los datos</span>
+        <h2>Carga las facturas de servicios públicos</h2>
+        <p class="update-lead">Actualiza la plataforma cargando las facturas de servicios públicos de todas las Instituciones Educativas de la ciudad de Medellín desde el año 2025.</p>
+        <div class="update-badges" aria-label="Alcance de actualización">
+          <span>Medellín</span>
+          <span>Instituciones Educativas</span>
+          <span>Desde 2025</span>
+        </div>
+        <div class="actions update-actions">
+          <button class="primary update-cta" id="scanDataBtn" aria-label="Actualizar datos del sistema ahora"><span class="cta-icon" aria-hidden="true">↻</span><span>Actualizar datos ahora</span><span class="cta-pulse-dot" aria-hidden="true"></span></button>
+          <label class="secondary file-label">
+            Cargar factura PDF local
+            <input type="file" id="localPdfInput" accept="application/pdf" hidden />
+          </label>
+          <button class="secondary" id="clearBtn">Limpiar este dispositivo</button>
+        </div>
+      </div>
+      <div class="update-status-card">
+        <div class="update-icon" aria-hidden="true">⚡</div>
+        <h2>Seguimiento de actualización</h2>
+        <p class="muted">Aquí se registra el proceso de lectura, reconocimiento de sedes y consolidación ambiental de las facturas cargadas.</p>
+        <pre id="logBox" class="log" aria-live="polite"></pre>
+      </div>
+    </section>
+
     <section class="panel intro-panel" id="resumen-ejecutivo">
       <div class="section-head">
         <div>
@@ -85,44 +113,7 @@
       <article><span>Aseo/Residuos</span><strong id="kWaste">0 t</strong></article>
     </section>
 
-    <section class="panel grid-2 import-panel update-spotlight" id="importacion">
-      <div class="update-copy">
-        <span class="section-kicker">Actualizando los datos</span>
-        <h2>Carga las facturas de servicios públicos</h2>
-        <p class="update-lead">Actualiza la plataforma cargando las facturas de servicios públicos de todas las Instituciones Educativas de la ciudad de Medellín desde el año 2025.</p>
-        <div class="update-badges" aria-label="Alcance de actualización">
-          <span>Medellín</span>
-          <span>Instituciones Educativas</span>
-          <span>Desde 2025</span>
-        </div>
-        <div class="actions update-actions">
-          <button class="primary update-cta" id="scanDataBtn" aria-label="Actualizar datos del sistema ahora"><span class="cta-icon" aria-hidden="true">↻</span><span>Actualizar datos ahora</span><span class="cta-pulse-dot" aria-hidden="true"></span></button>
-          <label class="secondary file-label">
-            Cargar factura PDF local
-            <input type="file" id="localPdfInput" accept="application/pdf" hidden />
-          </label>
-          <button class="secondary" id="clearBtn">Limpiar este dispositivo</button>
-        </div>
-      </div>
-      <div class="update-status-card">
-        <div class="update-icon" aria-hidden="true">⚡</div>
-        <h2>Seguimiento de actualización</h2>
-        <p class="muted">Aquí se registra el proceso de lectura, reconocimiento de sedes y consolidación ambiental de las facturas cargadas.</p>
-        <pre id="logBox" class="log" aria-live="polite"></pre>
-      </div>
-    </section>
 
-    <section class="panel insights-panel" id="impacto-proyecto">
-      <div class="section-head">
-        <div>
-          <span class="section-kicker">Impacto del proyecto</span>
-          <h2>Indicadores de avance y alertas inteligentes</h2>
-          <p class="muted">Esta sección traduce los datos en decisiones: sedes prioritarias, señales de aumento, buenas prácticas y oportunidades de intervención.</p>
-        </div>
-      </div>
-      <div class="impact-grid" id="impactGrid"></div>
-      <div id="smartAlerts" class="smart-alerts"></div>
-    </section>
 
     <section class="panel" id="comparar-periodos">
       <div class="section-head">
@@ -327,6 +318,6 @@
   </footer>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-  <script src="app.js?v=33-autocompletar-filtros"></script>
+  <script src="app.js?v=34-carga-despues-header"></script>
 </body>
 </html>

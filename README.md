@@ -87,7 +87,7 @@ Archivos actualizados:
 - El botón conserva accesibilidad con `aria-label` y respeta `prefers-reduced-motion`.
 
 
-## Actualización v33 — Autocompletado y filtros
+## Actualización v34 — Autocompletado y filtros
 
 - Buscador inteligente por institución, sede y dirección.
 - Coincidencias sin depender de tildes y con múltiples palabras.
@@ -100,3 +100,8 @@ Archivos actualizados:
 - Etiquetas de filtros activos y limpieza individual o general.
 - Estado vacío con orientación para recuperar resultados.
 - `manifest.json` actualizado con todos los PDF incluidos.
+
+
+## Ajuste v34
+- El módulo de carga y actualización de facturas se ubicó como primera sección después del encabezado y la navegación principal.
+- Se eliminó el módulo “Indicadores de avance y alertas inteligentes”.
