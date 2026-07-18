@@ -7,9 +7,17 @@
   <meta name="description" content="Sistema interactivo para medir, interpretar y gestionar la huella de carbono educativa a partir del consumo de servicios públicos." />
   <link rel="icon" type="image/png" href="assets/los-yoguis-logo.png" />
   <link rel="apple-touch-icon" href="assets/los-yoguis-logo.png" />
-  <link rel="stylesheet" href="styles.css?v=36-cinco-secciones" />
+  <link rel="stylesheet" href="styles.css?v=39-carga-automatica" />
 </head>
 <body>
+  <div class="invoice-loading active" id="invoiceLoading" role="status" aria-live="assertive" aria-hidden="false">
+    <div class="invoice-loading-card">
+      <span class="invoice-spinner" aria-hidden="true"></span>
+      <strong id="invoiceLoadingText">Espere, cargando facturas...</strong>
+      <small>La plataforma está leyendo y consolidando la información disponible.</small>
+    </div>
+  </div>
+
   <header class="hero hero-mjb hero-yoguis" id="inicio">
     <nav class="hero-top-links" aria-label="Enlaces principales del ecosistema Los Yoguis">
       <a class="hero-top-link hero-top-link-pluvio" href="https://losyoguis.github.io/Red-Escolar-de-Pluviometros-de-Medellin/" target="_blank" rel="noopener noreferrer">Red Escolar de Pluviómetros de Medellín</a>
@@ -130,7 +138,12 @@
           </select>
         </label>
         <label class="compare-site-field">Sede
-          <select id="compareSite">
+          <div class="autocomplete site-autocomplete" id="compareSiteAutocomplete">
+            <input id="compareSiteSearch" type="search" autocomplete="off" spellcheck="false" placeholder="Todas las sedes" aria-autocomplete="list" aria-controls="compareSiteSuggestions" aria-expanded="false" />
+            <button id="clearCompareSiteBtn" class="clear-search" type="button" title="Borrar sede" aria-label="Borrar sede">×</button>
+            <div id="compareSiteSuggestions" class="autocomplete-list" role="listbox" hidden></div>
+          </div>
+          <select id="compareSite" data-no-searchable="true" class="visually-hidden-select" aria-hidden="true" tabindex="-1">
             <option value="">Todas las sedes</option>
           </select>
         </label>
@@ -180,6 +193,15 @@
           </label>
           <button id="updateFactorsBtn" class="secondary">Actualizar cálculos</button>
         </div>
+      </div>
+      <div class="dashboard-site-search">
+        <label for="dashboardSiteSearch">Buscar institución o sede</label>
+        <div class="autocomplete site-autocomplete" id="dashboardSiteAutocomplete">
+          <input id="dashboardSiteSearch" type="search" autocomplete="off" spellcheck="false" placeholder="Escribe nombre, sede o dirección…" aria-autocomplete="list" aria-controls="dashboardSiteSuggestions" aria-expanded="false" />
+          <button id="clearDashboardSiteBtn" class="clear-search" type="button" title="Borrar búsqueda" aria-label="Borrar búsqueda">×</button>
+          <div id="dashboardSiteSuggestions" class="autocomplete-list" role="listbox" hidden></div>
+        </div>
+        <small>Busca sin tildes y selecciona una institución o sede para filtrar el informe.</small>
       </div>
       <div class="dashboard-grid">
         <article class="big-total"><span>Total energía eléctrica</span><strong id="dashTotalKwh">0 kWh</strong></article>
@@ -383,6 +405,6 @@
   </script>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-  <script src="app.js?v=36-cinco-secciones"></script>
+  <script src="app.js?v=39-carga-automatica"></script>
 </body>
 </html>

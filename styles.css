@@ -943,3 +943,69 @@ canvas{max-width:100%;height:auto;border-radius:16px;}
 .source-local{display:inline-block;color:#667b76;font-weight:800;font-size:.82rem}
 @media(max-width:1100px){.section-switcher{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:700px){.section-switcher{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* v37 · Autocompletado global para listas, filtros y comparadores */
+.native-search-select{
+  position:absolute!important;
+  width:1px!important;
+  height:1px!important;
+  padding:0!important;
+  margin:-1px!important;
+  overflow:hidden!important;
+  clip:rect(0,0,0,0)!important;
+  white-space:nowrap!important;
+  border:0!important;
+}
+.searchable-select{position:relative;width:100%;min-width:0}
+.searchable-select-input{
+  width:100%;min-height:44px;padding:10px 42px 10px 12px;border:1px solid var(--line,#b9d9d1);
+  border-radius:12px;background:#fff;color:var(--ink,#12342f);font:inherit;font-weight:700;
+  outline:none;box-sizing:border-box;
+}
+.searchable-select-input:focus{border-color:#0eb68f;box-shadow:0 0 0 3px rgba(14,182,143,.14)}
+.searchable-select-toggle{
+  position:absolute;right:5px;top:50%;transform:translateY(-50%);width:34px;height:34px;border:0;
+  border-radius:9px;background:transparent;color:#0a8068;font-size:22px;line-height:1;cursor:pointer;
+}
+.searchable-select-toggle:hover{background:#e8f8f3}
+.searchable-select-list{
+  position:absolute;z-index:120;top:calc(100% + 6px);left:0;right:0;max-height:260px;overflow:auto;
+  padding:6px;background:#fff;border:1px solid #b9d9d1;border-radius:13px;box-shadow:0 16px 34px rgba(8,55,46,.18)
+}
+.searchable-select-option{
+  display:flex;width:100%;align-items:center;justify-content:space-between;gap:10px;padding:10px 11px;
+  border:0;border-radius:9px;background:transparent;color:#173c35;text-align:left;font:inherit;cursor:pointer
+}
+.searchable-select-option:hover,.searchable-select-option.active{background:#e8f8f3;color:#08775f}
+.searchable-select-option em{font-size:.72rem;font-style:normal;color:#65827b;white-space:nowrap}
+.searchable-select-option mark{background:#bdf3df;color:#073d32;border-radius:3px;padding:0 1px}
+.searchable-select-empty{padding:14px;color:#657e79;text-align:center}
+.compare-controls label,.filter-toolbar>div:not(.toolbar-buttons){min-width:0}
+@media(max-width:760px){
+  .searchable-select-list{position:fixed;left:14px;right:14px;top:auto;bottom:74px;max-height:45vh;z-index:999}
+  .searchable-select-input{min-height:48px}
+}
+
+
+/* v38 · Carga automática de facturas */
+.invoice-loading{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;padding:24px;background:rgba(5,35,30,.62);backdrop-filter:blur(8px);opacity:0;visibility:hidden;pointer-events:none;transition:opacity .25s ease,visibility .25s ease}
+.invoice-loading.active{opacity:1;visibility:visible;pointer-events:auto}
+.invoice-loading.completed{opacity:0;visibility:hidden}
+.invoice-loading-card{width:min(440px,92vw);display:grid;justify-items:center;gap:12px;padding:30px 24px;border:1px solid rgba(255,255,255,.7);border-radius:24px;background:#f7fffc;box-shadow:0 24px 70px rgba(0,0,0,.28);text-align:center;color:#123b34}
+.invoice-loading-card strong{font-size:clamp(1.2rem,4vw,1.65rem)}
+.invoice-loading-card small{color:#5d736e;line-height:1.45}
+.invoice-spinner{width:52px;height:52px;border:6px solid #ccefe6;border-top-color:#09ad8b;border-radius:50%;animation:invoiceSpin .8s linear infinite}
+.invoice-loading.error .invoice-spinner{border-top-color:#c94545}
+.section-tab.is-loading{cursor:wait;opacity:.78}
+@keyframes invoiceSpin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.invoice-spinner{animation-duration:1.8s}}
+
+/* v39: buscadores con autocompletado en Histórico e Informe por sede */
+.visually-hidden-select{position:absolute!important;width:1px!important;height:1px!important;opacity:0!important;pointer-events:none!important;overflow:hidden!important}
+.site-autocomplete{width:100%}
+.compare-site-field .site-autocomplete input{min-height:46px;background:#fff}
+.dashboard-site-search{display:grid;grid-template-columns:minmax(240px,520px);gap:6px;margin:4px 0 18px;padding:16px 18px;border:1px solid #c8e3dc;border-radius:18px;background:linear-gradient(135deg,#f8fffc,#eefaf6)}
+.dashboard-site-search>label{font-size:.82rem;font-weight:900;color:#365d56}
+.dashboard-site-search>small{color:#627b75;font-weight:600}
+.dashboard-site-search .autocomplete-list{max-width:720px}
+@media(max-width:760px){.dashboard-site-search{grid-template-columns:1fr;padding:14px}.compare-site-field{min-width:100%}}

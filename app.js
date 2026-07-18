@@ -1,4 +1,4 @@
-/* SiMeCO2 Servicios Públicos - v36 cinco secciones y descarga de facturas */
+/* SiMeCO2 Servicios Públicos - v39 autocompletado por sede */
 let FACTOR_CO2_KG_KWH = 0.126; // kg CO2e/kWh. Ajustable desde el dashboard.
 let TREE_CO2_KG_YEAR = 22; // kg CO2e capturados por árbol al año. Ajustable desde el dashboard.
 const FACTOR_KEY = 'simeco2_factores_ambientales_v8';
@@ -10,6 +10,9 @@ const state = loadStore();
 let chartData = [];
 let selectedSiteKey = "";
 let autocompleteIndex = -1;
+let isScanningData = false;
+let dashboardSiteKey = "";
+const siteAutocompleteState = new Map();
 
 window.addEventListener('load', () => {
   initPdfJs();
@@ -17,8 +20,235 @@ window.addEventListener('load', () => {
   initFactors();
   bindEvents();
   renderAll();
-  log('Sistema listo. Actualiza la información del sistema o carga un PDF local para iniciar el análisis.');
+  initSearchableSelects();
+  log('Espere, cargando facturas...');
+  setTimeout(() => scanDataFolder({automatic:true}), 250);
 });
+
+
+/* Autocompletado global para todos los selectores de búsqueda y filtros.
+   Conserva el <select> original para no romper la lógica existente. */
+const searchableSelects = new Map();
+
+function initSearchableSelects(){
+  document.querySelectorAll('select:not([data-no-searchable="true"])').forEach(enhanceSearchableSelect);
+}
+
+function enhanceSearchableSelect(select){
+  if(!select || searchableSelects.has(select.id) || !select.id) return;
+  select.classList.add('native-search-select');
+  const wrap=document.createElement('div');
+  wrap.className='searchable-select';
+  wrap.dataset.for=select.id;
+  const input=document.createElement('input');
+  input.type='search';
+  input.className='searchable-select-input';
+  input.autocomplete='off';
+  input.spellcheck=false;
+  input.setAttribute('role','combobox');
+  input.setAttribute('aria-autocomplete','list');
+  input.setAttribute('aria-expanded','false');
+  input.setAttribute('aria-label', select.closest('label')?.childNodes?.[0]?.textContent?.trim() || 'Buscar opción');
+  const toggle=document.createElement('button');
+  toggle.type='button';
+  toggle.className='searchable-select-toggle';
+  toggle.setAttribute('aria-label','Mostrar opciones');
+  toggle.textContent='⌄';
+  const list=document.createElement('div');
+  list.className='searchable-select-list';
+  list.setAttribute('role','listbox');
+  list.hidden=true;
+  wrap.append(input,toggle,list);
+  select.insertAdjacentElement('afterend',wrap);
+  const item={select,wrap,input,toggle,list,index:-1,observer:null};
+  searchableSelects.set(select.id,item);
+  const render=()=>renderSearchableOptions(item,input.value);
+  input.addEventListener('focus',render);
+  input.addEventListener('input',render);
+  input.addEventListener('keydown',e=>handleSearchableKeydown(e,item));
+  toggle.addEventListener('click',()=>{ if(list.hidden){ input.focus(); renderSearchableOptions(item,''); } else closeSearchableSelect(item); });
+  list.addEventListener('mousedown',e=>{
+    const btn=e.target.closest('.searchable-select-option');
+    if(!btn) return;
+    e.preventDefault();
+    chooseSearchableOption(item,btn.dataset.value);
+  });
+  select.addEventListener('change',()=>syncSearchableSelect(select.id));
+  item.observer=new MutationObserver(()=>syncSearchableSelect(select.id,true));
+  item.observer.observe(select,{childList:true,subtree:true,characterData:true});
+  document.addEventListener('click',e=>{ if(!wrap.contains(e.target)) closeSearchableSelect(item); });
+  syncSearchableSelect(select.id,true);
+}
+
+function searchableOptions(select){
+  return [...select.options].map(o=>({value:o.value,label:o.textContent.trim(),disabled:o.disabled}));
+}
+
+function renderSearchableOptions(item,query=''){
+  const q=loose(query);
+  let options=searchableOptions(item.select).filter(o=>!o.disabled);
+  if(q){
+    options=options.map(o=>{
+      const label=loose(o.label);
+      let score=-1;
+      if(label===q) score=1000;
+      else if(label.startsWith(q)) score=700;
+      else if(label.includes(q)) score=500;
+      else {
+        const tokens=searchTokens(q);
+        if(tokens.every(t=>label.includes(t))) score=300+tokens.length;
+      }
+      return {...o,score};
+    }).filter(o=>o.score>=0).sort((a,b)=>b.score-a.score || a.label.localeCompare(b.label,'es'));
+  }
+  item.index=options.length ? 0 : -1;
+  item.list.innerHTML=options.length ? options.map((o,i)=>`<button type="button" class="searchable-select-option${i===0?' active':''}" role="option" data-value="${escapeHtml(o.value)}"><span>${highlightMatch(o.label,query)}</span>${o.value===item.select.value?'<em>Seleccionado</em>':''}</button>`).join('') : '<div class="searchable-select-empty">No hay coincidencias</div>';
+  item.list.hidden=false;
+  item.input.setAttribute('aria-expanded','true');
+}
+
+function chooseSearchableOption(item,value){
+  item.select.value=value;
+  syncSearchableSelect(item.select.id);
+  closeSearchableSelect(item);
+  item.select.dispatchEvent(new Event('change',{bubbles:true}));
+}
+
+function handleSearchableKeydown(e,item){
+  const opts=[...item.list.querySelectorAll('.searchable-select-option')];
+  if(e.key==='Escape'){ closeSearchableSelect(item); return; }
+  if(e.key==='Tab'){ closeSearchableSelect(item); return; }
+  if(item.list.hidden && (e.key==='ArrowDown' || e.key==='Enter')){ e.preventDefault(); renderSearchableOptions(item,item.input.value); return; }
+  if(!opts.length) return;
+  if(e.key==='ArrowDown'){ e.preventDefault(); item.index=(item.index+1)%opts.length; }
+  else if(e.key==='ArrowUp'){ e.preventDefault(); item.index=(item.index-1+opts.length)%opts.length; }
+  else if(e.key==='Enter'){ e.preventDefault(); chooseSearchableOption(item,opts[Math.max(0,item.index)].dataset.value); return; }
+  else return;
+  opts.forEach((o,i)=>o.classList.toggle('active',i===item.index));
+  opts[item.index]?.scrollIntoView({block:'nearest'});
+}
+
+function closeSearchableSelect(item){
+  item.list.hidden=true;
+  item.input.setAttribute('aria-expanded','false');
+  item.index=-1;
+  const selected=item.select.selectedOptions[0];
+  item.input.value=selected ? selected.textContent.trim() : '';
+}
+
+function syncSearchableSelect(id,rebuild=false){
+  const item=searchableSelects.get(id);
+  if(!item) return;
+  const selected=item.select.selectedOptions[0];
+  item.input.value=selected ? selected.textContent.trim() : '';
+  item.input.placeholder=searchableOptions(item.select)[0]?.label || 'Buscar…';
+  if(rebuild && !item.list.hidden) renderSearchableOptions(item,item.input.value);
+}
+
+function syncAllSearchableSelects(){
+  searchableSelects.forEach((_,id)=>syncSearchableSelect(id));
+}
+
+
+function initSiteAutocompleteField(config){
+  const input=$(config.inputId), list=$(config.listId), clear=$(config.clearId);
+  if(!input || !list || !clear) return;
+  const stateItem={...config,input,list,clear,index:-1};
+  siteAutocompleteState.set(config.inputId,stateItem);
+  input.addEventListener('input',()=>{
+    stateItem.index=-1;
+    clear.classList.toggle('visible',Boolean(input.value));
+    if(config.mode==='compare'){
+      $('compareSite').value='';
+      renderCompareControls({keepSite:true});
+      comparePeriods();
+    }else{
+      dashboardSiteKey='';
+      renderDashboard();
+    }
+    renderSiteAutocomplete(stateItem,input.value);
+  });
+  input.addEventListener('focus',()=>renderSiteAutocomplete(stateItem,input.value));
+  input.addEventListener('keydown',e=>handleSiteFieldKeydown(e,stateItem));
+  list.addEventListener('mousedown',e=>{
+    const btn=e.target.closest('.autocomplete-option');
+    if(!btn) return;
+    e.preventDefault();
+    chooseSiteFieldSuggestion(stateItem,btn.dataset.key);
+  });
+  clear.addEventListener('click',()=>clearSiteAutocompleteField(stateItem,true));
+  document.addEventListener('click',e=>{ if(!input.closest('.autocomplete').contains(e.target)) closeSiteAutocomplete(stateItem); });
+}
+function renderSiteAutocomplete(item,query=''){
+  const q=String(query||'').trim();
+  const options=siteSearchOptions().map(x=>({...x,score:suggestionScore(x,q)})).filter(x=>x.score>=0).sort((a,b)=>b.score-a.score || a.site.localeCompare(b.site,'es')).slice(0,12);
+  item.index=-1;
+  if(!options.length){
+    item.list.innerHTML='<div class="autocomplete-empty">No se encontraron sedes. Prueba con otra palabra.</div>';
+  }else{
+    item.list.innerHTML=options.map(x=>`<button type="button" class="autocomplete-option" role="option" data-key="${escapeHtml(x.key)}"><span><strong>${highlightMatch(x.site,q)}</strong><small>${highlightMatch(x.address||'Sin dirección registrada',q)}</small></span><em>${x.periodCount} periodo${x.periodCount===1?'':'s'}</em></button>`).join('');
+  }
+  item.list.hidden=false;
+  item.input.setAttribute('aria-expanded','true');
+}
+function chooseSiteFieldSuggestion(item,key){
+  const option=siteSearchOptions().find(x=>x.key===key);
+  if(!option) return;
+  item.input.value=option.site;
+  item.clear.classList.add('visible');
+  if(item.mode==='compare'){
+    $('compareSite').value=key;
+    renderCompareControls({keepSite:true});
+    comparePeriods();
+  }else{
+    dashboardSiteKey=key;
+    renderDashboard();
+  }
+  closeSiteAutocomplete(item);
+}
+function clearSiteAutocompleteField(item,focus=false){
+  item.input.value='';
+  item.clear.classList.remove('visible');
+  if(item.mode==='compare'){
+    $('compareSite').value='';
+    renderCompareControls({keepSite:true});
+    comparePeriods();
+  }else{
+    dashboardSiteKey='';
+    renderDashboard();
+  }
+  closeSiteAutocomplete(item);
+  if(focus) item.input.focus();
+}
+function closeSiteAutocomplete(item){
+  item.list.hidden=true;
+  item.input.setAttribute('aria-expanded','false');
+  item.index=-1;
+}
+function handleSiteFieldKeydown(e,item){
+  if(e.key==='Escape'){ closeSiteAutocomplete(item); return; }
+  if((e.key==='ArrowDown'||e.key==='ArrowUp') && item.list.hidden) renderSiteAutocomplete(item,item.input.value);
+  const opts=[...item.list.querySelectorAll('.autocomplete-option')];
+  if(!opts.length) return;
+  if(e.key==='ArrowDown'){ e.preventDefault(); item.index=(item.index+1)%opts.length; }
+  else if(e.key==='ArrowUp'){ e.preventDefault(); item.index=(item.index-1+opts.length)%opts.length; }
+  else if(e.key==='Enter'){
+    e.preventDefault();
+    const target=opts[Math.max(0,item.index)];
+    if(target) chooseSiteFieldSuggestion(item,target.dataset.key);
+    return;
+  }else return;
+  opts.forEach((o,i)=>o.classList.toggle('active',i===item.index));
+  opts[item.index]?.scrollIntoView({block:'nearest'});
+}
+function refreshSiteAutocompleteFields(){
+  const compare=$('compareSite');
+  const compareInput=$('compareSiteSearch');
+  if(compare && compareInput){
+    const selected=siteSearchOptions().find(x=>x.key===compare.value);
+    if(selected && !compareInput.value) compareInput.value=selected.site;
+  }
+}
 
 function initPdfJs(){
   const pdfStatus = $('pdfStatus');
@@ -48,6 +278,8 @@ function bindEvents(){
   $("exportJsonBtn").addEventListener("click", exportJson);
   if($("compareMode")) $("compareMode").addEventListener("change", ()=>{ renderCompareControls(); comparePeriods(); });
   if($("compareSite")) $("compareSite").addEventListener("change", ()=>{ renderCompareControls({keepSite:true}); comparePeriods(); });
+  initSiteAutocompleteField({inputId:'compareSiteSearch',listId:'compareSiteSuggestions',clearId:'clearCompareSiteBtn',mode:'compare'});
+  initSiteAutocompleteField({inputId:'dashboardSiteSearch',listId:'dashboardSiteSuggestions',clearId:'clearDashboardSiteBtn',mode:'dashboard'});
   $("compareBtn").addEventListener("click", comparePeriods);
   if($("printPlanBtn")) $("printPlanBtn").addEventListener("click", printCurrentPlan);
   if($("downloadPlanBtn")) $("downloadPlanBtn").addEventListener("click", downloadCurrentPlan);
@@ -119,7 +351,49 @@ function log(msg){
   $('logBox').scrollTop = $('logBox').scrollHeight;
 }
 
-async function scanDataFolder(){
+async function scanDataFolder(options={}){
+  if(isScanningData){
+    log('La carga de facturas ya está en progreso. Espere un momento...');
+    return;
+  }
+  isScanningData = true;
+  setInvoiceLoading(true, options.automatic ? 'Espere, cargando facturas...' : 'Espere, actualizando facturas...');
+  try{
+    await scanDataFolderCore();
+    setInvoiceLoading(false, 'Facturas cargadas correctamente.');
+  }catch(err){
+    console.error(err);
+    log(`Error general durante la carga: ${err.message}`);
+    setInvoiceLoading(false, 'No fue posible completar la carga de facturas.', true);
+  }finally{
+    isScanningData = false;
+  }
+}
+
+function setInvoiceLoading(active, message, isError=false){
+  const overlay = $('invoiceLoading');
+  const text = $('invoiceLoadingText');
+  const button = $('scanDataBtn');
+  if(text) text.textContent = message || (active ? 'Espere, cargando facturas...' : 'Carga finalizada.');
+  if(overlay){
+    overlay.classList.toggle('active', active);
+    overlay.classList.toggle('error', Boolean(isError));
+    overlay.setAttribute('aria-hidden', active ? 'false' : 'true');
+    if(!active){
+      overlay.classList.add('completed');
+      setTimeout(()=>overlay.classList.remove('completed','error'), 2200);
+    } else {
+      overlay.classList.remove('completed','error');
+    }
+  }
+  if(button){
+    button.disabled = active;
+    button.classList.toggle('is-loading', active);
+    button.setAttribute('aria-busy', active ? 'true' : 'false');
+  }
+}
+
+async function scanDataFolderCore(){
   log('Buscando PDFs nuevos en carpeta /data...');
   const cfg = getRepoConfig();
   let files = [];
@@ -406,7 +680,7 @@ function filteredRecords(){
   const service = $('serviceFilter').value;
   return sortRecords(state.records.filter(r=>recordMatchesSearch(r,q) && (!p || r.period===p) && serviceHasValue(r,service)));
 }
-function applyFilters(){ renderTable(); renderDashboard(); renderFilterSummary(); }
+function applyFilters(){ renderTable(); renderDashboard(); renderFilterSummary(); syncAllSearchableSelects(); }
 function clearSiteSearch(){
   $('siteSearch').value=''; selectedSiteKey=''; $('clearSearchBtn').classList.remove('visible'); closeAutocomplete(); applyFilters(); $('siteSearch').focus();
 }
@@ -469,7 +743,7 @@ function renderFilterSummary(){
   $('activeFilters').innerHTML=chips.join('') || '<span>Mostrando toda la información disponible.</span>';
   $('activeFilters').querySelectorAll('button').forEach(btn=>btn.addEventListener('click',()=>{ const t=btn.dataset.clear; if(t==='search') clearSiteSearch(); else { $(t==='period'?'periodFilter':'serviceFilter').value=''; applyFilters(); } }));
 }
-function renderAll(){ recalculateCo2(); renderControls(); renderCards(); renderExecutiveSummary(); renderProjectImpact(); renderDashboard(); renderTable(); drawChart(aggregateByPeriod(state.records)); }
+function renderAll(){ recalculateCo2(); renderControls(); renderCards(); renderExecutiveSummary(); renderProjectImpact(); renderDashboard(); renderTable(); drawChart(aggregateByPeriod(state.records)); refreshSiteAutocompleteFields(); }
 function renderControls(){
   const periods = [...new Set(state.records.map(r=>r.period))].sort();
   const options = '<option value="">Todos los periodos</option>'+periods.map(p=>`<option value="${p}">${p}</option>`).join('');
@@ -477,6 +751,7 @@ function renderControls(){
   $('periodFilter').innerHTML = options; $('periodFilter').value = current;
   renderCompareControls();
   renderFilterSummary();
+  syncAllSearchableSelects();
 }
 function renderCards(){
   const recs = state.records;
@@ -588,6 +863,7 @@ function renderCompareControls(opts={}){
       return `<option value="${escapeHtml(key)}">${escapeHtml(label)}</option>`;
     }).join('');
     if([...$('compareSite').options].some(o=>o.value===currentSite)) $('compareSite').value = currentSite;
+    refreshSiteAutocompleteFields();
   }
   const mode = $('compareMode') ? $('compareMode').value : 'month';
   const currentA = $('compareA').value;
@@ -743,7 +1019,7 @@ function dashboardRecords(){
   const q = $('siteSearch') ? $('siteSearch').value||'' : '';
   const p = $('periodFilter') ? $('periodFilter').value : '';
   const service = $('serviceFilter') ? $('serviceFilter').value : '';
-  return state.records.filter(r=>recordMatchesSearch(r,q) && (!p || r.period===p) && serviceHasValue(r,service) && Number(r.energyKwh)>0);
+  return state.records.filter(r=>recordMatchesSearch(r,q) && (!dashboardSiteKey || siteKey(r.site,r.address)===dashboardSiteKey) && (!p || r.period===p) && serviceHasValue(r,service) && Number(r.energyKwh)>0);
 }
 function aggregateBySite(records){
   const map = {};

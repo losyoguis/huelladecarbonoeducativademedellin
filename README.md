@@ -1,3 +1,20 @@
+# SiMeCO₂ v39 — Carga automática de facturas
+
+- Las facturas se cargan automáticamente al abrir la plataforma.
+- Se muestra el mensaje “Espere, cargando facturas...” durante el proceso.
+- Se evita ejecutar dos cargas simultáneas.
+- El botón Actualizar datos continúa disponible para actualizaciones manuales posteriores.
+- Se informa visualmente cuando la carga finaliza o presenta un error.
+
+---
+
+# SiMeCO₂ v37
+
+## Novedad principal
+Todos los campos de selección usados para búsqueda, filtros y comparaciones cuentan ahora con autocompletado: se puede escribir para filtrar opciones, navegar con flechas y confirmar con Enter.
+
+Incluye autocompletado en tipo de comparación, sede, periodos, filtro de periodo, servicio y ordenamiento, además del buscador institucional existente. Se conserva la lógica original de los selectores y la compatibilidad con GitHub Pages y Google Sites.
+
 # SiMeCO₂ · Plataforma de Huella de Carbono Educativa v32
 
 Sistema web en HTML, CSS y JavaScript para medir, visualizar e interpretar la huella de carbono educativa a partir del consumo de servicios públicos de sedes educativas.
@@ -125,3 +142,10 @@ La navegación funciona mediante pestañas superiores y una barra móvil. Los en
 - El módulo 3 se llama **Informe por sede**.
 - El módulo 4 se llama **Facturas por I.E.** e incluye filtros, registros y descarga directa de la factura desde la columna Fuente.
 - Se creó el módulo 5 **Aula**, donde se trasladó íntegramente Guardianes Climáticos.
+
+
+## Versión 39
+- Autocompletado de instituciones y sedes en Histórico.
+- Buscador con autocompletado en Informe por sede.
+- Búsqueda tolerante a tildes, nombres parciales y direcciones.
+- Navegación por teclado y limpieza rápida de cada buscador.
