@@ -1,3 +1,13 @@
+# SiMeCO₂ v43 — Interfaz sin filtros territoriales
+
+- Se retiraron de la interfaz los filtros por comuna, corregimiento y núcleo educativo.
+- Histórico conserva la comparación por tipo, sede y periodos.
+- Informe por sede conserva el buscador institucional y la descarga PDF.
+- Facturas por I.E. conserva búsqueda por sede, periodo, servicio y ordenamiento.
+- Los controles internos se mantienen ocultos para garantizar compatibilidad con la lógica existente.
+
+---
+
 # SiMeCO₂ v42 — Etiquetas más claras y prioridades con mayor contraste
 
 - El gráfico histórico ahora muestra etiquetas de periodo más comprensibles, con abreviaturas de mes y año.

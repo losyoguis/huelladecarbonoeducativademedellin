@@ -1030,3 +1030,11 @@ canvas{max-width:100%;height:auto;border-radius:16px;}
 .compare-controls-advanced,.territorial-filter-bar,.filter-toolbar{border:2px solid #8fd2c2!important;box-shadow:0 6px 18px rgba(7,88,70,.08);background:#fbfffd!important}
 .pdf-only-action{display:inline-flex;align-items:center;justify-content:center;gap:7px}.pdf-only-action::before{content:'PDF';display:inline-grid;place-items:center;min-width:31px;height:24px;padding:0 5px;border-radius:6px;background:#b3261e;color:#fff;font-size:.66rem;font-weight:950;letter-spacing:.04em}
 @media(max-width:650px){.territory-filter-heading{grid-template-columns:1fr}.territory-filter-heading span{grid-row:auto;justify-self:start;margin-bottom:7px}}
+
+/* v43: filtros territoriales retirados de la interfaz */
+.hidden-territory-controls{display:none!important}
+.report-actions-row{display:flex;justify-content:flex-end;margin:0 0 14px}
+.compare-controls-advanced{grid-template-columns:minmax(170px,.8fr) minmax(260px,1.4fr) minmax(150px,.7fr) minmax(150px,.7fr) auto auto!important}
+.filter-toolbar{grid-template-columns:minmax(280px,1.5fr) minmax(150px,.7fr) minmax(170px,.8fr) minmax(190px,.9fr) auto!important}
+@media(max-width:1050px){.compare-controls-advanced,.filter-toolbar{grid-template-columns:repeat(2,minmax(180px,1fr))!important}}
+@media(max-width:650px){.compare-controls-advanced,.filter-toolbar{grid-template-columns:1fr!important}.report-actions-row{justify-content:stretch}.report-actions-row button{width:100%}}

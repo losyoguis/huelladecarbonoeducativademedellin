@@ -7,7 +7,7 @@
   <meta name="description" content="Sistema interactivo para medir, interpretar y gestionar la huella de carbono educativa a partir del consumo de servicios públicos." />
   <link rel="icon" type="image/png" href="assets/los-yoguis-logo.png" />
   <link rel="apple-touch-icon" href="assets/los-yoguis-logo.png" />
-  <link rel="stylesheet" href="styles.css?v=42-graficos-prioridad-colores" />
+  <link rel="stylesheet" href="styles.css?v=43-sin-filtros-territoriales" />
 </head>
 <body>
   <div class="invoice-loading active" id="invoiceLoading" role="status" aria-live="assertive" aria-hidden="false">
@@ -128,7 +128,11 @@
           <p class="muted">Compara el consumo y la huella ambiental por mes, trimestre, semestre o año. También puedes filtrar la comparación por una sede específica.</p>
         </div>
       </div>
-      <div class="territory-filter-heading"><span>Filtros territoriales</span><strong>Comuna, corregimiento y núcleo educativo</strong><small>Selecciona un nivel territorial y luego busca la institución o sede.</small></div>
+      <div class="hidden-territory-controls" aria-hidden="true">
+        <select id="compareTerritoryType" tabindex="-1"><option value="">Todo Medellín</option></select>
+        <select id="compareTerritory" tabindex="-1"><option value="">Todos los territorios</option></select>
+        <select id="compareNucleus" tabindex="-1"><option value="">Todos los núcleos</option></select>
+      </div>
       <div class="compare-controls compare-controls-advanced">
         <label>Tipo de comparación
           <select id="compareMode">
@@ -137,20 +141,6 @@
             <option value="semester">Semestre vs semestre</option>
             <option value="year">Año vs año</option>
           </select>
-        </label>
-        <label>Ámbito territorial
-          <select id="compareTerritoryType">
-            <option value="">Todo Medellín</option>
-            <option value="Comuna">Comuna</option>
-            <option value="Corregimiento">Corregimiento</option>
-            <option value="Sin clasificar">Sin clasificar</option>
-          </select>
-        </label>
-        <label>Comuna o corregimiento
-          <select id="compareTerritory"><option value="">Todos los territorios</option></select>
-        </label>
-        <label>Núcleo educativo
-          <select id="compareNucleus"><option value="">Todos los núcleos</option></select>
         </label>
         <label class="compare-site-field">Sede
           <div class="autocomplete site-autocomplete" id="compareSiteAutocomplete">
@@ -210,14 +200,13 @@
           <button id="updateFactorsBtn" class="secondary">Actualizar cálculos</button>
         </div>
       </div>
-      <div class="territory-filter-heading"><span>Filtros territoriales</span><strong>Consulta el informe por territorio</strong><small>Los filtros se aplican en cascada: ámbito → territorio → núcleo → sede.</small></div>
-      <div class="territorial-filter-bar" aria-label="Filtros territoriales del informe">
-        <div><label for="dashboardTerritoryType">Ámbito territorial</label><select id="dashboardTerritoryType"><option value="">Todo Medellín</option><option value="Comuna">Comuna</option><option value="Corregimiento">Corregimiento</option><option value="Sin clasificar">Sin clasificar</option></select></div>
-        <div><label for="dashboardTerritory">Comuna o corregimiento</label><select id="dashboardTerritory"><option value="">Todos los territorios</option></select></div>
-        <div><label for="dashboardNucleus">Núcleo educativo</label><select id="dashboardNucleus"><option value="">Todos los núcleos</option></select></div>
-        <button id="clearDashboardTerritoryBtn" type="button" class="secondary">Limpiar territorio</button>
-        <button id="downloadDashboardPdfBtn" type="button" class="secondary pdf-only-action">Descargar informe PDF</button>
+      <div class="hidden-territory-controls" aria-hidden="true">
+        <select id="dashboardTerritoryType" tabindex="-1"><option value="">Todo Medellín</option></select>
+        <select id="dashboardTerritory" tabindex="-1"><option value="">Todos los territorios</option></select>
+        <select id="dashboardNucleus" tabindex="-1"><option value="">Todos los núcleos</option></select>
+        <button id="clearDashboardTerritoryBtn" type="button" tabindex="-1">Limpiar territorio</button>
       </div>
+      <div class="report-actions-row"><button id="downloadDashboardPdfBtn" type="button" class="secondary pdf-only-action">Descargar informe PDF</button></div>
       <div class="dashboard-site-search">
         <label for="dashboardSiteSearch">Buscar institución o sede</label>
         <div class="autocomplete site-autocomplete" id="dashboardSiteAutocomplete">
@@ -271,20 +260,12 @@
 
     <div class="app-section" id="seccion-4" data-page-title="Facturas por I.E.">
     <section class="panel data-panel" id="registros">
-      <div class="territory-filter-heading"><span>Filtros territoriales</span><strong>Localiza las facturas por comuna, corregimiento o núcleo</strong><small>Combina los filtros con periodo, servicio e institución educativa.</small></div>
+      <div class="hidden-territory-controls" aria-hidden="true">
+        <select id="territoryTypeFilter" tabindex="-1"><option value="">Todo Medellín</option></select>
+        <select id="territoryFilter" tabindex="-1"><option value="">Todos los territorios</option></select>
+        <select id="nucleusFilter" tabindex="-1"><option value="">Todos los núcleos</option></select>
+      </div>
       <div class="toolbar filter-toolbar">
-        <div>
-          <label for="territoryTypeFilter">Ámbito territorial</label>
-          <select id="territoryTypeFilter"><option value="">Todo Medellín</option><option value="Comuna">Comuna</option><option value="Corregimiento">Corregimiento</option><option value="Sin clasificar">Sin clasificar</option></select>
-        </div>
-        <div>
-          <label for="territoryFilter">Comuna o corregimiento</label>
-          <select id="territoryFilter"><option value="">Todos los territorios</option></select>
-        </div>
-        <div>
-          <label for="nucleusFilter">Núcleo educativo</label>
-          <select id="nucleusFilter"><option value="">Todos los núcleos</option></select>
-        </div>
         <div class="search-filter">
           <label for="siteSearch">Institución o sede</label>
           <div class="autocomplete" id="siteAutocomplete">
@@ -439,6 +420,6 @@
   </script>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-  <script src="app.js?v=42-graficos-prioridad-colores"></script>
+  <script src="app.js?v=43-sin-filtros-territoriales"></script>
 </body>
 </html>
