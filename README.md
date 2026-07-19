@@ -1,3 +1,13 @@
+# SiMeCO₂ v44 — Comparación inicial/final y PDF estable
+
+- Histórico selecciona automáticamente el primer y el último periodo disponible.
+- Se corrigió la generación del informe histórico PDF.
+- Los informes se abren en una vista previa independiente y solo muestran el diálogo de impresión al pulsar **Guardar como PDF**, evitando bloquear la plataforma.
+- Se eliminó el botón PDF general del dashboard por sede.
+- Se reforzó la generación del Plan de Gestión por sede para evitar doble ejecución o bloqueo de la página.
+
+---
+
 # SiMeCO₂ v43 — Interfaz sin filtros territoriales
 
 - Se retiraron de la interfaz los filtros por comuna, corregimiento y núcleo educativo.

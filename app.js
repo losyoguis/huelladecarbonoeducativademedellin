@@ -365,7 +365,6 @@ function bindEvents(){
   document.addEventListener("click", e=>{ if(!$("siteAutocomplete").contains(e.target)) closeAutocomplete(); });
   if($("downloadFilteredPdfBtn")) $("downloadFilteredPdfBtn").addEventListener("click", downloadFilteredPdfReport);
   if($("downloadHistoryPdfBtn")) $("downloadHistoryPdfBtn").addEventListener("click", downloadHistoryPdfReport);
-  if($("downloadDashboardPdfBtn")) $("downloadDashboardPdfBtn").addEventListener("click", downloadDashboardPdfReport);
   if($("compareMode")) $("compareMode").addEventListener("change", ()=>{ renderCompareControls(); comparePeriods(); });
   if($("compareSite")) $("compareSite").addEventListener("change", ()=>{ renderCompareControls({keepSite:true}); comparePeriods(); });
   initSiteAutocompleteField({inputId:'compareSiteSearch',listId:'compareSiteSuggestions',clearId:'clearCompareSiteBtn',mode:'compare'});
@@ -990,10 +989,11 @@ function renderCompareControls(opts={}){
   const options = groups.map(g=>`<option value="${escapeHtml(g.key)}">${escapeHtml(g.period)}</option>`).join('');
   $('compareA').innerHTML = options;
   $('compareB').innerHTML = options;
-  if(groups.some(g=>g.key===currentA)) $('compareA').value = currentA;
-  else if(groups.length) $('compareA').value = groups[Math.max(0, groups.length-2)].key;
-  if(groups.some(g=>g.key===currentB)) $('compareB').value = currentB;
-  else if(groups.length) $('compareB').value = groups[groups.length-1].key;
+  // v44: la comparación inicia siempre con la primera y la última fuente disponibles.
+  if(groups.length){
+    $('compareA').value = groups[0].key;
+    $('compareB').value = groups[groups.length-1].key;
+  }
 }
 function comparePeriods(){
   const mode = $('compareMode') ? $('compareMode').value : 'month';
@@ -1093,8 +1093,13 @@ function openPdfPrintDocument(title, subtitle, content){
     .plan-document{box-shadow:none!important;border:0!important;padding:0!important}.plan-document h2,.plan-document h3{color:#08745c}.plan-table{font-size:8pt}
     @media print{button{display:none!important}.pdf-report-header{-webkit-print-color-adjust:exact;print-color-adjust:exact}th,.metric,.filters-line{ -webkit-print-color-adjust:exact;print-color-adjust:exact}}
   `;
-  w.document.write(`<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>${escapeHtml(title)} - SiMeCO2</title><style>${css}</style></head><body><main class="pdf-report">${reportHeader(title,subtitle)}${content}<p class="footer-note">Documento generado por SiMeCO₂. En el cuadro de impresión selecciona “Guardar como PDF”.</p></main><script>window.onload=()=>setTimeout(()=>window.print(),300)<\/script></body></html>`);
+  const safeTitle = escapeHtml(title);
+  w.document.open();
+  w.document.write(`<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${safeTitle} - SiMeCO₂</title><style>${css}
+    .pdf-toolbar{position:sticky;top:0;z-index:50;display:flex;justify-content:center;gap:10px;padding:12px;background:#eef8f5;border-bottom:1px solid #cfe4de}.pdf-toolbar button{border:0;border-radius:999px;padding:12px 20px;font-weight:900;cursor:pointer}.pdf-toolbar .save{background:#0b9878;color:#fff}.pdf-toolbar .close{background:#fff;color:#173f37;border:1px solid #cfe4de}@media print{.pdf-toolbar{display:none!important}}
+  </style></head><body><div class="pdf-toolbar"><button class="save" onclick="window.print()">Guardar como PDF</button><button class="close" onclick="window.close()">Cerrar informe</button></div><main class="pdf-report">${reportHeader(title,subtitle)}${content}<p class="footer-note">Documento generado por SiMeCO₂. Presiona “Guardar como PDF” y selecciona esa opción en el cuadro de impresión.</p></main></body></html>`);
   w.document.close();
+  try{ w.focus(); }catch(_err){}
 }
 function activeTerritoryText(prefix){
   const f=territoryFilterValues(prefix); const values=[];
@@ -1110,14 +1115,21 @@ function downloadFilteredPdfReport(){
   openPdfPrintDocument('Informe de facturas por institución educativa',filters,`<div class="report-grid"><div class="metric"><span>Registros</span><strong>${recs.length}</strong></div><div class="metric"><span>Energía acumulada</span><strong>${fmt(energy)} kWh</strong></div><div class="metric"><span>Emisiones</span><strong>${fmt(co2/1000)} t CO₂e</strong></div></div><div class="report-card"><h2>Resumen de la consulta</h2><p>Agua acumulada: <strong>${fmt(water)} m³</strong></p></div><table><thead><tr><th>Periodo</th><th>Institución / sede</th><th>Dirección</th><th>Energía</th><th>Agua</th><th>CO₂e</th><th>Fuente</th></tr></thead><tbody>${rows}</tbody></table>`);
 }
 function downloadHistoryPdfReport(){
-  const recs=getComparisonRecords();
-  if(!recs.length){alert('No hay datos históricos para generar el informe PDF.');return;}
-  const a=$('compareA')?.value||'', b=$('compareB')?.value||'';
-  const selected=[a,b].filter(Boolean); const subset=recs.filter(r=>selected.some(p=>String(r.period||'').startsWith(p)));
-  const use=subset.length?subset:recs;
-  const rows=use.map(r=>`<tr><td>${escapeHtml(r.period||'')}</td><td>${escapeHtml(r.site||'')}</td><td>${fmt(r.energyKwh)} kWh</td><td>${fmt((Number(r.energyKwh)||0)*FACTOR_CO2_KG_KWH/1000)} t</td><td>${fmt(r.waterM3)} m³</td></tr>`).join('');
-  openPdfPrintDocument('Informe histórico de consumos',`${activeTerritoryText('compare')} · Periodos: ${a||'todos'} y ${b||'todos'}`,`<div class="report-card"><h2>Interpretación del histórico</h2><p>${escapeHtml($('compareNarrative')?.textContent||'Comparación histórica de los registros disponibles.')}</p></div><table><thead><tr><th>Periodo</th><th>Institución / sede</th><th>Energía</th><th>CO₂e</th><th>Agua</th></tr></thead><tbody>${rows}</tbody></table>`);
+  const mode = $('compareMode') ? $('compareMode').value : 'month';
+  const groups = aggregateByComparison(recordsForCompareScope(), mode);
+  if(!groups.length){alert('No hay datos históricos para generar el informe PDF.');return;}
+  const first = groups[0];
+  const last = groups[groups.length-1];
+  if($('compareA')) $('compareA').value = first.key;
+  if($('compareB')) $('compareB').value = last.key;
+  comparePeriods();
+  const selectedKeys = new Set([first.key,last.key]);
+  const raw = recordsForCompareScope().filter(r=>selectedKeys.has(groupKeyForPeriod(r.period,mode)));
+  const rows = raw.map(r=>`<tr><td>${escapeHtml(groupLabel(groupKeyForPeriod(r.period,mode),mode))}</td><td>${escapeHtml(r.site||'')}</td><td>${fmt(r.energyKwh)} kWh</td><td>${fmt((Number(r.energyKwh)||0)*FACTOR_CO2_KG_KWH/1000)} t</td><td>${fmt(r.waterM3)} m³</td></tr>`).join('');
+  const narrative = $('compareNarrative')?.textContent || `Comparación entre ${first.period} y ${last.period}.`;
+  openPdfPrintDocument('Informe histórico de consumos',`${first.period} vs ${last.period}`,`<div class="report-card"><h2>Comparación seleccionada</h2><p>${escapeHtml(narrative)}</p></div><div class="report-grid"><div class="metric"><span>Periodo inicial</span><strong>${escapeHtml(first.period)}</strong></div><div class="metric"><span>Periodo final</span><strong>${escapeHtml(last.period)}</strong></div><div class="metric"><span>Variación de energía</span><strong>${fmt(last.energyKwh-first.energyKwh)} kWh</strong></div></div><table><thead><tr><th>Periodo</th><th>Institución / sede</th><th>Energía</th><th>CO₂e</th><th>Agua</th></tr></thead><tbody>${rows}</tbody></table>`);
 }
+
 function downloadDashboardPdfReport(){
   const recs=dashboardFilteredRecords();
   if(!recs.length){alert('No hay información para generar el informe PDF.');return;}
@@ -1710,7 +1722,18 @@ function buildPlanHtml(d){
 }
 
 function printCurrentPlan(){
-  if(!CURRENT_PLAN_HTML) return;
-  openPdfPrintDocument('Plan de Gestión Ambiental por sede','Informe institucional de eficiencia energética y reducción de emisiones',CURRENT_PLAN_HTML);
+  if(!CURRENT_PLAN_HTML){ alert('Primero genera el informe de una sede.'); return; }
+  const btn = $('printPlanBtn');
+  if(btn){ btn.disabled=true; btn.textContent='Preparando informe…'; }
+  setTimeout(()=>{
+    try{
+      openPdfPrintDocument('Plan de Gestión Ambiental por sede','Informe institucional de eficiencia energética y reducción de emisiones',CURRENT_PLAN_HTML);
+    }catch(err){
+      console.error(err);
+      alert('No fue posible preparar el informe. Recarga la página e inténtalo nuevamente.');
+    }finally{
+      if(btn){ btn.disabled=false; btn.textContent='Descargar informe PDF'; }
+    }
+  },40);
 }
 
