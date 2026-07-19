@@ -1,3 +1,13 @@
+# SiMeCO₂ v45 — Tablas compactas y direcciones legibles
+
+- Se redujo el ancho de la columna **Dirección** en el dashboard por sede.
+- Las direcciones largas, incluso con guiones bajos o códigos continuos, ahora se dividen en varias líneas sin invadir otras columnas.
+- La tabla **Facturas por I.E.** se compactó para mostrar más columnas simultáneamente.
+- Se ajustaron anchos, tipografía, encabezados y botón de Plan de Gestión para aprovechar mejor el espacio disponible.
+- En pantallas pequeñas se conserva la visualización adaptable y el desplazamiento cuando sea necesario.
+
+---
+
 # SiMeCO₂ v44 — Comparación inicial/final y PDF estable
 
 - Histórico selecciona automáticamente el primer y el último periodo disponible.

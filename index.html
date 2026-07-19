@@ -7,7 +7,7 @@
   <meta name="description" content="Sistema interactivo para medir, interpretar y gestionar la huella de carbono educativa a partir del consumo de servicios públicos." />
   <link rel="icon" type="image/png" href="assets/los-yoguis-logo.png" />
   <link rel="apple-touch-icon" href="assets/los-yoguis-logo.png" />
-  <link rel="stylesheet" href="styles.css?v=44-pdf-estable-comparacion" />
+  <link rel="stylesheet" href="styles.css?v=45-tablas-compactas" />
 </head>
 <body>
   <div class="invoice-loading active" id="invoiceLoading" role="status" aria-live="assertive" aria-hidden="false">
@@ -221,7 +221,7 @@
         <article class="big-total"><span>Árboles necesarios</span><strong id="dashTotalTrees">0 árboles</strong></article>
       </div>
       <div class="table-wrap dashboard-table-wrap">
-        <table>
+        <table class="dashboard-data-table">
           <thead>
             <tr>
               <th>#</th>
@@ -308,11 +308,11 @@
         <strong id="filterResultCount">0 registros</strong>
         <div id="activeFilters" class="active-filters"></div>
       </div>
-      <div class="table-wrap">
-        <table>
+      <div class="table-wrap records-table-wrap">
+        <table class="records-data-table">
           <thead>
             <tr>
-              <th>Periodo</th><th>Sede</th><th>Dirección</th><th>Agua m³</th><th>Alc. m³</th><th>Energía kWh</th><th>Gas m³</th><th>Aseo $</th><th>Residuos t</th><th>CO₂ kg</th><th>Fuente</th>
+              <th>Periodo</th><th>Sede</th><th>Dirección</th><th>Agua<br>m³</th><th>Alc.<br>m³</th><th>Energía<br>kWh</th><th>Gas<br>m³</th><th>Aseo<br>$</th><th>Residuos<br>t</th><th>CO₂<br>kg</th><th>Fuente</th>
             </tr>
           </thead>
           <tbody id="recordsBody"></tbody>
@@ -419,6 +419,6 @@
   </script>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-  <script src="app.js?v=44-pdf-estable-comparacion"></script>
+  <script src="app.js?v=45-tablas-compactas"></script>
 </body>
 </html>
