@@ -8,7 +8,7 @@
   <meta name="description" content="Sistema interactivo para medir, interpretar y gestionar la huella de carbono educativa a partir del consumo de servicios públicos." />
   <link rel="icon" type="image/png" href="assets/los-yoguis-logo.png" />
   <link rel="apple-touch-icon" href="assets/los-yoguis-logo.png" />
-  <link rel="stylesheet" href="styles.css?v=46-rendimiento" />
+  <link rel="stylesheet" href="styles.css?v=47-ranking-paginado" />
 </head>
 <body>
   <div class="invoice-loading active" id="invoiceLoading" role="status" aria-live="assertive" aria-hidden="false">
@@ -171,13 +171,24 @@
           <p class="muted">Visualización principal con kWh acumulados, toneladas de CO₂e y árboles requeridos por sede.</p>
         </div>
       </div>
-      <div class="priority-legend" aria-label="Leyenda de prioridad">
-        <span class="priority-chip high">Alta</span>
-        <span class="priority-chip medium">Media</span>
-        <span class="priority-chip low">Preventiva</span>
+      <div class="ranking-toolbar" aria-label="Controles del ranking">
+        <div class="priority-legend" aria-label="Leyenda de prioridad">
+          <span class="priority-chip high">Alta</span>
+          <span class="priority-chip medium">Media</span>
+          <span class="priority-chip low">Preventiva</span>
+        </div>
+        <button id="refreshRankingBtn" class="secondary ranking-refresh-btn" type="button">↻ Actualizar ranking</button>
       </div>
+      <div id="rankingExtremes" class="ranking-extremes" aria-live="polite"></div>
       <div class="chart-card environmental-ranking-chart">
         <canvas id="siteChart" width="1100" height="500" aria-label="Ranking de sedes por consumo eléctrico y árboles requeridos"></canvas>
+      </div>
+      <div class="ranking-pagination" aria-label="Paginación del ranking">
+        <button id="rankingFirstBtn" class="secondary" type="button" title="Ver las primeras 10 sedes">« Primera</button>
+        <button id="rankingPrevBtn" class="secondary" type="button" title="Ver las 10 sedes anteriores">‹ Anteriores</button>
+        <strong id="rankingPageInfo">1–10 de 0 sedes</strong>
+        <button id="rankingNextBtn" class="secondary" type="button" title="Ver las siguientes 10 sedes">Siguientes ›</button>
+        <button id="rankingLastBtn" class="secondary" type="button" title="Ver las últimas sedes y conocer la de menor consumo">Última »</button>
       </div>
     </section>
 
@@ -420,6 +431,6 @@
   </script>
 
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-  <script defer src="app.js?v=46-rendimiento"></script>
+  <script defer src="app.js?v=47-ranking-paginado"></script>
 </body>
 </html>

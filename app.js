@@ -1,4 +1,4 @@
-/* SiMeCO2 Servicios Públicos - v46 optimización de rendimiento */
+/* SiMeCO2 Servicios Públicos - v47 ranking paginado */
 let FACTOR_CO2_KG_KWH = 0.126; // kg CO2e/kWh. Ajustable desde el dashboard.
 let TREE_CO2_KG_YEAR = 22; // kg CO2e capturados por árbol al año. Ajustable desde el dashboard.
 const FACTOR_KEY = 'simeco2_factores_ambientales_v8';
@@ -17,6 +17,9 @@ const territoryMetaCache = new WeakMap();
 let saveTimer = 0;
 let filterTimer = 0;
 let renderFrame = 0;
+const RANKING_PAGE_SIZE = 10;
+let rankingPage = 0;
+let rankingRowsCache = [];
 
 
 /* Clasificación territorial. Las coincidencias exactas tienen prioridad;
@@ -391,6 +394,11 @@ function bindEvents(){
   $("compareBtn").addEventListener("click", comparePeriods);
   if($("printPlanBtn")) $("printPlanBtn").addEventListener("click", printCurrentPlan);
   if($("environmentBody")) $("environmentBody").addEventListener("click", handlePlanButtonClick);
+  $("refreshRankingBtn")?.addEventListener("click", refreshFullRanking);
+  $("rankingFirstBtn")?.addEventListener("click", ()=>setRankingPage(0));
+  $("rankingPrevBtn")?.addEventListener("click", ()=>setRankingPage(rankingPage-1));
+  $("rankingNextBtn")?.addEventListener("click", ()=>setRankingPage(rankingPage+1));
+  $("rankingLastBtn")?.addEventListener("click", ()=>setRankingPage(Math.max(0,Math.ceil(rankingRowsCache.length/RANKING_PAGE_SIZE)-1)));
   document.addEventListener("click", handlePlanButtonClick);
 }
 function initConfig(){
@@ -1317,7 +1325,7 @@ function renderDashboard(){
   $('dashTotalTrees').textContent = fmt(totalTrees) + ' árboles';
   if(!rows.length){
     $('environmentBody').innerHTML = '<tr><td colspan="10">No hay registros de energía eléctrica para mostrar. Importa una factura PDF o revisa los filtros.</td></tr>';
-    drawSiteChart([]);
+    renderRanking();
     return;
   }
   const body = rows.map((r,i)=>{
@@ -1337,9 +1345,32 @@ function renderDashboard(){
   }).join('');
   const totalRow = `<tr class="total-row"><td colspan="4">TOTAL</td><td>${fmt(totalKwh)}</td><td>${fmt(totalCo2kg/1000)}</td><td>${fmt(totalTrees)}</td><td>—</td><td>—</td><td>—</td></tr>`;
   $('environmentBody').innerHTML = totalRow + body;
-  drawSiteChart(rows.slice(0,12));
+  renderRanking();
 }
 
+function getFullRankingRows(){
+  return aggregateBySite((state.records||[]).filter(r=>Number(r.energyKwh)>0));
+}
+function refreshFullRanking(){
+  dashboardSiteKey='';
+  const field=siteAutocompleteState.get('dashboardSiteSearch');
+  if(field){field.input.value='';field.clear.classList.remove('visible');}
+  rankingPage=0;
+  rankingRowsCache=getFullRankingRows();
+  drawSiteChart(rankingRowsCache);
+  log('Ranking actualizado: se muestran nuevamente todas las sedes disponibles.');
+}
+function setRankingPage(page){
+  const pages=Math.max(1,Math.ceil(rankingRowsCache.length/RANKING_PAGE_SIZE));
+  rankingPage=Math.max(0,Math.min(Number(page)||0,pages-1));
+  drawSiteChart(rankingRowsCache);
+}
+function renderRanking(){
+  rankingRowsCache=getFullRankingRows();
+  const pages=Math.max(1,Math.ceil(rankingRowsCache.length/RANKING_PAGE_SIZE));
+  if(rankingPage>=pages) rankingPage=pages-1;
+  drawSiteChart(rankingRowsCache);
+}
 function drawSiteChart(rows){
   const c = $('siteChart');
   if(!c) return;
@@ -1351,42 +1382,50 @@ function drawSiteChart(rows){
   ctx.fillText('Ranking de sedes por consumo eléctrico total (kWh)',24,34);
   ctx.font='12px Arial';
   ctx.fillStyle='#637772';
-  ctx.fillText('Dato visible por sede: kWh acumulados · t CO₂e · árboles requeridos.',24,54);
-  if(!rows.length){ ctx.fillStyle='#13312d'; ctx.fillText('Sin datos para graficar',24,92); return; }
+  ctx.fillText('Ordenado de mayor a menor consumo · vista de 10 sedes por página.',24,54);
 
-  // v11: barras más cortas y columna fija para que siempre se vean kWh, CO₂e y árboles.
+  const total=rows.length;
+  const pages=Math.max(1,Math.ceil(total/RANKING_PAGE_SIZE));
+  rankingPage=Math.max(0,Math.min(rankingPage,pages-1));
+  const start=rankingPage*RANKING_PAGE_SIZE;
+  const visible=rows.slice(start,start+RANKING_PAGE_SIZE);
+  const end=Math.min(start+visible.length,total);
+  if($('rankingPageInfo')) $('rankingPageInfo').textContent=total ? `${start+1}–${end} de ${total} sedes · Página ${rankingPage+1} de ${pages}` : 'Sin sedes disponibles';
+  ['rankingFirstBtn','rankingPrevBtn'].forEach(id=>{if($(id)) $(id).disabled=rankingPage===0||!total;});
+  ['rankingNextBtn','rankingLastBtn'].forEach(id=>{if($(id)) $(id).disabled=rankingPage>=pages-1||!total;});
+  const most=rows[0], least=rows[rows.length-1];
+  if($('rankingExtremes')) $('rankingExtremes').innerHTML=total ? `<article><span>Mayor consumo</span><strong>${escapeHtml(most.site)}</strong><small>${fmt(most.energyKwh)} kWh acumulados</small></article><article><span>Menor consumo</span><strong>${escapeHtml(least.site)}</strong><small>${fmt(least.energyKwh)} kWh acumulados</small></article>` : '<p>No hay datos para construir el ranking.</p>';
+
+  if(!visible.length){ ctx.fillStyle='#13312d'; ctx.fillText('Sin datos para graficar',24,92); return; }
   const padL = 255;
   const padR = 28;
   const valueX = Math.max(735, c.width - 330);
   const top = 82;
-  const rowH = 32;
-  const barH = 18;
+  const rowH = 36;
+  const barH = 20;
   const max = Math.max(...rows.map(r=>r.energyKwh),1);
   const maxBarW = Math.max(180, valueX - padL - 18);
-
   ctx.font='12px Arial';
-  rows.forEach((r,i)=>{
+  visible.forEach((r,i)=>{
     const y = top + i*rowH;
-    const label = (r.site||'').length>34 ? r.site.slice(0,34)+'…' : r.site;
-
+    const position=start+i+1;
+    const rawLabel=`${position}. ${r.site||''}`;
+    const label = rawLabel.length>36 ? rawLabel.slice(0,36)+'…' : rawLabel;
     ctx.fillStyle='#315650';
     ctx.textAlign='right';
-    ctx.fillText(label, padL-12, y+14);
-
+    ctx.fillText(label, padL-12, y+15);
     const bw = Math.max(8, (r.energyKwh/max)*maxBarW);
     const grad = ctx.createLinearGradient(padL,0,padL+bw,0);
     grad.addColorStop(0,'#0b9878');
     grad.addColorStop(1,'#0fc39a');
     ctx.fillStyle=grad;
     roundRect(ctx,padL,y,bw,barH,8); ctx.fill();
-
-    const textX = valueX;
-    const available = c.width - textX - padR;
+    const available = c.width - valueX - padR;
     const fullLabel = `${fmt(r.energyKwh)} kWh · ${fmt(r.co2kg/1000)} t CO₂e · ${fmt(r.trees)} árboles`;
     ctx.fillStyle='#13312d';
     ctx.textAlign='left';
     ctx.font='bold 11.5px Arial';
-    ctx.fillText(fitCanvasText(ctx, fullLabel, available), textX, y+14);
+    ctx.fillText(fitCanvasText(ctx, fullLabel, available), valueX, y+15);
   });
   ctx.textAlign='left';
 }

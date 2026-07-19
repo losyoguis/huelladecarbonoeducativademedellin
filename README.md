@@ -1,3 +1,13 @@
+# SiMeCO₂ v47 — Ranking paginado y actualización completa
+
+- El ranking se muestra en grupos de 10 sedes, ordenadas de mayor a menor consumo eléctrico.
+- Se añadieron controles para ir a la primera, anterior, siguiente y última página.
+- Se muestran claramente la sede de mayor consumo y la de menor consumo.
+- El botón **Actualizar ranking** elimina cualquier selección de sede y vuelve a mostrar el ranking completo.
+- La posición real de cada sede aparece numerada dentro del gráfico.
+
+---
+
 # SiMeCO₂ v46 — Optimización de velocidad
 
 - Inicio inmediato usando los datos guardados en el navegador.
