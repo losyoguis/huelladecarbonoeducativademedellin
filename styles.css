@@ -1105,3 +1105,11 @@ canvas{max-width:100%;height:auto;border-radius:16px;}
   .dashboard-table-wrap .dashboard-data-table,
   .records-table-wrap .records-data-table{min-width:0;}
 }
+
+
+/* v46: optimización de renderizado */
+.app-section:not(.active){display:none!important}
+.panel{content-visibility:auto;contain-intrinsic-size:700px}
+.table-wrap,.chart-card{contain:layout paint style}
+img{content-visibility:auto}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}

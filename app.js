@@ -1,4 +1,4 @@
-/* SiMeCO2 Servicios Públicos - v41 filtros visibles e informes solo PDF */
+/* SiMeCO2 Servicios Públicos - v46 optimización de rendimiento */
 let FACTOR_CO2_KG_KWH = 0.126; // kg CO2e/kWh. Ajustable desde el dashboard.
 let TREE_CO2_KG_YEAR = 22; // kg CO2e capturados por árbol al año. Ajustable desde el dashboard.
 const FACTOR_KEY = 'simeco2_factores_ambientales_v8';
@@ -13,6 +13,10 @@ let autocompleteIndex = -1;
 let isScanningData = false;
 let dashboardSiteKey = "";
 const siteAutocompleteState = new Map();
+const territoryMetaCache = new WeakMap();
+let saveTimer = 0;
+let filterTimer = 0;
+let renderFrame = 0;
 
 
 /* Clasificación territorial. Las coincidencias exactas tienen prioridad;
@@ -28,15 +32,22 @@ const CORREGIMIENTO_RULES = [
   ['palmitas','San Sebastián de Palmitas']
 ];
 function territoryMeta(record){
+  if(record && typeof record === 'object' && territoryMetaCache.has(record)) return territoryMetaCache.get(record);
   const hay=loose(`${record?.site||''} ${record?.address||''}`);
   const exact=TERRITORY_CATALOG.find(x=>x.match.some(m=>hay.includes(loose(m))));
-  if(exact) return {...exact};
-  for(const [needle,name] of CORREGIMIENTO_RULES){
-    if(hay.includes(loose(needle))) return {type:'Corregimiento',territory:name,nucleus:'Sin clasificar'};
+  let result;
+  if(exact) result={...exact};
+  else {
+    for(const [needle,name] of CORREGIMIENTO_RULES){
+      if(hay.includes(loose(needle))){ result={type:'Corregimiento',territory:name,nucleus:'Sin clasificar'}; break; }
+    }
+    if(!result){
+      const comuna=hay.match(/(?:comuna|c)\s*0?([1-9]|1[0-6])\b/);
+      result=comuna ? {type:'Comuna',territory:`Comuna ${Number(comuna[1])}`,nucleus:'Sin clasificar'} : {type:'Sin clasificar',territory:'Sin clasificar',nucleus:'Sin clasificar'};
+    }
   }
-  const comuna=hay.match(/(?:comuna|c)\s*0?([1-9]|1[0-6])\b/);
-  if(comuna) return {type:'Comuna',territory:`Comuna ${Number(comuna[1])}`,nucleus:'Sin clasificar'};
-  return {type:'Sin clasificar',territory:'Sin clasificar',nucleus:'Sin clasificar'};
+  if(record && typeof record === 'object') territoryMetaCache.set(record,result);
+  return result;
 }
 function territoryFilterValues(prefix){
   const ids = prefix==='compare'
@@ -101,17 +112,25 @@ function bindTerritoryFilters(){
   });
 }
 
-window.addEventListener('load', () => {
+window.addEventListener('DOMContentLoaded', () => {
   initPdfJs();
   initConfig();
   initFactors();
   bindEvents();
   bindTerritoryFilters();
-  renderAll();
-  initSearchableSelects();
-  refreshAllTerritoryFilters();
-  log('Espere, cargando facturas...');
-  setTimeout(() => scanDataFolder({automatic:true}), 250);
+  requestAnimationFrame(() => {
+    renderAll();
+    initSearchableSelects();
+    refreshAllTerritoryFilters();
+    if(state.records.length){
+      log(`Datos cargados desde memoria local: ${state.records.length} registros.`);
+      setInvoiceLoading(false, 'Datos listos. Verificando facturas nuevas...');
+      setTimeout(() => scanDataFolder({automatic:true, quiet:true}), 900);
+    }else{
+      log('Espere, cargando facturas...');
+      setTimeout(() => scanDataFolder({automatic:true}), 180);
+    }
+  });
 });
 
 
@@ -432,7 +451,15 @@ function loadStore(){
   try{ return JSON.parse(localStorage.getItem(STORE_KEY)) || {records:[], files:{}, sites:{}}; }
   catch{ return {records:[], files:{}, sites:{}}; }
 }
-function saveStore(){ localStorage.setItem(STORE_KEY, JSON.stringify(state)); }
+function saveStore(immediate=false){
+  clearTimeout(saveTimer);
+  const persist=()=>{ try{ localStorage.setItem(STORE_KEY, JSON.stringify(state)); }catch(err){ console.warn('No fue posible guardar la caché local:',err); } };
+  if(immediate) persist(); else saveTimer=setTimeout(persist,120);
+}
+function scheduleRenderAll(){
+  if(renderFrame) cancelAnimationFrame(renderFrame);
+  renderFrame=requestAnimationFrame(()=>{ renderFrame=0; renderAll(); });
+}
 function log(msg){
   const t = new Date().toLocaleTimeString();
   $('logBox').textContent += `[${t}] ${msg}\n`;
@@ -445,14 +472,14 @@ async function scanDataFolder(options={}){
     return;
   }
   isScanningData = true;
-  setInvoiceLoading(true, options.automatic ? 'Espere, cargando facturas...' : 'Espere, actualizando facturas...');
+  if(!options.quiet) setInvoiceLoading(true, options.automatic ? 'Espere, cargando facturas...' : 'Espere, actualizando facturas...');
   try{
     await scanDataFolderCore();
-    setInvoiceLoading(false, 'Facturas cargadas correctamente.');
+    if(!options.quiet) setInvoiceLoading(false, 'Facturas cargadas correctamente.');
   }catch(err){
     console.error(err);
     log(`Error general durante la carga: ${err.message}`);
-    setInvoiceLoading(false, 'No fue posible completar la carga de facturas.', true);
+    if(!options.quiet) setInvoiceLoading(false, 'No fue posible completar la carga de facturas.', true);
   }finally{
     isScanningData = false;
   }
@@ -488,7 +515,7 @@ async function scanDataFolderCore(){
   if(cfg.owner && cfg.repo){
     try{
       const api = `https://api.github.com/repos/${encodeURIComponent(cfg.owner)}/${encodeURIComponent(cfg.repo)}/contents/data?ref=${encodeURIComponent(cfg.branch)}`;
-      const res = await fetch(api, {cache:'no-store'});
+      const res = await fetch(api, {cache:'default'});
       if(!res.ok) throw new Error(`${res.status} ${res.statusText}`);
       const json = await res.json();
       files = json.filter(f=>f.type==='file' && f.name.toLowerCase().endsWith('.pdf')).map(f=>({name:f.name,url:f.download_url,sha:f.sha}));
@@ -499,7 +526,7 @@ async function scanDataFolderCore(){
   }
   if(!files.length){
     try{
-      const res = await fetch('data/manifest.json?ts='+Date.now(), {cache:'no-store'});
+      const res = await fetch('data/manifest.json', {cache:'no-cache'});
       if(res.ok){
         const manifest = await res.json();
         const arr = Array.isArray(manifest) ? manifest : manifest.files || [];
@@ -513,25 +540,40 @@ async function scanDataFolderCore(){
     return;
   }
   let imported=0, skipped=0, failed=0;
+  const pending=[];
   for(const file of files){
-    const fingerprint = file.sha || file.url || file.name;
-    if(state.files[fingerprint]){ skipped++; continue; }
-    try{
-      log(`Importando ${file.name}...`);
-      const buf = await (await fetch(file.url, {cache:'no-store'})).arrayBuffer();
-      const result = await parsePdfArrayBuffer(buf, file.name, file.url);
-      if(result.records.length){
-        addImport(result, fingerprint);
-        imported++;
-        log(`OK ${file.name}: ${result.records.length} registros, periodo ${result.period}.`);
-      }else{
-        failed++;
-        log(`Sin registros estructurados en ${file.name}. Muestra: ${result.sample.slice(0,500).replace(/\s+/g,' ')}`);
-      }
-    }catch(err){ failed++; log(`Error importando ${file.name}: ${err.message}`); }
+    const fingerprint=file.sha || file.url || file.name;
+    if(state.files[fingerprint]) skipped++;
+    else pending.push({...file,fingerprint});
   }
+  const concurrency=Math.min(2,pending.length);
+  let cursor=0;
+  async function importWorker(){
+    while(cursor<pending.length){
+      const file=pending[cursor++];
+      try{
+        log(`Importando ${file.name}...`);
+        const response=await fetch(file.url,{cache:'force-cache'});
+        if(!response.ok) throw new Error(`${response.status} ${response.statusText}`);
+        const buf=await response.arrayBuffer();
+        const result=await parsePdfArrayBuffer(buf,file.name,file.url);
+        if(result.records.length){
+          addImport(result,file.fingerprint);
+          imported++;
+          log(`OK ${file.name}: ${result.records.length} registros, periodo ${result.period}.`);
+        }else{
+          failed++;
+          log(`Sin registros estructurados en ${file.name}. Muestra: ${result.sample.slice(0,500).replace(/\s+/g,' ')}`);
+        }
+      }catch(err){
+        failed++;
+        log(`Error importando ${file.name}: ${err.message}`);
+      }
+    }
+  }
+  if(concurrency) await Promise.all(Array.from({length:concurrency},()=>importWorker()));
   log(`Proceso terminado. Importados: ${imported}. Omitidos ya existentes: ${skipped}. Fallidos: ${failed}.`);
-  saveStore(); renderAll();
+  saveStore(); scheduleRenderAll();
 }
 async function handleLocalPdf(ev){
   const file = ev.target.files[0]; if(!file) return;
@@ -541,7 +583,7 @@ async function handleLocalPdf(ev){
   if(result.records.length){
     const fingerprint = 'local-'+file.name+'-'+file.size+'-'+file.lastModified;
     addImport(result, fingerprint);
-    saveStore(); renderAll();
+    saveStore(); scheduleRenderAll();
     log(`PDF local importado: ${result.records.length} registros, periodo ${result.period}.`);
   } else {
     log(`PDF abierto, pero no se estructuraron registros. Muestra: ${result.sample.slice(0,1000).replace(/\s+/g,' ')}`);
@@ -566,12 +608,14 @@ async function parsePdfArrayBuffer(arrayBuffer, fileName, sourceUrl){
   const allLines = [];
   for(let p=1;p<=pdf.numPages;p++){
     const page = await pdf.getPage(p);
-    const content = await page.getTextContent();
+    const content = await page.getTextContent({disableCombineTextItems:false});
     const items = content.items.map(it=>({str:it.str||'', x:it.transform[4]||0, y:it.transform[5]||0})).filter(i=>i.str.trim());
     const lines = groupTextItemsIntoLines(items);
     allLines.push(...lines.map(line=>({page:p, text:line})));
     allText += `\nPÁGINA ${p}\n` + lines.join('\n');
+    page.cleanup();
     if(p%40===0) log(`Leídas ${p}/${pdf.numPages} páginas...`);
+    if(p%12===0) await new Promise(resolve=>setTimeout(resolve,0));
   }
   const period = detectPeriod(allText, fileName);
   const blocks = makeBlocks(allLines);
@@ -768,7 +812,11 @@ function filteredRecords(){
   const service = $('serviceFilter').value;
   return sortRecords(state.records.filter(r=>recordMatchesTerritory(r,territoryFilterValues('table')) && recordMatchesSearch(r,q) && (!p || r.period===p) && serviceHasValue(r,service)));
 }
-function applyFilters(){ renderTable(); renderDashboard(); renderFilterSummary(); syncAllSearchableSelects(); }
+function applyFilters(immediate=false){
+  clearTimeout(filterTimer);
+  const run=()=>{ renderTable(); renderDashboard(); renderFilterSummary(); syncAllSearchableSelects(); };
+  if(immediate) run(); else filterTimer=setTimeout(run,90);
+}
 function clearSiteSearch(){
   $('siteSearch').value=''; selectedSiteKey=''; $('clearSearchBtn').classList.remove('visible'); closeAutocomplete(); applyFilters(); $('siteSearch').focus();
 }

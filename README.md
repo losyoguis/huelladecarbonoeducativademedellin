@@ -1,3 +1,17 @@
+# SiMeCO₂ v46 — Optimización de velocidad
+
+- Inicio inmediato usando los datos guardados en el navegador.
+- Verificación de facturas nuevas en segundo plano cuando ya existe información local.
+- Caché del navegador para PDF y recursos, evitando descargas repetidas.
+- Escritura de datos en `localStorage` agrupada para reducir bloqueos.
+- Filtros con respuesta diferida corta para evitar renderizados en cada tecla.
+- Liberación de memoria después de leer cada página PDF y pausas breves para mantener la interfaz activa.
+- Renderizado diferido de paneles y secciones no visibles.
+- Scripts con carga `defer` y conexión anticipada al CDN de PDF.js.
+- Limpieza de archivos duplicados y residuos de versiones anteriores.
+
+---
+
 # SiMeCO₂ v45 — Tablas compactas y direcciones legibles
 
 - Se redujo el ancho de la columna **Dirección** en el dashboard por sede.
