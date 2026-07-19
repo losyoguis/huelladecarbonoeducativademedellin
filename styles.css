@@ -1009,3 +1009,16 @@ canvas{max-width:100%;height:auto;border-radius:16px;}
 .dashboard-site-search>small{color:#627b75;font-weight:600}
 .dashboard-site-search .autocomplete-list{max-width:720px}
 @media(max-width:760px){.dashboard-site-search{grid-template-columns:1fr;padding:14px}.compare-site-field{min-width:100%}}
+
+/* v40 · Filtros jerárquicos por comuna, corregimiento y núcleo */
+.compare-controls-advanced{grid-template-columns:repeat(4,minmax(150px,1fr));align-items:end}
+.compare-controls-advanced .compare-site-field{grid-column:span 2}
+.territorial-filter-bar{display:grid;grid-template-columns:repeat(3,minmax(170px,1fr)) auto;gap:12px;align-items:end;margin:8px 0 14px;padding:15px 16px;border:1px solid #c8e3dc;border-radius:18px;background:linear-gradient(135deg,#f8fffc,#eefaf6)}
+.territorial-filter-bar>div{min-width:0}
+.territorial-filter-bar label{display:block;margin-bottom:6px;font-size:.8rem;font-weight:900;color:#365d56}
+.territorial-filter-bar .secondary{min-height:44px;white-space:nowrap}
+.filter-toolbar{grid-template-columns:repeat(4,minmax(160px,1fr))}
+.filter-toolbar .search-filter{grid-column:span 2}
+.filter-toolbar .toolbar-buttons{grid-column:1/-1}
+@media(max-width:1050px){.compare-controls-advanced{grid-template-columns:repeat(2,minmax(180px,1fr))}.territorial-filter-bar{grid-template-columns:repeat(2,minmax(180px,1fr))}.territorial-filter-bar .secondary{grid-column:1/-1}.filter-toolbar{grid-template-columns:repeat(2,minmax(180px,1fr))}}
+@media(max-width:650px){.compare-controls-advanced,.territorial-filter-bar,.filter-toolbar{grid-template-columns:1fr}.compare-controls-advanced .compare-site-field,.filter-toolbar .search-filter{grid-column:auto}.territorial-filter-bar .secondary,.filter-toolbar .toolbar-buttons{grid-column:auto}}

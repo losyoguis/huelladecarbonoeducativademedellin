@@ -1,4 +1,4 @@
-/* SiMeCO2 Servicios Públicos - v39 autocompletado por sede */
+/* SiMeCO2 Servicios Públicos - v40 filtros territoriales jerárquicos */
 let FACTOR_CO2_KG_KWH = 0.126; // kg CO2e/kWh. Ajustable desde el dashboard.
 let TREE_CO2_KG_YEAR = 22; // kg CO2e capturados por árbol al año. Ajustable desde el dashboard.
 const FACTOR_KEY = 'simeco2_factores_ambientales_v8';
@@ -14,13 +14,101 @@ let isScanningData = false;
 let dashboardSiteKey = "";
 const siteAutocompleteState = new Map();
 
+
+/* Clasificación territorial. Las coincidencias exactas tienen prioridad;
+   los registros no identificados permanecen visibles como "Sin clasificar". */
+const TERRITORY_CATALOG = [
+  {match:['manuel j betancur','manuel jose betancur'], type:'Corregimiento', territory:'San Antonio de Prado', nucleus:'937'}
+];
+const CORREGIMIENTO_RULES = [
+  ['san antonio de prado','San Antonio de Prado'],
+  ['san cristobal','San Cristóbal'],
+  ['altavista','Altavista'],
+  ['santa elena','Santa Elena'],
+  ['palmitas','San Sebastián de Palmitas']
+];
+function territoryMeta(record){
+  const hay=loose(`${record?.site||''} ${record?.address||''}`);
+  const exact=TERRITORY_CATALOG.find(x=>x.match.some(m=>hay.includes(loose(m))));
+  if(exact) return {...exact};
+  for(const [needle,name] of CORREGIMIENTO_RULES){
+    if(hay.includes(loose(needle))) return {type:'Corregimiento',territory:name,nucleus:'Sin clasificar'};
+  }
+  const comuna=hay.match(/(?:comuna|c)\s*0?([1-9]|1[0-6])\b/);
+  if(comuna) return {type:'Comuna',territory:`Comuna ${Number(comuna[1])}`,nucleus:'Sin clasificar'};
+  return {type:'Sin clasificar',territory:'Sin clasificar',nucleus:'Sin clasificar'};
+}
+function territoryFilterValues(prefix){
+  const ids = prefix==='compare'
+    ? ['compareTerritoryType','compareTerritory','compareNucleus']
+    : prefix==='dashboard'
+      ? ['dashboardTerritoryType','dashboardTerritory','dashboardNucleus']
+      : ['territoryTypeFilter','territoryFilter','nucleusFilter'];
+  return {type:$(ids[0])?.value||'',territory:$(ids[1])?.value||'',nucleus:$(ids[2])?.value||''};
+}
+function recordMatchesTerritory(record,filters){
+  const meta=territoryMeta(record);
+  return (!filters.type||meta.type===filters.type) && (!filters.territory||meta.territory===filters.territory) && (!filters.nucleus||meta.nucleus===filters.nucleus);
+}
+function territoryScopedRecords(prefix){
+  const filters=territoryFilterValues(prefix);
+  return state.records.filter(r=>recordMatchesTerritory(r,filters));
+}
+function setSelectOptions(id,options,placeholder){
+  const el=$(id); if(!el) return;
+  const current=el.value;
+  el.innerHTML=`<option value="">${escapeHtml(placeholder)}</option>`+options.map(v=>`<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`).join('');
+  if(options.includes(current)) el.value=current;
+  else el.value='';
+  syncSearchableSelect(id,true);
+}
+function updateTerritoryCascade(prefix,changed=''){
+  const ids = prefix==='compare'
+    ? {type:'compareTerritoryType',territory:'compareTerritory',nucleus:'compareNucleus'}
+    : prefix==='dashboard'
+      ? {type:'dashboardTerritoryType',territory:'dashboardTerritory',nucleus:'dashboardNucleus'}
+      : {type:'territoryTypeFilter',territory:'territoryFilter',nucleus:'nucleusFilter'};
+  const type=$(ids.type)?.value||'';
+  if(changed==='type'){ if($(ids.territory)) $(ids.territory).value=''; if($(ids.nucleus)) $(ids.nucleus).value=''; }
+  if(changed==='territory' && $(ids.nucleus)) $(ids.nucleus).value='';
+  const metas=state.records.map(territoryMeta).filter(m=>!type||m.type===type);
+  const territories=[...new Set(metas.map(m=>m.territory))].sort((a,b)=>a.localeCompare(b,'es'));
+  setSelectOptions(ids.territory,territories,'Todos los territorios');
+  const territory=$(ids.territory)?.value||'';
+  const nuclei=[...new Set(metas.filter(m=>!territory||m.territory===territory).map(m=>m.nucleus))].sort((a,b)=>a.localeCompare(b,'es'));
+  setSelectOptions(ids.nucleus,nuclei,'Todos los núcleos');
+}
+function refreshAllTerritoryFilters(){
+  ['compare','dashboard','table'].forEach(prefix=>updateTerritoryCascade(prefix));
+}
+function bindTerritoryFilters(){
+  const configs=[
+    ['compare','compareTerritoryType','compareTerritory','compareNucleus',()=>{ if($('compareSite')) $('compareSite').value=''; const f=siteAutocompleteState.get('compareSiteSearch'); if(f){f.input.value='';f.clear.classList.remove('visible');} renderCompareControls({keepSite:true}); comparePeriods(); }],
+    ['dashboard','dashboardTerritoryType','dashboardTerritory','dashboardNucleus',()=>{ dashboardSiteKey=''; const f=siteAutocompleteState.get('dashboardSiteSearch'); if(f){f.input.value='';f.clear.classList.remove('visible');} renderDashboard(); }],
+    ['table','territoryTypeFilter','territoryFilter','nucleusFilter',()=>{ selectedSiteKey=''; if($('siteSearch')) $('siteSearch').value=''; applyFilters(); }]
+  ];
+  configs.forEach(([prefix,typeId,territoryId,nucleusId,render])=>{
+    $(typeId)?.addEventListener('change',()=>{updateTerritoryCascade(prefix,'type');render();});
+    $(territoryId)?.addEventListener('change',()=>{updateTerritoryCascade(prefix,'territory');render();});
+    $(nucleusId)?.addEventListener('change',render);
+  });
+  $('clearDashboardTerritoryBtn')?.addEventListener('click',()=>{
+    ['dashboardTerritoryType','dashboardTerritory','dashboardNucleus'].forEach(id=>{if($(id)) $(id).value='';});
+    updateTerritoryCascade('dashboard'); dashboardSiteKey='';
+    const f=siteAutocompleteState.get('dashboardSiteSearch'); if(f){f.input.value='';f.clear.classList.remove('visible');}
+    renderDashboard(); syncAllSearchableSelects();
+  });
+}
+
 window.addEventListener('load', () => {
   initPdfJs();
   initConfig();
   initFactors();
   bindEvents();
+  bindTerritoryFilters();
   renderAll();
   initSearchableSelects();
+  refreshAllTerritoryFilters();
   log('Espere, cargando facturas...');
   setTimeout(() => scanDataFolder({automatic:true}), 250);
 });
@@ -181,18 +269,18 @@ function initSiteAutocompleteField(config){
 }
 function renderSiteAutocomplete(item,query=''){
   const q=String(query||'').trim();
-  const options=siteSearchOptions().map(x=>({...x,score:suggestionScore(x,q)})).filter(x=>x.score>=0).sort((a,b)=>b.score-a.score || a.site.localeCompare(b.site,'es')).slice(0,12);
+  const options=siteSearchOptions(item.mode==='compare'?'compare':'dashboard').map(x=>({...x,score:suggestionScore(x,q)})).filter(x=>x.score>=0).sort((a,b)=>b.score-a.score || a.site.localeCompare(b.site,'es')).slice(0,12);
   item.index=-1;
   if(!options.length){
     item.list.innerHTML='<div class="autocomplete-empty">No se encontraron sedes. Prueba con otra palabra.</div>';
   }else{
-    item.list.innerHTML=options.map(x=>`<button type="button" class="autocomplete-option" role="option" data-key="${escapeHtml(x.key)}"><span><strong>${highlightMatch(x.site,q)}</strong><small>${highlightMatch(x.address||'Sin dirección registrada',q)}</small></span><em>${x.periodCount} periodo${x.periodCount===1?'':'s'}</em></button>`).join('');
+    item.list.innerHTML=options.map(x=>`<button type="button" class="autocomplete-option" role="option" data-key="${escapeHtml(x.key)}"><span><strong>${highlightMatch(x.site,q)}</strong><small>${highlightMatch(x.address||'Sin dirección registrada',q)} · ${escapeHtml(x.meta?.territory||'Sin clasificar')} · Núcleo ${escapeHtml(x.meta?.nucleus||'Sin clasificar')}</small></span><em>${x.periodCount} periodo${x.periodCount===1?'':'s'}</em></button>`).join('');
   }
   item.list.hidden=false;
   item.input.setAttribute('aria-expanded','true');
 }
 function chooseSiteFieldSuggestion(item,key){
-  const option=siteSearchOptions().find(x=>x.key===key);
+  const option=siteSearchOptions(item.mode==='compare'?'compare':'dashboard').find(x=>x.key===key);
   if(!option) return;
   item.input.value=option.site;
   item.clear.classList.add('visible');
@@ -245,7 +333,7 @@ function refreshSiteAutocompleteFields(){
   const compare=$('compareSite');
   const compareInput=$('compareSiteSearch');
   if(compare && compareInput){
-    const selected=siteSearchOptions().find(x=>x.key===compare.value);
+    const selected=siteSearchOptions('compare').find(x=>x.key===compare.value);
     if(selected && !compareInput.value) compareInput.value=selected.site;
   }
 }
@@ -678,21 +766,22 @@ function filteredRecords(){
   const q = $('siteSearch').value||'';
   const p = $('periodFilter').value;
   const service = $('serviceFilter').value;
-  return sortRecords(state.records.filter(r=>recordMatchesSearch(r,q) && (!p || r.period===p) && serviceHasValue(r,service)));
+  return sortRecords(state.records.filter(r=>recordMatchesTerritory(r,territoryFilterValues('table')) && recordMatchesSearch(r,q) && (!p || r.period===p) && serviceHasValue(r,service)));
 }
 function applyFilters(){ renderTable(); renderDashboard(); renderFilterSummary(); syncAllSearchableSelects(); }
 function clearSiteSearch(){
   $('siteSearch').value=''; selectedSiteKey=''; $('clearSearchBtn').classList.remove('visible'); closeAutocomplete(); applyFilters(); $('siteSearch').focus();
 }
 function clearAllFilters(){
-  $('siteSearch').value=''; selectedSiteKey=''; $('periodFilter').value=''; $('serviceFilter').value=''; $('sortFilter').value='period-desc'; $('clearSearchBtn').classList.remove('visible'); closeAutocomplete(); applyFilters();
+  $('siteSearch').value=''; selectedSiteKey=''; ['territoryTypeFilter','territoryFilter','nucleusFilter'].forEach(id=>{if($(id)) $(id).value='';}); updateTerritoryCascade('table'); $('periodFilter').value=''; $('serviceFilter').value=''; $('sortFilter').value='period-desc'; $('clearSearchBtn').classList.remove('visible'); closeAutocomplete(); applyFilters();
 }
 function handleSiteSearchInput(){
   selectedSiteKey=''; $('clearSearchBtn').classList.toggle('visible',Boolean($('siteSearch').value)); renderAutocompleteSuggestions($('siteSearch').value); applyFilters();
 }
-function siteSearchOptions(){
+function siteSearchOptions(scope='all'){
   const map = new Map();
-  for(const r of state.records){ const key=siteKey(r.site,r.address); if(!map.has(key)) map.set(key,{key,site:r.site||'Sin nombre',address:r.address||'',periods:new Set()}); map.get(key).periods.add(r.period); }
+  const records = scope==='compare' ? territoryScopedRecords('compare') : scope==='dashboard' ? territoryScopedRecords('dashboard') : scope==='table' ? territoryScopedRecords('table') : state.records;
+  for(const r of records){ const key=siteKey(r.site,r.address); if(!map.has(key)) map.set(key,{key,site:r.site||'Sin nombre',address:r.address||'',periods:new Set(),meta:territoryMeta(r)}); map.get(key).periods.add(r.period); }
   return [...map.values()].map(x=>({...x,periodCount:x.periods.size}));
 }
 function suggestionScore(item, query){
@@ -710,10 +799,10 @@ function highlightMatch(text, query){
 }
 function renderAutocompleteSuggestions(query=''){
   const box=$('siteSuggestions'); const q=String(query||'').trim();
-  const options=siteSearchOptions().map(x=>({...x,score:suggestionScore(x,q)})).filter(x=>x.score>=0).sort((a,b)=>b.score-a.score || a.site.localeCompare(b.site,'es')).slice(0,10);
+  const options=siteSearchOptions('table').map(x=>({...x,score:suggestionScore(x,q)})).filter(x=>x.score>=0).sort((a,b)=>b.score-a.score || a.site.localeCompare(b.site,'es')).slice(0,10);
   autocompleteIndex=-1;
   if(!options.length){ box.innerHTML='<div class="autocomplete-empty">No se encontraron sedes. Prueba con otra palabra.</div>'; box.hidden=false; $('siteSearch').setAttribute('aria-expanded','true'); return; }
-  box.innerHTML=options.map((x,i)=>`<button type="button" class="autocomplete-option" role="option" data-key="${escapeHtml(x.key)}" data-index="${i}"><span><strong>${highlightMatch(x.site,q)}</strong><small>${highlightMatch(x.address||'Sin dirección registrada',q)}</small></span><em>${x.periodCount} periodo${x.periodCount===1?'':'s'}</em></button>`).join('');
+  box.innerHTML=options.map((x,i)=>`<button type="button" class="autocomplete-option" role="option" data-key="${escapeHtml(x.key)}" data-index="${i}"><span><strong>${highlightMatch(x.site,q)}</strong><small>${highlightMatch(x.address||'Sin dirección registrada',q)} · ${escapeHtml(x.meta?.territory||'Sin clasificar')} · Núcleo ${escapeHtml(x.meta?.nucleus||'Sin clasificar')}</small></span><em>${x.periodCount} periodo${x.periodCount===1?'':'s'}</em></button>`).join('');
   box.hidden=false; $('siteSearch').setAttribute('aria-expanded','true');
 }
 function closeAutocomplete(){ $('siteSuggestions').hidden=true; $('siteSearch').setAttribute('aria-expanded','false'); autocompleteIndex=-1; }
@@ -737,13 +826,25 @@ function renderFilterSummary(){
   const recs=filteredRecords(); const uniqueSites=new Set(recs.map(r=>siteKey(r.site,r.address))).size;
   $('filterResultCount').textContent=`${recs.length} registro${recs.length===1?'':'s'} · ${uniqueSites} sede${uniqueSites===1?'':'s'}`;
   const chips=[]; const q=$('siteSearch').value.trim(); const p=$('periodFilter').value; const service=$('serviceFilter');
+  const tf=territoryFilterValues('table');
+  if(tf.type) chips.push(`<button type="button" data-clear="territoryType">Ámbito: ${escapeHtml(tf.type)} ×</button>`);
+  if(tf.territory) chips.push(`<button type="button" data-clear="territory">Territorio: ${escapeHtml(tf.territory)} ×</button>`);
+  if(tf.nucleus) chips.push(`<button type="button" data-clear="nucleus">Núcleo: ${escapeHtml(tf.nucleus)} ×</button>`);
   if(q) chips.push(`<button type="button" data-clear="search">Búsqueda: ${escapeHtml(q)} ×</button>`);
   if(p) chips.push(`<button type="button" data-clear="period">Periodo: ${escapeHtml(p)} ×</button>`);
   if(service.value) chips.push(`<button type="button" data-clear="service">${escapeHtml(service.selectedOptions[0].textContent)} ×</button>`);
   $('activeFilters').innerHTML=chips.join('') || '<span>Mostrando toda la información disponible.</span>';
-  $('activeFilters').querySelectorAll('button').forEach(btn=>btn.addEventListener('click',()=>{ const t=btn.dataset.clear; if(t==='search') clearSiteSearch(); else { $(t==='period'?'periodFilter':'serviceFilter').value=''; applyFilters(); } }));
+  $('activeFilters').querySelectorAll('button').forEach(btn=>btn.addEventListener('click',()=>{
+    const t=btn.dataset.clear;
+    if(t==='search') return clearSiteSearch();
+    if(t==='territoryType'){ $('territoryTypeFilter').value=''; updateTerritoryCascade('table','type'); }
+    else if(t==='territory'){ $('territoryFilter').value=''; updateTerritoryCascade('table','territory'); }
+    else if(t==='nucleus') $('nucleusFilter').value='';
+    else $(t==='period'?'periodFilter':'serviceFilter').value='';
+    applyFilters();
+  }));
 }
-function renderAll(){ recalculateCo2(); renderControls(); renderCards(); renderExecutiveSummary(); renderProjectImpact(); renderDashboard(); renderTable(); drawChart(aggregateByPeriod(state.records)); refreshSiteAutocompleteFields(); }
+function renderAll(){ recalculateCo2(); refreshAllTerritoryFilters(); renderControls(); renderCards(); renderExecutiveSummary(); renderProjectImpact(); renderDashboard(); renderTable(); drawChart(aggregateByPeriod(state.records)); refreshSiteAutocompleteFields(); }
 function renderControls(){
   const periods = [...new Set(state.records.map(r=>r.period))].sort();
   const options = '<option value="">Todos los periodos</option>'+periods.map(p=>`<option value="${p}">${p}</option>`).join('');
@@ -839,7 +940,7 @@ function compareModeLabel(mode){
 }
 function recordsForCompareScope(){
   const site = $('compareSite') ? $('compareSite').value : '';
-  return state.records.filter(r=>!site || siteKey(r.site,r.address) === site);
+  return state.records.filter(r=>recordMatchesTerritory(r,territoryFilterValues('compare')) && (!site || siteKey(r.site,r.address) === site));
 }
 function aggregateByComparison(records, mode){
   const map = {};
@@ -856,7 +957,7 @@ function renderCompareControls(opts={}){
   if(!$('compareA') || !$('compareB')) return;
   const currentSite = opts.keepSite && $('compareSite') ? $('compareSite').value : ($('compareSite') ? $('compareSite').value : '');
   if($('compareSite')){
-    const siteOptions = getSiteOptions();
+    const siteOptions = aggregateBySite(territoryScopedRecords('compare')).map(x=>({site:x.site,address:x.address}));
     $('compareSite').innerHTML = '<option value="">Todas las sedes</option>' + siteOptions.map(s=>{
       const key = siteKey(s.site,s.address);
       const label = `${s.site}${s.address ? ' · '+s.address : ''}`;
@@ -1016,10 +1117,10 @@ function money(n){ return n==null||n==='' ? '—' : '$ '+fmt(n); }
 
 /* Dashboard ambiental por sede - v8 */
 function dashboardRecords(){
-  const q = $('siteSearch') ? $('siteSearch').value||'' : '';
-  const p = $('periodFilter') ? $('periodFilter').value : '';
-  const service = $('serviceFilter') ? $('serviceFilter').value : '';
-  return state.records.filter(r=>recordMatchesSearch(r,q) && (!dashboardSiteKey || siteKey(r.site,r.address)===dashboardSiteKey) && (!p || r.period===p) && serviceHasValue(r,service) && Number(r.energyKwh)>0);
+  const q = $('dashboardSiteSearch') ? $('dashboardSiteSearch').value||'' : '';
+  const p = '';
+  const service = '';
+  return state.records.filter(r=>recordMatchesTerritory(r,territoryFilterValues('dashboard')) && recordMatchesSearch(r,q) && (!dashboardSiteKey || siteKey(r.site,r.address)===dashboardSiteKey) && (!p || r.period===p) && serviceHasValue(r,service) && Number(r.energyKwh)>0);
 }
 function aggregateBySite(records){
   const map = {};

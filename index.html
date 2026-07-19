@@ -7,7 +7,7 @@
   <meta name="description" content="Sistema interactivo para medir, interpretar y gestionar la huella de carbono educativa a partir del consumo de servicios públicos." />
   <link rel="icon" type="image/png" href="assets/los-yoguis-logo.png" />
   <link rel="apple-touch-icon" href="assets/los-yoguis-logo.png" />
-  <link rel="stylesheet" href="styles.css?v=39-carga-automatica" />
+  <link rel="stylesheet" href="styles.css?v=40-filtros-territoriales" />
 </head>
 <body>
   <div class="invoice-loading active" id="invoiceLoading" role="status" aria-live="assertive" aria-hidden="false">
@@ -137,6 +137,20 @@
             <option value="year">Año vs año</option>
           </select>
         </label>
+        <label>Ámbito territorial
+          <select id="compareTerritoryType">
+            <option value="">Todo Medellín</option>
+            <option value="Comuna">Comuna</option>
+            <option value="Corregimiento">Corregimiento</option>
+            <option value="Sin clasificar">Sin clasificar</option>
+          </select>
+        </label>
+        <label>Comuna o corregimiento
+          <select id="compareTerritory"><option value="">Todos los territorios</option></select>
+        </label>
+        <label>Núcleo educativo
+          <select id="compareNucleus"><option value="">Todos los núcleos</option></select>
+        </label>
         <label class="compare-site-field">Sede
           <div class="autocomplete site-autocomplete" id="compareSiteAutocomplete">
             <input id="compareSiteSearch" type="search" autocomplete="off" spellcheck="false" placeholder="Todas las sedes" aria-autocomplete="list" aria-controls="compareSiteSuggestions" aria-expanded="false" />
@@ -194,6 +208,12 @@
           <button id="updateFactorsBtn" class="secondary">Actualizar cálculos</button>
         </div>
       </div>
+      <div class="territorial-filter-bar" aria-label="Filtros territoriales del informe">
+        <div><label for="dashboardTerritoryType">Ámbito territorial</label><select id="dashboardTerritoryType"><option value="">Todo Medellín</option><option value="Comuna">Comuna</option><option value="Corregimiento">Corregimiento</option><option value="Sin clasificar">Sin clasificar</option></select></div>
+        <div><label for="dashboardTerritory">Comuna o corregimiento</label><select id="dashboardTerritory"><option value="">Todos los territorios</option></select></div>
+        <div><label for="dashboardNucleus">Núcleo educativo</label><select id="dashboardNucleus"><option value="">Todos los núcleos</option></select></div>
+        <button id="clearDashboardTerritoryBtn" type="button" class="secondary">Limpiar territorio</button>
+      </div>
       <div class="dashboard-site-search">
         <label for="dashboardSiteSearch">Buscar institución o sede</label>
         <div class="autocomplete site-autocomplete" id="dashboardSiteAutocomplete">
@@ -249,6 +269,18 @@
     <div class="app-section" id="seccion-4" data-page-title="Facturas por I.E.">
     <section class="panel data-panel" id="registros">
       <div class="toolbar filter-toolbar">
+        <div>
+          <label for="territoryTypeFilter">Ámbito territorial</label>
+          <select id="territoryTypeFilter"><option value="">Todo Medellín</option><option value="Comuna">Comuna</option><option value="Corregimiento">Corregimiento</option><option value="Sin clasificar">Sin clasificar</option></select>
+        </div>
+        <div>
+          <label for="territoryFilter">Comuna o corregimiento</label>
+          <select id="territoryFilter"><option value="">Todos los territorios</option></select>
+        </div>
+        <div>
+          <label for="nucleusFilter">Núcleo educativo</label>
+          <select id="nucleusFilter"><option value="">Todos los núcleos</option></select>
+        </div>
         <div class="search-filter">
           <label for="siteSearch">Institución o sede</label>
           <div class="autocomplete" id="siteAutocomplete">
@@ -405,6 +437,6 @@
   </script>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-  <script src="app.js?v=39-carga-automatica"></script>
+  <script src="app.js?v=40-filtros-territoriales"></script>
 </body>
 </html>

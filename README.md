@@ -149,3 +149,14 @@ La navegación funciona mediante pestañas superiores y una barra móvil. Los en
 - Buscador con autocompletado en Informe por sede.
 - Búsqueda tolerante a tildes, nombres parciales y direcciones.
 - Navegación por teclado y limpieza rápida de cada buscador.
+
+## Versión 40 · filtros territoriales jerárquicos
+
+Se incorporaron filtros combinables en Histórico, Informe por sede y Facturas por I.E.:
+
+- Ámbito territorial: Medellín, comuna, corregimiento o registros sin clasificar.
+- Comuna o corregimiento dependiente del ámbito elegido.
+- Núcleo educativo dependiente del territorio.
+- Institución o sede con autocompletado limitado por los filtros territoriales activos.
+
+La clasificación prioriza coincidencias institucionales conocidas y reglas territoriales presentes en el nombre o la dirección. Los registros que todavía no tienen una relación territorial confiable se conservan bajo **Sin clasificar**, evitando asignaciones inventadas. Para ampliar la cobertura se deben añadir relaciones verificadas al catálogo `TERRITORY_CATALOG` de `app.js`.
