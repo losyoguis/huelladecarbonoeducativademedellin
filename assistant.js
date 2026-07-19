@@ -1,4 +1,4 @@
-/* Asistente Ambiental SiMeCO2 v51 — funcionamiento local y seguro */
+/* Asistente Ambiental SiMeCO2 v52 — funcionamiento local, periodos validados y seguro */
 (() => {
   'use strict';
 
@@ -68,11 +68,23 @@
   }
 
   function findSite(question, list){
-    const q = normalize(question)
+    const items=aggregate(list);
+    const fullQuestion=normalize(question);
+    const exact=items
+      .filter(item=>{
+        const name=normalize(item.site);
+        return name.length>=3 && fullQuestion.includes(name);
+      })
+      .sort((a,b)=>normalize(b.site).length-normalize(a.site).length)[0];
+    if(exact) return exact;
+
+    const q = fullQuestion
       .replace(/\b(cual|cuanto|cuanta|consumo|consumio|energia|emision|emisiones|co2|agua|sede|institucion|ie|i e|colegio|escuela|periodo|mes|ano|del|de|la|el|en|para|por|total|huella|carbono|prioridad)\b/g,' ')
-      .replace(/\b20\d{2}\b/g,' ').replace(/\s+/g,' ').trim();
+      .replace(/\b(enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|setiembre|octubre|noviembre|diciembre)\b/g,' ')
+      .replace(/\b20\d{2}\b/g,' ')
+      .split(/\s+/).filter(token=>token.length>=3).join(' ').trim();
     if(!q) return null;
-    const candidates = aggregate(list).map(item => ({item, score:Math.max(fuzzyScore(item.site,q), fuzzyScore(`${item.site} ${item.address}`,q))})).sort((a,b)=>b.score-a.score);
+    const candidates = items.map(item => ({item, score:Math.max(fuzzyScore(item.site,q), fuzzyScore(`${item.site} ${item.address}`,q))})).sort((a,b)=>b.score-a.score);
     return candidates[0]?.score >= 80 ? candidates[0].item : null;
   }
 
@@ -95,9 +107,17 @@
 
     const period = periodFromQuestion(question);
     const scoped = filterByPeriod(all, period);
-    const scope = scoped.length ? scoped : all;
+    if(period && !scoped.length){
+      return `No hay información cargada para ${readablePeriod(period)}. Consulta otro mes o revisa las facturas disponibles.`;
+    }
+    const scope = period ? scoped : all;
     const sites = aggregate(scope);
-    const site = findSite(question, scope) || findSite(question, all);
+    const siteInScope = findSite(question, scope);
+    const siteInAll = findSite(question, all);
+    if(period && siteInAll && !siteInScope){
+      return `Encontré la sede **${siteInAll.site}**, pero no tiene registros disponibles en ${readablePeriod(period)}.`;
+    }
+    const site = siteInScope || (!period ? siteInAll : null);
 
     if(/(hola|buenos dias|buenas tardes|buenas noches|quien eres|que puedes hacer)/.test(q)){
       return 'Hola. Soy el Asistente Ambiental SiMeCO₂. Puedo consultar consumos, emisiones, periodos, prioridades, sedes con mayor o menor consumo y explicar conceptos ambientales usando los datos cargados en esta plataforma.';

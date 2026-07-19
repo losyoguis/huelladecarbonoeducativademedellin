@@ -3,19 +3,69 @@
 <head>
   <meta charset="utf-8" />
   <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0b3b31" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="SiMeCO₂" />
+  <link rel="manifest" href="manifest.webmanifest" />
   <title>SiMeCO₂ · Plataforma de Huella de Carbono Educativa</title>
   <meta name="description" content="Sistema interactivo para medir, interpretar y gestionar la huella de carbono educativa a partir del consumo de servicios públicos." />
   <link rel="icon" type="image/png" href="assets/los-yoguis-logo.png" />
   <link rel="apple-touch-icon" href="assets/los-yoguis-logo.png" />
-  <link rel="stylesheet" href="styles.css?v=51-asistente-ambiental" />
+  <link rel="stylesheet" href="styles.css?v=52-progreso-mobile" />
 </head>
 <body>
   <div class="invoice-loading active" id="invoiceLoading" role="status" aria-live="assertive" aria-hidden="false">
     <div class="invoice-loading-card">
-      <span class="invoice-spinner" aria-hidden="true"></span>
-      <strong id="invoiceLoadingText">Espere, cargando facturas...</strong>
-      <small>La plataforma está leyendo y consolidando la información disponible.</small>
+      <div class="invoice-loading-brand">
+        <img src="assets/los-yoguis-logo.png" alt="" aria-hidden="true" />
+        <div>
+          <span>SiMeCO₂ · Los Yoguis</span>
+          <small>Huella de Carbono Educativa de Medellín</small>
+        </div>
+      </div>
+
+      <div class="invoice-loading-heading">
+        <span class="invoice-spinner" aria-hidden="true"></span>
+        <div>
+          <span class="invoice-loading-kicker">Procesamiento ambiental</span>
+          <strong id="invoiceLoadingText">Espere, cargando facturas...</strong>
+        </div>
+      </div>
+
+      <p class="invoice-loading-detail" id="invoiceLoadingDetail">Preparando la lectura y consolidación de la información disponible.</p>
+
+      <div class="invoice-progress-block">
+        <div class="invoice-progress-track" id="invoiceProgressTrack" role="progressbar" aria-label="Progreso de carga de facturas" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+          <span id="invoiceProgressBar"></span>
+        </div>
+        <div class="invoice-progress-meta">
+          <strong id="invoiceProgressPercent">0%</strong>
+          <span id="invoiceProgressCounter">Preparando archivos…</span>
+        </div>
+      </div>
+
+      <div class="invoice-loading-metrics" aria-label="Resumen del procesamiento">
+        <article><strong id="invoiceLoadingFiles">0/0</strong><span>Facturas</span></article>
+        <article><strong id="invoiceLoadingPages">0/0</strong><span>Páginas</span></article>
+        <article><strong id="invoiceLoadingRecords">0</strong><span>Registros</span></article>
+      </div>
+
+      <div class="invoice-loading-stages" aria-label="Etapas de procesamiento">
+        <span data-loading-stage="files"><b>1</b>Localizar</span>
+        <span data-loading-stage="read"><b>2</b>Leer PDF</span>
+        <span data-loading-stage="consolidate"><b>3</b>Consolidar</span>
+        <span data-loading-stage="done"><b>4</b>Finalizar</span>
+      </div>
+
+      <div class="invoice-project-fact" aria-live="polite">
+        <span>Mientras se cargan los datos</span>
+        <p id="invoiceProjectFact">SiMeCO₂ convierte el consumo eléctrico de las instituciones educativas en estimaciones pedagógicas de emisiones de CO₂e.</p>
+      </div>
+
+      <small class="invoice-loading-hint" id="invoiceLoadingHint">No cierres esta ventana. La duración depende de la cantidad y el tamaño de las facturas.</small>
     </div>
   </div>
 
@@ -392,11 +442,21 @@
   </main>
 
   <nav class="mobile-bottom-nav section-mobile-nav" aria-label="Navegación móvil por secciones">
-    <button type="button" class="mobile-section-tab active" data-section="seccion-1" data-action="actualizar">Actualizar</button>
-    <button type="button" class="mobile-section-tab" data-section="seccion-2">Histórico</button>
-    <button type="button" class="mobile-section-tab" data-section="seccion-3">Informes</button>
-    <button type="button" class="mobile-section-tab" data-section="seccion-4">Facturas</button>
-    <button type="button" class="mobile-section-tab" data-section="seccion-5">Aula</button>
+    <button type="button" class="mobile-section-tab active" data-section="seccion-1" data-action="actualizar" aria-label="Actualizar datos">
+      <span aria-hidden="true">↻</span><small>Actualizar</small>
+    </button>
+    <button type="button" class="mobile-section-tab" data-section="seccion-2" aria-label="Consultar histórico">
+      <span aria-hidden="true">▥</span><small>Histórico</small>
+    </button>
+    <button type="button" class="mobile-section-tab" data-section="seccion-3" aria-label="Consultar informes por sede">
+      <span aria-hidden="true">⌂</span><small>Informes</small>
+    </button>
+    <button type="button" class="mobile-section-tab" data-section="seccion-4" aria-label="Consultar facturas">
+      <span aria-hidden="true">▤</span><small>Facturas</small>
+    </button>
+    <button type="button" class="mobile-section-tab" data-section="seccion-5" aria-label="Abrir aula ambiental">
+      <span aria-hidden="true">✦</span><small>Aula</small>
+    </button>
   </nav>
 
   <footer class="brand-footer" aria-label="Pie de página Los Yoguis">
@@ -498,7 +558,7 @@
   </script>
 
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-  <script defer src="app.js?v=51-asistente-ambiental"></script>
-  <script defer src="assistant.js?v=51-asistente-ambiental"></script>
+  <script defer src="app.js?v=52-progreso-mobile"></script>
+  <script defer src="assistant.js?v=52-progreso-mobile"></script>
 </body>
 </html>

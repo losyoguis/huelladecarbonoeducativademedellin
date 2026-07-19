@@ -1,3 +1,14 @@
+# SiMeCO₂ v52 — Progreso de carga y aplicación móvil
+
+- Barra de progreso real por factura y página durante la lectura de los PDF.
+- Métricas en vivo de facturas verificadas, páginas procesadas y registros consolidados.
+- Etapas visuales de localización, lectura, consolidación y finalización.
+- Información pedagógica rotativa sobre SiMeCO₂ mientras se cargan los datos.
+- Interfaz móvil reorganizada con navegación inferior, tarjetas, formularios y tablas adaptadas.
+- Corrección del botón móvil **Actualizar**, separadores numéricos colombianos y consultas sin datos del asistente.
+
+---
+
 # SiMeCO₂ v51 — Asistente Ambiental integrado
 
 - Botón flotante en la esquina inferior derecha.
@@ -249,3 +260,18 @@ La clasificación prioriza coincidencias institucionales conocidas y reglas terr
 - Listado base de las 16 comunas y los 5 corregimientos de Medellín.
 - Descargas de resultados limitadas a informes en PDF mediante una plantilla institucional mejorada.
 - Eliminadas las exportaciones CSV, JSON y HTML.
+
+## Novedades v52 · progreso de carga y experiencia móvil
+
+- Barra de progreso real durante la lectura de facturas.
+- Indicadores en vivo de facturas verificadas, páginas leídas y registros consolidados.
+- Etapas visibles: localizar, leer PDF, consolidar y finalizar.
+- Datos pedagógicos rotativos sobre el proyecto mientras se procesa la información.
+- Pantalla de carga adaptada a computador, tableta y móvil.
+- Navegación móvil inferior con apariencia de aplicación.
+- Cabecera, tarjetas, formularios, tablas, gráficos y asistente reorganizados para pantallas pequeñas.
+- El botón móvil **Actualizar** también ejecuta la búsqueda y lectura de facturas.
+- Corrección de separadores numéricos colombianos, por ejemplo `2.684 kWh` se interpreta como `2684 kWh`.
+- El asistente ya no reutiliza información de otros meses cuando el periodo consultado no tiene datos.
+
+Para probar el proyecto localmente, ejecútalo mediante un servidor web (por ejemplo, Live Server o `python3 -m http.server`) porque los navegadores restringen la lectura de `manifest.json` y PDF al abrir `index.html` directamente con `file://`.

@@ -1,4 +1,4 @@
-/* SiMeCO2 Servicios Públicos - v49 ranking por prioridad */
+/* SiMeCO2 Servicios Públicos - v52 progreso real de carga y experiencia móvil */
 let FACTOR_CO2_KG_KWH = 0.126; // kg CO2e/kWh. Ajustable desde el dashboard.
 let TREE_CO2_KG_YEAR = 22; // kg CO2e capturados por árbol al año. Ajustable desde el dashboard.
 const FACTOR_KEY = 'simeco2_factores_ambientales_v8';
@@ -24,6 +24,25 @@ let rankingPeriod = "";
 let rankingPriority = "";
 let rankingSelectedKey = "";
 let rankingAutocompleteIndex = -1;
+
+const PROJECT_LOADING_FACTS = [
+  'SiMeCO₂ transforma los consumos de servicios públicos en información útil para la gestión ambiental escolar.',
+  'La huella de carbono por electricidad corresponde al alcance 2: energía adquirida por las instituciones.',
+  'El ranking ambiental permite identificar sedes prioritarias y orientar acciones de ahorro energético.',
+  'Cada Plan de Gestión Ambiental puede incluir metas, responsables, indicadores, cronograma y evidencias.',
+  'La plataforma reúne información histórica desde 2025 para comparar periodos y reconocer tendencias.',
+  'Las equivalencias de CO₂e y árboles son estimaciones pedagógicas ajustables desde el sistema.',
+  'Los datos consolidados apoyan decisiones de estudiantes, docentes y comunidades educativas.',
+  'El asistente ambiental consulta la información ya procesada sin exponer claves ni servicios externos.'
+];
+const LOADING_STAGE_ORDER = ['files','read','consolidate','done'];
+let invoiceFactIndex = 0;
+let invoiceFactTimer = 0;
+let invoiceHideTimer = 0;
+let invoiceProgressState = {
+  percent:0, processedFiles:0, totalFiles:0, currentPage:0, totalPages:0,
+  records:0, stage:'files', detail:'Preparando la lectura de facturas…', currentFile:''
+};
 
 
 /* Clasificación territorial. Las coincidencias exactas tienen prioridad;
@@ -377,6 +396,9 @@ function initPdfJs(){
 }
 function bindEvents(){
   $("scanDataBtn").addEventListener("click", scanDataFolder);
+  document.querySelectorAll('.mobile-section-tab[data-action="actualizar"]').forEach(button=>{
+    button.addEventListener('click',()=>scanDataFolder());
+  });
   $("localPdfInput").addEventListener("change", handleLocalPdf);
   $("clearBtn").addEventListener("click", ()=>{ if(confirm("¿Reiniciar todos los datos importados?")){ localStorage.removeItem(STORE_KEY); location.reload(); }});
   if($("saveRepoBtn")) $("saveRepoBtn").addEventListener("click", saveConfig);
@@ -492,10 +514,16 @@ async function scanDataFolder(options={}){
     return;
   }
   isScanningData = true;
-  if(!options.quiet) setInvoiceLoading(true, options.automatic ? 'Espere, cargando facturas...' : 'Espere, actualizando facturas...');
+  if(!options.quiet){
+    resetInvoiceProgress(options.automatic ? 'Preparando la carga automática de facturas…' : 'Preparando la actualización de facturas…');
+    setInvoiceLoading(true, options.automatic ? 'Espere, cargando facturas...' : 'Espere, actualizando facturas...');
+  }
   try{
-    await scanDataFolderCore();
-    if(!options.quiet) setInvoiceLoading(false, 'Facturas cargadas correctamente.');
+    const result=await scanDataFolderCore({showProgress:!options.quiet});
+    if(!options.quiet){
+      const message=result?.failed ? `Carga finalizada con ${result.failed} factura${result.failed===1?'':'s'} pendiente${result.failed===1?'':'s'} de revisión.` : 'Facturas cargadas correctamente.';
+      setInvoiceLoading(false,message);
+    }
   }catch(err){
     console.error(err);
     log(`Error general durante la carga: ${err.message}`);
@@ -505,30 +533,112 @@ async function scanDataFolder(options={}){
   }
 }
 
+function resetInvoiceProgress(detail='Preparando la lectura y consolidación de la información disponible.'){
+  invoiceProgressState = {
+    percent:0, processedFiles:0, totalFiles:0, currentPage:0, totalPages:0,
+    records:state.records.length, stage:'files', detail, currentFile:''
+  };
+  updateInvoiceProgress(invoiceProgressState);
+}
+
+function startInvoiceFactRotation(){
+  clearInterval(invoiceFactTimer);
+  const fact=$('invoiceProjectFact');
+  if(fact) fact.textContent=PROJECT_LOADING_FACTS[invoiceFactIndex%PROJECT_LOADING_FACTS.length];
+  invoiceFactTimer=setInterval(()=>{
+    invoiceFactIndex=(invoiceFactIndex+1)%PROJECT_LOADING_FACTS.length;
+    const target=$('invoiceProjectFact');
+    if(!target) return;
+    target.classList.remove('fact-enter');
+    void target.offsetWidth;
+    target.textContent=PROJECT_LOADING_FACTS[invoiceFactIndex];
+    target.classList.add('fact-enter');
+  },4600);
+}
+
+function stopInvoiceFactRotation(){
+  clearInterval(invoiceFactTimer);
+  invoiceFactTimer=0;
+}
+
+function updateInvoiceProgress(patch={}){
+  invoiceProgressState={...invoiceProgressState,...patch};
+  const stateNow=invoiceProgressState;
+  const percent=Math.max(0,Math.min(100,Number(stateNow.percent)||0));
+  const rounded=Math.round(percent);
+  const bar=$('invoiceProgressBar');
+  const track=$('invoiceProgressTrack');
+  const percentText=$('invoiceProgressPercent');
+  const counter=$('invoiceProgressCounter');
+  const detail=$('invoiceLoadingDetail');
+  const files=$('invoiceLoadingFiles');
+  const pages=$('invoiceLoadingPages');
+  const records=$('invoiceLoadingRecords');
+  if(bar) bar.style.width=`${percent}%`;
+  if(track) track.setAttribute('aria-valuenow',String(rounded));
+  if(percentText) percentText.textContent=`${rounded}%`;
+  if(counter){
+    const total=Number(stateNow.totalFiles)||0;
+    const processed=Math.min(total,Number(stateNow.processedFiles)||0);
+    counter.textContent=total ? `${processed} de ${total} facturas verificadas` : 'Preparando archivos…';
+  }
+  if(detail){
+    const file=stateNow.currentFile ? ` ${stateNow.currentFile}` : '';
+    detail.textContent=(stateNow.detail||'Procesando información…')+file;
+  }
+  if(files) files.textContent=`${Number(stateNow.processedFiles)||0}/${Number(stateNow.totalFiles)||0}`;
+  if(pages) pages.textContent=stateNow.totalPages ? `${Number(stateNow.currentPage)||0}/${Number(stateNow.totalPages)||0}` : '—';
+  if(records) records.textContent=new Intl.NumberFormat('es-CO').format(Number(stateNow.records)||0);
+  const stage=stateNow.stage||'files';
+  const activeIndex=Math.max(0,LOADING_STAGE_ORDER.indexOf(stage));
+  document.querySelectorAll('[data-loading-stage]').forEach(el=>{
+    const index=LOADING_STAGE_ORDER.indexOf(el.dataset.loadingStage);
+    el.classList.toggle('active',index===activeIndex);
+    el.classList.toggle('completed',index<activeIndex || stage==='done');
+  });
+}
+
 function setInvoiceLoading(active, message, isError=false){
   const overlay = $('invoiceLoading');
   const text = $('invoiceLoadingText');
-  const button = $('scanDataBtn');
+  const buttons = [$('scanDataBtn'),...document.querySelectorAll('.mobile-section-tab[data-action="actualizar"]')].filter(Boolean);
+  clearTimeout(invoiceHideTimer);
   if(text) text.textContent = message || (active ? 'Espere, cargando facturas...' : 'Carga finalizada.');
   if(overlay){
-    overlay.classList.toggle('active', active);
     overlay.classList.toggle('error', Boolean(isError));
-    overlay.setAttribute('aria-hidden', active ? 'false' : 'true');
-    if(!active){
-      overlay.classList.add('completed');
-      setTimeout(()=>overlay.classList.remove('completed','error'), 2200);
-    } else {
-      overlay.classList.remove('completed','error');
+    if(active){
+      overlay.setAttribute('aria-hidden','false');
+      overlay.classList.add('active');
+      overlay.classList.remove('completed','success');
+      document.body.classList.add('invoice-loading-open');
+      startInvoiceFactRotation();
+    }else{
+      updateInvoiceProgress({
+        percent:isError ? invoiceProgressState.percent : 100,
+        stage:isError ? invoiceProgressState.stage : 'done',
+        detail:isError ? 'Revisa el registro de actualización para conocer el detalle del error.' : 'La información quedó lista para consultar en la plataforma.',
+        processedFiles:invoiceProgressState.totalFiles || invoiceProgressState.processedFiles
+      });
+      overlay.setAttribute('aria-hidden','false');
+      overlay.classList.add(isError?'error':'success');
+      overlay.classList.add('active','completed');
+      stopInvoiceFactRotation();
+      invoiceHideTimer=setTimeout(()=>{
+        overlay.classList.remove('active','completed','success','error');
+        overlay.setAttribute('aria-hidden','true');
+        document.body.classList.remove('invoice-loading-open');
+      },isError ? 2200 : 1050);
     }
   }
-  if(button){
+  buttons.forEach(button=>{
     button.disabled = active;
     button.classList.toggle('is-loading', active);
     button.setAttribute('aria-busy', active ? 'true' : 'false');
-  }
+  });
 }
 
-async function scanDataFolderCore(){
+async function scanDataFolderCore(options={}){
+  const showProgress=Boolean(options.showProgress);
   log('Buscando PDFs nuevos en carpeta /data...');
   const cfg = getRepoConfig();
   let files = [];
@@ -557,7 +667,8 @@ async function scanDataFolderCore(){
   }
   if(!files.length){
     log('No se encontraron PDF. En GitHub público basta subir los PDF a /data. En local usa data/manifest.json.');
-    return;
+    if(showProgress) updateInvoiceProgress({stage:'files',detail:'No se encontraron facturas PDF en la carpeta /data.'});
+    throw new Error('No se encontraron facturas PDF para procesar.');
   }
   let imported=0, skipped=0, failed=0;
   const pending=[];
@@ -566,17 +677,60 @@ async function scanDataFolderCore(){
     if(state.files[fingerprint]) skipped++;
     else pending.push({...file,fingerprint});
   }
+
+  const fileProgress=new Map();
+  const totalFiles=files.length;
+  const reportFileProgress=(file,fraction,meta={})=>{
+    fileProgress.set(file.fingerprint,Math.max(0,Math.min(1,Number(fraction)||0)));
+    const fractions=[...fileProgress.values()];
+    const completedPending=fractions.filter(value=>value>=1).length;
+    const processedFiles=skipped+completedPending;
+    const overall=((skipped+fractions.reduce((sum,value)=>sum+value,0))/Math.max(1,totalFiles))*100;
+    if(showProgress) updateInvoiceProgress({
+      percent:overall,
+      processedFiles,
+      totalFiles,
+      records:state.records.length,
+      currentFile:meta.currentFile===false ? '' : `· ${file.name}`,
+      currentPage:meta.currentPage||0,
+      totalPages:meta.totalPages||0,
+      stage:meta.stage||'read',
+      detail:meta.detail||'Procesando'
+    });
+  };
+
+  if(showProgress){
+    updateInvoiceProgress({
+      percent:(skipped/Math.max(1,totalFiles))*100,
+      processedFiles:skipped,totalFiles,records:state.records.length,
+      stage:pending.length?'read':'done',
+      detail:pending.length ? `Se encontraron ${totalFiles} facturas. Iniciando la lectura…` : 'Todas las facturas ya estaban procesadas.',
+      currentFile:'',currentPage:0,totalPages:0
+    });
+  }
+
   const concurrency=Math.min(2,pending.length);
   let cursor=0;
   async function importWorker(){
     while(cursor<pending.length){
       const file=pending[cursor++];
       try{
+        reportFileProgress(file,.025,{stage:'read',detail:'Descargando factura',currentPage:0,totalPages:0});
         log(`Importando ${file.name}...`);
         const response=await fetch(file.url,{cache:'force-cache'});
         if(!response.ok) throw new Error(`${response.status} ${response.statusText}`);
         const buf=await response.arrayBuffer();
-        const result=await parsePdfArrayBuffer(buf,file.name,file.url);
+        reportFileProgress(file,.08,{stage:'read',detail:'Factura descargada. Preparando páginas',currentPage:0,totalPages:0});
+        const result=await parsePdfArrayBuffer(buf,file.name,file.url,progress=>{
+          const pageFraction=progress.totalPages ? progress.currentPage/progress.totalPages : 0;
+          reportFileProgress(file,.08+(pageFraction*.78),{
+            stage:'read',
+            detail:'Leyendo y reconociendo páginas',
+            currentPage:progress.currentPage,
+            totalPages:progress.totalPages
+          });
+        });
+        reportFileProgress(file,.93,{stage:'consolidate',detail:'Consolidando sedes e indicadores',currentPage:result.numPages||0,totalPages:result.numPages||0});
         if(result.records.length){
           addImport(result,file.fingerprint);
           imported++;
@@ -585,31 +739,71 @@ async function scanDataFolderCore(){
           failed++;
           log(`Sin registros estructurados en ${file.name}. Muestra: ${result.sample.slice(0,500).replace(/\s+/g,' ')}`);
         }
+        reportFileProgress(file,1,{stage:'consolidate',detail:result.records.length?'Factura consolidada':'Factura revisada sin registros estructurados',currentPage:result.numPages||0,totalPages:result.numPages||0});
       }catch(err){
         failed++;
         log(`Error importando ${file.name}: ${err.message}`);
+        reportFileProgress(file,1,{stage:'consolidate',detail:'La factura presentó un error y el proceso continúa',currentPage:0,totalPages:0});
       }
     }
   }
   if(concurrency) await Promise.all(Array.from({length:concurrency},()=>importWorker()));
+  if(showProgress){
+    updateInvoiceProgress({
+      percent:100,processedFiles:totalFiles,totalFiles,records:state.records.length,
+      stage:'done',detail:`Consolidación terminada: ${imported} nuevas, ${skipped} ya existentes y ${failed} con novedad.`,
+      currentFile:'',currentPage:0,totalPages:0
+    });
+  }
   log(`Proceso terminado. Importados: ${imported}. Omitidos ya existentes: ${skipped}. Fallidos: ${failed}.`);
   saveStore(); scheduleRenderAll();
+  if(pending.length && failed===pending.length && imported===0){
+    throw new Error(`No fue posible consolidar ninguna de las ${pending.length} facturas pendientes.`);
+  }
+  return {imported,skipped,failed,total:totalFiles};
 }
 async function handleLocalPdf(ev){
   const file = ev.target.files[0]; if(!file) return;
-  log(`Leyendo PDF local: ${file.name}`);
-  const buf = await file.arrayBuffer();
-  const result = await parsePdfArrayBuffer(buf, file.name, 'local');
-  if(result.records.length){
-    const fingerprint = 'local-'+file.name+'-'+file.size+'-'+file.lastModified;
-    addImport(result, fingerprint);
-    saveStore(); scheduleRenderAll();
-    log(`PDF local importado: ${result.records.length} registros, periodo ${result.period}.`);
-  } else {
-    log(`PDF abierto, pero no se estructuraron registros. Muestra: ${result.sample.slice(0,1000).replace(/\s+/g,' ')}`);
-    alert('El PDF fue abierto, pero no se pudieron estructurar registros. Revisa el diagnóstico.');
+  if(isScanningData){
+    alert('Ya hay una carga de facturas en progreso. Espera a que finalice.');
+    ev.target.value='';
+    return;
   }
-  ev.target.value='';
+  isScanningData=true;
+  resetInvoiceProgress('Preparando la factura seleccionada desde este dispositivo…');
+  updateInvoiceProgress({totalFiles:1,processedFiles:0,currentFile:`· ${file.name}`,records:state.records.length});
+  setInvoiceLoading(true,'Espere, cargando la factura...');
+  log(`Leyendo PDF local: ${file.name}`);
+  try{
+    const buf = await file.arrayBuffer();
+    const result = await parsePdfArrayBuffer(buf, file.name, 'local',progress=>{
+      updateInvoiceProgress({
+        percent:8+(progress.currentPage/Math.max(1,progress.totalPages))*78,
+        processedFiles:0,totalFiles:1,currentFile:`· ${file.name}`,
+        currentPage:progress.currentPage,totalPages:progress.totalPages,
+        records:state.records.length,stage:'read',detail:'Leyendo y reconociendo páginas'
+      });
+    });
+    updateInvoiceProgress({percent:93,stage:'consolidate',detail:'Consolidando sedes e indicadores',currentPage:result.numPages,totalPages:result.numPages});
+    if(result.records.length){
+      const fingerprint = 'local-'+file.name+'-'+file.size+'-'+file.lastModified;
+      addImport(result, fingerprint);
+      saveStore(); scheduleRenderAll();
+      updateInvoiceProgress({percent:100,processedFiles:1,totalFiles:1,records:state.records.length,stage:'done',detail:'Factura local consolidada correctamente',currentFile:''});
+      log(`PDF local importado: ${result.records.length} registros, periodo ${result.period}.`);
+      setInvoiceLoading(false,'Factura cargada correctamente.');
+    } else {
+      log(`PDF abierto, pero no se estructuraron registros. Muestra: ${result.sample.slice(0,1000).replace(/\s+/g,' ')}`);
+      setInvoiceLoading(false,'No se encontraron registros estructurados en la factura.',true);
+    }
+  }catch(err){
+    console.error(err);
+    log(`Error importando PDF local: ${err.message}`);
+    setInvoiceLoading(false,'No fue posible cargar la factura seleccionada.',true);
+  }finally{
+    isScanningData=false;
+    ev.target.value='';
+  }
 }
 function addImport(result, fingerprint){
   const existingKeys = new Set(state.records.map(r=>r.key));
@@ -620,10 +814,11 @@ function addImport(result, fingerprint){
   state.files[fingerprint] = {name:result.fileName, period:result.period, importedAt:new Date().toISOString(), count:result.records.length};
 }
 
-async function parsePdfArrayBuffer(arrayBuffer, fileName, sourceUrl){
+async function parsePdfArrayBuffer(arrayBuffer, fileName, sourceUrl, onProgress=null){
   if(!window.pdfjsLib) throw new Error('PDF.js no está cargado.');
   const pdf = await pdfjsLib.getDocument({data:arrayBuffer}).promise;
   log(`PDF cargado: ${fileName}, ${pdf.numPages} páginas.`);
+  if(typeof onProgress==='function') onProgress({currentPage:0,totalPages:pdf.numPages});
   let allText = '';
   const allLines = [];
   for(let p=1;p<=pdf.numPages;p++){
@@ -634,6 +829,7 @@ async function parsePdfArrayBuffer(arrayBuffer, fileName, sourceUrl){
     allLines.push(...lines.map(line=>({page:p, text:line})));
     allText += `\nPÁGINA ${p}\n` + lines.join('\n');
     page.cleanup();
+    if(typeof onProgress==='function') onProgress({currentPage:p,totalPages:pdf.numPages});
     if(p%40===0) log(`Leídas ${p}/${pdf.numPages} páginas...`);
     if(p%12===0) await new Promise(resolve=>setTimeout(resolve,0));
   }
@@ -657,7 +853,7 @@ async function parsePdfArrayBuffer(arrayBuffer, fileName, sourceUrl){
       source:fileName, page:1, sourceUrl, type:'resumen'
     });
   }
-  return {fileName, period, records, sample:allText.slice(0,3000)};
+  return {fileName, period, records, numPages:pdf.numPages, sample:allText.slice(0,3000)};
 }
 function groupTextItemsIntoLines(items){
   items.sort((a,b)=> Math.abs(b.y-a.y)>3 ? b.y-a.y : a.x-b.x);
@@ -788,11 +984,29 @@ function valueAfter(text,label){
 function extractAfter(text,re){ const m = text.match(re); return m ? parseNumber(m[1]) : null; }
 function parseNumber(v){
   if(v==null) return null;
-  let s=String(v).trim().replace(/\s/g,'');
+  let s=String(v).trim().replace(/\s/g,'').replace(/[^0-9,.-]/g,'');
   if(!s) return null;
-  if(s.includes(',') && s.includes('.')) s=s.replace(/\./g,'').replace(',','.');
-  else if(s.includes(',')) s=s.replace(',','.');
-  const n=parseFloat(s); return Number.isFinite(n)?n:null;
+  const negative=s.startsWith('-');
+  s=s.replace(/-/g,'');
+  const commas=(s.match(/,/g)||[]).length;
+  const dots=(s.match(/\./g)||[]).length;
+
+  if(commas && dots){
+    // En las facturas colombianas el último separador suele ser el decimal.
+    if(s.lastIndexOf(',')>s.lastIndexOf('.')) s=s.replace(/\./g,'').replace(',','.');
+    else s=s.replace(/,/g,'');
+  }else if(dots){
+    const parts=s.split('.');
+    const looksThousands=parts.length>2 || (parts.length===2 && parts[1].length===3 && parts[0]!=='0');
+    if(looksThousands) s=parts.join('');
+  }else if(commas){
+    const parts=s.split(',');
+    const looksThousands=parts.length>2 || (parts.length===2 && parts[1].length===3 && parts[0]!=='0');
+    s=looksThousands ? parts.join('') : parts.join('.');
+  }
+
+  const n=parseFloat((negative?'-':'')+s);
+  return Number.isFinite(n)?n:null;
 }
 function parseMoney(v){ return parseNumber(v); }
 function round(n,d=2){ return Number.isFinite(n) ? Math.round(n*Math.pow(10,d))/Math.pow(10,d) : 0; }
