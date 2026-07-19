@@ -1,10 +1,10 @@
-# SiMeCO₂ v47 — Ranking paginado y actualización completa
+# SiMeCO₂ v48 — Ranking por mes y búsqueda directa
 
-- El ranking se muestra en grupos de 10 sedes, ordenadas de mayor a menor consumo eléctrico.
-- Se añadieron controles para ir a la primera, anterior, siguiente y última página.
-- Se muestran claramente la sede de mayor consumo y la de menor consumo.
-- El botón **Actualizar ranking** elimina cualquier selección de sede y vuelve a mostrar el ranking completo.
-- La posición real de cada sede aparece numerada dentro del gráfico.
+- El ranking puede filtrarse por un mes específico o mostrar todos los meses acumulados.
+- Se añadió un buscador con autocompletado por institución, sede y dirección.
+- Cada sugerencia muestra el puesto de la sede dentro del ranking filtrado.
+- Al seleccionar una sede, la plataforma abre directamente la página de 10 donde está ubicada y resalta su fila.
+- El botón **Actualizar ranking** limpia el mes y la búsqueda para restaurar el ranking completo.
 
 ---
 

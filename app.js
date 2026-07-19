@@ -1,4 +1,4 @@
-/* SiMeCO2 Servicios Públicos - v47 ranking paginado */
+/* SiMeCO2 Servicios Públicos - v48 ranking por mes y buscador */
 let FACTOR_CO2_KG_KWH = 0.126; // kg CO2e/kWh. Ajustable desde el dashboard.
 let TREE_CO2_KG_YEAR = 22; // kg CO2e capturados por árbol al año. Ajustable desde el dashboard.
 const FACTOR_KEY = 'simeco2_factores_ambientales_v8';
@@ -20,6 +20,9 @@ let renderFrame = 0;
 const RANKING_PAGE_SIZE = 10;
 let rankingPage = 0;
 let rankingRowsCache = [];
+let rankingPeriod = "";
+let rankingSelectedKey = "";
+let rankingAutocompleteIndex = -1;
 
 
 /* Clasificación territorial. Las coincidencias exactas tienen prioridad;
@@ -395,6 +398,13 @@ function bindEvents(){
   if($("printPlanBtn")) $("printPlanBtn").addEventListener("click", printCurrentPlan);
   if($("environmentBody")) $("environmentBody").addEventListener("click", handlePlanButtonClick);
   $("refreshRankingBtn")?.addEventListener("click", refreshFullRanking);
+  $("rankingPeriodFilter")?.addEventListener("change", ()=>{ rankingPeriod=$("rankingPeriodFilter").value||""; rankingSelectedKey=""; rankingPage=0; renderRanking(); });
+  $("rankingSiteSearch")?.addEventListener("input", handleRankingSearchInput);
+  $("rankingSiteSearch")?.addEventListener("focus", ()=>renderRankingSuggestions($("rankingSiteSearch").value));
+  $("rankingSiteSearch")?.addEventListener("keydown", handleRankingSearchKeydown);
+  $("rankingSiteSuggestions")?.addEventListener("mousedown", handleRankingSuggestionClick);
+  $("clearRankingSearchBtn")?.addEventListener("click", clearRankingSearch);
+  document.addEventListener("click", e=>{ const box=$("rankingSiteAutocomplete"); if(box && !box.contains(e.target)) closeRankingSuggestions(); });
   $("rankingFirstBtn")?.addEventListener("click", ()=>setRankingPage(0));
   $("rankingPrevBtn")?.addEventListener("click", ()=>setRankingPage(rankingPage-1));
   $("rankingNextBtn")?.addEventListener("click", ()=>setRankingPage(rankingPage+1));
@@ -1348,17 +1358,113 @@ function renderDashboard(){
   renderRanking();
 }
 
+function getRankingPeriods(){
+  return [...new Set((state.records||[]).map(r=>r.period).filter(Boolean))].sort();
+}
+function renderRankingPeriodOptions(){
+  const select=$('rankingPeriodFilter');
+  if(!select) return;
+  const periods=getRankingPeriods();
+  const current=rankingPeriod || select.value || '';
+  select.innerHTML='<option value="">Todos los meses</option>'+periods.map(p=>`<option value="${escapeHtml(p)}">${escapeHtml(groupLabel(p,'month'))}</option>`).join('');
+  if(periods.includes(current)){select.value=current;rankingPeriod=current;}
+  else{select.value='';rankingPeriod='';}
+}
 function getFullRankingRows(){
-  return aggregateBySite((state.records||[]).filter(r=>Number(r.energyKwh)>0));
+  const records=(state.records||[]).filter(r=>Number(r.energyKwh)>0 && (!rankingPeriod || r.period===rankingPeriod));
+  return aggregateBySite(records);
+}
+function rankingSearchOptions(){
+  return rankingRowsCache.map((r,index)=>({...r,index,key:siteKey(r.site,r.address)}));
+}
+function closeRankingSuggestions(){
+  const list=$('rankingSiteSuggestions'), input=$('rankingSiteSearch');
+  if(list) list.hidden=true;
+  if(input) input.setAttribute('aria-expanded','false');
+  rankingAutocompleteIndex=-1;
+}
+function clearRankingSearch(){
+  rankingSelectedKey='';
+  rankingAutocompleteIndex=-1;
+  if($('rankingSiteSearch')) $('rankingSiteSearch').value='';
+  if($('clearRankingSearchBtn')) $('clearRankingSearchBtn').classList.remove('visible');
+  closeRankingSuggestions();
+  rankingPage=0;
+  drawSiteChart(rankingRowsCache);
+}
+function rankingMatches(query){
+  const tokens=loose(query).split(/\s+/).filter(Boolean);
+  const opts=rankingSearchOptions();
+  if(!tokens.length) return opts.slice(0,20);
+  return opts.map(o=>{
+    const hay=loose(`${o.site} ${o.address}`);
+    if(!tokens.every(t=>hay.includes(t))) return null;
+    let score=0; const site=loose(o.site), address=loose(o.address);
+    tokens.forEach(t=>{ if(site.startsWith(t)) score+=8; else if(site.includes(t)) score+=5; if(address.includes(t)) score+=2; });
+    return {...o,score};
+  }).filter(Boolean).sort((a,b)=>b.score-a.score||a.index-b.index).slice(0,20);
+}
+function highlightRankingMatch(value,query){
+  const safe=escapeHtml(value||'');
+  const token=loose(query).split(/\s+/).filter(Boolean)[0];
+  if(!token) return safe;
+  const raw=String(value||''); const idx=loose(raw).indexOf(token);
+  if(idx<0) return safe;
+  return `${escapeHtml(raw.slice(0,idx))}<mark>${escapeHtml(raw.slice(idx,idx+token.length))}</mark>${escapeHtml(raw.slice(idx+token.length))}`;
+}
+function renderRankingSuggestions(query=''){
+  const list=$('rankingSiteSuggestions'), input=$('rankingSiteSearch');
+  if(!list||!input) return;
+  const matches=rankingMatches(query);
+  rankingAutocompleteIndex=-1;
+  list.innerHTML=matches.length?matches.map((o,i)=>`<button type="button" class="autocomplete-option" role="option" data-ranking-key="${escapeHtml(o.key)}" data-ranking-index="${o.index}"><span><strong>${highlightRankingMatch(o.site,query)}</strong><small>${highlightRankingMatch(o.address||'Sin dirección',query)}</small></span><em>Puesto ${o.index+1}</em></button>`).join(''):'<div class="autocomplete-empty">No se encontraron instituciones o sedes.</div>';
+  list.hidden=false; input.setAttribute('aria-expanded','true');
+}
+function handleRankingSearchInput(){
+  rankingSelectedKey='';
+  const value=$('rankingSiteSearch').value;
+  $('clearRankingSearchBtn')?.classList.toggle('visible',Boolean(value));
+  renderRankingSuggestions(value);
+}
+function selectRankingSuggestion(key,index){
+  const row=rankingRowsCache[index] || rankingRowsCache.find(r=>siteKey(r.site,r.address)===key);
+  if(!row) return;
+  rankingSelectedKey=key;
+  $('rankingSiteSearch').value=row.site;
+  $('clearRankingSearchBtn')?.classList.add('visible');
+  closeRankingSuggestions();
+  const actualIndex=rankingRowsCache.findIndex(r=>siteKey(r.site,r.address)===key);
+  rankingPage=Math.max(0,Math.floor(actualIndex/RANKING_PAGE_SIZE));
+  drawSiteChart(rankingRowsCache);
+  requestAnimationFrame(()=>$('siteChart')?.scrollIntoView({behavior:'smooth',block:'center'}));
+}
+function handleRankingSuggestionClick(e){
+  const btn=e.target.closest('[data-ranking-key]'); if(!btn) return;
+  e.preventDefault(); selectRankingSuggestion(btn.dataset.rankingKey,Number(btn.dataset.rankingIndex));
+}
+function handleRankingSearchKeydown(e){
+  const list=$('rankingSiteSuggestions');
+  const options=[...(list?.querySelectorAll('.autocomplete-option')||[])];
+  if(e.key==='ArrowDown'){e.preventDefault();rankingAutocompleteIndex=Math.min(rankingAutocompleteIndex+1,options.length-1);}
+  else if(e.key==='ArrowUp'){e.preventDefault();rankingAutocompleteIndex=Math.max(rankingAutocompleteIndex-1,0);}
+  else if(e.key==='Enter' && rankingAutocompleteIndex>=0 && options[rankingAutocompleteIndex]){e.preventDefault();options[rankingAutocompleteIndex].dispatchEvent(new MouseEvent('mousedown',{bubbles:true}));return;}
+  else if(e.key==='Escape'){closeRankingSuggestions();return;} else return;
+  options.forEach((o,i)=>o.classList.toggle('active',i===rankingAutocompleteIndex));
+  options[rankingAutocompleteIndex]?.scrollIntoView({block:'nearest'});
 }
 function refreshFullRanking(){
   dashboardSiteKey='';
   const field=siteAutocompleteState.get('dashboardSiteSearch');
   if(field){field.input.value='';field.clear.classList.remove('visible');}
-  rankingPage=0;
+  rankingPeriod=''; rankingSelectedKey=''; rankingPage=0;
+  renderRankingPeriodOptions();
+  if($('rankingPeriodFilter')) $('rankingPeriodFilter').value='';
+  if($('rankingSiteSearch')) $('rankingSiteSearch').value='';
+  $('clearRankingSearchBtn')?.classList.remove('visible');
+  closeRankingSuggestions();
   rankingRowsCache=getFullRankingRows();
   drawSiteChart(rankingRowsCache);
-  log('Ranking actualizado: se muestran nuevamente todas las sedes disponibles.');
+  log('Ranking actualizado: se muestran nuevamente todas las sedes y todos los meses.');
 }
 function setRankingPage(page){
   const pages=Math.max(1,Math.ceil(rankingRowsCache.length/RANKING_PAGE_SIZE));
@@ -1366,7 +1472,13 @@ function setRankingPage(page){
   drawSiteChart(rankingRowsCache);
 }
 function renderRanking(){
+  renderRankingPeriodOptions();
   rankingRowsCache=getFullRankingRows();
+  if(rankingSelectedKey && !rankingRowsCache.some(r=>siteKey(r.site,r.address)===rankingSelectedKey)){
+    rankingSelectedKey='';
+    if($('rankingSiteSearch')) $('rankingSiteSearch').value='';
+    $('clearRankingSearchBtn')?.classList.remove('visible');
+  }
   const pages=Math.max(1,Math.ceil(rankingRowsCache.length/RANKING_PAGE_SIZE));
   if(rankingPage>=pages) rankingPage=pages-1;
   drawSiteChart(rankingRowsCache);
@@ -1382,7 +1494,7 @@ function drawSiteChart(rows){
   ctx.fillText('Ranking de sedes por consumo eléctrico total (kWh)',24,34);
   ctx.font='12px Arial';
   ctx.fillStyle='#637772';
-  ctx.fillText('Ordenado de mayor a menor consumo · vista de 10 sedes por página.',24,54);
+  ctx.fillText(`Ordenado de mayor a menor consumo · ${rankingPeriod ? groupLabel(rankingPeriod,'month') : 'todos los meses'} · vista de 10 sedes.`,24,54);
 
   const total=rows.length;
   const pages=Math.max(1,Math.ceil(total/RANKING_PAGE_SIZE));
@@ -1411,7 +1523,13 @@ function drawSiteChart(rows){
     const position=start+i+1;
     const rawLabel=`${position}. ${r.site||''}`;
     const label = rawLabel.length>36 ? rawLabel.slice(0,36)+'…' : rawLabel;
-    ctx.fillStyle='#315650';
+    const isSelected = rankingSelectedKey && siteKey(r.site,r.address)===rankingSelectedKey;
+    if(isSelected){
+      ctx.fillStyle='#fff3bf';
+      roundRect(ctx,12,y-7,c.width-24,rowH-1,10); ctx.fill();
+    }
+    ctx.fillStyle=isSelected?'#075846':'#315650';
+    ctx.font=isSelected?'bold 12px Arial':'12px Arial';
     ctx.textAlign='right';
     ctx.fillText(label, padL-12, y+15);
     const bw = Math.max(8, (r.energyKwh/max)*maxBarW);

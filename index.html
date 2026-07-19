@@ -8,7 +8,7 @@
   <meta name="description" content="Sistema interactivo para medir, interpretar y gestionar la huella de carbono educativa a partir del consumo de servicios públicos." />
   <link rel="icon" type="image/png" href="assets/los-yoguis-logo.png" />
   <link rel="apple-touch-icon" href="assets/los-yoguis-logo.png" />
-  <link rel="stylesheet" href="styles.css?v=47-ranking-paginado" />
+  <link rel="stylesheet" href="styles.css?v=48-ranking-mes-buscador" />
 </head>
 <body>
   <div class="invoice-loading active" id="invoiceLoading" role="status" aria-live="assertive" aria-hidden="false">
@@ -171,13 +171,26 @@
           <p class="muted">Visualización principal con kWh acumulados, toneladas de CO₂e y árboles requeridos por sede.</p>
         </div>
       </div>
-      <div class="ranking-toolbar" aria-label="Controles del ranking">
+      <div class="ranking-filter-bar" aria-label="Filtros y búsqueda del ranking">
+        <label>Mes del ranking
+          <select id="rankingPeriodFilter"><option value="">Todos los meses</option></select>
+        </label>
+        <label>Localizar institución o sede
+          <div class="autocomplete site-autocomplete" id="rankingSiteAutocomplete">
+            <input id="rankingSiteSearch" type="search" autocomplete="off" spellcheck="false" placeholder="Escribe el nombre o la dirección…" aria-autocomplete="list" aria-controls="rankingSiteSuggestions" aria-expanded="false" />
+            <button id="clearRankingSearchBtn" class="clear-search" type="button" title="Borrar búsqueda" aria-label="Borrar búsqueda">×</button>
+            <div id="rankingSiteSuggestions" class="autocomplete-list" role="listbox" hidden></div>
+          </div>
+          <small>Las sugerencias muestran el puesto de cada sede y te llevan directamente a su página.</small>
+        </label>
+        <button id="refreshRankingBtn" class="secondary ranking-refresh-btn" type="button">↻ Actualizar ranking</button>
+      </div>
+      <div class="ranking-toolbar" aria-label="Leyenda del ranking">
         <div class="priority-legend" aria-label="Leyenda de prioridad">
           <span class="priority-chip high">Alta</span>
           <span class="priority-chip medium">Media</span>
           <span class="priority-chip low">Preventiva</span>
         </div>
-        <button id="refreshRankingBtn" class="secondary ranking-refresh-btn" type="button">↻ Actualizar ranking</button>
       </div>
       <div id="rankingExtremes" class="ranking-extremes" aria-live="polite"></div>
       <div class="chart-card environmental-ranking-chart">
@@ -431,6 +444,6 @@
   </script>
 
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-  <script defer src="app.js?v=47-ranking-paginado"></script>
+  <script defer src="app.js?v=48-ranking-mes-buscador"></script>
 </body>
 </html>
