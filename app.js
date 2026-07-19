@@ -1,4 +1,4 @@
-/* SiMeCO2 Servicios Públicos - v40 filtros territoriales jerárquicos */
+/* SiMeCO2 Servicios Públicos - v41 filtros visibles e informes solo PDF */
 let FACTOR_CO2_KG_KWH = 0.126; // kg CO2e/kWh. Ajustable desde el dashboard.
 let TREE_CO2_KG_YEAR = 22; // kg CO2e capturados por árbol al año. Ajustable desde el dashboard.
 const FACTOR_KEY = 'simeco2_factores_ambientales_v8';
@@ -72,7 +72,8 @@ function updateTerritoryCascade(prefix,changed=''){
   if(changed==='type'){ if($(ids.territory)) $(ids.territory).value=''; if($(ids.nucleus)) $(ids.nucleus).value=''; }
   if(changed==='territory' && $(ids.nucleus)) $(ids.nucleus).value='';
   const metas=state.records.map(territoryMeta).filter(m=>!type||m.type===type);
-  const territories=[...new Set(metas.map(m=>m.territory))].sort((a,b)=>a.localeCompare(b,'es'));
+  const baseTerritories = type==='Comuna' ? Array.from({length:16},(_,i)=>`Comuna ${i+1}`) : type==='Corregimiento' ? ['Altavista','San Antonio de Prado','San Cristóbal','San Sebastián de Palmitas','Santa Elena'] : [];
+  const territories=[...new Set([...baseTerritories,...metas.map(m=>m.territory)])].filter(Boolean).sort((a,b)=>a.localeCompare(b,'es'));
   setSelectOptions(ids.territory,territories,'Todos los territorios');
   const territory=$(ids.territory)?.value||'';
   const nuclei=[...new Set(metas.filter(m=>!territory||m.territory===territory).map(m=>m.nucleus))].sort((a,b)=>a.localeCompare(b,'es'));
@@ -362,15 +363,15 @@ function bindEvents(){
   $("clearFiltersBtn").addEventListener("click", clearAllFilters);
   $("siteSuggestions").addEventListener("mousedown", handleSuggestionClick);
   document.addEventListener("click", e=>{ if(!$("siteAutocomplete").contains(e.target)) closeAutocomplete(); });
-  $("exportCsvBtn").addEventListener("click", exportCsv);
-  $("exportJsonBtn").addEventListener("click", exportJson);
+  if($("downloadFilteredPdfBtn")) $("downloadFilteredPdfBtn").addEventListener("click", downloadFilteredPdfReport);
+  if($("downloadHistoryPdfBtn")) $("downloadHistoryPdfBtn").addEventListener("click", downloadHistoryPdfReport);
+  if($("downloadDashboardPdfBtn")) $("downloadDashboardPdfBtn").addEventListener("click", downloadDashboardPdfReport);
   if($("compareMode")) $("compareMode").addEventListener("change", ()=>{ renderCompareControls(); comparePeriods(); });
   if($("compareSite")) $("compareSite").addEventListener("change", ()=>{ renderCompareControls({keepSite:true}); comparePeriods(); });
   initSiteAutocompleteField({inputId:'compareSiteSearch',listId:'compareSiteSuggestions',clearId:'clearCompareSiteBtn',mode:'compare'});
   initSiteAutocompleteField({inputId:'dashboardSiteSearch',listId:'dashboardSiteSuggestions',clearId:'clearDashboardSiteBtn',mode:'dashboard'});
   $("compareBtn").addEventListener("click", comparePeriods);
   if($("printPlanBtn")) $("printPlanBtn").addEventListener("click", printCurrentPlan);
-  if($("downloadPlanBtn")) $("downloadPlanBtn").addEventListener("click", downloadCurrentPlan);
   if($("environmentBody")) $("environmentBody").addEventListener("click", handlePlanButtonClick);
   document.addEventListener("click", handlePlanButtonClick);
 }
@@ -1019,6 +1020,57 @@ function drawChart(data){
   ctx.textAlign='left';
 }
 function roundRect(ctx,x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
+
+function reportHeader(title, subtitle=''){
+  const now=new Date().toLocaleString('es-CO',{dateStyle:'long',timeStyle:'short'});
+  return `<header class="pdf-report-header"><div><span>SiMeCO₂ · Huella de Carbono Educativa de Medellín</span><h1>${escapeHtml(title)}</h1><p>${escapeHtml(subtitle)}</p></div><div class="pdf-report-badge">Informe ambiental<br><strong>${escapeHtml(now)}</strong></div></header>`;
+}
+function openPdfPrintDocument(title, subtitle, content){
+  const w=window.open('', '_blank');
+  if(!w){ alert('Permite las ventanas emergentes para generar el informe PDF.'); return; }
+  const css=`
+    @page{size:A4;margin:14mm}*{box-sizing:border-box}body{margin:0;color:#173f37;font-family:Arial,Helvetica,sans-serif;background:#fff;font-size:10.5pt;line-height:1.45}
+    .pdf-report{max-width:190mm;margin:auto}.pdf-report-header{display:flex;justify-content:space-between;gap:20px;padding:20px 22px;margin-bottom:18px;border-radius:18px;background:linear-gradient(135deg,#075846,#0b9878);color:#fff}
+    .pdf-report-header span{font-size:9pt;font-weight:800;letter-spacing:.08em;text-transform:uppercase}.pdf-report-header h1{margin:5px 0 4px;font-size:24pt}.pdf-report-header p{margin:0;color:#d8fff4}.pdf-report-badge{min-width:150px;padding:12px;border:1px solid rgba(255,255,255,.35);border-radius:13px;text-align:right;font-size:8.5pt}
+    .report-card{padding:15px 17px;margin:0 0 14px;border:1px solid #cfe4de;border-radius:14px;background:#f8fffc}.report-card h2{margin:0 0 8px;color:#08745c;font-size:15pt}.report-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:12px 0}.metric{padding:11px;border-radius:11px;background:#e9f8f3}.metric span{display:block;font-size:8.5pt;color:#4a6d65}.metric strong{font-size:14pt;color:#075846}
+    table{width:100%;border-collapse:collapse;margin:10px 0 18px;font-size:8pt}th{background:#0b7d64;color:#fff;text-align:left;padding:7px 6px}td{padding:6px;border-bottom:1px solid #d7e8e3;vertical-align:top}tbody tr:nth-child(even){background:#f2faf7}
+    .filters-line{padding:10px 13px;margin-bottom:14px;border-left:5px solid #f2b705;background:#fff8db;border-radius:8px}.footer-note{margin-top:20px;padding-top:10px;border-top:1px solid #cfe4de;color:#607b75;font-size:8pt}
+    .plan-document{box-shadow:none!important;border:0!important;padding:0!important}.plan-document h2,.plan-document h3{color:#08745c}.plan-table{font-size:8pt}
+    @media print{button{display:none!important}.pdf-report-header{-webkit-print-color-adjust:exact;print-color-adjust:exact}th,.metric,.filters-line{ -webkit-print-color-adjust:exact;print-color-adjust:exact}}
+  `;
+  w.document.write(`<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>${escapeHtml(title)} - SiMeCO2</title><style>${css}</style></head><body><main class="pdf-report">${reportHeader(title,subtitle)}${content}<p class="footer-note">Documento generado por SiMeCO₂. En el cuadro de impresión selecciona “Guardar como PDF”.</p></main><script>window.onload=()=>setTimeout(()=>window.print(),300)<\/script></body></html>`);
+  w.document.close();
+}
+function activeTerritoryText(prefix){
+  const f=territoryFilterValues(prefix); const values=[];
+  if(f.type) values.push(`Ámbito: ${f.type}`); if(f.territory) values.push(`Territorio: ${f.territory}`); if(f.nucleus) values.push(`Núcleo: ${f.nucleus}`);
+  return values.length?values.join(' · '):'Todo Medellín';
+}
+function downloadFilteredPdfReport(){
+  const recs=filteredRecords();
+  if(!recs.length){alert('No hay registros para generar el informe PDF.');return;}
+  const energy=recs.reduce((a,r)=>a+(Number(r.energyKwh)||0),0), co2=recs.reduce((a,r)=>a+(Number(r.co2kg)||0),0), water=recs.reduce((a,r)=>a+(Number(r.waterM3)||0),0);
+  const rows=recs.map(r=>`<tr><td>${escapeHtml(r.period||'')}</td><td>${escapeHtml(r.site||'')}</td><td>${escapeHtml(r.address||'')}</td><td>${fmt(r.energyKwh)} kWh</td><td>${fmt(r.waterM3)} m³</td><td>${fmt(r.co2kg)} kg</td><td>${escapeHtml(r.source||'PDF')}</td></tr>`).join('');
+  const filters=[activeTerritoryText('table'),$('periodFilter')?.value&&`Periodo: ${$('periodFilter').value}`,$('serviceFilter')?.value&&`Servicio: ${$('serviceFilter').value}`,$('siteSearch')?.value&&`Sede: ${$('siteSearch').value}`].filter(Boolean).join(' · ');
+  openPdfPrintDocument('Informe de facturas por institución educativa',filters,`<div class="report-grid"><div class="metric"><span>Registros</span><strong>${recs.length}</strong></div><div class="metric"><span>Energía acumulada</span><strong>${fmt(energy)} kWh</strong></div><div class="metric"><span>Emisiones</span><strong>${fmt(co2/1000)} t CO₂e</strong></div></div><div class="report-card"><h2>Resumen de la consulta</h2><p>Agua acumulada: <strong>${fmt(water)} m³</strong></p></div><table><thead><tr><th>Periodo</th><th>Institución / sede</th><th>Dirección</th><th>Energía</th><th>Agua</th><th>CO₂e</th><th>Fuente</th></tr></thead><tbody>${rows}</tbody></table>`);
+}
+function downloadHistoryPdfReport(){
+  const recs=getComparisonRecords();
+  if(!recs.length){alert('No hay datos históricos para generar el informe PDF.');return;}
+  const a=$('compareA')?.value||'', b=$('compareB')?.value||'';
+  const selected=[a,b].filter(Boolean); const subset=recs.filter(r=>selected.some(p=>String(r.period||'').startsWith(p)));
+  const use=subset.length?subset:recs;
+  const rows=use.map(r=>`<tr><td>${escapeHtml(r.period||'')}</td><td>${escapeHtml(r.site||'')}</td><td>${fmt(r.energyKwh)} kWh</td><td>${fmt((Number(r.energyKwh)||0)*FACTOR_CO2_KG_KWH/1000)} t</td><td>${fmt(r.waterM3)} m³</td></tr>`).join('');
+  openPdfPrintDocument('Informe histórico de consumos',`${activeTerritoryText('compare')} · Periodos: ${a||'todos'} y ${b||'todos'}`,`<div class="report-card"><h2>Interpretación del histórico</h2><p>${escapeHtml($('compareNarrative')?.textContent||'Comparación histórica de los registros disponibles.')}</p></div><table><thead><tr><th>Periodo</th><th>Institución / sede</th><th>Energía</th><th>CO₂e</th><th>Agua</th></tr></thead><tbody>${rows}</tbody></table>`);
+}
+function downloadDashboardPdfReport(){
+  const recs=dashboardFilteredRecords();
+  if(!recs.length){alert('No hay información para generar el informe PDF.');return;}
+  const agg=aggregateBySite(recs); const rows=agg.map((x,i)=>`<tr><td>${i+1}</td><td>${escapeHtml(x.site)}</td><td>${escapeHtml(x.address||'')}</td><td>${x.periods}</td><td>${fmt(x.energyKwh)} kWh</td><td>${fmt(x.co2kg/1000)} t</td><td>${Math.ceil(x.co2kg/TREE_CO2_KG_YEAR)}</td></tr>`).join('');
+  const energy=agg.reduce((a,x)=>a+x.energyKwh,0), co2=agg.reduce((a,x)=>a+x.co2kg,0);
+  openPdfPrintDocument('Informe ambiental por sede',activeTerritoryText('dashboard'),`<div class="report-grid"><div class="metric"><span>Sedes</span><strong>${agg.length}</strong></div><div class="metric"><span>Energía</span><strong>${fmt(energy)} kWh</strong></div><div class="metric"><span>CO₂ equivalente</span><strong>${fmt(co2/1000)} t</strong></div></div><table><thead><tr><th>#</th><th>Sede</th><th>Dirección</th><th>Periodos</th><th>Energía</th><th>CO₂e</th><th>Árboles</th></tr></thead><tbody>${rows}</tbody></table>`);
+}
+
 function exportCsv(){
   const recs=filteredRecords();
   const headers=['periodo','sede','direccion','agua_m3','alcantarillado_m3','energia_kwh','gas_m3','aseo_valor','residuos_t','co2_kg','fuente'];
@@ -1299,7 +1351,6 @@ function generateManagementPlan(key){
   $('planReport').className = 'plan-report';
   $('planReport').innerHTML = CURRENT_PLAN_HTML;
   $('printPlanBtn').disabled = false;
-  $('downloadPlanBtn').disabled = false;
   if(window.simecoOpenSection) window.simecoOpenSection('seccion-3', {scroll:false});
   requestAnimationFrame(()=>$('planPanel').scrollIntoView({behavior:'smooth', block:'start'}));
   log(`Plan de Gestión generado para ${site}.`);
@@ -1605,15 +1656,6 @@ function buildPlanHtml(d){
 
 function printCurrentPlan(){
   if(!CURRENT_PLAN_HTML) return;
-  const w = window.open('', '_blank');
-  const css = document.querySelector('style')?.innerHTML || '';
-  const linkCss = '<link rel="stylesheet" href="styles.css">';
-  w.document.write(`<!doctype html><html lang="es"><head><meta charset="utf-8"><title>${escapeHtml(CURRENT_PLAN_FILENAME)}</title>${linkCss}<style>${css}body{background:white}.plan-document{box-shadow:none}.plan-actions,.hero,footer{display:none}</style></head><body><main><section class="panel plan-panel">${CURRENT_PLAN_HTML}</section></main><script>window.onload=()=>window.print()</script></body></html>`);
-  w.document.close();
+  openPdfPrintDocument('Plan de Gestión Ambiental por sede','Informe institucional de eficiencia energética y reducción de emisiones',CURRENT_PLAN_HTML);
 }
 
-function downloadCurrentPlan(){
-  if(!CURRENT_PLAN_HTML) return;
-  const html = `<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${escapeHtml(CURRENT_PLAN_FILENAME)}</title><link rel="stylesheet" href="styles.css"></head><body><main><section class="panel plan-panel">${CURRENT_PLAN_HTML}</section></main></body></html>`;
-  downloadBlob(html, CURRENT_PLAN_FILENAME, 'text/html;charset=utf-8');
-}

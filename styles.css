@@ -1022,3 +1022,11 @@ canvas{max-width:100%;height:auto;border-radius:16px;}
 .filter-toolbar .toolbar-buttons{grid-column:1/-1}
 @media(max-width:1050px){.compare-controls-advanced{grid-template-columns:repeat(2,minmax(180px,1fr))}.territorial-filter-bar{grid-template-columns:repeat(2,minmax(180px,1fr))}.territorial-filter-bar .secondary{grid-column:1/-1}.filter-toolbar{grid-template-columns:repeat(2,minmax(180px,1fr))}}
 @media(max-width:650px){.compare-controls-advanced,.territorial-filter-bar,.filter-toolbar{grid-template-columns:1fr}.compare-controls-advanced .compare-site-field,.filter-toolbar .search-filter{grid-column:auto}.territorial-filter-bar .secondary,.filter-toolbar .toolbar-buttons{grid-column:auto}}
+
+/* v41 - filtros territoriales visibles y descarga exclusiva en PDF */
+.territory-filter-heading{display:grid;grid-template-columns:auto 1fr;column-gap:12px;align-items:center;margin:10px 0 12px;padding:14px 17px;border-radius:16px;background:linear-gradient(135deg,#075846,#0b9878);color:#fff;box-shadow:0 8px 22px rgba(7,88,70,.16)}
+.territory-filter-heading span{grid-row:1/3;display:inline-flex;align-items:center;justify-content:center;padding:8px 11px;border-radius:999px;background:#f2b705;color:#173f37;font-size:.74rem;font-weight:950;text-transform:uppercase;letter-spacing:.06em}
+.territory-filter-heading strong{font-size:1rem}.territory-filter-heading small{color:#d8fff4}
+.compare-controls-advanced,.territorial-filter-bar,.filter-toolbar{border:2px solid #8fd2c2!important;box-shadow:0 6px 18px rgba(7,88,70,.08);background:#fbfffd!important}
+.pdf-only-action{display:inline-flex;align-items:center;justify-content:center;gap:7px}.pdf-only-action::before{content:'PDF';display:inline-grid;place-items:center;min-width:31px;height:24px;padding:0 5px;border-radius:6px;background:#b3261e;color:#fff;font-size:.66rem;font-weight:950;letter-spacing:.04em}
+@media(max-width:650px){.territory-filter-heading{grid-template-columns:1fr}.territory-filter-heading span{grid-row:auto;justify-self:start;margin-bottom:7px}}

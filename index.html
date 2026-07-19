@@ -7,7 +7,7 @@
   <meta name="description" content="Sistema interactivo para medir, interpretar y gestionar la huella de carbono educativa a partir del consumo de servicios públicos." />
   <link rel="icon" type="image/png" href="assets/los-yoguis-logo.png" />
   <link rel="apple-touch-icon" href="assets/los-yoguis-logo.png" />
-  <link rel="stylesheet" href="styles.css?v=40-filtros-territoriales" />
+  <link rel="stylesheet" href="styles.css?v=41-filtros-visibles-pdf" />
 </head>
 <body>
   <div class="invoice-loading active" id="invoiceLoading" role="status" aria-live="assertive" aria-hidden="false">
@@ -128,6 +128,7 @@
           <p class="muted">Compara el consumo y la huella ambiental por mes, trimestre, semestre o año. También puedes filtrar la comparación por una sede específica.</p>
         </div>
       </div>
+      <div class="territory-filter-heading"><span>Filtros territoriales</span><strong>Comuna, corregimiento y núcleo educativo</strong><small>Selecciona un nivel territorial y luego busca la institución o sede.</small></div>
       <div class="compare-controls compare-controls-advanced">
         <label>Tipo de comparación
           <select id="compareMode">
@@ -164,6 +165,7 @@
         <label>Periodo A <select id="compareA"></select></label>
         <label>Periodo B <select id="compareB"></select></label>
         <button id="compareBtn" class="primary">Comparar</button>
+        <button id="downloadHistoryPdfBtn" class="secondary pdf-only-action">Descargar histórico PDF</button>
       </div>
       <div id="compareNarrative" class="interpretation-box">Selecciona dos periodos para generar una interpretación automática.</div>
       <div id="compareResult" class="compare-result"></div>
@@ -208,11 +210,13 @@
           <button id="updateFactorsBtn" class="secondary">Actualizar cálculos</button>
         </div>
       </div>
+      <div class="territory-filter-heading"><span>Filtros territoriales</span><strong>Consulta el informe por territorio</strong><small>Los filtros se aplican en cascada: ámbito → territorio → núcleo → sede.</small></div>
       <div class="territorial-filter-bar" aria-label="Filtros territoriales del informe">
         <div><label for="dashboardTerritoryType">Ámbito territorial</label><select id="dashboardTerritoryType"><option value="">Todo Medellín</option><option value="Comuna">Comuna</option><option value="Corregimiento">Corregimiento</option><option value="Sin clasificar">Sin clasificar</option></select></div>
         <div><label for="dashboardTerritory">Comuna o corregimiento</label><select id="dashboardTerritory"><option value="">Todos los territorios</option></select></div>
         <div><label for="dashboardNucleus">Núcleo educativo</label><select id="dashboardNucleus"><option value="">Todos los núcleos</option></select></div>
         <button id="clearDashboardTerritoryBtn" type="button" class="secondary">Limpiar territorio</button>
+        <button id="downloadDashboardPdfBtn" type="button" class="secondary pdf-only-action">Descargar informe PDF</button>
       </div>
       <div class="dashboard-site-search">
         <label for="dashboardSiteSearch">Buscar institución o sede</label>
@@ -257,8 +261,7 @@
           <p class="muted">Selecciona una sede desde el dashboard ambiental. El sistema generará un informe personalizado para reducir consumo eléctrico y emisiones de GEI en alcance 2.</p>
         </div>
         <div class="plan-actions">
-          <button id="printPlanBtn" class="secondary" disabled>Generar informe institucional</button>
-          <button id="downloadPlanBtn" class="secondary" disabled>Descargar HTML</button>
+          <button id="printPlanBtn" class="primary pdf-only-action" disabled>Descargar informe PDF</button>
         </div>
       </div>
       <div id="planReport" class="plan-empty">Aún no se ha seleccionado una sede. Usa el botón <strong>Plan de Gestión</strong> en la tabla del Dashboard ambiental por sede.</div>
@@ -268,6 +271,7 @@
 
     <div class="app-section" id="seccion-4" data-page-title="Facturas por I.E.">
     <section class="panel data-panel" id="registros">
+      <div class="territory-filter-heading"><span>Filtros territoriales</span><strong>Localiza las facturas por comuna, corregimiento o núcleo</strong><small>Combina los filtros con periodo, servicio e institución educativa.</small></div>
       <div class="toolbar filter-toolbar">
         <div>
           <label for="territoryTypeFilter">Ámbito territorial</label>
@@ -317,9 +321,7 @@
         </div>
         <div class="toolbar-buttons">
           <button id="clearFiltersBtn" type="button" class="secondary">Limpiar filtros</button>
-          <button id="exportCsvBtn" class="secondary">Exportar CSV</button>
-          <button id="exportJsonBtn" class="secondary">Exportar JSON</button>
-          <button onclick="window.print()" class="secondary">PDF/Imprimir</button>
+          <button id="downloadFilteredPdfBtn" class="primary pdf-only-action">Descargar informe PDF</button>
         </div>
       </div>
       <div class="filter-summary" aria-live="polite">
@@ -437,6 +439,6 @@
   </script>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-  <script src="app.js?v=40-filtros-territoriales"></script>
+  <script src="app.js?v=41-filtros-visibles-pdf"></script>
 </body>
 </html>

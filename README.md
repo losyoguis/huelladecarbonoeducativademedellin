@@ -160,3 +160,10 @@ Se incorporaron filtros combinables en Histórico, Informe por sede y Facturas p
 - Institución o sede con autocompletado limitado por los filtros territoriales activos.
 
 La clasificación prioriza coincidencias institucionales conocidas y reglas territoriales presentes en el nombre o la dirección. Los registros que todavía no tienen una relación territorial confiable se conservan bajo **Sin clasificar**, evitando asignaciones inventadas. Para ampliar la cobertura se deben añadir relaciones verificadas al catálogo `TERRITORY_CATALOG` de `app.js`.
+
+
+## Versión 41
+- Filtros territoriales visibles en Histórico, Informe por sede y Facturas por I.E.
+- Listado base de las 16 comunas y los 5 corregimientos de Medellín.
+- Descargas de resultados limitadas a informes en PDF mediante una plantilla institucional mejorada.
+- Eliminadas las exportaciones CSV, JSON y HTML.
