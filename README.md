@@ -1,3 +1,15 @@
+# SiMeCO₂ v51 — Asistente Ambiental integrado
+
+- Botón flotante en la esquina inferior derecha.
+- Chat integrado, adaptable a computador y celular.
+- Respuestas basadas en los datos reales cargados por la plataforma.
+- Consultas sobre mayor y menor consumo, top 10, sedes, periodos, emisiones, agua y prioridad.
+- Explicaciones pedagógicas de alcance 2, CO₂e, cálculo de emisiones y equivalencia de árboles.
+- Funciona localmente sin exponer claves API ni depender de un servidor externo.
+- Preparado para una futura conexión segura con la API de OpenAI mediante backend.
+
+---
+
 # SiMeCO₂ v50 — Indicadores explicados
 
 - Se eliminó el bloque duplicado de indicadores del resumen ejecutivo.

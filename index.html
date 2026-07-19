@@ -8,7 +8,7 @@
   <meta name="description" content="Sistema interactivo para medir, interpretar y gestionar la huella de carbono educativa a partir del consumo de servicios públicos." />
   <link rel="icon" type="image/png" href="assets/los-yoguis-logo.png" />
   <link rel="apple-touch-icon" href="assets/los-yoguis-logo.png" />
-  <link rel="stylesheet" href="styles.css?v=48-ranking-mes-buscador" />
+  <link rel="stylesheet" href="styles.css?v=51-asistente-ambiental" />
 </head>
 <body>
   <div class="invoice-loading active" id="invoiceLoading" role="status" aria-live="assertive" aria-hidden="false">
@@ -406,6 +406,39 @@
     </div>
   </footer>
 
+
+  <aside class="simeco-assistant" aria-label="Asistente Ambiental SiMeCO₂">
+    <button id="simecoAssistantLauncher" class="simeco-assistant-launcher" type="button" aria-expanded="false" aria-controls="simecoAssistantPanel">
+      <span class="simeco-assistant-launcher-icon" aria-hidden="true">🌱</span>
+      <span>Pregúntale a SiMeCO₂</span>
+    </button>
+    <section id="simecoAssistantPanel" class="simeco-assistant-panel" aria-hidden="true">
+      <header class="simeco-assistant-header">
+        <div>
+          <span class="simeco-assistant-avatar" aria-hidden="true">🌱</span>
+          <div><strong>Asistente Ambiental</strong><small>Consulta los datos de SiMeCO₂</small></div>
+        </div>
+        <div class="simeco-assistant-header-actions">
+          <button id="simecoAssistantReset" type="button" title="Nueva conversación" aria-label="Nueva conversación">↻</button>
+          <button id="simecoAssistantClose" type="button" title="Cerrar asistente" aria-label="Cerrar asistente">×</button>
+        </div>
+      </header>
+      <div id="simecoAssistantMessages" class="simeco-assistant-messages" aria-live="polite"></div>
+      <div class="simeco-assistant-suggestions" aria-label="Preguntas sugeridas">
+        <button type="button" data-assistant-question="¿Qué sede consume más?">Mayor consumo</button>
+        <button type="button" data-assistant-question="Muéstrame el top 10">Top 10</button>
+        <button type="button" data-assistant-question="¿Qué significa alcance 2?">Alcance 2</button>
+        <button type="button" data-assistant-question="¿Cómo se calcula la huella de carbono?">Cálculo CO₂e</button>
+      </div>
+      <form id="simecoAssistantForm" class="simeco-assistant-form">
+        <label class="sr-only" for="simecoAssistantInput">Escribe tu pregunta</label>
+        <textarea id="simecoAssistantInput" rows="1" maxlength="400" placeholder="Ej.: consumo de una I.E. en junio de 2026"></textarea>
+        <button id="simecoAssistantSend" type="submit" aria-label="Enviar pregunta">➤</button>
+      </form>
+      <p class="simeco-assistant-note">Responde con los datos disponibles. Las equivalencias ambientales son estimaciones pedagógicas.</p>
+    </section>
+  </aside>
+
   <script>
     (() => {
       const sectionForTarget = {
@@ -465,6 +498,7 @@
   </script>
 
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-  <script defer src="app.js?v=48-ranking-mes-buscador"></script>
+  <script defer src="app.js?v=51-asistente-ambiental"></script>
+  <script defer src="assistant.js?v=51-asistente-ambiental"></script>
 </body>
 </html>
