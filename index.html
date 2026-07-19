@@ -7,7 +7,7 @@
   <meta name="description" content="Sistema interactivo para medir, interpretar y gestionar la huella de carbono educativa a partir del consumo de servicios públicos." />
   <link rel="icon" type="image/png" href="assets/los-yoguis-logo.png" />
   <link rel="apple-touch-icon" href="assets/los-yoguis-logo.png" />
-  <link rel="stylesheet" href="styles.css?v=41-filtros-visibles-pdf" />
+  <link rel="stylesheet" href="styles.css?v=42-graficos-prioridad-colores" />
 </head>
 <body>
   <div class="invoice-loading active" id="invoiceLoading" role="status" aria-live="assertive" aria-hidden="false">
@@ -181,9 +181,9 @@
         </div>
       </div>
       <div class="priority-legend" aria-label="Leyenda de prioridad">
-        <span class="priority-chip high">Alta prioridad</span>
-        <span class="priority-chip medium">Prioridad media</span>
-        <span class="priority-chip low">Prioridad preventiva</span>
+        <span class="priority-chip high">Alta</span>
+        <span class="priority-chip medium">Media</span>
+        <span class="priority-chip low">Preventiva</span>
       </div>
       <div class="chart-card environmental-ranking-chart">
         <canvas id="siteChart" width="1100" height="500" aria-label="Ranking de sedes por consumo eléctrico y árboles requeridos"></canvas>
@@ -439,6 +439,6 @@
   </script>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-  <script src="app.js?v=41-filtros-visibles-pdf"></script>
+  <script src="app.js?v=42-graficos-prioridad-colores"></script>
 </body>
 </html>

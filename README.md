@@ -1,3 +1,11 @@
+# SiMeCO₂ v42 — Etiquetas más claras y prioridades con mayor contraste
+
+- El gráfico histórico ahora muestra etiquetas de periodo más comprensibles, con abreviaturas de mes y año.
+- La columna **Prioridad** del dashboard muestra solo el nivel: **Alta**, **Media** o **Preventiva**.
+- La leyenda y los chips de prioridad usan colores con mayor contraste para facilitar la lectura.
+
+---
+
 # SiMeCO₂ v39 — Carga automática de facturas
 
 - Las facturas se cargan automáticamente al abrir la plataforma.

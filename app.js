@@ -923,18 +923,34 @@ function groupKeyForPeriod(period, mode){
   if(mode === 'quarter') return `${p.year}-Q${Math.ceil(p.month/3)}`;
   return `${p.year}-${String(p.month).padStart(2,'0')}`;
 }
+function periodMonthShort(month){
+  return ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'][Math.max(0,Number(month||1)-1)] || '';
+}
 function groupLabel(key, mode){
   const k = String(key||'');
   if(mode === 'quarter'){
     const m = k.match(/^(20\d{2})-Q([1-4])$/);
-    return m ? `${m[1]} · Trimestre ${m[2]}` : k;
+    return m ? `Trim. ${m[2]} ${m[1]}` : k;
   }
   if(mode === 'semester'){
     const m = k.match(/^(20\d{2})-S([1-2])$/);
-    return m ? `${m[1]} · Semestre ${m[2]}` : k;
+    return m ? `Sem. ${m[2]} ${m[1]}` : k;
   }
   if(mode === 'year') return k;
-  return k;
+  const p = periodToParts(k);
+  return p ? `${periodMonthShort(p.month)} ${p.year}` : k;
+}
+function chartLabelLines(item){
+  const key = String(item?.key || item?.period || '');
+  const p = periodToParts(key);
+  if(p) return [periodMonthShort(p.month), String(p.year)];
+  const q = key.match(/^(20\d{2})-Q([1-4])$/);
+  if(q) return [`Trim. ${q[2]}`, q[1]];
+  const s = key.match(/^(20\d{2})-S([1-2])$/);
+  if(s) return [`Sem. ${s[2]}`, s[1]];
+  const y = key.match(/^(20\d{2})$/);
+  if(y) return [y[1]];
+  return [String(item?.period || key)];
 }
 function compareModeLabel(mode){
   return {month:'Mes vs mes', quarter:'Trimestre vs trimestre', semester:'Semestre vs semestre', year:'Año vs año'}[mode] || 'Mes vs mes';
@@ -1005,17 +1021,56 @@ function comparePeriods(){
 
 function drawChart(data){
   chartData=data;
-  const c=$('chart'), ctx=c.getContext('2d'); ctx.clearRect(0,0,c.width,c.height);
-  ctx.font='16px Arial'; ctx.fillStyle='#13312d'; ctx.fillText('Comparativo de energía por periodo (kWh)',24,34);
-  if(!data.length){ ctx.fillText('Sin datos importados',24,80); return; }
-  const pad=70, w=c.width-pad*2, h=c.height-110; const max=Math.max(...data.map(d=>d.energyKwh),1);
-  ctx.strokeStyle='#d7e6e2'; ctx.beginPath(); ctx.moveTo(pad,55); ctx.lineTo(pad,55+h); ctx.lineTo(pad+w,55+h); ctx.stroke();
-  const bw=Math.max(24,w/data.length*.55); const gap=w/data.length;
+  const c=$('chart'), ctx=c.getContext('2d');
+  ctx.clearRect(0,0,c.width,c.height);
+  ctx.fillStyle='#13312d';
+  ctx.font='bold 18px Arial';
+  ctx.fillText('Comparativo de energía por periodo (kWh)',24,34);
+  if(!data.length){
+    ctx.font='14px Arial';
+    ctx.fillText('Sin datos importados',24,80);
+    return;
+  }
+  const top = 56;
+  const pad = 76;
+  const bottomSpace = 90;
+  const w = c.width - pad*2;
+  const h = c.height - top - bottomSpace;
+  const baseY = top + h;
+  const max = Math.max(...data.map(d=>d.energyKwh), 1);
+  ctx.strokeStyle='#d7e6e2';
+  ctx.lineWidth=1;
+  ctx.beginPath();
+  ctx.moveTo(pad, top);
+  ctx.lineTo(pad, baseY);
+  ctx.lineTo(pad+w, baseY);
+  ctx.stroke();
+
+  const gap = w / data.length;
+  const bw = Math.max(26, Math.min(gap * 0.54, 52));
   data.forEach((d,i)=>{
-    const x=pad+i*gap+gap/2-bw/2; const bh=(d.energyKwh/max)*h; const y=55+h-bh;
-    const grad=ctx.createLinearGradient(0,y,0,55+h); grad.addColorStop(0,'#0fc39a'); grad.addColorStop(1,'#0b9878');
-    ctx.fillStyle=grad; roundRect(ctx,x,y,bw,bh,10); ctx.fill();
-    ctx.fillStyle='#13312d'; ctx.textAlign='center'; ctx.fillText(d.period,x+bw/2,55+h+28); ctx.fillText(fmt(d.energyKwh),x+bw/2,Math.max(72,y-8));
+    const x = pad + i*gap + gap/2 - bw/2;
+    const bh = (d.energyKwh / max) * h;
+    const y = baseY - bh;
+    const grad = ctx.createLinearGradient(0, y, 0, baseY);
+    grad.addColorStop(0, '#16d2a6');
+    grad.addColorStop(1, '#0b9878');
+    ctx.fillStyle = grad;
+    roundRect(ctx, x, y, bw, bh, 10);
+    ctx.fill();
+
+    ctx.fillStyle = '#13312d';
+    ctx.textAlign = 'center';
+    ctx.font = 'bold 12px Arial';
+    ctx.fillText(fmt(d.energyKwh), x + bw/2, Math.max(top + 14, y - 10));
+
+    const lines = chartLabelLines(d);
+    ctx.font = '11px Arial';
+    let labelY = baseY + 22;
+    lines.forEach(line => {
+      ctx.fillText(line, x + bw/2, labelY);
+      labelY += 13;
+    });
   });
   ctx.textAlign='left';
 }
@@ -1216,7 +1271,7 @@ function renderDashboard(){
     <td data-label="CO₂e t">${fmt(r.co2kg/1000)}</td>
     <td data-label="Árboles requeridos"><strong>${fmt(r.trees)}</strong></td>
     <td data-label="Promedio kWh/mes">${fmt(r.avgKwhMonth)}</td>
-    <td data-label="Prioridad"><span class="priority-chip ${priority.cls}">${escapeHtml(priority.level)}</span></td>
+    <td data-label="Prioridad"><span class="priority-chip ${priority.cls}" title="${escapeHtml(priority.level)}">${escapeHtml(priority.short || priority.level)}</span></td>
     <td data-label="Plan" class="plan-cell"><button type="button" class="plan-btn primary" data-site-key="${escapeHtml(siteKey(r.site,r.address))}" title="Generar, visualizar y descargar el Plan de Gestión de ${escapeHtml(r.site)}">📄 Generar informe<br><small>Plan de Gestión</small></button></td>
   </tr>`;
   }).join('');
@@ -1357,9 +1412,9 @@ function generateManagementPlan(key){
 }
 
 function classifyEnergyIntensity(avgMonth){
-  if(avgMonth >= 5000) return {level:'Alta prioridad', cls:'high', text:'La sede presenta un consumo eléctrico mensual alto. Se recomienda priorizar diagnóstico técnico, medición por circuitos, sustitución LED y evaluación solar fotovoltaica.'};
-  if(avgMonth >= 2000) return {level:'Prioridad media', cls:'medium', text:'La sede presenta un consumo eléctrico moderado. Se recomienda fortalecer hábitos de ahorro, optimizar iluminación y controlar horarios de equipos.'};
-  return {level:'Prioridad preventiva', cls:'low', text:'La sede presenta un consumo eléctrico bajo o moderado. Se recomienda mantener monitoreo, formación ambiental y acciones preventivas de eficiencia.'};
+  if(avgMonth >= 5000) return {level:'Alta prioridad', short:'Alta', cls:'high', text:'La sede presenta un consumo eléctrico mensual alto. Se recomienda priorizar diagnóstico técnico, medición por circuitos, sustitución LED y evaluación solar fotovoltaica.'};
+  if(avgMonth >= 2000) return {level:'Prioridad media', short:'Media', cls:'medium', text:'La sede presenta un consumo eléctrico moderado. Se recomienda fortalecer hábitos de ahorro, optimizar iluminación y controlar horarios de equipos.'};
+  return {level:'Prioridad preventiva', short:'Preventiva', cls:'low', text:'La sede presenta un consumo eléctrico bajo o moderado. Se recomienda mantener monitoreo, formación ambiental y acciones preventivas de eficiencia.'};
 }
 
 
