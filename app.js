@@ -1231,21 +1231,15 @@ function getGlobalStats(){
 }
 
 function renderExecutiveSummary(){
-  if(!$('executiveText') || !$('executiveGrid')) return;
+  if(!$('executiveText')) return;
   const s = getGlobalStats();
   if(!s.recs.length){
     $('executiveText').textContent = 'SiMeCO₂ convierte información de servicios públicos en indicadores comprensibles para la gestión ambiental escolar. Actualiza el sistema para generar diagnóstico, priorización e informes institucionales.';
-    $('executiveGrid').innerHTML = `<article><span>Estado</span><strong>Sin registros</strong><small>Actualiza información para iniciar el análisis.</small></article>`;
     return;
   }
-  const periodText = s.periods.length ? `${s.periods[0]} a ${s.periods[s.periods.length-1]}` : 'periodo no definido';
+  const periodText = s.periods.length ? `${groupLabel(s.periods[0], 'month')} a ${groupLabel(s.periods[s.periods.length-1], 'month')}` : 'periodo no definido';
   const topText = s.topSite ? ` La sede con mayor consumo acumulado es ${s.topSite.site}, con ${fmt(s.topSite.energyKwh)} kWh.` : '';
   $('executiveText').innerHTML = `Durante el periodo <strong>${escapeHtml(periodText)}</strong>, el sistema registra <strong>${fmt(s.energy)} kWh</strong> de energía eléctrica, equivalentes a <strong>${fmt(s.co2kg/1000)} toneladas de CO₂e</strong>. Para compensar pedagógicamente estas emisiones se requerirían aproximadamente <strong>${fmt(s.trees)} árboles/año</strong>.${escapeHtml(topText)}`;
-  $('executiveGrid').innerHTML = `
-    <article class="executive-highlight-card"><span>Huella de Carbono Educativa de Medellín</span><strong>${fmt(s.co2kg/1000)} t CO₂e</strong><small>Alcance 2 estimado a partir del consumo eléctrico institucional</small></article>
-    <article><span>Cobertura</span><strong>${fmt(s.sites.length)} sedes</strong><small>${fmt(s.periods.length)} periodo(s) analizado(s)</small></article>
-    <article><span>Energía</span><strong>${fmt(s.energy)} kWh</strong><small>Consumo eléctrico acumulado</small></article>
-    <article><span>Compensación</span><strong>${fmt(s.trees)} árboles</strong><small>Equivalencia pedagógica anual</small></article>`;
 }
 
 function renderProjectImpact(){

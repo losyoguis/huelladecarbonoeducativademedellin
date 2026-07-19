@@ -8,7 +8,7 @@
   <meta name="description" content="Sistema interactivo para medir, interpretar y gestionar la huella de carbono educativa a partir del consumo de servicios públicos." />
   <link rel="icon" type="image/png" href="assets/los-yoguis-logo.png" />
   <link rel="apple-touch-icon" href="assets/los-yoguis-logo.png" />
-  <link rel="stylesheet" href="styles.css?v=49-ranking-prioridad" />
+  <link rel="stylesheet" href="styles.css?v=48-ranking-mes-buscador" />
 </head>
 <body>
   <div class="invoice-loading active" id="invoiceLoading" role="status" aria-live="assertive" aria-hidden="false">
@@ -97,23 +97,44 @@
         <article><span>Huella</span><strong>CO₂ equivalente</strong><p>Transforma kWh en emisiones estimadas y árboles equivalentes para compensación pedagógica.</p></article>
         <article><span>Gestión</span><strong>Planes por sede</strong><p>Genera acciones, metas, indicadores, cronograma y evidencias de seguimiento.</p></article>
       </div>
-      <div class="executive-grid" id="executiveGrid">
-        <article><span>Estado</span><strong>Sin datos</strong><small>Actualiza el sistema para iniciar.</small></article>
-      </div>
     </section>
 
     <section class="cards kpi-cards" id="cards" aria-label="Indicadores generales">
       <article class="hero-huella-card">
         <span>Huella de Carbono Educativa de Medellín</span>
         <strong id="kCo2">0 t CO₂e</strong>
-        <small>Alcance 2 estimado del consumo eléctrico institucional</small>
+        <small>Emisiones indirectas estimadas por la electricidad consumida en las instituciones educativas.</small>
       </article>
-      <article><span>Periodos</span><strong id="kPeriods">0</strong></article>
-      <article><span>Sedes</span><strong id="kSites">0</strong></article>
-      <article><span>Energía acumulada</span><strong id="kKwh">0 kWh</strong></article>
-      <article><span>Árboles requeridos</span><strong id="kTrees">0</strong></article>
-      <article><span>Agua</span><strong id="kWater">0 m³</strong></article>
-      <article><span>Aseo/Residuos</span><strong id="kWaste">0 t</strong></article>
+      <article>
+        <span>Periodos</span>
+        <strong id="kPeriods">0</strong>
+        <small>Cantidad de meses con facturas procesadas y disponibles para el análisis histórico.</small>
+      </article>
+      <article>
+        <span>Sedes</span>
+        <strong id="kSites">0</strong>
+        <small>Número de sedes educativas identificadas en las facturas cargadas.</small>
+      </article>
+      <article>
+        <span>Energía acumulada</span>
+        <strong id="kKwh">0 kWh</strong>
+        <small>Suma del consumo eléctrico registrado en todas las sedes y periodos analizados.</small>
+      </article>
+      <article>
+        <span>Árboles requeridos</span>
+        <strong id="kTrees">0</strong>
+        <small>Equivalencia pedagógica de árboles necesarios para capturar anualmente el CO₂e estimado.</small>
+      </article>
+      <article>
+        <span>Agua</span>
+        <strong id="kWater">0 m³</strong>
+        <small>Volumen total de agua facturada en las sedes educativas durante los periodos disponibles.</small>
+      </article>
+      <article>
+        <span>Aseo/Residuos</span>
+        <strong id="kWaste">0 t</strong>
+        <small>Cantidad acumulada de residuos reportados en las facturas, cuando el dato está disponible.</small>
+      </article>
     </section>
 
 
@@ -185,12 +206,11 @@
         </label>
         <button id="refreshRankingBtn" class="secondary ranking-refresh-btn" type="button">↻ Actualizar ranking</button>
       </div>
-      <div class="ranking-toolbar" aria-label="Filtros por prioridad del ranking">
-        <div id="rankingPriorityFilters" class="priority-legend priority-filter-buttons" role="group" aria-label="Filtrar instituciones por prioridad">
-          <button type="button" class="priority-chip all is-active" data-priority="" aria-pressed="true">Todas</button>
-          <button type="button" class="priority-chip high" data-priority="high" aria-pressed="false">Alta</button>
-          <button type="button" class="priority-chip medium" data-priority="medium" aria-pressed="false">Media</button>
-          <button type="button" class="priority-chip low" data-priority="low" aria-pressed="false">Preventiva</button>
+      <div class="ranking-toolbar" aria-label="Leyenda del ranking">
+        <div class="priority-legend" aria-label="Leyenda de prioridad">
+          <span class="priority-chip high">Alta</span>
+          <span class="priority-chip medium">Media</span>
+          <span class="priority-chip low">Preventiva</span>
         </div>
       </div>
       <div id="rankingExtremes" class="ranking-extremes" aria-live="polite"></div>
@@ -445,6 +465,6 @@
   </script>
 
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-  <script defer src="app.js?v=49-ranking-prioridad"></script>
+  <script defer src="app.js?v=48-ranking-mes-buscador"></script>
 </body>
 </html>

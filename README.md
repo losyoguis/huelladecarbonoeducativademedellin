@@ -1,10 +1,8 @@
-# SiMeCO₂ v49 — Ranking filtrable por prioridad
+# SiMeCO₂ v50 — Indicadores explicados
 
-- Los indicadores **Todas, Alta, Media y Preventiva** ahora son botones interactivos.
-- Cada botón filtra inmediatamente las instituciones y sedes según su nivel de prioridad energética.
-- El botón activo queda resaltado visualmente.
-- El filtro funciona junto con el mes, el autocompletado y la paginación de 10 en 10.
-- **Actualizar ranking** restablece todos los meses, todas las prioridades y todas las sedes.
+- Se eliminó el bloque duplicado de indicadores del resumen ejecutivo.
+- Cada indicador general incluye una explicación clara de su significado e interpretación.
+- Se conserva una única vista consolidada de huella, periodos, sedes, energía, árboles, agua y residuos.
 
 ---
 

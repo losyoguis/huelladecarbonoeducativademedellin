@@ -1134,3 +1134,8 @@ img{content-visibility:auto}
 .priority-chip.all{background:#e8f1ef;color:#173f37;border-color:#9dbcb5}
 .priority-filter-buttons .priority-chip.all.is-active{background:#173f37;color:#fff;border-color:#173f37}
 @media(max-width:520px){.priority-filter-buttons{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));width:100%}.priority-filter-buttons .priority-chip{width:100%}}
+
+/* v50: indicadores generales con explicación visible */
+.kpi-cards article small{display:block;margin-top:8px;color:#58716b;line-height:1.38;font-size:.82rem;font-weight:600;}
+.kpi-cards .hero-huella-card small{color:#e8fff8;}
+@media(max-width:680px){.kpi-cards article small{font-size:.78rem;}}
