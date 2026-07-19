@@ -1,4 +1,4 @@
-/* SiMeCO2 Servicios Públicos - v48 ranking por mes y buscador */
+/* SiMeCO2 Servicios Públicos - v49 ranking por prioridad */
 let FACTOR_CO2_KG_KWH = 0.126; // kg CO2e/kWh. Ajustable desde el dashboard.
 let TREE_CO2_KG_YEAR = 22; // kg CO2e capturados por árbol al año. Ajustable desde el dashboard.
 const FACTOR_KEY = 'simeco2_factores_ambientales_v8';
@@ -21,6 +21,7 @@ const RANKING_PAGE_SIZE = 10;
 let rankingPage = 0;
 let rankingRowsCache = [];
 let rankingPeriod = "";
+let rankingPriority = "";
 let rankingSelectedKey = "";
 let rankingAutocompleteIndex = -1;
 
@@ -399,6 +400,7 @@ function bindEvents(){
   if($("environmentBody")) $("environmentBody").addEventListener("click", handlePlanButtonClick);
   $("refreshRankingBtn")?.addEventListener("click", refreshFullRanking);
   $("rankingPeriodFilter")?.addEventListener("change", ()=>{ rankingPeriod=$("rankingPeriodFilter").value||""; rankingSelectedKey=""; rankingPage=0; renderRanking(); });
+  $("rankingPriorityFilters")?.addEventListener("click", handleRankingPriorityClick);
   $("rankingSiteSearch")?.addEventListener("input", handleRankingSearchInput);
   $("rankingSiteSearch")?.addEventListener("focus", ()=>renderRankingSuggestions($("rankingSiteSearch").value));
   $("rankingSiteSearch")?.addEventListener("keydown", handleRankingSearchKeydown);
@@ -1372,7 +1374,26 @@ function renderRankingPeriodOptions(){
 }
 function getFullRankingRows(){
   const records=(state.records||[]).filter(r=>Number(r.energyKwh)>0 && (!rankingPeriod || r.period===rankingPeriod));
-  return aggregateBySite(records);
+  return aggregateBySite(records).filter(row=>!rankingPriority || classifyEnergyIntensity(row.avgKwhMonth).cls===rankingPriority);
+}
+function updateRankingPriorityButtons(){
+  document.querySelectorAll('#rankingPriorityFilters [data-priority]').forEach(btn=>{
+    const active=(btn.dataset.priority||'')===rankingPriority;
+    btn.classList.toggle('is-active',active);
+    btn.setAttribute('aria-pressed',String(active));
+  });
+}
+function handleRankingPriorityClick(e){
+  const btn=e.target.closest('[data-priority]');
+  if(!btn) return;
+  rankingPriority=btn.dataset.priority||'';
+  rankingSelectedKey='';
+  rankingPage=0;
+  if($('rankingSiteSearch')) $('rankingSiteSearch').value='';
+  $('clearRankingSearchBtn')?.classList.remove('visible');
+  closeRankingSuggestions();
+  renderRanking();
+  log(`Ranking filtrado por prioridad: ${rankingPriority ? ({high:'Alta',medium:'Media',low:'Preventiva'}[rankingPriority]||rankingPriority) : 'Todas'}.`);
 }
 function rankingSearchOptions(){
   return rankingRowsCache.map((r,index)=>({...r,index,key:siteKey(r.site,r.address)}));
@@ -1456,7 +1477,7 @@ function refreshFullRanking(){
   dashboardSiteKey='';
   const field=siteAutocompleteState.get('dashboardSiteSearch');
   if(field){field.input.value='';field.clear.classList.remove('visible');}
-  rankingPeriod=''; rankingSelectedKey=''; rankingPage=0;
+  rankingPeriod=''; rankingPriority=''; rankingSelectedKey=''; rankingPage=0;
   renderRankingPeriodOptions();
   if($('rankingPeriodFilter')) $('rankingPeriodFilter').value='';
   if($('rankingSiteSearch')) $('rankingSiteSearch').value='';
@@ -1473,6 +1494,7 @@ function setRankingPage(page){
 }
 function renderRanking(){
   renderRankingPeriodOptions();
+  updateRankingPriorityButtons();
   rankingRowsCache=getFullRankingRows();
   if(rankingSelectedKey && !rankingRowsCache.some(r=>siteKey(r.site,r.address)===rankingSelectedKey)){
     rankingSelectedKey='';
@@ -1494,7 +1516,7 @@ function drawSiteChart(rows){
   ctx.fillText('Ranking de sedes por consumo eléctrico total (kWh)',24,34);
   ctx.font='12px Arial';
   ctx.fillStyle='#637772';
-  ctx.fillText(`Ordenado de mayor a menor consumo · ${rankingPeriod ? groupLabel(rankingPeriod,'month') : 'todos los meses'} · vista de 10 sedes.`,24,54);
+  ctx.fillText(`Ordenado de mayor a menor consumo · ${rankingPeriod ? groupLabel(rankingPeriod,'month') : 'todos los meses'} · ${rankingPriority ? 'prioridad '+({high:'alta',medium:'media',low:'preventiva'}[rankingPriority]||rankingPriority) : 'todas las prioridades'} · vista de 10 sedes.`,24,54);
 
   const total=rows.length;
   const pages=Math.max(1,Math.ceil(total/RANKING_PAGE_SIZE));

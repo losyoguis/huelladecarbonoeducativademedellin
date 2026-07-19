@@ -1124,3 +1124,13 @@ img{content-visibility:auto}
 .ranking-filter-bar label{min-width:0}.ranking-filter-bar small{display:block;margin-top:6px;color:var(--muted);font-size:.76rem}.ranking-filter-bar .ranking-refresh-btn{align-self:end;white-space:nowrap}.ranking-filter-bar .autocomplete-list{z-index:120}.ranking-filter-bar mark{background:#ffe970;color:#183e36;border-radius:3px;padding:0 1px}
 @media(max-width:900px){.ranking-filter-bar{grid-template-columns:1fr 1fr}.ranking-filter-bar .ranking-refresh-btn{grid-column:1/-1;width:100%}}
 @media(max-width:620px){.ranking-filter-bar{grid-template-columns:1fr}.ranking-filter-bar .ranking-refresh-btn{grid-column:auto}}
+
+
+/* v49: botones de filtro por prioridad del ranking */
+.priority-filter-buttons .priority-chip{appearance:none;cursor:pointer;font-family:inherit;transition:transform .16s ease,box-shadow .16s ease,filter .16s ease;opacity:.78}
+.priority-filter-buttons .priority-chip:hover{transform:translateY(-1px);filter:saturate(1.12);opacity:1}
+.priority-filter-buttons .priority-chip:focus-visible{outline:3px solid rgba(11,152,120,.28);outline-offset:3px}
+.priority-filter-buttons .priority-chip.is-active{opacity:1;box-shadow:0 0 0 3px #fff,0 0 0 6px rgba(11,152,120,.24),0 7px 16px rgba(19,49,45,.14);transform:translateY(-1px)}
+.priority-chip.all{background:#e8f1ef;color:#173f37;border-color:#9dbcb5}
+.priority-filter-buttons .priority-chip.all.is-active{background:#173f37;color:#fff;border-color:#173f37}
+@media(max-width:520px){.priority-filter-buttons{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));width:100%}.priority-filter-buttons .priority-chip{width:100%}}

@@ -8,7 +8,7 @@
   <meta name="description" content="Sistema interactivo para medir, interpretar y gestionar la huella de carbono educativa a partir del consumo de servicios públicos." />
   <link rel="icon" type="image/png" href="assets/los-yoguis-logo.png" />
   <link rel="apple-touch-icon" href="assets/los-yoguis-logo.png" />
-  <link rel="stylesheet" href="styles.css?v=48-ranking-mes-buscador" />
+  <link rel="stylesheet" href="styles.css?v=49-ranking-prioridad" />
 </head>
 <body>
   <div class="invoice-loading active" id="invoiceLoading" role="status" aria-live="assertive" aria-hidden="false">
@@ -185,11 +185,12 @@
         </label>
         <button id="refreshRankingBtn" class="secondary ranking-refresh-btn" type="button">↻ Actualizar ranking</button>
       </div>
-      <div class="ranking-toolbar" aria-label="Leyenda del ranking">
-        <div class="priority-legend" aria-label="Leyenda de prioridad">
-          <span class="priority-chip high">Alta</span>
-          <span class="priority-chip medium">Media</span>
-          <span class="priority-chip low">Preventiva</span>
+      <div class="ranking-toolbar" aria-label="Filtros por prioridad del ranking">
+        <div id="rankingPriorityFilters" class="priority-legend priority-filter-buttons" role="group" aria-label="Filtrar instituciones por prioridad">
+          <button type="button" class="priority-chip all is-active" data-priority="" aria-pressed="true">Todas</button>
+          <button type="button" class="priority-chip high" data-priority="high" aria-pressed="false">Alta</button>
+          <button type="button" class="priority-chip medium" data-priority="medium" aria-pressed="false">Media</button>
+          <button type="button" class="priority-chip low" data-priority="low" aria-pressed="false">Preventiva</button>
         </div>
       </div>
       <div id="rankingExtremes" class="ranking-extremes" aria-live="polite"></div>
@@ -444,6 +445,6 @@
   </script>
 
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-  <script defer src="app.js?v=48-ranking-mes-buscador"></script>
+  <script defer src="app.js?v=49-ranking-prioridad"></script>
 </body>
 </html>
