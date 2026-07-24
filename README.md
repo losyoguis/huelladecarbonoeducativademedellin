@@ -275,3 +275,11 @@ La clasificación prioriza coincidencias institucionales conocidas y reglas terr
 - El asistente ya no reutiliza información de otros meses cuando el periodo consultado no tiene datos.
 
 Para probar el proyecto localmente, ejecútalo mediante un servidor web (por ejemplo, Live Server o `python3 -m http.server`) porque los navegadores restringen la lectura de `manifest.json` y PDF al abrir `index.html` directamente con `file://`.
+
+## SiMeCO₂ v53 — Ranking sincronizado con Históricos
+
+- El ranking ahora parte de la misma colección de sedes que utiliza la búsqueda histórica.
+- Las sedes con facturas de agua, aseo u otros servicios, pero sin lectura eléctrica, ya no desaparecen: se muestran al final como **Sin dato eléctrico**.
+- El autocompletado del ranking informa cuántos periodos históricos tiene la sede y cuántos contienen energía.
+- La prioridad Alta, Media o Preventiva solo se calcula cuando existe una lectura eléctrica válida; no se inventan consumos de 0 kWh para datos ausentes.
+- El resumen del ranking muestra cuántas sedes tienen energía y cuántas siguen pendientes de asociación o lectura eléctrica.

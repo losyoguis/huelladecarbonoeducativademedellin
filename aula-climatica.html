@@ -295,8 +295,8 @@
       <div class="section-head">
         <div>
           <span class="section-kicker">Priorización</span>
-          <h2>Ranking de sedes por consumo eléctrico total</h2>
-          <p class="muted">Visualización principal con kWh acumulados, toneladas de CO₂e y árboles requeridos por sede.</p>
+          <h2>Ranking de sedes por consumo eléctrico registrado</h2>
+          <p class="muted">Incluye todas las sedes presentes en los históricos. Las que aún no tienen lectura eléctrica aparecen al final como “Sin dato eléctrico”.</p>
         </div>
       </div>
       <div class="priority-legend" aria-label="Leyenda de prioridad">
@@ -305,7 +305,7 @@
         <span class="priority-chip low">Prioridad preventiva</span>
       </div>
       <div class="chart-card environmental-ranking-chart">
-        <canvas id="siteChart" width="1100" height="500" aria-label="Ranking de sedes por consumo eléctrico y árboles requeridos"></canvas>
+        <canvas id="siteChart" width="1100" height="500" aria-label="Ranking de sedes por consumo eléctrico registrado, incluyendo sedes pendientes de dato eléctrico"></canvas>
       </div>
       <div class="intro-slide-controls" aria-label="Controles de presentación inicial">
         <button type="button" class="intro-control intro-back" data-intro-action="back" aria-label="Diapositiva anterior">← <span>Atrás</span></button>
@@ -451,6 +451,6 @@
   
   <script defer src="data/registros.js?v=1"></script>
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-  <script defer src="app.js?v=60-facturas-energia"></script>
+  <script defer src="app.js?v=53-ranking-historicos"></script>
 </body>
 </html>

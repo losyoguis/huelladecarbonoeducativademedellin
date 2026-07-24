@@ -1,0 +1,27 @@
+SiMeCO₂ v53 — Ranking sincronizado con Históricos
+Fecha: 23 de julio de 2026
+
+PROBLEMA CORREGIDO
+Algunas instituciones aparecían en la búsqueda de Históricos, pero no podían localizarse en el ranking porque sus registros correspondían a agua, aseo u otros servicios y no contenían una lectura eléctrica. El ranking descartaba esos registros mediante el filtro energyKwh > 0.
+
+SOLUCIÓN APLICADA
+1. El ranking ahora utiliza la misma colección de instituciones y sedes que la búsqueda histórica.
+2. Las sedes sin lectura eléctrica permanecen visibles al final del ranking con la etiqueta “Sin dato eléctrico”.
+3. No se interpreta la ausencia de lectura como un consumo real de 0 kWh.
+4. El autocompletado informa los periodos históricos y la cobertura eléctrica de cada sede.
+5. Los filtros de prioridad Alta, Media y Preventiva solo incluyen sedes con una lectura eléctrica válida.
+6. El resumen informa cuántas sedes tienen datos eléctricos y cuántas están pendientes.
+7. Un valor eléctrico explícito de 0 kWh se conserva como lectura válida y se diferencia de un dato ausente.
+
+ARCHIVOS ACTUALIZADOS
+- app.js
+- app.min.js
+- index.html
+- dashboard.html
+- aula-climatica.html
+- styles.css
+- styles.min.css
+- README.md
+
+ARCHIVO CREADO
+- CAMBIOS-v53.txt

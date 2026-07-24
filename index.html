@@ -238,8 +238,8 @@
       <div class="section-head">
         <div>
           <span class="section-kicker">Priorización</span>
-          <h2>Ranking de sedes por consumo eléctrico total</h2>
-          <p class="muted">Visualización principal con kWh acumulados, toneladas de CO₂e y árboles requeridos por sede.</p>
+          <h2>Ranking de sedes por consumo eléctrico registrado</h2>
+          <p class="muted">Incluye todas las sedes presentes en los históricos. Las que aún no tienen lectura eléctrica aparecen al final como “Sin dato eléctrico”.</p>
         </div>
       </div>
       <div class="ranking-filter-bar" aria-label="Filtros y búsqueda del ranking">
@@ -252,7 +252,7 @@
             <button id="clearRankingSearchBtn" class="clear-search" type="button" title="Borrar búsqueda" aria-label="Borrar búsqueda">×</button>
             <div id="rankingSiteSuggestions" class="autocomplete-list" role="listbox" hidden></div>
           </div>
-          <small>Las sugerencias muestran el puesto de cada sede y te llevan directamente a su página.</small>
+          <small>Las sugerencias consultan los mismos históricos; también muestran sedes pendientes de lectura eléctrica.</small>
         </label>
         <button id="refreshRankingBtn" class="secondary ranking-refresh-btn" type="button">↻ Actualizar ranking</button>
       </div>
@@ -265,14 +265,14 @@
       </div>
       <div id="rankingExtremes" class="ranking-extremes" aria-live="polite"></div>
       <div class="chart-card environmental-ranking-chart">
-        <canvas id="siteChart" width="1100" height="500" aria-label="Ranking de sedes por consumo eléctrico y árboles requeridos"></canvas>
+        <canvas id="siteChart" width="1100" height="500" aria-label="Ranking de sedes por consumo eléctrico registrado, incluyendo sedes pendientes de dato eléctrico"></canvas>
       </div>
       <div class="ranking-pagination" aria-label="Paginación del ranking">
         <button id="rankingFirstBtn" class="secondary" type="button" title="Ver las primeras 10 sedes">« Primera</button>
         <button id="rankingPrevBtn" class="secondary" type="button" title="Ver las 10 sedes anteriores">‹ Anteriores</button>
         <strong id="rankingPageInfo">1–10 de 0 sedes</strong>
         <button id="rankingNextBtn" class="secondary" type="button" title="Ver las siguientes 10 sedes">Siguientes ›</button>
-        <button id="rankingLastBtn" class="secondary" type="button" title="Ver las últimas sedes y conocer la de menor consumo">Última »</button>
+        <button id="rankingLastBtn" class="secondary" type="button" title="Ver las últimas sedes, incluidas las pendientes de dato eléctrico">Última »</button>
       </div>
     </section>
 
@@ -558,7 +558,7 @@
   </script>
 
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-  <script defer src="app.js?v=52-progreso-mobile"></script>
-  <script defer src="assistant.js?v=52-progreso-mobile"></script>
+  <script defer src="app.js?v=53-ranking-historicos"></script>
+  <script defer src="assistant.js?v=53-ranking-historicos"></script>
 </body>
 </html>

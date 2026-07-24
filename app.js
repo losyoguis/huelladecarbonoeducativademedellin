@@ -1,4 +1,4 @@
-/* SiMeCO2 Servicios Públicos - v52 progreso real de carga y experiencia móvil */
+/* SiMeCO2 Servicios Públicos - v53 ranking sincronizado con históricos */
 let FACTOR_CO2_KG_KWH = 0.126; // kg CO2e/kWh. Ajustable desde el dashboard.
 let TREE_CO2_KG_YEAR = 22; // kg CO2e capturados por árbol al año. Ajustable desde el dashboard.
 const FACTOR_KEY = 'simeco2_factores_ambientales_v8';
@@ -1517,22 +1517,42 @@ function dashboardRecords(){
   const service = '';
   return state.records.filter(r=>recordMatchesTerritory(r,territoryFilterValues('dashboard')) && recordMatchesSearch(r,q) && (!dashboardSiteKey || siteKey(r.site,r.address)===dashboardSiteKey) && (!p || r.period===p) && serviceHasValue(r,service) && Number(r.energyKwh)>0);
 }
+function recordHasEnergyReading(record){
+  if(!record) return false;
+  const raw=record.energyKwh;
+  return raw!==null && raw!==undefined && raw!=='' && Number.isFinite(Number(raw));
+}
 function aggregateBySite(records){
   const map = {};
   for(const r of records){
     const key = siteKey(r.site, r.address);
-    if(!map[key]) map[key] = {site:r.site, address:r.address||'', periods:new Set(), energyKwh:0, co2kg:0, count:0};
-    map[key].periods.add(r.period);
-    map[key].energyKwh += Number(r.energyKwh)||0;
-    map[key].co2kg += Number(r.co2kg)||0;
-    map[key].count += 1;
+    if(!map[key]) map[key] = {
+      site:r.site||'Sin nombre', address:r.address||'', periods:new Set(), energyPeriods:new Set(),
+      energyKwh:0, co2kg:0, count:0, energyRecordCount:0
+    };
+    const item=map[key];
+    if(r.period) item.periods.add(r.period);
+    if(recordHasEnergyReading(r)){
+      item.energyPeriods.add(r.period||`registro-${item.count}`);
+      item.energyKwh += Number(r.energyKwh)||0;
+      item.co2kg += Number(r.co2kg)||((Number(r.energyKwh)||0)*FACTOR_CO2_KG_KWH);
+      item.energyRecordCount += 1;
+    }
+    item.count += 1;
   }
-  return Object.values(map).map(x=>({
-    ...x,
-    periodCount:x.periods.size,
-    trees: Math.ceil((x.co2kg||0) / TREE_CO2_KG_YEAR),
-    avgKwhMonth: x.periods.size ? x.energyKwh / x.periods.size : x.energyKwh
-  })).sort((a,b)=>b.energyKwh-a.energyKwh);
+  return Object.values(map).map(x=>{
+    const periodCount=x.periods.size;
+    const energyPeriodCount=x.energyPeriods.size;
+    return {
+      ...x,
+      periodCount,
+      energyPeriodCount,
+      missingEnergyPeriodCount:Math.max(0,periodCount-energyPeriodCount),
+      hasEnergy:x.energyRecordCount>0,
+      trees:Math.ceil((x.co2kg||0)/TREE_CO2_KG_YEAR),
+      avgKwhMonth:energyPeriodCount ? x.energyKwh/energyPeriodCount : 0
+    };
+  }).sort((a,b)=>Number(b.hasEnergy)-Number(a.hasEnergy) || b.energyKwh-a.energyKwh || String(a.site).localeCompare(String(b.site),'es'));
 }
 function renderDashboard(){
   if(!$('environmentBody')) return;
@@ -1581,8 +1601,15 @@ function renderRankingPeriodOptions(){
   else{select.value='';rankingPeriod='';}
 }
 function getFullRankingRows(){
-  const records=(state.records||[]).filter(r=>Number(r.energyKwh)>0 && (!rankingPeriod || r.period===rankingPeriod));
-  return aggregateBySite(records).filter(row=>!rankingPriority || classifyEnergyIntensity(row.avgKwhMonth).cls===rankingPriority);
+  // El ranking parte de la misma colección que alimenta Históricos. Así, una sede
+  // con facturas de agua, aseo u otro servicio sigue siendo localizable aunque aún
+  // no tenga una lectura eléctrica asociada. Esas sedes se ubican al final y se
+  // identifican como “Sin dato eléctrico”, sin inventar un consumo de 0 kWh.
+  const records=(state.records||[]).filter(r=>!rankingPeriod || r.period===rankingPeriod);
+  return aggregateBySite(records).filter(row=>{
+    if(!rankingPriority) return true;
+    return row.hasEnergy && classifyEnergyIntensity(row.avgKwhMonth).cls===rankingPriority;
+  });
 }
 function updateRankingPriorityButtons(){
   document.querySelectorAll('#rankingPriorityFilters [data-priority]').forEach(btn=>{
@@ -1646,7 +1673,12 @@ function renderRankingSuggestions(query=''){
   if(!list||!input) return;
   const matches=rankingMatches(query);
   rankingAutocompleteIndex=-1;
-  list.innerHTML=matches.length?matches.map((o,i)=>`<button type="button" class="autocomplete-option" role="option" data-ranking-key="${escapeHtml(o.key)}" data-ranking-index="${o.index}"><span><strong>${highlightRankingMatch(o.site,query)}</strong><small>${highlightRankingMatch(o.address||'Sin dirección',query)}</small></span><em>Puesto ${o.index+1}</em></button>`).join(''):'<div class="autocomplete-empty">No se encontraron instituciones o sedes.</div>';
+  list.innerHTML=matches.length?matches.map((o,i)=>{
+    const coverage=o.hasEnergy
+      ? `${o.energyPeriodCount} periodo${o.energyPeriodCount===1?'':'s'} con energía de ${o.periodCount} histórico${o.periodCount===1?'':'s'}`
+      : `${o.periodCount} periodo${o.periodCount===1?'':'s'} histórico${o.periodCount===1?'':'s'} · Sin dato eléctrico`;
+    return `<button type="button" class="autocomplete-option" role="option" data-ranking-key="${escapeHtml(o.key)}" data-ranking-index="${o.index}"><span><strong>${highlightRankingMatch(o.site,query)}</strong><small>${highlightRankingMatch(o.address||'Sin dirección',query)} · ${escapeHtml(coverage)}</small></span><em>${o.hasEnergy?`Puesto ${o.index+1}`:'Pendiente'}</em></button>`;
+  }).join(''):'<div class="autocomplete-empty">No se encontraron instituciones o sedes en los históricos.</div>';
   list.hidden=false; input.setAttribute('aria-expanded','true');
 }
 function handleRankingSearchInput(){
@@ -1721,10 +1753,10 @@ function drawSiteChart(rows){
   ctx.fillStyle='#13312d';
   ctx.font='bold 17px Arial';
   ctx.textAlign='left';
-  ctx.fillText('Ranking de sedes por consumo eléctrico total (kWh)',24,34);
+  ctx.fillText('Ranking de sedes por consumo eléctrico registrado (kWh)',24,34);
   ctx.font='12px Arial';
   ctx.fillStyle='#637772';
-  ctx.fillText(`Ordenado de mayor a menor consumo · ${rankingPeriod ? groupLabel(rankingPeriod,'month') : 'todos los meses'} · ${rankingPriority ? 'prioridad '+({high:'alta',medium:'media',low:'preventiva'}[rankingPriority]||rankingPriority) : 'todas las prioridades'} · vista de 10 sedes.`,24,54);
+  ctx.fillText(`Mayor a menor consumo · ${rankingPeriod ? groupLabel(rankingPeriod,'month') : 'todos los meses'} · ${rankingPriority ? 'prioridad '+({high:'alta',medium:'media',low:'preventiva'}[rankingPriority]||rankingPriority) : 'incluye sedes sin dato eléctrico al final'} · vista de 10 sedes.`,24,54);
 
   const total=rows.length;
   const pages=Math.max(1,Math.ceil(total/RANKING_PAGE_SIZE));
@@ -1735,17 +1767,21 @@ function drawSiteChart(rows){
   if($('rankingPageInfo')) $('rankingPageInfo').textContent=total ? `${start+1}–${end} de ${total} sedes · Página ${rankingPage+1} de ${pages}` : 'Sin sedes disponibles';
   ['rankingFirstBtn','rankingPrevBtn'].forEach(id=>{if($(id)) $(id).disabled=rankingPage===0||!total;});
   ['rankingNextBtn','rankingLastBtn'].forEach(id=>{if($(id)) $(id).disabled=rankingPage>=pages-1||!total;});
-  const most=rows[0], least=rows[rows.length-1];
-  if($('rankingExtremes')) $('rankingExtremes').innerHTML=total ? `<article><span>Mayor consumo</span><strong>${escapeHtml(most.site)}</strong><small>${fmt(most.energyKwh)} kWh acumulados</small></article><article><span>Menor consumo</span><strong>${escapeHtml(least.site)}</strong><small>${fmt(least.energyKwh)} kWh acumulados</small></article>` : '<p>No hay datos para construir el ranking.</p>';
+  const measuredRows=rows.filter(r=>r.hasEnergy);
+  const pendingRows=rows.filter(r=>!r.hasEnergy);
+  const most=measuredRows[0], least=measuredRows[measuredRows.length-1];
+  if($('rankingExtremes')){
+    $('rankingExtremes').innerHTML=total ? `${most?`<article><span>Mayor consumo</span><strong>${escapeHtml(most.site)}</strong><small>${fmt(most.energyKwh)} kWh registrados</small></article>`:'<article><span>Mayor consumo</span><strong>Sin datos eléctricos</strong><small>No hay lecturas para comparar</small></article>'}${least?`<article><span>Menor consumo con dato</span><strong>${escapeHtml(least.site)}</strong><small>${fmt(least.energyKwh)} kWh registrados</small></article>`:'<article><span>Menor consumo con dato</span><strong>Sin datos eléctricos</strong><small>No hay lecturas para comparar</small></article>'}<article><span>Cobertura del ranking</span><strong>${measuredRows.length} con energía · ${pendingRows.length} pendientes</strong><small>${total} sedes presentes en históricos</small></article>` : '<p>No hay sedes históricas para construir el ranking.</p>';
+  }
 
-  if(!visible.length){ ctx.fillStyle='#13312d'; ctx.fillText('Sin datos para graficar',24,92); return; }
+  if(!visible.length){ ctx.fillStyle='#13312d'; ctx.fillText('Sin datos históricos para graficar',24,92); return; }
   const padL = 255;
   const padR = 28;
   const valueX = Math.max(735, c.width - 330);
   const top = 82;
   const rowH = 36;
   const barH = 20;
-  const max = Math.max(...rows.map(r=>r.energyKwh),1);
+  const max = Math.max(...measuredRows.map(r=>r.energyKwh),1);
   const maxBarW = Math.max(180, valueX - padL - 18);
   ctx.font='12px Arial';
   visible.forEach((r,i)=>{
@@ -1762,17 +1798,28 @@ function drawSiteChart(rows){
     ctx.font=isSelected?'bold 12px Arial':'12px Arial';
     ctx.textAlign='right';
     ctx.fillText(label, padL-12, y+15);
-    const bw = Math.max(8, (r.energyKwh/max)*maxBarW);
-    const grad = ctx.createLinearGradient(padL,0,padL+bw,0);
-    grad.addColorStop(0,'#0b9878');
-    grad.addColorStop(1,'#0fc39a');
-    ctx.fillStyle=grad;
-    roundRect(ctx,padL,y,bw,barH,8); ctx.fill();
+    if(r.hasEnergy){
+      const bw = Math.max(5, (r.energyKwh/max)*maxBarW);
+      const grad = ctx.createLinearGradient(padL,0,padL+bw,0);
+      grad.addColorStop(0,'#0b9878');
+      grad.addColorStop(1,'#0fc39a');
+      ctx.fillStyle=grad;
+      roundRect(ctx,padL,y,bw,barH,8); ctx.fill();
+    }else{
+      ctx.save();
+      ctx.setLineDash([6,5]);
+      ctx.strokeStyle='#9cafaa';
+      ctx.lineWidth=1.5;
+      roundRect(ctx,padL,y,maxBarW,barH,8); ctx.stroke();
+      ctx.restore();
+    }
     const available = c.width - valueX - padR;
-    const fullLabel = `${fmt(r.energyKwh)} kWh · ${fmt(r.co2kg/1000)} t CO₂e · ${fmt(r.trees)} árboles`;
-    ctx.fillStyle='#13312d';
+    const fullLabel = r.hasEnergy
+      ? `${fmt(r.energyKwh)} kWh · ${fmt(r.co2kg/1000)} t CO₂e · ${fmt(r.trees)} árboles · ${r.energyPeriodCount}/${r.periodCount} periodos`
+      : `Sin dato eléctrico · ${r.periodCount} periodo${r.periodCount===1?'':'s'} histórico${r.periodCount===1?'':'s'}`;
+    ctx.fillStyle=r.hasEnergy?'#13312d':'#637772';
     ctx.textAlign='left';
-    ctx.font='bold 11.5px Arial';
+    ctx.font=r.hasEnergy?'bold 11.5px Arial':'italic 11.5px Arial';
     ctx.fillText(fitCanvasText(ctx, fullLabel, available), valueX, y+15);
   });
   ctx.textAlign='left';
