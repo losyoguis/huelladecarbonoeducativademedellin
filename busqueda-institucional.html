@@ -6,7 +6,7 @@
 <title>Búsqueda institucional · Facturas de servicios públicos · SiMeCO₂</title>
 <meta name="description" content="Consulta por institución educativa el resumen mensual de sus facturas de servicios públicos.">
 <link rel="icon" href="assets/los-yoguis-logo.png" type="image/png">
-<link rel="stylesheet" href="styles.css?v=61-institucional-visible">
+<link rel="stylesheet" href="styles.css?v=54-observacion-busqueda">
 </head>
 <body class="standalone-page institutional-page app-ready" data-page="institutional">
 <header class="module-page-header" id="module-top">
@@ -34,8 +34,9 @@
     </div>
     <div class="institutional-search-grid">
       <label class="institutional-search-field">Institución educativa o sede
-        <input id="institutionSearch" type="search" autocomplete="off" placeholder="Ejemplo: Manuel J. Betancur" aria-controls="institutionSuggestions">
+        <input id="institutionSearch" type="search" autocomplete="off" placeholder="Escribe el nombre o la dirección de la sede" aria-controls="institutionSuggestions">
         <div id="institutionSuggestions" class="institution-suggestions" role="listbox" hidden></div>
+        <small class="search-address-note"><strong>Sugerencia:</strong> si el nombre de la sede no aparece, búscala por la dirección registrada en la factura.</small>
       </label>
       <label>Año
         <select id="institutionYear"><option value="">Todos</option></select>

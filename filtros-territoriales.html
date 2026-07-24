@@ -4,7 +4,7 @@
 <title>Búsqueda territorial de sedes educativas · SiMeCO₂</title>
 <meta content="Filtros territoriales para consultar sedes educativas de Medellín." name="description"/>
 <link crossorigin="" href="https://cdnjs.cloudflare.com" rel="preconnect"/><link href="//cdnjs.cloudflare.com" rel="dns-prefetch"/>
-<link href="assets/los-yoguis-logo.png" rel="icon" type="image/png"/><link href="styles.css?v=52-datos-render-estable" rel="stylesheet"/>
+<link href="assets/los-yoguis-logo.png" rel="icon" type="image/png"/><link href="styles.css?v=54-observacion-busqueda" rel="stylesheet"/>
 </head><body class="standalone-page territorial-page app-ready" data-page="territorial">
 <header class="module-page-header" id="module-top"><a class="module-back-button" href="index.html#inicio">← Volver al inicio</a><div><span class="section-kicker">Búsqueda territorial</span><h1>Filtros territoriales de sedes educativas</h1><p>Consulta exclusivamente las sedes y consumos extraídos de las facturas de energía. Filtra por nombre, periodo y clasificación territorial registrada.</p></div><div class="module-page-links"><a href="dashboard.html">Dashboard</a><a aria-current="page" href="filtros-territoriales.html">Búsqueda territorial</a><a href="aula-climatica.html">Aula climática</a></div></header>
 <main class="standalone-module-main"><section class="module-intro-banner"><span aria-hidden="true">🔎</span><div><strong>Consulta territorial independiente</strong><p>Los filtros funcionan en cascada y actualizan automáticamente el ranking de resultados.</p></div></section><section class="panel advanced-site-filters territorial-filter-panel embedded-filter-panel" id="filtros-sedes">
@@ -22,8 +22,9 @@
 </div>
 <div class="site-filter-grid territorial-filter-grid">
 <label class="filter-search-wide">Buscar dentro de los filtros
-          <input autocomplete="off" id="globalSiteSearch" list="siteSearchSuggestions" placeholder="Escribe sede, núcleo, comuna, barrio o vereda" type="search"/>
+          <input autocomplete="off" id="globalSiteSearch" list="siteSearchSuggestions" placeholder="Escribe nombre, dirección, núcleo, comuna, barrio o vereda" type="search"/>
 <datalist id="siteSearchSuggestions"></datalist>
+<small class="search-address-note"><strong>Sugerencia:</strong> si el nombre de la sede no aparece, búscala por la dirección registrada en la factura.</small>
 </label>
 <label>Zona territorial
           <select id="zoneFilter"><option value="">Todas</option></select>

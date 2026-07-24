@@ -1316,3 +1316,37 @@ img{content-visibility:auto}
   .section-mobile-nav button small{font-size:.54rem}
 }
 @keyframes mobileSectionIn{from{opacity:0;transform:translateX(8px)}to{opacity:1;transform:none}}
+
+/* v54: observación visible para búsquedas por nombre o dirección */
+.search-address-note{
+  display:block;
+  margin-top:7px;
+  padding:8px 10px;
+  border:1px solid #b9ded3;
+  border-radius:11px;
+  background:#eef9f5;
+  color:#315f56;
+  font-size:.78rem;
+  font-weight:650;
+  line-height:1.4;
+}
+.search-address-note::before{
+  content:"⌕";
+  display:inline-grid;
+  place-items:center;
+  width:20px;
+  height:20px;
+  margin-right:6px;
+  border-radius:50%;
+  background:#d7f1e8;
+  color:#086d58;
+  font-weight:900;
+  vertical-align:middle;
+}
+.search-address-note strong{color:#075846}
+.search-secondary-hint{display:block;margin-top:6px;color:var(--muted,#607b75);font-size:.76rem}
+.filter-search-wide .search-address-note,.institutional-search-field .search-address-note{font-weight:650}
+@media(max-width:620px){
+  .search-address-note{padding:8px 9px;font-size:.76rem}
+}
+

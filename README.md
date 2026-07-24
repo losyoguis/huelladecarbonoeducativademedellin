@@ -283,3 +283,11 @@ Para probar el proyecto localmente, ejecútalo mediante un servidor web (por eje
 - El autocompletado del ranking informa cuántos periodos históricos tiene la sede y cuántos contienen energía.
 - La prioridad Alta, Media o Preventiva solo se calcula cuando existe una lectura eléctrica válida; no se inventan consumos de 0 kWh para datos ausentes.
 - El resumen del ranking muestra cuántas sedes tienen energía y cuántas siguen pendientes de asociación o lectura eléctrica.
+
+## SiMeCO₂ v54 — Orientación para búsquedas por dirección
+
+- Se agregó una observación visible en los buscadores de Histórico, Ranking, Informe por sede, Facturas por I.E. y las consultas institucionales/territoriales.
+- El mensaje indica: **“Si el nombre de la sede no aparece, búscala por la dirección registrada en la factura.”**
+- Se actualizaron los textos de ayuda y los marcadores de búsqueda para dejar claro que el sistema acepta nombres y direcciones.
+- La observación es responsive y conserva una lectura clara en computador, tableta y móvil.
+

@@ -9,7 +9,7 @@
   <meta name="description" content="Sistema interactivo para medir, interpretar y gestionar la huella de carbono educativa a partir del consumo de servicios públicos." />
   <link rel="icon" type="image/png" href="assets/los-yoguis-logo.png" />
   <link rel="apple-touch-icon" href="assets/los-yoguis-logo.png" />
-  <link rel="stylesheet" href="styles.css?v=52-datos-render-estable" />
+  <link rel="stylesheet" href="styles.css?v=54-observacion-busqueda" />
 </head>
 <body class="standalone-page aula-page app-ready" data-page="aula">
   <header class="module-page-header" id="module-top">
@@ -231,8 +231,9 @@
 
       <div class="site-filter-grid territorial-filter-grid">
         <label class="filter-search-wide">Buscar dentro de los filtros
-          <input id="globalSiteSearch" type="search" list="siteSearchSuggestions" placeholder="Escribe sede, núcleo, comuna, barrio o vereda" autocomplete="off" />
+          <input id="globalSiteSearch" type="search" list="siteSearchSuggestions" placeholder="Escribe nombre, dirección, núcleo, comuna, barrio o vereda" autocomplete="off" />
           <datalist id="siteSearchSuggestions"></datalist>
+          <small class="search-address-note"><strong>Sugerencia:</strong> si el nombre de la sede no aparece, búscala por la dirección registrada en la factura.</small>
         </label>
         <label>Zona territorial
           <select id="zoneFilter"><option value="">Todas</option></select>
