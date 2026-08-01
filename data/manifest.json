@@ -1,21 +1,91 @@
 {
   "description": "Facturas disponibles para actualización automática de SiMeCO₂.",
+  "dataVersion": "v55-summary-20260801",
   "files": [
-    "1-2025Enero.pdf",
-    "1-2026Enero.pdf",
-    "11-2025Noviembre.pdf",
-    "12-2025Diciembre.pdf",
-    "2-2025Febrero.pdf",
-    "2-2026Febrero.pdf",
-    "3-2025Marzo.pdf",
-    "3-2026Marzo.pdf",
-    "4-2025Abril.pdf",
-    "4-2026Abril.pdf",
-    "5-2025Mayo.pdf",
-    "5-2026Mayo.pdf",
-    "6-2025Junio.pdf",
-    "6-2026Junio.pdf",
-    "7-2025julio.pdf",
-    "8-2025Agosto.pdf"
+    {
+      "name": "1-2025Enero.pdf",
+      "url": "data/1-2025Enero.pdf",
+      "sha": "b55de03f59cbbac27302f0bdbf8c8a74e972bfca"
+    },
+    {
+      "name": "1-2026Enero.pdf",
+      "url": "data/1-2026Enero.pdf",
+      "sha": "261963c6ccef0beb30561cb32627a7d6805b0de7"
+    },
+    {
+      "name": "11-2025Noviembre.pdf",
+      "url": "data/11-2025Noviembre.pdf",
+      "sha": "391857b32234462192973dd0ff41766700294e3b"
+    },
+    {
+      "name": "12-2025Diciembre.pdf",
+      "url": "data/12-2025Diciembre.pdf",
+      "sha": "9e4c88f6316994f248d3af40eeab82917f2fb087"
+    },
+    {
+      "name": "2-2025Febrero.pdf",
+      "url": "data/2-2025Febrero.pdf",
+      "sha": "0cac489f2904b2d986c8f42dd0891439be6bf7e3"
+    },
+    {
+      "name": "2-2026Febrero.pdf",
+      "url": "data/2-2026Febrero.pdf",
+      "sha": "207221245c5b0cc19e87d19b5b42bfc3f8a82a74"
+    },
+    {
+      "name": "3-2025Marzo.pdf",
+      "url": "data/3-2025Marzo.pdf",
+      "sha": "a748fb933cba3c8ff85555f980069a10fa0f6bee"
+    },
+    {
+      "name": "3-2026Marzo.pdf",
+      "url": "data/3-2026Marzo.pdf",
+      "sha": "b80531c4d7fd370f00fab03cbb1a8d1c63cfc5d1"
+    },
+    {
+      "name": "4-2025Abril.pdf",
+      "url": "data/4-2025Abril.pdf",
+      "sha": "72574f4cf53cdf6fccb5c844b5edfaa5e4e6477a"
+    },
+    {
+      "name": "4-2026Abril.pdf",
+      "url": "data/4-2026Abril.pdf",
+      "sha": "90edb65c993aa0ddeffc648eb3b1f2bc93cc7b49"
+    },
+    {
+      "name": "5-2025Mayo.pdf",
+      "url": "data/5-2025Mayo.pdf",
+      "sha": "79d7bd581f453f76eab8db9448f5ef8390181b49"
+    },
+    {
+      "name": "5-2026Mayo.pdf",
+      "url": "data/5-2026Mayo.pdf",
+      "sha": "d0e24b8a6667d6dab495e6fb59100e7475a23e6a"
+    },
+    {
+      "name": "6-2025Junio.pdf",
+      "url": "data/6-2025Junio.pdf",
+      "sha": "d4edd2f78848c00bcc424d154ad6bd4e259d409e"
+    },
+    {
+      "name": "6-2026Junio.pdf",
+      "url": "data/6-2026Junio.pdf",
+      "sha": "48172a997a71adcd92f2e03c926859b87e7d8139"
+    },
+    {
+      "name": "7-2025julio.pdf",
+      "url": "data/7-2025julio.pdf",
+      "sha": "2a87ac4690d7e341707fb5b727019fae9c3e1771"
+    },
+    {
+      "name": "7-2026julio.pdf",
+      "url": "data/7-2026julio.pdf",
+      "sha": "03ce234fd290ad7df7c348cce7e39975ee00a983"
+    },
+    {
+      "name": "8-2025Agosto.pdf",
+      "url": "data/8-2025Agosto.pdf",
+      "sha": "7fdc0b99d6a728ea8dbb6f25b0dba6503547fa45"
+    }
   ]
 }
