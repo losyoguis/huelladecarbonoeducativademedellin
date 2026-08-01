@@ -1350,3 +1350,18 @@ img{content-visibility:auto}
   .search-address-note{padding:8px 9px;font-size:.76rem}
 }
 
+
+/* v55 · Fuente verificada del histórico */
+.history-source-note{
+  margin:14px 0 10px;
+  padding:12px 14px;
+  border:1px solid #bfe4d9;
+  border-left:5px solid #0b9878;
+  border-radius:12px;
+  background:#f2fbf8;
+  color:#315f56;
+  font-size:.92rem;
+  line-height:1.45;
+}
+.history-source-note strong{color:#075846}
+@media (max-width:700px){.history-source-note{font-size:.84rem;padding:10px 12px}}

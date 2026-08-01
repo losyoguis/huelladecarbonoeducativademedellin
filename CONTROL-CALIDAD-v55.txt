@@ -1,0 +1,55 @@
+CONTROL DE CALIDAD SiMeCO₂ v55
+Fecha: 1 de agosto de 2026
+
+CRITERIO PRINCIPAL
+El histórico general usa el valor ACTUAL de energía del Resumen de facturación de la página 1 de cada PDF.
+El detalle por sede se conserva para búsquedas, ranking, informes y planes de gestión.
+
+COMPARACIÓN ENERGÉTICA
+Periodo | Detalle sedes (kWh) | Resumen oficial (kWh) | Diferencia
+2025-01 | 690,306.00 | 710,596.02 | -2.86%
+2025-02 | 832,085.00 | 854,824.14 | -2.66%
+2025-03 | 1,227,471.00 | 1,237,425.50 | -0.80%
+2025-04 | 1,227,022.00 | 1,236,143.74 | -0.74%
+2025-05 | 1,147,674.00 | 1,161,043.02 | -1.15%
+2025-06 | 1,243,945.00 | 1,259,958.95 | -1.27%
+2025-07 | 974,616.00 | 987,201.89 | -1.27%
+2025-08 | 1,213,915.00 | 1,228,480.90 | -1.19%
+2025-11 | 1,218,893.00 | 1,229,352.43 | -0.85%
+2025-12 | 1,163,500.00 | 1,169,243.39 | -0.49%
+2026-01 | 735,898.00 | 755,186.76 | -2.55%
+2026-02 | 818,241.00 | 833,873.56 | -1.87%
+2026-03 | 1,236,359.00 | 1,252,323.71 | -1.27%
+2026-04 | 1,253,680.00 | 1,266,248.75 | -0.99%
+2026-05 | 1,240,152.00 | 1,255,948.11 | -1.26%
+2026-06 | 1,275,357.00 | 1,284,372.89 | -0.70%
+2026-07 | 0.00 | 1,078,205.60 | Detalle se procesa al abrir la plataforma
+
+Máxima diferencia del detalle precargado frente al resumen oficial: 2.86%.
+Claves duplicadas en registros precargados: 0.
+Registros precargados: 8,150.
+Resúmenes oficiales: 17.
+
+INTEGRIDAD DE ARCHIVOS
+OK | 1-2025Enero.pdf
+OK | 1-2026Enero.pdf
+OK | 11-2025Noviembre.pdf
+OK | 12-2025Diciembre.pdf
+OK | 2-2025Febrero.pdf
+OK | 2-2026Febrero.pdf
+OK | 3-2025Marzo.pdf
+OK | 3-2026Marzo.pdf
+OK | 4-2025Abril.pdf
+OK | 4-2026Abril.pdf
+OK | 5-2025Mayo.pdf
+OK | 5-2026Mayo.pdf
+OK | 6-2025Junio.pdf
+OK | 6-2026Junio.pdf
+OK | 7-2025julio.pdf
+OK | 7-2026julio.pdf
+OK | 8-2025Agosto.pdf
+
+RESULTADO
+APROBADO
+
+Nota: julio de 2026 ya cuenta con total oficial en el histórico. El detalle por sede se consolida automáticamente desde su PDF cuando se abre o actualiza la aplicación.

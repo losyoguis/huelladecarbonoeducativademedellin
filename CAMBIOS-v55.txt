@@ -1,0 +1,56 @@
+SiMeCO₂ v55 — Históricos verificados y caché estable
+Fecha: 1 de agosto de 2026
+
+PROBLEMA ANALIZADO
+La gráfica “Comparativo de energía por periodo (kWh)” podía mostrar resultados diferentes entre una carga y otra. El histórico general estaba sumando los registros detallados que el lector PDF lograba asociar a cada sede. Esa colección podía variar por tres razones:
+1. La caché local conservaba resultados generados por versiones anteriores del lector.
+2. Una factura actualizada podía agregarse sin reemplazar completamente los registros de la versión anterior.
+3. El detalle de algunas facturas se extraía parcialmente según la estructura interna del PDF, aunque el total consolidado de la primera página sí era estable.
+
+CORRECCIÓN PRINCIPAL
+- El histórico general de Medellín ahora toma el valor ACTUAL del “Resumen de facturación” de la primera página de cada PDF.
+- Los 17 periodos disponibles cuentan con un resumen oficial verificado, incluido julio de 2026 con 1.078.205,60 kWh.
+- Al seleccionar una sede, la comparación vuelve a usar exclusivamente sus registros detallados.
+- Se muestra una observación en pantalla que identifica la fuente utilizada en cada caso.
+
+ESTABILIDAD DE DATOS Y CACHÉ
+- Se creó una nueva versión de almacenamiento local: simeco2_servicios_v8.
+- Los datos precargados se usan como base estable al abrir la aplicación.
+- Las facturas se identifican por nombre y huella SHA del archivo.
+- Cuando una factura cambia, el sistema reemplaza sus registros y su resumen; no los duplica.
+- El resumen consolidado se guarda separado de los registros de sede y no afecta el ranking, los conteos institucionales ni la búsqueda.
+- Julio de 2026 se muestra de inmediato en el histórico y su detalle por sede se procesa automáticamente desde el PDF.
+
+OTRAS CORRECCIONES
+- Los indicadores generales de energía, CO₂e, árboles y agua usan los totales oficiales por periodo.
+- El resumen ejecutivo y las alertas de variación mensual usan la misma serie oficial del histórico.
+- El informe histórico PDF identifica si utilizó resumen oficial o detalle por sede.
+- Las etiquetas numéricas de la gráfica se alternan verticalmente para reducir superposiciones.
+- Se añadió un control de calidad reproducible que compara detalle y resumen, verifica duplicados y valida la integridad de cada PDF.
+
+RESULTADO DEL CONTROL DE CALIDAD
+- 8.150 registros detallados precargados.
+- 17 resúmenes oficiales.
+- 0 claves duplicadas.
+- Diferencia máxima entre la suma del detalle precargado y el resumen oficial: 2,86%.
+- 17 de 17 PDF con integridad verificada.
+- Resultado: APROBADO.
+
+ARCHIVOS ACTUALIZADOS
+- index.html
+- dashboard.html
+- aula-climatica.html
+- app.js
+- app.min.js
+- styles.css
+- styles.min.css
+- data/manifest.json
+- README.md
+
+ARCHIVOS CREADOS
+- data/resumenes.json
+- data/resumenes.js
+- tools/generar_resumenes.py
+- tools/validar_historicos.py
+- CONTROL-CALIDAD-v55.txt
+- CAMBIOS-v55.txt

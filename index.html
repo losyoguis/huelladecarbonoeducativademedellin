@@ -168,7 +168,7 @@
       <article>
         <span>Energía acumulada</span>
         <strong id="kKwh">0 kWh</strong>
-        <small>Suma del consumo eléctrico registrado en todas las sedes y periodos analizados.</small>
+        <small>Suma de los totales oficiales de energía del resumen de facturación de cada periodo disponible.</small>
       </article>
       <article>
         <span>Árboles requeridos</span>
@@ -178,7 +178,7 @@
       <article>
         <span>Agua</span>
         <strong id="kWater">0 m³</strong>
-        <small>Volumen total de agua facturada en las sedes educativas durante los periodos disponibles.</small>
+        <small>Volumen total oficial de agua reportado en el resumen de facturación de cada periodo disponible.</small>
       </article>
       <article>
         <span>Aseo/Residuos</span>
@@ -230,6 +230,7 @@
         <button id="compareBtn" class="primary">Comparar</button>
         <button id="downloadHistoryPdfBtn" class="secondary pdf-only-action">Descargar histórico PDF</button>
       </div>
+      <div id="historyDataSourceNote" class="history-source-note" role="note"></div>
       <div id="compareNarrative" class="interpretation-box">Selecciona dos periodos para generar una interpretación automática.</div>
       <div id="compareResult" class="compare-result"></div>
       <canvas id="chart" width="1100" height="420" aria-label="Gráfico comparativo"></canvas>
@@ -561,8 +562,10 @@
     })();
   </script>
 
+  <script defer src="data/registros.js?v=55-datos-base"></script>
+  <script defer src="data/resumenes.js?v=55-historicos-verificados"></script>
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-  <script defer src="app.js?v=54-observacion-busqueda"></script>
-  <script defer src="assistant.js?v=54-observacion-busqueda"></script>
+  <script defer src="app.js?v=55-historicos-verificados"></script>
+  <script defer src="assistant.js?v=55-historicos-verificados"></script>
 </body>
 </html>

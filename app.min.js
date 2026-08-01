@@ -1,9 +1,10 @@
-/* SiMeCO2 Servicios Públicos - v53 ranking sincronizado con históricos */
+/* SiMeCO2 Servicios Públicos - v55 históricos verificados y caché estable */
 let FACTOR_CO2_KG_KWH = 0.126; // kg CO2e/kWh. Ajustable desde el dashboard.
 let TREE_CO2_KG_YEAR = 22; // kg CO2e capturados por árbol al año. Ajustable desde el dashboard.
 const FACTOR_KEY = 'simeco2_factores_ambientales_v8';
-const STORE_KEY = 'simeco2_servicios_v7';
+const STORE_KEY = 'simeco2_servicios_v8';
 const CONFIG_KEY = 'simeco2_repo_config_v7';
+const DATA_VERSION = 'v55-history-summary-20260801';
 
 const $ = (id)=>document.getElementById(id);
 const state = loadStore();
@@ -489,9 +490,59 @@ function saveConfig(){
   localStorage.setItem(CONFIG_KEY, JSON.stringify(cfg));
   log(`Configuración guardada: ${cfg.owner}/${cfg.repo}@${cfg.branch}`);
 }
+function cloneData(value){
+  if(value==null) return value;
+  try{return structuredClone(value);}catch{return JSON.parse(JSON.stringify(value));}
+}
+function canonicalBundle(){
+  const records=Array.isArray(window.SIMECO_REGISTROS) ? cloneData(window.SIMECO_REGISTROS) : [];
+  const bundle=window.SIMECO_SUMMARY_BUNDLE && typeof window.SIMECO_SUMMARY_BUNDLE==='object' ? window.SIMECO_SUMMARY_BUNDLE : {};
+  const summaries=Array.isArray(bundle.summaries) ? cloneData(bundle.summaries) : [];
+  const sourceNames=new Set(records.map(r=>r?.source).filter(Boolean));
+  const files={};
+  Object.entries(bundle.files||{}).forEach(([name,meta])=>{
+    if(sourceNames.has(name)) files[name]={...cloneData(meta), fingerprint:meta.fingerprint||meta.sha||name};
+  });
+  return {records,summaries,files};
+}
+function rebuildSites(records){
+  const sites={};
+  (records||[]).forEach(r=>{ if(r?.site) sites[siteKey(r.site,r.address)]={site:r.site,address:r.address||''}; });
+  return sites;
+}
 function loadStore(){
-  try{ return JSON.parse(localStorage.getItem(STORE_KEY)) || {records:[], files:{}, sites:{}}; }
-  catch{ return {records:[], files:{}, sites:{}}; }
+  const canonical=canonicalBundle();
+  let saved=null;
+  try{ saved=JSON.parse(localStorage.getItem(STORE_KEY)||'null'); }catch{}
+  if(!saved || saved.dataVersion!==DATA_VERSION){
+    return {dataVersion:DATA_VERSION, records:canonical.records, summaries:canonical.summaries, files:canonical.files, sites:rebuildSites(canonical.records)};
+  }
+  const overriddenSources=new Set();
+  Object.entries(saved.files||{}).forEach(([name,meta])=>{
+    const base=canonical.files[name];
+    if(base && meta?.fingerprint && meta.fingerprint!==base.fingerprint) overriddenSources.add(name);
+  });
+  const recordMap=new Map();
+  canonical.records.filter(r=>!overriddenSources.has(r.source)).forEach(r=>recordMap.set(r.key||`${r.period}|${r.source}|${r.page}|${r.site}`,r));
+  (Array.isArray(saved.records)?saved.records:[]).forEach(r=>{
+    const key=r.key||`${r.period}|${r.source}|${r.page}|${r.site}`;
+    if(!recordMap.has(key) || overriddenSources.has(r.source)) recordMap.set(key,r);
+  });
+  const summaryMap=new Map();
+  canonical.summaries.filter(r=>!overriddenSources.has(r.source)).forEach(r=>summaryMap.set(r.source||r.period,r));
+  (Array.isArray(saved.summaries)?saved.summaries:[]).forEach(r=>{
+    const key=r.source||r.period;
+    if(!summaryMap.has(key) || overriddenSources.has(r.source)) summaryMap.set(key,r);
+  });
+  const records=[...recordMap.values()];
+  return {
+    ...saved,
+    dataVersion:DATA_VERSION,
+    records,
+    summaries:[...summaryMap.values()].sort((a,b)=>String(a.period).localeCompare(String(b.period))),
+    files:{...canonical.files,...(saved.files||{})},
+    sites:rebuildSites(records)
+  };
 }
 function saveStore(immediate=false){
   clearTimeout(saveTimer);
@@ -674,7 +725,8 @@ async function scanDataFolderCore(options={}){
   const pending=[];
   for(const file of files){
     const fingerprint=file.sha || file.url || file.name;
-    if(state.files[fingerprint]) skipped++;
+    const previous=state.files[file.name];
+    if(previous && previous.fingerprint===fingerprint) skipped++;
     else pending.push({...file,fingerprint});
   }
 
@@ -806,12 +858,19 @@ async function handleLocalPdf(ev){
   }
 }
 function addImport(result, fingerprint){
-  const existingKeys = new Set(state.records.map(r=>r.key));
-  for(const r of result.records){
-    if(!existingKeys.has(r.key)) state.records.push(r);
-    if(r.site) state.sites[siteKey(r.site,r.address)] = {site:r.site,address:r.address};
+  // Sustituye la versión anterior de la misma factura para evitar duplicados y cachés mezcladas.
+  state.records=(state.records||[]).filter(r=>r.source!==result.fileName);
+  const existingKeys=new Set();
+  for(const r of result.records||[]){
+    if(!existingKeys.has(r.key)){ state.records.push(r); existingKeys.add(r.key); }
   }
-  state.files[fingerprint] = {name:result.fileName, period:result.period, importedAt:new Date().toISOString(), count:result.records.length};
+  if(result.summary){
+    state.summaries=(state.summaries||[]).filter(r=>r.source!==result.fileName && r.period!==result.summary.period);
+    state.summaries.push(result.summary);
+    state.summaries.sort((a,b)=>String(a.period).localeCompare(String(b.period)));
+  }
+  state.sites=rebuildSites(state.records);
+  state.files[result.fileName]={name:result.fileName, fingerprint, period:result.period, importedAt:new Date().toISOString(), count:(result.records||[]).length};
 }
 
 async function parsePdfArrayBuffer(arrayBuffer, fileName, sourceUrl, onProgress=null){
@@ -842,18 +901,14 @@ async function parsePdfArrayBuffer(arrayBuffer, fileName, sourceUrl, onProgress=
     const rec = parseBlock(block, period, fileName, sourceUrl, idx);
     if(rec && hasAnyMeasure(rec)) records.push(rec);
   });
-  // Si no estructura bloques, por lo menos importa resumen consolidado página 1.
-  if(!records.length && (summary.energyKwh || summary.waterM3 || summary.alcM3 || summary.gasM3)){
-    records.push({
-      key:`${period}|RESUMEN CONSOLIDADO|${fileName}`,
-      period, site:'RESUMEN CONSOLIDADO MUNICIPIO DE MEDELLÍN - EDUCACIÓN', address:'Contrato 1538220',
-      waterM3:summary.waterM3, alcM3:summary.alcM3, energyKwh:summary.energyKwh, gasM3:summary.gasM3,
-      waterValue:summary.waterValue, alcValue:summary.alcValue, energyValue:summary.energyValue, gasValue:summary.gasValue,
-      wasteValue:summary.wasteValue, wasteTon:null, co2kg:round((summary.energyKwh||0)*FACTOR_CO2_KG_KWH,2),
-      source:fileName, page:1, sourceUrl, type:'resumen'
-    });
-  }
-  return {fileName, period, records, numPages:pdf.numPages, sample:allText.slice(0,3000)};
+  const summaryRecord={
+    period, source:fileName, sourceUrl,
+    waterM3:summary.waterM3, alcM3:summary.alcM3, energyKwh:summary.energyKwh, gasM3:summary.gasM3,
+    waterValue:summary.waterValue, alcValue:summary.alcValue, energyValue:summary.energyValue, gasValue:summary.gasValue,
+    otherValue:summary.wasteValue, verifiedFrom:'Resumen de facturación, página 1'
+  };
+  // El resumen oficial se guarda por separado: nunca se mezcla como una sede ni duplica el ranking.
+  return {fileName, period, records, summary:summaryRecord, numPages:pdf.numPages, sample:allText.slice(0,3000)};
 }
 function groupTextItemsIntoLines(items){
   items.sort((a,b)=> Math.abs(b.y-a.y)>3 ? b.y-a.y : a.x-b.x);
@@ -1126,7 +1181,7 @@ function renderFilterSummary(){
     applyFilters();
   }));
 }
-function renderAll(){ recalculateCo2(); refreshAllTerritoryFilters(); renderControls(); renderCards(); renderExecutiveSummary(); renderProjectImpact(); renderDashboard(); renderTable(); drawChart(aggregateByPeriod(state.records)); refreshSiteAutocompleteFields(); }
+function renderAll(){ recalculateCo2(); refreshAllTerritoryFilters(); renderControls(); renderCards(); renderExecutiveSummary(); renderProjectImpact(); renderDashboard(); renderTable(); drawChart(comparisonGroups('month')); updateHistorySourceNote(); refreshSiteAutocompleteFields(); }
 function renderControls(){
   const periods = [...new Set(state.records.map(r=>r.period))].sort();
   const options = '<option value="">Todos los periodos</option>'+periods.map(p=>`<option value="${p}">${p}</option>`).join('');
@@ -1137,17 +1192,22 @@ function renderControls(){
   syncAllSearchableSelects();
 }
 function renderCards(){
-  const recs = state.records;
-  const periods = new Set(recs.map(r=>r.period)).size;
-  const sites = new Set(recs.map(r=>siteKey(r.site,r.address))).size;
-  const sum = (field)=>recs.reduce((a,r)=>a+(Number(r[field])||0),0);
-  $('kPeriods').textContent = periods;
-  $('kSites').textContent = sites;
-  $('kKwh').textContent = fmt(sum('energyKwh'))+' kWh';
-  $('kCo2').textContent = fmt(sum('co2kg')/1000)+' t CO₂e';
-  if($('kTrees')) $('kTrees').textContent = fmt(Math.ceil(sum('co2kg')/TREE_CO2_KG_YEAR));
-  $('kWater').textContent = fmt(sum('waterM3'))+' m³';
-  $('kWaste').textContent = fmt(sum('wasteTon'))+' t';
+  const recs=state.records||[];
+  const official=officialSummaries();
+  const periods=new Set([...recs.map(r=>r.period),...official.map(r=>r.period)].filter(Boolean)).size;
+  const sites=new Set(recs.map(r=>siteKey(r.site,r.address))).size;
+  const detailSum=(field)=>recs.reduce((a,r)=>a+(Number(r[field])||0),0);
+  const officialSum=(field)=>official.reduce((a,r)=>a+(Number(r[field])||0),0);
+  const energy=official.length ? officialSum('energyKwh') : detailSum('energyKwh');
+  const water=official.length ? officialSum('waterM3') : detailSum('waterM3');
+  const co2kg=energy*FACTOR_CO2_KG_KWH;
+  $('kPeriods').textContent=periods;
+  $('kSites').textContent=sites;
+  $('kKwh').textContent=fmt(energy)+' kWh';
+  $('kCo2').textContent=fmt(co2kg/1000)+' t CO₂e';
+  if($('kTrees')) $('kTrees').textContent=fmt(Math.ceil(co2kg/TREE_CO2_KG_YEAR));
+  $('kWater').textContent=fmt(water)+' m³';
+  $('kWaste').textContent=fmt(detailSum('wasteTon'))+' t';
 }
 function renderSourceDownload(record){
   const name = String(record?.source || 'Factura PDF');
@@ -1184,6 +1244,41 @@ function aggregateByPeriod(records){
     ['energyKwh','waterM3','alcM3','gasM3','wasteTon','co2kg'].forEach(k=>map[r.period][k]+=Number(r[k])||0);
   }
   return Object.values(map).sort((a,b)=>a.period.localeCompare(b.period));
+}
+function officialSummaries(){
+  return (Array.isArray(state.summaries)?state.summaries:[])
+    .filter(r=>r?.period && Number.isFinite(Number(r.energyKwh)))
+    .map(r=>({...r,co2kg:(Number(r.energyKwh)||0)*FACTOR_CO2_KG_KWH}))
+    .sort((a,b)=>String(a.period).localeCompare(String(b.period)));
+}
+function isGlobalCompareScope(){
+  const site=$('compareSite')?.value||'';
+  const filters=territoryFilterValues('compare');
+  return !site && !filters.type && !filters.territory && !filters.nucleus;
+}
+function aggregateSummariesByComparison(mode){
+  const map={};
+  for(const r of officialSummaries()){
+    const key=groupKeyForPeriod(r.period,mode);
+    if(!key) continue;
+    map[key] ||= {key,period:groupLabel(key,mode),energyKwh:0,waterM3:0,alcM3:0,gasM3:0,wasteTon:0,co2kg:0,records:0,official:true,sources:[]};
+    ['energyKwh','waterM3','alcM3','gasM3','co2kg'].forEach(k=>map[key][k]+=Number(r[k])||0);
+    map[key].records+=1;
+    if(r.source) map[key].sources.push(r.source);
+  }
+  return Object.values(map).sort((a,b)=>a.key.localeCompare(b.key));
+}
+function comparisonGroups(mode){
+  if(isGlobalCompareScope() && officialSummaries().length) return aggregateSummariesByComparison(mode);
+  return aggregateByComparison(recordsForCompareScope(),mode);
+}
+function updateHistorySourceNote(){
+  const el=$('historyDataSourceNote'); if(!el) return;
+  if(isGlobalCompareScope() && officialSummaries().length){
+    el.innerHTML='<strong>Dato verificado:</strong> el total de Medellín se toma del “Resumen de facturación” de la primera página de cada PDF. Así, la gráfica no cambia por caché, registros parciales o diferencias del lector de detalle.';
+  }else{
+    el.innerHTML='<strong>Detalle por sede:</strong> la comparación corresponde a las lecturas asociadas a la institución o dirección seleccionada.';
+  }
 }
 function getSiteOptions(){
   return Object.values(state.sites).sort((a,b)=>String(a.site).localeCompare(String(b.site)));
@@ -1267,7 +1362,7 @@ function renderCompareControls(opts={}){
   const mode = $('compareMode') ? $('compareMode').value : 'month';
   const currentA = $('compareA').value;
   const currentB = $('compareB').value;
-  const groups = aggregateByComparison(recordsForCompareScope(), mode);
+  const groups = comparisonGroups(mode);
   const options = groups.map(g=>`<option value="${escapeHtml(g.key)}">${escapeHtml(g.period)}</option>`).join('');
   $('compareA').innerHTML = options;
   $('compareB').innerHTML = options;
@@ -1281,16 +1376,17 @@ function comparePeriods(){
   const mode = $('compareMode') ? $('compareMode').value : 'month';
   const site = $('compareSite') ? $('compareSite').value : '';
   const a=$('compareA').value, b=$('compareB').value;
-  const agg = aggregateByComparison(recordsForCompareScope(), mode);
+  const agg = comparisonGroups(mode);
   const A = agg.find(x=>x.key===a), B = agg.find(x=>x.key===b);
   if(!A||!B){
     $('compareResult').innerHTML='<p class="bad">Se requieren al menos dos periodos equivalentes para comparar con el filtro seleccionado.</p>';
     if($('compareNarrative')) $('compareNarrative').textContent = 'Aún no hay suficientes datos comparables para generar una interpretación automática.';
     drawChart(agg);
+    updateHistorySourceNote();
     return;
   }
   const siteText = site ? (($('compareSite').selectedOptions[0]||{}).textContent || 'Sede seleccionada') : 'Todas las sedes';
-  const metrics=[['energyKwh','Energía','kWh'],['waterM3','Agua','m³'],['co2kg','CO₂','kg'],['wasteTon','Residuos','t']];
+  const metrics=A.official ? [['energyKwh','Energía','kWh'],['waterM3','Agua','m³'],['co2kg','CO₂','kg']] : [['energyKwh','Energía','kWh'],['waterM3','Agua','m³'],['co2kg','CO₂','kg'],['wasteTon','Residuos','t']];
   const summary = `<div class="compare-summary"><strong>${escapeHtml(compareModeLabel(mode))}</strong><span>${escapeHtml(siteText)}</span><small>${escapeHtml(A.period)} vs ${escapeHtml(B.period)}</small></div>`;
   $('compareResult').innerHTML = summary + metrics.map(([k,label,unit])=>{
     const diff=(B[k]||0)-(A[k]||0); const pct=(A[k]||0)? diff/A[k]*100 : 0;
@@ -1299,6 +1395,7 @@ function comparePeriods(){
   }).join('');
   if($('compareNarrative')) $('compareNarrative').innerHTML = buildComparisonNarrative(A, B, mode, siteText);
   drawChart(agg);
+  updateHistorySourceNote();
 }
 
 function drawChart(data){
@@ -1343,8 +1440,10 @@ function drawChart(data){
 
     ctx.fillStyle = '#13312d';
     ctx.textAlign = 'center';
-    ctx.font = 'bold 12px Arial';
-    ctx.fillText(fmt(d.energyKwh), x + bw/2, Math.max(top + 14, y - 10));
+    ctx.font = 'bold 11px Arial';
+    const preferredLabelY=y-10-(i%2?0:16);
+    const safeLabelY=Math.max(top+13+(i%2?16:0),preferredLabelY);
+    ctx.fillText(fmt(d.energyKwh), x + bw/2, safeLabelY);
 
     const lines = chartLabelLines(d);
     ctx.font = '11px Arial';
@@ -1397,19 +1496,23 @@ function downloadFilteredPdfReport(){
   openPdfPrintDocument('Informe de facturas por institución educativa',filters,`<div class="report-grid"><div class="metric"><span>Registros</span><strong>${recs.length}</strong></div><div class="metric"><span>Energía acumulada</span><strong>${fmt(energy)} kWh</strong></div><div class="metric"><span>Emisiones</span><strong>${fmt(co2/1000)} t CO₂e</strong></div></div><div class="report-card"><h2>Resumen de la consulta</h2><p>Agua acumulada: <strong>${fmt(water)} m³</strong></p></div><table><thead><tr><th>Periodo</th><th>Institución / sede</th><th>Dirección</th><th>Energía</th><th>Agua</th><th>CO₂e</th><th>Fuente</th></tr></thead><tbody>${rows}</tbody></table>`);
 }
 function downloadHistoryPdfReport(){
-  const mode = $('compareMode') ? $('compareMode').value : 'month';
-  const groups = aggregateByComparison(recordsForCompareScope(), mode);
+  const mode=$('compareMode')?.value||'month';
+  const groups=comparisonGroups(mode);
   if(!groups.length){alert('No hay datos históricos para generar el informe PDF.');return;}
-  const first = groups[0];
-  const last = groups[groups.length-1];
-  if($('compareA')) $('compareA').value = first.key;
-  if($('compareB')) $('compareB').value = last.key;
+  const first=groups[0], last=groups[groups.length-1];
+  if($('compareA')) $('compareA').value=first.key;
+  if($('compareB')) $('compareB').value=last.key;
   comparePeriods();
-  const selectedKeys = new Set([first.key,last.key]);
-  const raw = recordsForCompareScope().filter(r=>selectedKeys.has(groupKeyForPeriod(r.period,mode)));
-  const rows = raw.map(r=>`<tr><td>${escapeHtml(groupLabel(groupKeyForPeriod(r.period,mode),mode))}</td><td>${escapeHtml(r.site||'')}</td><td>${fmt(r.energyKwh)} kWh</td><td>${fmt((Number(r.energyKwh)||0)*FACTOR_CO2_KG_KWH/1000)} t</td><td>${fmt(r.waterM3)} m³</td></tr>`).join('');
-  const narrative = $('compareNarrative')?.textContent || `Comparación entre ${first.period} y ${last.period}.`;
-  openPdfPrintDocument('Informe histórico de consumos',`${first.period} vs ${last.period}`,`<div class="report-card"><h2>Comparación seleccionada</h2><p>${escapeHtml(narrative)}</p></div><div class="report-grid"><div class="metric"><span>Periodo inicial</span><strong>${escapeHtml(first.period)}</strong></div><div class="metric"><span>Periodo final</span><strong>${escapeHtml(last.period)}</strong></div><div class="metric"><span>Variación de energía</span><strong>${fmt(last.energyKwh-first.energyKwh)} kWh</strong></div></div><table><thead><tr><th>Periodo</th><th>Institución / sede</th><th>Energía</th><th>CO₂e</th><th>Agua</th></tr></thead><tbody>${rows}</tbody></table>`);
+  let rows='';
+  if(isGlobalCompareScope() && officialSummaries().length){
+    rows=[first,last].map(r=>`<tr><td>${escapeHtml(r.period)}</td><td>Total Medellín · Resumen oficial PDF</td><td>${fmt(r.energyKwh)} kWh</td><td>${fmt(r.co2kg/1000)} t</td><td>${fmt(r.waterM3)} m³</td></tr>`).join('');
+  }else{
+    const selectedKeys=new Set([first.key,last.key]);
+    rows=recordsForCompareScope().filter(r=>selectedKeys.has(groupKeyForPeriod(r.period,mode))).map(r=>`<tr><td>${escapeHtml(groupLabel(groupKeyForPeriod(r.period,mode),mode))}</td><td>${escapeHtml(r.site||'')}</td><td>${fmt(r.energyKwh)} kWh</td><td>${fmt((Number(r.energyKwh)||0)*FACTOR_CO2_KG_KWH/1000)} t</td><td>${fmt(r.waterM3)} m³</td></tr>`).join('');
+  }
+  const narrative=$('compareNarrative')?.textContent||`Comparación entre ${first.period} y ${last.period}.`;
+  const sourceText=isGlobalCompareScope()?'Fuente: resumen consolidado oficial de la primera página de cada factura PDF.':'Fuente: lecturas detalladas de la sede seleccionada.';
+  openPdfPrintDocument('Informe histórico de consumos',`${first.period} vs ${last.period}`,`<div class="filters-line">${escapeHtml(sourceText)}</div><div class="report-card"><h2>Comparación seleccionada</h2><p>${escapeHtml(narrative)}</p></div><div class="report-grid"><div class="metric"><span>Periodo inicial</span><strong>${escapeHtml(first.period)}</strong></div><div class="metric"><span>Periodo final</span><strong>${escapeHtml(last.period)}</strong></div><div class="metric"><span>Variación de energía</span><strong>${fmt(last.energyKwh-first.energyKwh)} kWh</strong></div></div><table><thead><tr><th>Periodo</th><th>Alcance</th><th>Energía</th><th>CO₂e</th><th>Agua</th></tr></thead><tbody>${rows}</tbody></table>`);
 }
 
 function downloadDashboardPdfReport(){
@@ -1431,17 +1534,18 @@ function downloadBlob(content,name,type){ const a=document.createElement('a'); a
 function csvCell(v){ const s=(v??'').toString(); return '"'+s.replace(/"/g,'""')+'"'; }
 
 function getGlobalStats(){
-  const recs = state.records || [];
-  const periods = [...new Set(recs.map(r=>r.period).filter(Boolean))].sort();
-  const sites = aggregateBySite(recs.filter(r=>Number(r.energyKwh)>0));
-  const sum = (field)=>recs.reduce((a,r)=>a+(Number(r[field])||0),0);
-  const energy = sum('energyKwh');
-  const co2kg = sum('co2kg');
-  const water = sum('waterM3');
-  const waste = sum('wasteTon');
-  const trees = Math.ceil(co2kg / TREE_CO2_KG_YEAR);
-  const topSite = sites[0] || null;
-  return {recs, periods, sites, energy, co2kg, water, waste, trees, topSite};
+  const recs=state.records||[];
+  const periodSeries=officialSummaries().length ? aggregateSummariesByComparison('month') : aggregateByPeriod(recs);
+  const periods=periodSeries.map(r=>r.key||r.period).filter(Boolean).sort();
+  const sites=aggregateBySite(recs.filter(r=>Number(r.energyKwh)>0));
+  const detailSum=(field)=>recs.reduce((a,r)=>a+(Number(r[field])||0),0);
+  const energy=periodSeries.reduce((a,r)=>a+(Number(r.energyKwh)||0),0);
+  const water=periodSeries.reduce((a,r)=>a+(Number(r.waterM3)||0),0);
+  const co2kg=energy*FACTOR_CO2_KG_KWH;
+  const waste=detailSum('wasteTon');
+  const trees=Math.ceil(co2kg/TREE_CO2_KG_YEAR);
+  const topSite=sites[0]||null;
+  return {recs,periods,periodSeries,sites,energy,co2kg,water,waste,trees,topSite};
 }
 
 function renderExecutiveSummary(){
@@ -1478,7 +1582,7 @@ function buildSmartAlerts(s){
     const p = classifyEnergyIntensity(s.topSite.avgKwhMonth);
     alerts.push(`<div class="alert-card ${p.cls}"><strong>Sede con mayor prioridad</strong><p>${escapeHtml(s.topSite.site)} concentra ${fmt(s.topSite.energyKwh)} kWh acumulados. Clasificación: ${escapeHtml(p.level)}.</p></div>`);
   }
-  const byPeriod = aggregateByPeriod(s.recs);
+  const byPeriod=s.periodSeries||aggregateByPeriod(s.recs);
   if(byPeriod.length >= 2){
     const a = byPeriod[byPeriod.length-2], b = byPeriod[byPeriod.length-1];
     const diff = b.energyKwh - a.energyKwh;

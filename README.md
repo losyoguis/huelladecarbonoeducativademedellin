@@ -1,3 +1,15 @@
+# SiMeCO₂ v55 — Históricos verificados y caché estable
+
+- El gráfico general de históricos usa el total oficial **ACTUAL** del “Resumen de facturación” de la primera página de cada PDF.
+- Los totales dejan de depender de registros parciales, del orden de lectura de PDF.js o de cachés antiguas del navegador.
+- Los resúmenes consolidados se guardan separados de las sedes, por lo que no alteran el ranking ni crean instituciones ficticias.
+- La caché se migró a una versión nueva y combina datos precargados con facturas nuevas sin duplicarlas.
+- Cuando cambia una factura, sus registros anteriores se sustituyen en lugar de acumularse.
+- Se incluyó el resumen oficial de julio de 2026 y un control automático de integridad y coherencia.
+- La gráfica alterna la altura de etiquetas para reducir superposiciones.
+
+---
+
 # SiMeCO₂ v52 — Progreso de carga y aplicación móvil
 
 - Barra de progreso real por factura y página durante la lectura de los PDF.
