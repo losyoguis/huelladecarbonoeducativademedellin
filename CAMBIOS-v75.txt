@@ -1,0 +1,15 @@
+SiMeCO₂ v75 — Informe mensual claro y direcciones con Google Maps
+
+CAMBIOS PRINCIPALES
+- El informe por sede consolida los datos por periodo mensual antes de construir las gráficas.
+- Cada mes aparece una sola vez, aun cuando existan varios registros de la sede en la factura.
+- Las etiquetas de los gráficos usan abreviaturas de mes/año y se rotan cuando hay muchos periodos.
+- El ancho de las gráficas crece de forma dinámica según el número de periodos, evitando superposición.
+- La tabla mensual del informe también usa datos consolidados por periodo.
+- Se agregó una explicación en el informe indicando que cada barra corresponde a un mes consolidado.
+- Se eliminó completamente el texto/etiqueta “Ver ubicación”.
+- Cada dirección mantiene el icono 🏫 y una observación visible: “Haz clic en la dirección para abrir Google Maps.”
+- La observación se aplica en tablas, rankings, autocompletados, ficha, informe, búsqueda institucional y módulo territorial.
+- Se mejoró el ancho de las tarjetas móviles para evitar cortes de palabras y direcciones.
+- Se actualizó el cache-busting de app.js y styles.css a v75.
+- No se modificaron los históricos, valores originales, rankings ni cálculos de ahorro.

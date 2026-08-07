@@ -1555,18 +1555,7 @@ img{content-visibility:auto}
 .school-map-action{
   position:relative;
 }
-.school-map-link::after{
-  content:"Ver ubicación";
-  display:inline-block;
-  margin-left:.35rem;
-  padding:.08rem .38rem;
-  border-radius:999px;
-  background:rgba(8,118,94,.09);
-  color:#08765e;
-  font-size:.72em;
-  font-weight:700;
-  vertical-align:middle;
-}
+
 .school-map-action{
   cursor:pointer;
   color:#08765e;
@@ -1579,7 +1568,7 @@ img{content-visibility:auto}
   border-bottom-color:#045c49;
 }
 @media (max-width:640px){
-  .school-map-link::after{display:none}
+  
 }
 
 /* v72 · aislamiento de repintado para búsquedas */
@@ -1995,5 +1984,102 @@ body.viewport-phone .assistant-panel{
   body.is-embedded .data-panel .table-wrap:has(.records-data-table),
   body.is-embedded .dashboard-panel .table-wrap:has(.dashboard-data-table){
     overflow:visible !important;
+  }
+}
+
+
+/* v75 · Direcciones limpias y observación de Google Maps */
+.map-address-wrap,
+.map-address-action-wrap{
+  display:inline-flex;
+  flex-direction:column;
+  align-items:flex-start;
+  gap:2px;
+  max-width:100%;
+}
+.map-address-note{
+  display:block;
+  margin-top:2px;
+  color:#6a7f79;
+  font-size:.72rem;
+  line-height:1.2;
+  font-weight:600;
+}
+.map-address-note.compact{
+  font-size:.68rem;
+}
+.school-map-link::after{
+  content:none !important;
+  display:none !important;
+}
+.map-address,
+.map-address-action{
+  overflow-wrap:anywhere;
+  word-break:normal;
+}
+
+/* Informe por sede: visualización mensual clara */
+.plan-chart-card{
+  min-width:0;
+}
+.plan-chart-wrap{
+  width:100%;
+  overflow-x:auto;
+  overflow-y:hidden;
+  padding:4px 0 10px;
+  -webkit-overflow-scrolling:touch;
+}
+.plan-chart-svg{
+  display:block;
+  width:max(100%,980px);
+  height:auto;
+  margin:0 auto;
+}
+.plan-chart-head{
+  padding-bottom:8px;
+}
+.plan-chart-head h4{
+  margin-bottom:6px;
+}
+.plan-chart-head p{
+  max-width:980px;
+  line-height:1.5;
+}
+.plan-summary-grid{
+  align-items:stretch;
+}
+.plan-summary-grid > div{
+  min-width:0;
+}
+.plan-table{
+  font-variant-numeric:tabular-nums;
+}
+.plan-document .map-address-wrap{
+  margin-top:4px;
+}
+.plan-document .map-address-note{
+  font-size:.76rem;
+}
+
+/* En tarjetas móviles: nombre y dirección no se parten letra por letra */
+@media (max-width:620px){
+  body.is-embedded .dashboard-data-table td,
+  body.is-embedded .records-data-table td{
+    grid-template-columns:minmax(92px,32%) minmax(0,1fr) !important;
+  }
+  body.is-embedded .dashboard-data-table td > *,
+  body.is-embedded .records-data-table td > *{
+    min-width:0;
+  }
+  .map-address-wrap,
+  .map-address-action-wrap{
+    width:100%;
+  }
+  .map-address-note{
+    font-size:.68rem;
+  }
+  .plan-chart-svg{
+    width:auto !important;
+    min-width:780px !important;
   }
 }

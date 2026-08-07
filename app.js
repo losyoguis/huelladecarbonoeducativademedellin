@@ -4,7 +4,7 @@ let TREE_CO2_KG_YEAR = 22; // kg CO2e capturados por árbol al año. Ajustable d
 const FACTOR_KEY = 'simeco2_factores_ambientales_v8';
 const STORE_KEY = 'simeco2_servicios_v16';
 const CONFIG_KEY = 'simeco2_repo_config_v7';
-const DATA_VERSION = 'v74-google-sites-responsive-20260807';
+const DATA_VERSION = 'v75-informe-direcciones-visualizacion-20260807';
 
 const $ = (id)=>document.getElementById(id);
 const state = loadStore();
@@ -1944,7 +1944,7 @@ function mapAddressLink(address,label,schoolName=''){
   const url=googleMapsAddressUrl(raw,school);
   if(!url) return `<span class="map-address map-address-unavailable">${escapeHtml(text)}</span>`;
   const title=school?`Abrir la ubicación de ${school} en Google Maps`:'Abrir esta dirección en Google Maps';
-  return `<a class="map-address school-map-link" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer" title="${escapeHtml(title)}" aria-label="${escapeHtml(title)}">🏫 ${escapeHtml(text)}</a>`;
+  return `<span class="map-address-wrap"><a class="map-address school-map-link" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer" title="${escapeHtml(title)}" aria-label="${escapeHtml(title)}">🏫 ${escapeHtml(text)}</a><small class="map-address-note">Haz clic en la dirección para abrir Google Maps.</small></span>`;
 }
 function openAddressInGoogleMaps(address,schoolName=''){
   const url=googleMapsAddressUrl(address,schoolName);
@@ -1953,7 +1953,7 @@ function openAddressInGoogleMaps(address,schoolName=''){
 function mapAddressAction(address,innerHtml,schoolName=''){
   const raw=String(address||'').trim(), school=String(schoolName||'').trim();
   if(!googleMapsAddressUrl(raw,school)) return innerHtml;
-  return `<span class="map-address-action school-map-action" data-map-address="${escapeHtml(raw)}" data-map-school="${escapeHtml(school)}" title="Abrir ubicación precisa del colegio en Google Maps">🏫 ${innerHtml}</span>`;
+  return `<span class="map-address-action-wrap"><span class="map-address-action school-map-action" data-map-address="${escapeHtml(raw)}" data-map-school="${escapeHtml(school)}" title="Abrir ubicación precisa del colegio en Google Maps">🏫 ${innerHtml}</span><small class="map-address-note compact">Haz clic para abrir Google Maps.</small></span>`;
 }
 function fmt(n){ return new Intl.NumberFormat('es-CO',{maximumFractionDigits:2}).format(Number(n)||0); }
 function num(n){ return n==null||n==='' ? '—' : fmt(n); }
@@ -2556,27 +2556,57 @@ function classifyEnergyIntensity(avgMonth){
 
 
 function buildPlanMetricSeries(recs){
-  return [...recs]
-    .map(r=>({
-      period:String(r.period||''),
-      hasEnergy:recordHasEnergyReading(r),
-      energy:recordHasEnergyReading(r)?Number(r.energyKwh):null,
-      water:Number(r.waterM3)||0,
-      alc:Number(r.alcM3)||0,
-      gas:Number(r.gasM3)||0,
-      waste:Number(r.wasteTon)||0,
-      co2:recordHasEnergyReading(r)?(Number(r.energyKwh)*FACTOR_CO2_KG_KWH)/1000:null,
-      trees:recordHasEnergyReading(r)?Math.ceil((Number(r.energyKwh)*FACTOR_CO2_KG_KWH)/TREE_CO2_KG_YEAR):null,
-      source:r.source||'PDF'
-    }))
+  const byPeriod=new Map();
+  for(const r of recs||[]){
+    const period=String(r.period||'').trim();
+    if(!period) continue;
+    if(!byPeriod.has(period)){
+      byPeriod.set(period,{
+        period,energy:0,water:0,alc:0,gas:0,waste:0,
+        energyCount:0,waterCount:0,alcCount:0,gasCount:0,wasteCount:0,
+        sources:new Set()
+      });
+    }
+    const x=byPeriod.get(period);
+    if(recordHasEnergyReading(r)){x.energy+=Number(r.energyKwh)||0;x.energyCount++;}
+    if(recordHasReading(r,'waterM3')){x.water+=Number(r.waterM3)||0;x.waterCount++;}
+    if(recordHasReading(r,'alcM3')){x.alc+=Number(r.alcM3)||0;x.alcCount++;}
+    if(recordHasReading(r,'gasM3')){x.gas+=Number(r.gasM3)||0;x.gasCount++;}
+    if(recordHasReading(r,'wasteTon')){x.waste+=Number(r.wasteTon)||0;x.wasteCount++;}
+    if(r.source)x.sources.add(r.source);
+  }
+  return [...byPeriod.values()]
+    .map(x=>{
+      const hasEnergy=x.energyCount>0;
+      return {
+        period:x.period,
+        hasEnergy,
+        energy:hasEnergy?x.energy:null,
+        water:x.waterCount?x.water:null,
+        alc:x.alcCount?x.alc:null,
+        gas:x.gasCount?x.gas:null,
+        waste:x.wasteCount?x.waste:null,
+        co2:hasEnergy?(x.energy*FACTOR_CO2_KG_KWH)/1000:null,
+        trees:hasEnergy?Math.ceil((x.energy*FACTOR_CO2_KG_KWH)/TREE_CO2_KG_YEAR):null,
+        source:[...x.sources].join(' · ')||'PDF'
+      };
+    })
     .sort((a,b)=>a.period.localeCompare(b.period));
+}
+function shortPlanPeriodLabel(period){
+  const m=String(period||'').match(/^(20\d{2})-(0[1-9]|1[0-2])$/);
+  if(!m) return String(period||'');
+  const months=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+  return `${months[Number(m[2])-1]} ${m[1].slice(2)}`;
 }
 
 function buildPlanBarChartSvg(rows, cfg={}){
   if(!rows || !rows.length) return `<div class="plan-chart-empty">No hay datos suficientes para graficar ${escapeHtml(cfg.title||'este indicador')}.</div>`;
-  const width = cfg.width || 980;
-  const height = cfg.height || 350;
-  const padL = 74, padR = 28, padT = 28, padB = 62;
+  const minWidth=cfg.width||980;
+  const width=Math.max(minWidth,rows.length*64+120);
+  const manyRows=rows.length>12;
+  const height=cfg.height||(manyRows?390:350);
+  const padL=74,padR=28,padT=34,padB=manyRows?86:68;
   const chartW = width - padL - padR;
   const chartH = height - padT - padB;
   const values = rows.map(r => Number(cfg.getValue ? cfg.getValue(r) : r.value) || 0);
@@ -2606,7 +2636,10 @@ function buildPlanBarChartSvg(rows, cfg={}){
     const valueText = escapeHtml(fmtValue(value));
     bars += `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${Math.max(h,2).toFixed(1)}" rx="10" fill="url(#${gradId})" />`;
     bars += `<text x="${(x+barW/2).toFixed(1)}" y="${Math.max(y-8,padT+14).toFixed(1)}" text-anchor="middle" font-size="11.5" font-weight="800" fill="#183c35">${valueText}</text>`;
-    bars += `<text x="${(x+barW/2).toFixed(1)}" y="${(padT+chartH+22).toFixed(1)}" text-anchor="middle" font-size="11.5" font-weight="800" fill="#36524d">${label}</text>`;
+    const labelX=(x+barW/2).toFixed(1),labelY=(padT+chartH+24).toFixed(1);
+    bars += manyRows
+      ? `<text x="${labelX}" y="${labelY}" text-anchor="end" font-size="11" font-weight="800" fill="#36524d" transform="rotate(-38 ${labelX} ${labelY})">${label}</text>`
+      : `<text x="${labelX}" y="${labelY}" text-anchor="middle" font-size="11.5" font-weight="800" fill="#36524d">${label}</text>`;
   });
 
   return `
@@ -2654,7 +2687,7 @@ function buildPlanReductionCharts(d){
         colorA:'#26c6a6', colorB:'#109677',
         getValue:(r)=>r.value,
         formatValue:(v)=>fmt(v),
-        formatLabel:(r)=>escapeHtml(r.period)
+        formatLabel:(r)=>escapeHtml(shortPlanPeriodLabel(r.period))
       })}
       ${buildPlanBarChartSvg(co2Rows, {
         title:'CO₂e evitado estimado por escenario (t/año)',
@@ -2663,7 +2696,7 @@ function buildPlanReductionCharts(d){
         colorA:'#5bbdff', colorB:'#1877cf',
         getValue:(r)=>r.value,
         formatValue:(v)=>fmt(v),
-        formatLabel:(r)=>escapeHtml(r.period)
+        formatLabel:(r)=>escapeHtml(shortPlanPeriodLabel(r.period))
       })}
     </div>`;
 }
@@ -2675,22 +2708,22 @@ function buildPlanMonthlyCharts(d){
     cards.push(buildPlanBarChartSvg(rows.filter(r=>r.hasEnergy), {
       title:'Consumo de energía eléctrica por periodo',
       subtitle:`Histórico de consumo facturado en kWh para la sede ${d.site}.`,
-      gradId:'planEnergyPeriods', colorA:'#19caa4', colorB:'#0a9978', getValue:(r)=>r.energy, formatValue:(v)=>fmt(v), formatLabel:(r)=>escapeHtml(r.period)
+      gradId:'planEnergyPeriods', colorA:'#19caa4', colorB:'#0a9978', getValue:(r)=>r.energy, formatValue:(v)=>fmt(v), formatLabel:(r)=>escapeHtml(shortPlanPeriodLabel(r.period))
     }));
   }
   if(rows.some(r=>r.water>0)) cards.push(buildPlanBarChartSvg(rows, {
-    title:'Consumo de agua por periodo (m³)', subtitle:'Permite identificar periodos de mayor demanda hídrica y posibles oportunidades de ahorro.', gradId:'planWaterPeriods', colorA:'#8ed0ff', colorB:'#2f84d6', getValue:(r)=>r.water, formatValue:(v)=>fmt(v), formatLabel:(r)=>escapeHtml(r.period)
+    title:'Consumo de agua por periodo (m³)', subtitle:'Permite identificar periodos de mayor demanda hídrica y posibles oportunidades de ahorro.', gradId:'planWaterPeriods', colorA:'#8ed0ff', colorB:'#2f84d6', getValue:(r)=>r.water, formatValue:(v)=>fmt(v), formatLabel:(r)=>escapeHtml(shortPlanPeriodLabel(r.period))
   }));
   if(d.hasEnergy){
     cards.push(buildPlanBarChartSvg(rows.filter(r=>r.hasEnergy), {
-      title:'Emisiones estimadas de CO₂e por periodo (t)', subtitle:`Calculadas a partir del factor ${fmt(FACTOR_CO2_KG_KWH)} kg CO₂e/kWh.`, gradId:'planCo2Periods', colorA:'#66c2ff', colorB:'#1c77d3', getValue:(r)=>r.co2, formatValue:(v)=>fmt(v), formatLabel:(r)=>escapeHtml(r.period)
+      title:'Emisiones estimadas de CO₂e por periodo (t)', subtitle:`Calculadas a partir del factor ${fmt(FACTOR_CO2_KG_KWH)} kg CO₂e/kWh.`, gradId:'planCo2Periods', colorA:'#66c2ff', colorB:'#1c77d3', getValue:(r)=>r.co2, formatValue:(v)=>fmt(v), formatLabel:(r)=>escapeHtml(shortPlanPeriodLabel(r.period))
     }));
     cards.push(buildPlanBarChartSvg(rows.filter(r=>r.hasEnergy), {
-      title:'Árboles equivalentes requeridos por periodo', subtitle:'Estimación de árboles necesarios para compensar las emisiones asociadas al consumo del periodo.', gradId:'planTreesPeriods', colorA:'#acd95c', colorB:'#5ca61c', getValue:(r)=>r.trees, formatValue:(v)=>fmt(v), formatLabel:(r)=>escapeHtml(r.period)
+      title:'Árboles equivalentes requeridos por periodo', subtitle:'Estimación de árboles necesarios para compensar las emisiones asociadas al consumo del periodo.', gradId:'planTreesPeriods', colorA:'#acd95c', colorB:'#5ca61c', getValue:(r)=>r.trees, formatValue:(v)=>fmt(v), formatLabel:(r)=>escapeHtml(shortPlanPeriodLabel(r.period))
     }));
   }
   if(rows.some(r => r.waste > 0)) cards.push(buildPlanBarChartSvg(rows, {
-    title:'Residuos / aseo por periodo (t)', subtitle:'Comportamiento mensual del componente de residuos identificado en la factura consolidada.', gradId:'planWastePeriods', colorA:'#ffcf70', colorB:'#d58d12', getValue:(r)=>r.waste, formatValue:(v)=>fmt(v), formatLabel:(r)=>escapeHtml(r.period)
+    title:'Residuos / aseo por periodo (t)', subtitle:'Comportamiento mensual del componente de residuos identificado en la factura consolidada.', gradId:'planWastePeriods', colorA:'#ffcf70', colorB:'#d58d12', getValue:(r)=>r.waste, formatValue:(v)=>fmt(v), formatLabel:(r)=>escapeHtml(shortPlanPeriodLabel(r.period))
   }));
   if(!cards.length) return '<div class="plan-chart-empty">No hay indicadores cuantitativos suficientes para generar gráficas de esta sede.</div>';
   return `<div class="plan-visual-grid">${cards.join('')}</div>`;
@@ -2720,7 +2753,8 @@ function buildPlanSummaryCards(d){
 
 function buildPlanHtml(d){
   const periodText = d.periods.length ? `${d.periods[0]} a ${d.periods[d.periods.length-1]} (${d.periods.length} periodo(s) importado(s))` : 'Sin periodo';
-  const monthlyRows = d.recs.map(r=>{ const hasEnergy=recordHasEnergyReading(r); return `<tr><td>${escapeHtml(r.period)}</td><td>${hasEnergy?`${fmt(r.energyKwh)} kWh`:(d.energyException?'<span class="not-available">Contrato separado</span>':'<span class="not-available">Sin dato</span>')}</td><td>${recordHasReading(r,'waterM3')?`${fmt(r.waterM3)} m³`:'—'}</td><td>${recordHasReading(r,'alcM3')?`${fmt(r.alcM3)} m³`:'—'}</td><td>${recordHasReading(r,'gasM3')?`${fmt(r.gasM3)} m³`:'—'}</td><td>${hasEnergy?`${fmt(Number(r.energyKwh)*FACTOR_CO2_KG_KWH/1000)} t CO₂e`:'No calculable'}</td><td>${hasEnergy?fmt(Math.ceil((Number(r.energyKwh)*FACTOR_CO2_KG_KWH)/TREE_CO2_KG_YEAR)):'No calculable'}</td><td>${recordHasReading(r,'wasteTon')?`${fmt(r.wasteTon)} t`:'—'}</td><td>${escapeHtml(r.source||'PDF')}</td></tr>`; }).join('');
+  const consolidatedMonths=buildPlanMetricSeries(d.recs);
+  const monthlyRows = consolidatedMonths.map(r=>`<tr><td>${escapeHtml(r.period)}</td><td>${r.hasEnergy?`${fmt(r.energy)} kWh`:(d.energyException?'<span class="not-available">Contrato separado</span>':'<span class="not-available">Sin dato</span>')}</td><td>${r.water!=null?`${fmt(r.water)} m³`:'—'}</td><td>${r.alc!=null?`${fmt(r.alc)} m³`:'—'}</td><td>${r.gas!=null?`${fmt(r.gas)} m³`:'—'}</td><td>${r.hasEnergy?`${fmt(r.co2)} t CO₂e`:'No calculable'}</td><td>${r.hasEnergy?fmt(r.trees):'No calculable'}</td><td>${r.waste!=null?`${fmt(r.waste)} t`:'—'}</td><td>${escapeHtml(r.source||'PDF')}</td></tr>`).join('');
   const summaryCards = buildPlanSummaryCards(d);
   const monthlyCharts = buildPlanMonthlyCharts(d);
   const reductionCharts = buildPlanReductionCharts(d);
@@ -2763,7 +2797,7 @@ function buildPlanHtml(d){
       </div>
       <p class="plan-note"><strong>Lectura técnica:</strong> ${escapeHtml(d.intensity.text)}</p>
       <h3>1.1 Panel gráfico del diagnóstico</h3>
-      <p>Las siguientes gráficas presentan los principales indicadores medibles y comparables de la sede: energía, agua, CO₂e, árboles equivalentes y, cuando aplica, residuos/aseo. Estas visualizaciones también quedan integradas en el informe generado para consulta, impresión o descarga.</p>
+      <p>Las siguientes gráficas presentan los principales indicadores medibles y comparables de la sede: energía, agua, CO₂e, árboles equivalentes y, cuando aplica, residuos/aseo. <strong>Cada barra representa un único periodo mensual consolidado</strong>, incluso cuando la factura contiene más de un registro asociado a la sede. Estas visualizaciones también quedan integradas en el informe generado para consulta, impresión o descarga.</p>
       ${summaryCards}
       ${monthlyCharts}
 

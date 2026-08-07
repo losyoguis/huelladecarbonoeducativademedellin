@@ -1,0 +1,34 @@
+CONTROL DE CALIDAD SiMeCO₂ v75
+Fecha: 2026-08-07
+
+OBJETIVO
+Corregir la visualización del informe por sede y estandarizar la interacción de direcciones con Google Maps.
+
+INFORME POR SEDE
+- Datos consolidados por periodo mensual antes de graficar.
+- Una sola barra por mes.
+- Etiquetas abreviadas mes/año.
+- Etiquetas rotadas cuando hay muchos periodos.
+- Ancho dinámico de gráfica según cantidad de meses.
+- Tabla mensual consolidada por periodo.
+- Explicación explícita de la consolidación mensual.
+
+DIRECCIONES
+- Eliminado completamente “Ver ubicación”.
+- Se conserva el icono 🏫.
+- Cada dirección muestra: “Haz clic en la dirección para abrir Google Maps.”
+- Aplicado en tablas, rankings, autocompletados, ficha, informe, búsqueda institucional y módulo territorial.
+
+RESPONSIVE
+- Se mantiene la optimización para Google Sites.
+- Se mejoró el ancho de celdas móviles para evitar cortes letra por letra.
+
+VALIDACIONES
+- npm run check: APROBADO.
+- npm test: APROBADO.
+- validar_sistema.py: APROBADO.
+- validar_historicos.py: APROBADO.
+- 9.147 registros.
+- 567 instituciones/sedes.
+- 17 períodos oficiales.
+RESULTADO: APROBADO.
