@@ -107,6 +107,10 @@ function periodHints(message) {
   const iso = q.match(/\b(20\d{2})[ -](0?[1-9]|1[0-2])\b/);
   if (iso) return {period:`${iso[1]}-${String(iso[2]).padStart(2,'0')}`,year:null};
   const year = (q.match(/\b20\d{2}\b/) || [])[0] || null;
+  if(year){
+    const months={enero:'01',febrero:'02',marzo:'03',abril:'04',mayo:'05',junio:'06',julio:'07',agosto:'08',septiembre:'09',setiembre:'09',octubre:'10',noviembre:'11',diciembre:'12'};
+    for(const [name,month] of Object.entries(months)) if(q.includes(name)) return {period:`${year}-${month}`,year:null};
+  }
   return {period:null,year};
 }
 
@@ -127,7 +131,7 @@ function preconsultData(message) {
     const resolved = data.resolveInstitution(candidate);
     if (resolved && !resolved.notFound && !resolved.ambiguous) institution = resolved.displayName;
   }
-  const out = { intent:'general' };
+  const out = { intent:'general', metric, filter:hints };
   if (/(cuantos|cuantas|cantidad|numero).*(sedes|instituciones)/.test(q)) {
     out.intent='system_counts';
     out.systemCounts={
@@ -143,22 +147,134 @@ function preconsultData(message) {
     out.institutionReport=data.institutionReport(institution,{period:hints.period||undefined,year:hints.year||undefined});
     return out;
   }
-  if (institution && /informe|reporte|analisis|consumo|huella|co2|agua|energia|gas|residuo|aseo/.test(q)) {
+  if (institution && /calidad|cobertura|complet/.test(q)) {
+    out.intent='institution_quality';
+    out.quality=data.qualityReport(institution);
+    return out;
+  }
+  if (institution && /informe|reporte|analisis|analiza|consumo|consumio|huella|co2|agua|energia|gas|residuo|aseo|historico|evolucion|tendencia/.test(q)) {
     out.intent='institution_report';
     out.institutionReport=data.institutionReport(institution,{period:hints.period||undefined,year:hints.year||undefined});
+    return out;
+  }
+  if (/calidad|cobertura|datos incompletos|problemas de datos/.test(q)) {
+    out.intent='quality';
+    out.quality=data.qualityReport();
     return out;
   }
   if (/ranking|top/.test(q)) {
     out.intent='ranking';
     out.ranking=data.ranking(metric,{period:hints.period||undefined,year:hints.year||undefined,limit:10});
+    return out;
+  }
+  if (/medellin|ciudad|total general|indicadores/.test(q) && /(consumo|energia|agua|gas|residuo|aseo|co2|total)/.test(q)) {
+    out.intent='city_indicators';
+    out.city=data.cityIndicators({period:hints.period||undefined,year:hints.year||undefined});
+    return out;
   }
   return out;
 }
 
+const numberFmt = new Intl.NumberFormat('es-CO',{maximumFractionDigits:2});
+function fmt(value){ return value===null || value===undefined || value==='' ? 'Sin dato' : numberFmt.format(Number(value)); }
+function metricMeta(field){ return data.METRICS[field] || data.METRICS.energyKwh; }
+function periodName(value){
+  const m=String(value||'').match(/^(20\d{2})-(\d{2})$/); if(!m) return value||'todos los periodos';
+  const months=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  return `${months[Number(m[2])-1]||m[2]} de ${m[1]}`;
+}
+function percentChange(a,b){ if(a===null||a===undefined||!Number.isFinite(Number(a))||!Number(b)) return null; return ((Number(a)-Number(b))/Number(b))*100; }
+function signText(value){ if(value===null) return ''; const abs=Math.abs(value); return `${value<0?'disminuyó':'aumentó'} ${numberFmt.format(abs)} %`; }
+
+function reportAnswer(report,message=''){
+  if(!report?.institution) return null;
+  const q=normalizeText(message);
+  const name=report.institution.name;
+  const t=report.totals||{};
+  const quality=report.quality||{};
+  const latest=report.latest||null;
+  const monthly=Array.isArray(report.monthly)?report.monthly:[];
+  const metric=metricFromMessage(message);
+  const meta=metricMeta(metric);
+  if(/(cuanto|cuanta|consumo|consumio)/.test(q) && !/informe|reporte|analisis|analiza/.test(q)){
+    const val=t[metric];
+    const scope=report.filter?.period ? `en ${periodName(report.filter.period)}` : report.filter?.year ? `durante ${report.filter.year}` : `en ${report.periodCount} periodos disponibles`;
+    if(val===null || val===undefined) return `**${name}** no tiene un valor identificado de ${meta.label.toLowerCase()} ${scope}. Estado de calidad: **${quality.label||'Datos parciales'}**.`;
+    return `**${name}** registra **${fmt(val)} ${meta.unit}** de ${meta.label.toLowerCase()} ${scope}. Estado de calidad: **${quality.label||'Datos disponibles'}**.`;
+  }
+  const previous=monthly.length>1?monthly[monthly.length-2]:null;
+  const change=latest && previous ? percentChange(latest.energyKwh,previous.energyKwh) : null;
+  const members=(report.institution.members||[]).map(m=>m.role?`${m.name} (${m.role})`:m.name).join('; ');
+  const lines=[`**${name}** tiene **${report.periodCount} periodos** y ${report.institution.members?.length||1} sede(s)/cuenta(s) agrupada(s) en SiMeCO₂.`];
+  if(members) lines.push(`**Identificación:** ${members}.`);
+  lines.push(`**Calidad de datos:** ${quality.label||'Datos parciales'}.`);
+  const vals=[];
+  if(t.energyKwh!==null) vals.push(`energía **${fmt(t.energyKwh)} kWh**`); else vals.push('energía **no identificada**');
+  if(t.waterM3!==null) vals.push(`agua **${fmt(t.waterM3)} m³**`);
+  if(t.alcM3!==null) vals.push(`alcantarillado **${fmt(t.alcM3)} m³**`);
+  if(t.gasM3!==null) vals.push(`gas **${fmt(t.gasM3)} m³**`);
+  if(t.wasteTon!==null) vals.push(`residuos/aseo **${fmt(t.wasteTon)} t**`);
+  lines.push(`**Acumulado disponible:** ${vals.join(', ')}.`);
+  if(t.co2kg!==null) lines.push(`**Huella eléctrica estimada:** **${fmt(Number(t.co2kg)/1000)} t CO₂e**.`);
+  if(latest){
+    const latestVals=[];
+    if(latest.energyKwh!==null) latestVals.push(`${fmt(latest.energyKwh)} kWh`);
+    if(latest.waterM3!==null) latestVals.push(`${fmt(latest.waterM3)} m³ de agua`);
+    lines.push(`**Último periodo (${periodName(latest.period)}):** ${latestVals.length?latestVals.join(' y '):'sin datos de los indicadores principales'}.`);
+  }
+  if(change!==null) lines.push(`**Tendencia reciente:** frente al periodo anterior, la energía ${signText(change)}.`);
+  if(quality.status==='energia_contrato_separado') lines.push('**Hallazgo:** la energía se gestiona en una fuente/contrato separado y no debe interpretarse como 0 kWh ni incluirse en el ranking eléctrico hasta integrar esa fuente.');
+  else if(t.energyKwh!==null) lines.push('**Acción prioritaria:** revisar los meses de mayor consumo, horarios de equipos e iluminación, y fijar una meta de reducción medible con seguimiento mensual.');
+  if(t.waterM3!==null) lines.push('En agua, conviene revisar picos mensuales, fugas, sanitarios, tanques y rutinas de limpieza para explicar variaciones.');
+  return lines.join('\n\n');
+}
+
+function deterministicAnswer(grounded,message=''){
+  if(!grounded || grounded.intent==='general') return null;
+  if(grounded.intent==='system_counts'){
+    const c=grounded.systemCounts;
+    return `SiMeCO₂ tiene **${fmt(c.institutions)} instituciones/sedes agrupadas para consulta**, construidas a partir de **${fmt(c.records)} registros** distribuidos en **${fmt(c.periods)} periodos**. La cifra corresponde al índice institucional actual del sistema; algunas instituciones agrupan más de una sede o cuenta cuando la equivalencia está verificada.`;
+  }
+  if(grounded.intent==='institution_report') return reportAnswer(grounded.institutionReport,message);
+  if(grounded.intent==='institution_quality'){
+    const x=grounded.quality;
+    if(!x?.institution) return null;
+    const c=x.quality?.coverage||{};
+    return `**${x.institution.name}** está clasificada como **${x.quality?.label||'Datos parciales'}**. Cobertura: energía ${fmt(c.energyKwh?.percent)} %, agua ${fmt(c.waterM3?.percent)} %, alcantarillado ${fmt(c.alcM3?.percent)} %, gas ${fmt(c.gasM3?.percent)} % y residuos ${fmt(c.wasteTon?.percent)} %.`;
+  }
+  if(grounded.intent==='institution_ranking_status'){
+    const r=grounded.rankingStatus; if(!r?.institution) return null;
+    if(r.included) return `**${r.institution.name}** sí está incluida en el ranking de ${r.metric?.label?.toLowerCase()||'servicio'} y ocupa el **puesto ${r.position} de ${r.totalRanked}**, con **${fmt(r.value)} ${r.metric?.unit||''}** en el alcance consultado.`;
+    return `**${r.institution.name} no aparece en el ranking de ${r.metric?.label?.toLowerCase()||'servicio'} porque ${String(r.reason||r.qualityLabel||'no tiene un dato válido para clasificar').toLowerCase()}**. Esto **no significa consumo cero**. Estado de calidad: **${r.qualityLabel||r.qualityStatus||'Datos parciales'}**.`;
+  }
+  if(grounded.intent==='ranking'){
+    const r=grounded.ranking; if(!r) return null;
+    const rows=(r.ranking||[]).slice(0,10).map(x=>`${x.position}. ${x.name}: **${fmt(x.value)} ${r.metric?.unit||''}**`).join('\n');
+    const filter=r.filter?.period?` en ${periodName(r.filter.period)}`:r.filter?.year?` en ${r.filter.year}`:'';
+    return `**Top ${Math.min(10,(r.ranking||[]).length)} de ${r.metric?.label||'servicio'}${filter}:**\n\n${rows}\n\nSe clasificaron ${fmt(r.totalRanked)} instituciones/sedes con dato disponible; ${fmt(r.totalExcluded)} quedaron fuera por ausencia o estado de calidad del dato.`;
+  }
+  if(grounded.intent==='quality'){
+    const t=grounded.quality?.totals||{};
+    return `**Calidad de datos de SiMeCO₂:** ${fmt(t.datos_principales_completos||0)} con datos principales completos, ${fmt(t.datos_parciales||0)} con datos parciales, ${fmt(t.energia_no_identificada||0)} con energía no identificada y ${fmt(t.energia_contrato_separado||0)} con energía en contrato separado. Ninguna ausencia se convierte automáticamente en 0.`;
+  }
+  if(grounded.intent==='city_indicators'){
+    const c=grounded.city||{}, t=c.totals||{};
+    return `En el alcance consultado, SiMeCO₂ consolida **${fmt(c.institutionCount)} instituciones/sedes**, **${fmt(c.recordCount)} registros** y **${fmt(c.periodCount)} periodos**. Totales disponibles: energía **${fmt(t.energyKwh)} kWh**, agua **${fmt(t.waterM3)} m³**, alcantarillado **${fmt(t.alcM3)} m³** y residuos **${fmt(t.wasteTon)} t**.`;
+  }
+  return null;
+}
+
+function wantsDeepAI(message,grounded){
+  const q=normalizeText(message);
+  if(grounded?.intent==='general') return true;
+  if(grounded?.intent==='institution_ranking_status' || grounded?.intent==='system_counts' || grounded?.intent==='ranking' || grounded?.intent==='quality' || grounded?.intent==='institution_quality') return false;
+  return /(profund|explica las causas|causas|estrateg|plan de accion detall|recomendaciones detall|interpreta|analisis comparativo|analiza profundamente|propuesta pedagog|redacta)/.test(q);
+}
+
 function sanitizeHistory(history) {
   if (!Array.isArray(history)) return [];
-  return history.slice(-8).filter(m => m && ['user','assistant'].includes(m.role) && typeof m.text === 'string')
-    .map(m => ({role:m.role, content:m.text.slice(0,1800)}));
+  return history.slice(-4).filter(m => m && ['user','assistant'].includes(m.role) && typeof m.text === 'string')
+    .map(m => ({role:m.role, content:m.text.slice(0,900)}));
 }
 
 function extractText(response) {
@@ -184,29 +300,30 @@ async function openAIRequest(payload, apiKey) {
     const message = body?.error?.message || `OpenAI API respondió ${response.status}`;
     const error = new Error(message);
     error.status = response.status;
+    error.openaiCode = body?.error?.code || body?.error?.type || '';
     throw error;
   }
   return body;
 }
 
-async function answerWithOpenAI({message,history,apiKey,model,safetyIdentifier}) {
-  const grounded = preconsultData(message);
+async function answerWithOpenAI({message,history,apiKey,model,safetyIdentifier,grounded:providedGrounded}) {
+  const grounded = providedGrounded || preconsultData(message);
   const groundText = `DATOS PRECONSULTADOS SIMECO2 (fuente de verdad):\n${JSON.stringify(grounded)}`;
-  const input = [...sanitizeHistory(history), {role:'developer',content:groundText.slice(0,18000)}, {role:'user',content:String(message).slice(0,1800)}];
+  const input = [...sanitizeHistory(history), {role:'developer',content:groundText.slice(0,9000)}, {role:'user',content:String(message).slice(0,1200)}];
+  const groundedEnough=grounded.intent!=='general';
   let response = await openAIRequest({
     model,
     instructions:SYSTEM_PROMPT,
     input,
-    tools:TOOL_DEFS,
-    tool_choice:'auto',
+    ...(groundedEnough ? {} : {tools:TOOL_DEFS,tool_choice:'auto'}),
     reasoning:{effort:'low'},
-    text:{verbosity:'medium'},
-    max_output_tokens:1600,
+    text:{verbosity:'low'},
+    max_output_tokens:900,
     ...(safetyIdentifier ? {safety_identifier:safetyIdentifier} : {}),
   }, apiKey);
 
   let rounds = 0;
-  while (rounds < 5) {
+  while (!groundedEnough && rounds < 2) {
     const calls = (response.output || []).filter(item => item.type === 'function_call');
     if (!calls.length) break;
     const outputs = calls.map(call => {
@@ -225,13 +342,30 @@ async function answerWithOpenAI({message,history,apiKey,model,safetyIdentifier})
       tool_choice:'auto',
       instructions:SYSTEM_PROMPT,
       reasoning:{effort:'low'},
-      text:{verbosity:'medium'},
-      max_output_tokens:1600,
+      text:{verbosity:'low'},
+      max_output_tokens:900,
       ...(safetyIdentifier ? {safety_identifier:safetyIdentifier} : {}),
     }, apiKey);
     rounds += 1;
   }
-  return { text: extractText(response) || 'No pude construir una respuesta con los datos disponibles.', responseId:response.id, model, groundedIntent:grounded.intent };
+  return { text: extractText(response) || deterministicAnswer(grounded,message) || 'No pude construir una respuesta con los datos disponibles.', responseId:response.id, model, groundedIntent:grounded.intent, mode:'ai' };
 }
 
-module.exports = {TOOL_DEFS,SYSTEM_PROMPT,runTool,answerWithOpenAI};
+async function answerAssistant({message,history,apiKey,model,safetyIdentifier}){
+  const grounded=preconsultData(message);
+  const deterministic=deterministicAnswer(grounded,message);
+  if(deterministic && !wantsDeepAI(message,grounded)) return {text:deterministic,model:'SiMeCO2 Data Engine',groundedIntent:grounded.intent,mode:'data'};
+  if(!apiKey){
+    if(deterministic) return {text:deterministic,model:'SiMeCO2 Data Engine',groundedIntent:grounded.intent,mode:'data'};
+    const error=new Error('OPENAI_API_KEY_MISSING'); error.status=503; throw error;
+  }
+  try{
+    return await answerWithOpenAI({message,history,apiKey,model,safetyIdentifier,grounded});
+  }catch(error){
+    // Una consulta estructurada nunca queda inutilizable por cuota o indisponibilidad de IA.
+    if(deterministic) return {text:deterministic,model:'SiMeCO2 Data Engine',groundedIntent:grounded.intent,mode:'data',aiFallback:true,aiErrorStatus:error.status||null};
+    throw error;
+  }
+}
+
+module.exports = {TOOL_DEFS,SYSTEM_PROMPT,runTool,preconsultData,deterministicAnswer,answerWithOpenAI,answerAssistant};

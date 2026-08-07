@@ -10,12 +10,28 @@ function readJson(name) {
   return JSON.parse(fs.readFileSync(path.join(DATA_DIR, name), 'utf8'));
 }
 
-const recordsBundle = readJson('registros.json');
+const recordsBundle = readJson('registros.compact.json');
 const syncBundle = readJson('sincronizacion-territorial.json');
 const exceptionsBundle = readJson('excepciones-servicios.json');
 const summariesBundle = readJson('resumenes.json');
 
-const records = Array.isArray(recordsBundle.records) ? recordsBundle.records : [];
+function decodeCompactRecords(bundle) {
+  if (Array.isArray(bundle?.records)) return bundle.records;
+  const columns=Array.isArray(bundle?.c)?bundle.c:[];
+  const dictColumns=Array.isArray(bundle?.dictColumns)?bundle.dictColumns:[];
+  const dictCount=dictColumns.length;
+  const dictionaries=bundle?.d||{};
+  const rows=Array.isArray(bundle?.r)?bundle.r:[];
+  return rows.map(row=>{
+    const record={};
+    for(let i=0;i<columns.length;i++){
+      const key=columns[i];
+      record[key]=i<dictCount ? dictionaries[key]?.[row[i]] : row[i];
+    }
+    return record;
+  });
+}
+const records = decodeCompactRecords(recordsBundle);
 const sync = syncBundle && typeof syncBundle.metadata === 'object' ? syncBundle.metadata : {};
 const exceptions = Array.isArray(exceptionsBundle.exceptions) ? exceptionsBundle.exceptions : [];
 const summaries = Array.isArray(summariesBundle.summaries) ? summariesBundle.summaries : [];
