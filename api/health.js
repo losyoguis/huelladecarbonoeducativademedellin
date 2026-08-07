@@ -11,7 +11,7 @@ module.exports = async function handler(req,res) {
   const payload = {
     ok:true,
     service:'SiMeCO2 API',
-    version:'v63-api-model-fix-20260807',
+    version:'v64-function-schema-fix-20260807',
     aiConfigured:Boolean(apiKey),
     model,
     records:data.records.length,

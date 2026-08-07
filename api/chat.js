@@ -18,7 +18,7 @@ module.exports = async function handler(req,res) {
     const rawSession=String(body.sessionId || req.headers['x-forwarded-for'] || 'anonymous').slice(0,200);
     const safetyIdentifier='simeco2_'+crypto.createHash('sha256').update(rawSession).digest('hex').slice(0,32);
     const result = await answerWithOpenAI({message,history:body.history,apiKey,model,safetyIdentifier});
-    return res.status(200).json({ok:true,...result,dataVersion:'v63-api-model-fix-20260807'});
+    return res.status(200).json({ok:true,...result,dataVersion:'v64-function-schema-fix-20260807'});
   } catch (error) {
     console.error('SiMeCO2 chat error', error);
     const msg=String(error?.message||'');
