@@ -1,0 +1,13 @@
+CONTROL DE CALIDAD SiMeCO₂ v69
+- Sintaxis JavaScript: APROBADA.
+- Pruebas npm: APROBADAS.
+- Interpretación automática Top 3: APROBADA.
+- El Top 3 usa siempre las primeras tres posiciones reales del ranking.
+- Tendencia general: explicación del índice 70% constancia + 30% magnitud.
+- Filtro mensual: explicación del ahorro contra el mes calendario anterior.
+- Nombre y dirección visibles en cada ejemplo.
+- Registros: 9.147.
+- Instituciones/sedes agrupadas: 567.
+- Históricos oficiales: 17 períodos.
+- Integridad de PDF: APROBADA.
+RESULTADO: APROBADO.

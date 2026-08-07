@@ -1,0 +1,8 @@
+SiMeCO₂ v69 — Interpretación automática del Top 3
+
+- Se agregó una sección permanente dentro del Ranking de Ahorro con los puestos 1, 2 y 3.
+- Cada puesto muestra: nombre, dirección, puntuación/ahorro, constancia y una interpretación en lenguaje natural.
+- En Tendencia general explica el Índice de Gestión del Ahorro (70% constancia + 30% magnitud).
+- Al seleccionar un mes, la interpretación cambia automáticamente y explica el ahorro frente al mes calendario anterior.
+- La sección se recalcula con los datos reales cada vez que cambia el filtro o se actualiza el ranking.
+- Se mantiene la regla de no comparar meses faltantes o lecturas ausentes.

@@ -1,0 +1,12 @@
+CONTROL DE CALIDAD SiMeCO₂ v68
+- Sintaxis JavaScript: APROBADA.
+- Pruebas npm: APROBADAS, incluido Índice de Gestión del Ahorro.
+- Registros: 9.147.
+- Instituciones/sedes agrupadas: 567.
+- Históricos oficiales: 17 períodos.
+- Integridad de PDF: APROBADA.
+- Ranking mensual: conserva ahorro kWh contra mes calendario anterior.
+- Ranking tendencia general: ordenado por Índice de Gestión del Ahorro.
+- Fórmula: 70% constancia + 30% magnitud normalizada.
+- Nombre y dirección: conservados en ambos rankings.
+RESULTADO: APROBADO.

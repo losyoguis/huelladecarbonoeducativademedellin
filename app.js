@@ -2168,9 +2168,18 @@ function buildSavingsRows(){
       rows.push({...meta,comparisons,decreaseCount:decreases.length,increaseCount:increases.length,equalCount:equals.length,decreaseRate,savingsKwh,netSavingsKwh,increaseKwh,savingsPercent:null,rankingValue:netSavingsKwh});
     }
   }
+  if(!savingsPeriod && rows.length){
+    const maxNet=Math.max(...rows.map(r=>Math.max(0,Number(r.netSavingsKwh)||0)),1);
+    rows.forEach(r=>{
+      const consistency=Math.max(0,Math.min(100,Number(r.decreaseRate)||0));
+      const magnitude=100*Math.max(0,Number(r.netSavingsKwh)||0)/maxNet;
+      r.managementScore=(0.70*consistency)+(0.30*magnitude);
+      r.rankingValue=r.managementScore;
+    });
+  }
   return rows.sort((a,b)=>{
     if(savingsPeriod) return (b.rankingValue-a.rankingValue) || ((b.savingsPercent||0)-(a.savingsPercent||0)) || String(a.displaySite||a.site).localeCompare(String(b.displaySite||b.site),'es');
-    return (b.rankingValue-a.rankingValue) || (b.decreaseCount-a.decreaseCount) || (b.decreaseRate-a.decreaseRate) || String(a.displaySite||a.site).localeCompare(String(b.displaySite||b.site),'es');
+    return (b.managementScore-a.managementScore) || (b.decreaseRate-a.decreaseRate) || (b.netSavingsKwh-a.netSavingsKwh) || String(a.displaySite||a.site).localeCompare(String(b.displaySite||b.site),'es');
   });
 }
 function savingsSearchOptions(){return savingsRowsCache.map((r,index)=>({...r,index,key:r.key||siteKey(r.site,r.address)}));}
@@ -2197,15 +2206,53 @@ function renderSavingsRanking(){
   if(savingsSelectedKey&&!savingsRowsCache.some(r=>r.key===savingsSelectedKey)){savingsSelectedKey='';if($('savingsSiteSearch'))$('savingsSiteSearch').value='';$('clearSavingsSearchBtn')?.classList.remove('visible');}
   const pages=Math.max(1,Math.ceil(savingsRowsCache.length/SAVINGS_PAGE_SIZE));if(savingsPage>=pages)savingsPage=pages-1;drawSavingsChart(savingsRowsCache);
 }
+function renderSavingsTop3Interpretation(rows){
+  const box=$('savingsTop3Interpretation'),method=$('savingsTop3Method');
+  if(!box)return;
+  const top=rows.slice(0,3);
+  if(method){
+    method.textContent=savingsPeriod
+      ? `Lectura para ${groupLabel(savingsPeriod,'month')}: cada puesto compara el consumo con ${groupLabel(monthBefore(savingsPeriod),'month')}.`
+      : 'Lectura de tendencia general: el Índice de Gestión del Ahorro combina 70% constancia y 30% magnitud del ahorro.';
+  }
+  if(!top.length){
+    box.innerHTML='<p class="savings-top3-empty">No hay sedes con ahorro verificable para construir el ejemplo.</p>';
+    return;
+  }
+  box.innerHTML=top.map((r,i)=>{
+    const name=escapeHtml(r.displaySite||r.site||'Sede sin nombre');
+    const address=escapeHtml(rankingAddressText(r));
+    if(savingsPeriod){
+      const prev=fmt(r.previousKwh),curr=fmt(r.currentKwh),saved=fmt(r.savingsKwh),pct=fmt(r.savingsPercent,1);
+      return `<article class="savings-top3-card">
+        <div class="savings-top3-place"><span>${i+1}</span><strong>${i===0?'Primer':i===1?'Segundo':'Tercer'} puesto</strong></div>
+        <h4>${name}</h4>
+        <p class="savings-top3-address">📍 ${address}</p>
+        <p class="savings-top3-data"><strong>↓ ${saved} kWh</strong> · ${pct}% menos · ${prev} → ${curr} kWh</p>
+        <p><strong>Interpretación:</strong> esta sede ocupa el puesto ${i+1} porque, entre ${escapeHtml(groupLabel(monthBefore(savingsPeriod),'month'))} y ${escapeHtml(groupLabel(savingsPeriod,'month'))}, redujo su consumo en <strong>${saved} kWh</strong>, equivalente a <strong>${pct}%</strong>. En este filtro mensual el orden prioriza la cantidad real de kWh ahorrados.</p>
+      </article>`;
+    }
+    const score=fmt(r.managementScore,1),rate=fmt(r.decreaseRate,1),net=fmt(r.netSavingsKwh),dec=r.decreaseCount,total=r.comparisons.length;
+    return `<article class="savings-top3-card">
+      <div class="savings-top3-place"><span>${i+1}</span><strong>${i===0?'Primer':i===1?'Segundo':'Tercer'} puesto</strong></div>
+      <h4>${name}</h4>
+      <p class="savings-top3-address">📍 ${address}</p>
+      <p class="savings-top3-data"><strong>🏆 ${score} puntos</strong> · ${dec}/${total} meses ↓ (${rate}%) · ahorro neto ${net} kWh</p>
+      <p><strong>Interpretación:</strong> esta sede ocupa el puesto ${i+1} porque obtuvo <strong>${score} puntos</strong> en el Índice de Gestión del Ahorro. Logró disminuir el consumo en <strong>${dec} de ${total}</strong> comparaciones mensuales válidas (<strong>${rate}%</strong> de constancia) y acumuló un ahorro neto de <strong>${net} kWh</strong>. La posición combina principalmente la regularidad de las reducciones (70%) con la magnitud del ahorro (30%).</p>
+    </article>`;
+  }).join('');
+}
+
 function drawSavingsChart(rows){
-  const c=$('savingsSiteChart');if(!c)return;const ctx=c.getContext('2d');ctx.clearRect(0,0,c.width,c.height);ctx.fillStyle='#13312d';ctx.font='bold 17px Arial';ctx.textAlign='left';ctx.fillText('Ranking de sedes por ahorro de energía eléctrica (kWh)',24,34);ctx.font='12px Arial';ctx.fillStyle='#637772';ctx.fillText(savingsPeriod?`${groupLabel(savingsPeriod,'month')} frente a ${groupLabel(monthBefore(savingsPeriod),'month')} · nombre y dirección · mayor ahorro mensual a menor.`:'Tendencia general · nombre y dirección · mayor ahorro neto a menor · solo meses consecutivos con lectura válida.',24,54);
+  const c=$('savingsSiteChart');if(!c)return;const ctx=c.getContext('2d');ctx.clearRect(0,0,c.width,c.height);ctx.fillStyle='#13312d';ctx.font='bold 17px Arial';ctx.textAlign='left';ctx.fillText('Ranking de sedes por ahorro de energía eléctrica (kWh)',24,34);ctx.font='12px Arial';ctx.fillStyle='#637772';ctx.fillText(savingsPeriod?`${groupLabel(savingsPeriod,'month')} frente a ${groupLabel(monthBefore(savingsPeriod),'month')} · nombre y dirección · mayor ahorro mensual a menor.`:'Tendencia general · Índice de Gestión del Ahorro: 70% constancia + 30% magnitud del ahorro · solo meses consecutivos válidos.',24,54);
   const total=rows.length,pages=Math.max(1,Math.ceil(total/SAVINGS_PAGE_SIZE));savingsPage=Math.max(0,Math.min(savingsPage,pages-1));const start=savingsPage*SAVINGS_PAGE_SIZE,visible=rows.slice(start,start+SAVINGS_PAGE_SIZE),end=Math.min(start+visible.length,total);
   if($('savingsPageInfo'))$('savingsPageInfo').textContent=total?`${start+1}–${end} de ${total} sedes con ahorro · Página ${savingsPage+1} de ${pages}`:'Sin sedes con ahorro verificable';['savingsFirstBtn','savingsPrevBtn'].forEach(id=>{if($(id))$(id).disabled=savingsPage===0||!total;});['savingsNextBtn','savingsLastBtn'].forEach(id=>{if($(id))$(id).disabled=savingsPage>=pages-1||!total;});
+  renderSavingsTop3Interpretation(rows);
   const maxSaved=rows.reduce((m,r)=>Math.max(m,Number(r.rankingValue)||0),0),best=rows[0],bestRate=[...rows].sort((a,b)=>savingsPeriod?((b.savingsPercent||0)-(a.savingsPercent||0))||(b.rankingValue-a.rankingValue):(b.decreaseCount-a.decreaseCount)||(b.decreaseRate-a.decreaseRate)||(b.comparisons.length-a.comparisons.length)||(b.rankingValue-a.rankingValue))[0];
-  if($('savingsRankingExtremes'))$('savingsRankingExtremes').innerHTML=total?`<article><span>Mayor ahorro</span><strong>${escapeHtml(best.displaySite||best.site)}</strong><small>📍 ${escapeHtml(rankingAddressText(best))} · ${fmt(best.rankingValue)} kWh${savingsPeriod&&Number.isFinite(best.savingsPercent)?` · ${fmt(best.savingsPercent,1)}% menos`:''}</small></article><article><span>${savingsPeriod?'Mejor reducción':'Mayor constancia'}</span><strong>${escapeHtml(bestRate.displaySite||bestRate.site)}</strong><small>📍 ${escapeHtml(rankingAddressText(bestRate))} · ${savingsPeriod?`${fmt(bestRate.savingsPercent,1)}% menos`:`${bestRate.decreaseCount}/${bestRate.comparisons.length} comparaciones a la baja · ${fmt(bestRate.decreaseRate,1)}%`}</small></article><article><span>Cobertura</span><strong>${total} sedes con ahorro verificable</strong><small>${savingsPeriod?`Comparación ${escapeHtml(groupLabel(monthBefore(savingsPeriod),'month'))} → ${escapeHtml(groupLabel(savingsPeriod,'month'))}`:'No se comparan meses faltantes ni lecturas ausentes'}</small></article>`:'<p>No hay reducciones de energía verificables para la selección actual.</p>';
+  if($('savingsRankingExtremes'))$('savingsRankingExtremes').innerHTML=total?`<article><span>${savingsPeriod?'Mayor ahorro':'Mejor gestión del ahorro'}</span><strong>${escapeHtml(best.displaySite||best.site)}</strong><small>📍 ${escapeHtml(rankingAddressText(best))} · ${savingsPeriod?`${fmt(best.rankingValue)} kWh${Number.isFinite(best.savingsPercent)?` · ${fmt(best.savingsPercent,1)}% menos`:''}`:`🏆 ${fmt(best.managementScore,1)} puntos · ahorro neto ${fmt(best.netSavingsKwh)} kWh`}</small></article><article><span>${savingsPeriod?'Mejor reducción':'Mayor constancia'}</span><strong>${escapeHtml(bestRate.displaySite||bestRate.site)}</strong><small>📍 ${escapeHtml(rankingAddressText(bestRate))} · ${savingsPeriod?`${fmt(bestRate.savingsPercent,1)}% menos`:`${bestRate.decreaseCount}/${bestRate.comparisons.length} comparaciones a la baja · ${fmt(bestRate.decreaseRate,1)}%`}</small></article><article><span>Cobertura</span><strong>${total} sedes con ahorro verificable</strong><small>${savingsPeriod?`Comparación ${escapeHtml(groupLabel(monthBefore(savingsPeriod),'month'))} → ${escapeHtml(groupLabel(savingsPeriod,'month'))}`:'No se comparan meses faltantes ni lecturas ausentes'}</small></article>`:'<p>No hay reducciones de energía verificables para la selección actual.</p>';
   if(!visible.length){ctx.fillStyle='#13312d';ctx.font='13px Arial';ctx.fillText('No hay ahorro mensual verificable para graficar en esta selección.',24,94);return;}
   const nameRight=205,addressX=218,addressWidth=205,padL=440,padR=28,valueX=Math.max(790,c.width-300),top=82,rowH=36,barH=20,max=Math.max(maxSaved,1),maxBarW=Math.max(150,valueX-padL-18);ctx.font='12px Arial';
-  visible.forEach((r,i)=>{const y=top+i*rowH,position=start+i+1,isSelected=savingsSelectedKey&&r.key===savingsSelectedKey;if(isSelected){ctx.fillStyle='#fff3bf';roundRect(ctx,12,y-7,c.width-24,rowH-1,10);ctx.fill();}drawRankingIdentity(ctx,r,position,y,isSelected,{nameRight,addressX,addressWidth});const bw=Math.max(5,(r.rankingValue/max)*maxBarW),grad=ctx.createLinearGradient(padL,0,padL+bw,0);grad.addColorStop(0,'#0b9878');grad.addColorStop(1,'#0fc39a');ctx.fillStyle=grad;roundRect(ctx,padL,y,bw,barH,8);ctx.fill();const available=c.width-valueX-padR;let fullLabel;if(savingsPeriod){fullLabel=`↓ ${fmt(r.savingsKwh)} kWh · ${fmt(r.savingsPercent,1)}% · ${fmt(r.previousKwh)} → ${fmt(r.currentKwh)} kWh`;}else{fullLabel=`${r.decreaseCount}/${r.comparisons.length} meses ↓ (${fmt(r.decreaseRate,1)}%) · ahorro neto ${fmt(r.netSavingsKwh)} kWh`;}ctx.fillStyle='#13312d';ctx.textAlign='left';ctx.font='bold 11.5px Arial';ctx.fillText(fitCanvasText(ctx,fullLabel,available),valueX,y+15);});ctx.textAlign='left';
+  visible.forEach((r,i)=>{const y=top+i*rowH,position=start+i+1,isSelected=savingsSelectedKey&&r.key===savingsSelectedKey;if(isSelected){ctx.fillStyle='#fff3bf';roundRect(ctx,12,y-7,c.width-24,rowH-1,10);ctx.fill();}drawRankingIdentity(ctx,r,position,y,isSelected,{nameRight,addressX,addressWidth});const bw=Math.max(5,(r.rankingValue/max)*maxBarW),grad=ctx.createLinearGradient(padL,0,padL+bw,0);grad.addColorStop(0,'#0b9878');grad.addColorStop(1,'#0fc39a');ctx.fillStyle=grad;roundRect(ctx,padL,y,bw,barH,8);ctx.fill();const available=c.width-valueX-padR;let fullLabel;if(savingsPeriod){fullLabel=`↓ ${fmt(r.savingsKwh)} kWh · ${fmt(r.savingsPercent,1)}% · ${fmt(r.previousKwh)} → ${fmt(r.currentKwh)} kWh`;}else{fullLabel=`🏆 ${fmt(r.managementScore,1)} pts · ${r.decreaseCount}/${r.comparisons.length} meses ↓ (${fmt(r.decreaseRate,1)}%) · ahorro ${fmt(r.netSavingsKwh)} kWh`;}ctx.fillStyle='#13312d';ctx.textAlign='left';ctx.font='bold 11.5px Arial';ctx.fillText(fitCanvasText(ctx,fullLabel,available),valueX,y+15);});ctx.textAlign='left';
 }
 
 function fitCanvasText(ctx, text, maxWidth){

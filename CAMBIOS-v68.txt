@@ -1,0 +1,10 @@
+SiMeCO₂ v68 — Índice de Gestión del Ahorro
+
+- El ranking general de ahorro ya no se ordena únicamente por kWh netos ahorrados.
+- Nuevo Índice de Gestión del Ahorro (0–100 puntos):
+  70% constancia: porcentaje de comparaciones mensuales consecutivas en las que baja el consumo.
+  30% magnitud: ahorro neto de la sede normalizado respecto al mayor ahorro neto del conjunto.
+- Se muestran puntos, meses a la baja, porcentaje de constancia y ahorro neto.
+- El filtro por un mes concreto conserva el ranking por ahorro real de kWh frente al mes calendario anterior.
+- Se mantienen nombre y dirección en ambos rankings.
+- Los meses faltantes y lecturas ausentes no se interpretan como ahorro.
