@@ -1,4 +1,4 @@
-CONTROL DE CALIDAD INTEGRAL — SiMeCO₂ v62
+CONTROL DE CALIDAD INTEGRAL — SiMeCO₂ v63
 Fecha: 2026-08-07
 
 ALCANCE
@@ -15,9 +15,9 @@ PRUEBAS EJECUTADAS
 - OK: Bundles JS cargados: 9147 registros, 17 resúmenes, 248 coincidencias territoriales y 1 excepción(es) de servicio
 - OK: Regresión INEM: 17 periodos conservados, energía ausente en el consolidado, alias oficial y contrato separado verificados
 - OK: Regresión Fe y Alegría Santo Domingo Savio: 2 sedes, 34 registros, 17 periodos y totales institucionales verificados
-- OK: Capa API/IA v62 presente con endpoints, configuración y backend serverless
-- OK: Sintaxis de endpoints API y Asistente v62 validada con Node
-- OK: Pruebas automatizadas de datos y endpoints v62 aprobadas
+- OK: Capa API/IA v63 presente con endpoints, configuración y backend serverless
+- OK: Sintaxis de endpoints API y Asistente v63 validada con Node
+- OK: Pruebas automatizadas de datos y endpoints v63 aprobadas
 - OK: Históricos, conciliación e integridad de los 17 PDF aprobados
 
 RESULTADO

@@ -34,7 +34,7 @@ La clave de OpenAI se lee únicamente desde `OPENAI_API_KEY` en el servidor. **N
 Copia `.env.example` solo como referencia y configura las variables en el proveedor del backend:
 
 - `OPENAI_API_KEY`: obligatoria para respuestas IA.
-- `OPENAI_MODEL`: por defecto `gpt-5.6-terra`.
+- `OPENAI_MODEL`: por defecto `gpt-5-mini`.
 - `SIMECO_ALLOWED_ORIGINS`: lista separada por comas. Si el frontend está en GitHub Pages, incluye su origen exacto.
 - `SIMECO_MAX_REQUESTS_PER_MINUTE`: por defecto 12.
 

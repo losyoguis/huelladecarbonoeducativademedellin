@@ -8,7 +8,7 @@ OPCIÓN RECOMENDADA: PUBLICAR TODO EN VERCEL
 3. No necesitas comando de compilación. El sitio es estático y `/api/*` se ejecuta como funciones Node.
 4. En Project Settings > Environment Variables crea:
    OPENAI_API_KEY = tu clave (solo en Vercel, nunca en archivos del repositorio)
-   OPENAI_MODEL = gpt-5.6-terra
+   OPENAI_MODEL = gpt-5-mini
    SIMECO_MAX_REQUESTS_PER_MINUTE = 12
 5. Si frontend y API están en el mismo dominio de Vercel, `assistant-config.js` puede quedar con apiUrl vacío.
 6. Publica y prueba primero `/api/health`. Debe devolver `ok: true` y `aiConfigured: true`.

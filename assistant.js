@@ -209,7 +209,7 @@
   }
 
   function assistantSessionId(){
-    const key='simeco2_assistant_session_v62';
+    const key='simeco2_assistant_session_v63';
     let id=localStorage.getItem(key);
     if(!id){ id=(window.crypto?.randomUUID?.() || `simeco-${Date.now()}-${Math.random().toString(36).slice(2)}`); localStorage.setItem(key,id); }
     return id;
@@ -229,13 +229,14 @@
   async function probeApi(){
     const apiUrl=resolvedApiUrl();
     if(!config.preferAI || !apiUrl){ setAssistantStatus('local','API de IA no configurada en el cliente.'); return; }
-    const healthUrl=apiUrl.replace(/\/chat(?:\?.*)?$/,'/health');
+    const healthUrl=apiUrl.replace(/\/chat(?:\?.*)?$/,'/health?probe=1');
     try{
       setAssistantStatus('checking','Verificando conexión con el servidor.');
       const response=await fetch(healthUrl,{method:'GET',cache:'no-store'});
       const payload=await response.json().catch(()=>({}));
       if(!response.ok) throw new Error(payload?.error||`API ${response.status}`);
-      if(payload.aiConfigured) setAssistantStatus('ai',`API SiMeCO₂ ${payload.version||''} · ${payload.model||'OpenAI'}`);
+      if(payload.aiConfigured && payload.aiReachable) setAssistantStatus('ai',`API SiMeCO₂ ${payload.version||''} · ${payload.model||'OpenAI'}`);
+      else if(payload.aiConfigured) setAssistantStatus('error',`OpenAI configurado, pero el modelo/API no está disponible (${payload.aiProbe||payload.aiProbeStatus||'probe fallido'}).`);
       else setAssistantStatus('error','La API de datos está disponible, pero OPENAI_API_KEY no está configurada.');
     }catch(error){ setAssistantStatus('error',error?.message||'API no disponible'); }
   }
@@ -255,7 +256,7 @@
         signal:controller.signal
       });
       const payload=await response.json().catch(()=>({}));
-      if(!response.ok || !payload?.text) throw new Error(payload?.error || `API ${response.status}`);
+      if(!response.ok || !payload?.text) { const err=new Error([payload?.error,payload?.detail,payload?.code].filter(Boolean).join(' · ') || `API ${response.status}`); err.code=payload?.code; throw err; }
       setAssistantStatus('ai',`Modelo: ${payload.model||'OpenAI'}`);
       return payload.text;
     } finally { clearTimeout(timer); }
@@ -290,7 +291,7 @@
         console.warn('Asistente IA no disponible.',error);
         setAssistantStatus('error',error?.message||'API no disponible');
         if(config.preferAI && apiUrl){
-          responseText='La IA está configurada, pero la consulta al servidor falló. No voy a sustituirla silenciosamente por una respuesta local que pueda mezclar datos. Revisa el estado de la API, la facturación/crédito de OpenAI o los logs de Vercel y vuelve a intentar.';
+          responseText=`La consulta con IA falló y no voy a reemplazarla por datos locales potencialmente mezclados. ${error?.message ? 'Detalle: '+error.message : 'Revisa /api/health?probe=1 y los logs de Vercel.'}`;
         }
       }
       if(!responseText) responseText=answer(question);

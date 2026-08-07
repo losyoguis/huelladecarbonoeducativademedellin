@@ -1,1 +1,1 @@
-SiMeCO2 v62 · Asistente grounded y diagnóstico API · 2026-08-07
+SiMeCO2 v63-api-model-fix-20260807
