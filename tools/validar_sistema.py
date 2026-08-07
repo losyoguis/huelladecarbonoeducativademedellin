@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Control de calidad integral de SiMeCO₂ v65: datos, rendimiento, API y frontend."""
+"""Control de calidad integral de SiMeCO₂ v66: datos, rendimiento, API y frontend."""
 from __future__ import annotations
 import json, re, subprocess, sys
 from html.parser import HTMLParser
@@ -58,8 +58,8 @@ def main():
     if 'pdf-lib.min.js' in search: errors.append('Búsqueda institucional todavía carga PDF-Lib al inicio')
     if 'ensurePdfLib' not in (ROOT/'institucional.js').read_text(encoding='utf8'): errors.append('Falta carga bajo demanda de PDF-Lib')
     app=(ROOT/'app.js').read_text(encoding='utf8')
-    for marker in ["simeco2_servicios_v16","v65-rendimiento-consultas-20260807","function ensurePdfJs","RECORD_TABLE_PAGE_SIZE = 200","function renderRecordPagination","La verificación de PDF queda bajo demanda"]:
-        if marker not in app: errors.append(f'Falta marcador v65 en app.js: {marker}')
+    for marker in ["simeco2_servicios_v16","v66-ranking-ahorro-20260807","function ensurePdfJs","RECORD_TABLE_PAGE_SIZE = 200","function renderRecordPagination","function renderSavingsRanking","function monthBefore","La verificación de PDF queda bajo demanda"]:
+        if marker not in app: errors.append(f'Falta marcador v66 en app.js: {marker}')
     checks.append('PDF.js/PDF-Lib bajo demanda y tabla paginada')
 
     # Bundle compacto: igualdad exacta y reducción.
@@ -98,7 +98,7 @@ console.log(JSON.stringify({n:compact.length,equal}));
     for marker in ['"records": 9147','"feEnergy": 73924','"inemStatus": "energia_contrato_separado"','"mode": "data-first"']:
         if marker not in data_test: errors.append(f'No se confirmó prueba crítica: {marker}')
 
-    print('CONTROL DE CALIDAD SiMeCO2 v65')
+    print('CONTROL DE CALIDAD SiMeCO2 v66')
     for c in checks: print('OK -',c)
     if errors:
         for e in errors: print('ERROR -',e)
