@@ -6,7 +6,7 @@ const TOOL_DEFS = [
   {
     type:'function', name:'buscar_institucion',
     description:'Busca una institución o sede de SiMeCO₂ por nombre oficial, alias de factura, dirección, código o núcleo. Úsala si el nombre es ambiguo o no estás seguro de la coincidencia.',
-    parameters:{type:'object',properties:{query:{type:'string'},limit:{type:'integer',minimum:1,maximum:10}},required:['query'],additionalProperties:false},
+    parameters:{type:'object',properties:{query:{type:'string'},limit:{type:'integer',minimum:1,maximum:10,description:'Máximo de coincidencias a devolver. Usa 8 salvo que la pregunta requiera otra cantidad.'}},required:['query','limit'],additionalProperties:false},
     strict:true,
   },
   {
@@ -128,6 +128,15 @@ function preconsultData(message) {
     if (resolved && !resolved.notFound && !resolved.ambiguous) institution = resolved.displayName;
   }
   const out = { intent:'general' };
+  if (/(cuantos|cuantas|cantidad|numero).*(sedes|instituciones)/.test(q)) {
+    out.intent='system_counts';
+    out.systemCounts={
+      institutions:data.institutions.length,
+      records:data.records.length,
+      periods:new Set(data.records.map(r=>r.period).filter(Boolean)).size
+    };
+    return out;
+  }
   if (institution && /ranking|puesto|posicion|aparece/.test(q)) {
     out.intent='institution_ranking_status';
     out.rankingStatus=data.rankingStatusForInstitution(institution,metric,{period:hints.period||undefined,year:hints.year||undefined});
