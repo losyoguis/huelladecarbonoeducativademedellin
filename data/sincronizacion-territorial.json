@@ -1,7 +1,7 @@
 {
-  "version": "1.0",
-  "source": "Facturas PDF + directorio territorial de referencia",
-  "matched": 245,
+  "version": "v60",
+  "source": "Facturas PDF + directorio territorial de referencia + vinculaciones institucionales verificadas",
+  "matched": 248,
   "totalInvoiceSites": 539,
   "metadata": {
     "anexo villa del socorro|cr 48 cl 104 -11": {
@@ -3678,6 +3678,66 @@
       "matchedName": "INST EDUC YERMO Y PARRES",
       "invoiceSite": "Yermo Y Parres",
       "invoiceAddress": "Cl 28 Cr 77 -84"
+    },
+    "inem j f de rpo|cr 48 cl 1 -125": {
+      "zone": "Zona Suroriental",
+      "territoryType": "Comuna",
+      "commune": "El Poblado",
+      "neighborhood": "El Poblado",
+      "nucleus": "932",
+      "siteType": "Institución Educativa",
+      "directoryId": "MED-932-001",
+      "source": "Vinculación institucional verificada v57",
+      "confidence": "Alta",
+      "matchScore": 100.0,
+      "matchedName": "INST EDUC INEM JOSE FELIX DE RESTREPO",
+      "displayName": "I.E. INEM José Félix de Restrepo",
+      "aliases": "INEM Jose Felix de Restrepo; Inem J F De Rpo",
+      "invoiceSite": "Inem J F De Rpo",
+      "invoiceAddress": "Cr 48 Cl 1 -125",
+      "note": "La factura registra servicios de la sede bajo una abreviatura; la vinculación no modifica los valores originales."
+    },
+    "municipio de medellin|cr 29 cl 110 a -83": {
+      "zone": "Zona Nororiental",
+      "territoryType": "Comuna",
+      "commune": "Popular",
+      "neighborhood": "Santo Domingo Savio",
+      "nucleus": "914",
+      "siteType": "Institución Educativa",
+      "directoryId": "MED-914-004",
+      "source": "Vinculación institucional verificada v60",
+      "confidence": "Alta",
+      "matchScore": 100.0,
+      "matchedName": "INST EDUC FE Y ALEGRIA SANTO DOMINGO SAVIO",
+      "displayName": "I.E. Fe y Alegría Santo Domingo Savio · Sede Principal",
+      "institutionGroupId": "MED-914-004",
+      "institutionDisplayName": "I.E. Fe y Alegría Santo Domingo Savio",
+      "institutionRole": "Sede Principal",
+      "aliases": "Fe y Alegría Santo Domingo Savio; Fe y Alegria Santo Domingo Savio; I.E. Fe y Alegría Santo Domingo Savio; INST EDUC FE Y ALEGRIA SANTO DOMINGO SAVIO; SEC ESC FE Y ALEGRIA SEGUNDA AGRUPACION; Municipio De Medellin; Esc.sto Domingo Savio 2; Santo Domingo Savio Segunda Agrupación",
+      "invoiceSite": "Municipio De Medellin",
+      "invoiceAddress": "Cr 29 Cl 110 A -83",
+      "note": "La dirección de la factura se vincula con la sede principal de la I.E. Fe y Alegría Santo Domingo Savio. La agrupación institucional conserva por separado la trazabilidad de cada sede y suma sus consumos únicamente en vistas institucionales."
+    },
+    "esc.sto domingo savio 2|cr 30 cl 110 b -24": {
+      "zone": "Zona Nororiental",
+      "territoryType": "Comuna",
+      "commune": "Popular",
+      "neighborhood": "Santo Domingo Savio",
+      "nucleus": "914",
+      "siteType": "Sección Escuela",
+      "directoryId": "MED-914-019",
+      "source": "Vinculación institucional verificada v60",
+      "confidence": "Alta",
+      "matchScore": 100.0,
+      "matchedName": "SEC ESC FE Y ALEGRIA SEGUNDA AGRUPACION",
+      "displayName": "I.E. Fe y Alegría Santo Domingo Savio · Segunda Agrupación",
+      "institutionGroupId": "MED-914-004",
+      "institutionDisplayName": "I.E. Fe y Alegría Santo Domingo Savio",
+      "institutionRole": "Segunda Agrupación",
+      "aliases": "Fe y Alegría Santo Domingo Savio; Fe y Alegria Santo Domingo Savio; I.E. Fe y Alegría Santo Domingo Savio; INST EDUC FE Y ALEGRIA SANTO DOMINGO SAVIO; SEC ESC FE Y ALEGRIA SEGUNDA AGRUPACION; Municipio De Medellin; Esc.sto Domingo Savio 2; Santo Domingo Savio Segunda Agrupación",
+      "invoiceSite": "Esc.sto Domingo Savio 2",
+      "invoiceAddress": "Cr 30 Cl 110 B -24",
+      "note": "La dirección de la factura se vincula con la Sección Escuela Fe y Alegría Segunda Agrupación. Para informes institucionales se integra con la sede principal sin perder la evidencia individual."
     }
   }
 }
