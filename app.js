@@ -4,7 +4,7 @@ let TREE_CO2_KG_YEAR = 22; // kg CO2e capturados por árbol al año. Ajustable d
 const FACTOR_KEY = 'simeco2_factores_ambientales_v8';
 const STORE_KEY = 'simeco2_servicios_v16';
 const CONFIG_KEY = 'simeco2_repo_config_v7';
-const DATA_VERSION = 'v72-rendimiento-busquedas-20260807';
+const DATA_VERSION = 'v73-informe-por-sede-corregido-20260807';
 
 const $ = (id)=>document.getElementById(id);
 const state = loadStore();
@@ -393,6 +393,8 @@ function chooseSiteFieldSuggestion(item,key){
     comparePeriods();
   }else{
     dashboardSiteKey=key;
+    const reportBtn=$('generateSelectedReportBtn');
+    if(reportBtn) reportBtn.disabled=false;
     renderDashboard();
   }
   closeSiteAutocomplete(item);
@@ -406,6 +408,8 @@ function clearSiteAutocompleteField(item,focus=false){
     comparePeriods();
   }else{
     dashboardSiteKey='';
+    const reportBtn=$('generateSelectedReportBtn');
+    if(reportBtn) reportBtn.disabled=true;
     renderDashboard();
   }
   closeSiteAutocomplete(item);
@@ -500,6 +504,7 @@ function bindEvents(){
   bindEvent('exportCsvBtn','click',exportCsv);
   bindEvent('exportJsonBtn','click',exportJson);
   bindEvent('environmentBody','click',handlePlanButtonClick);
+  bindEvent('generateSelectedReportBtn','click',generateSelectedSiteReport);
   bindEvent('refreshRankingBtn','click',refreshFullRanking);
   bindEvent('rankingMetricFilter','change',()=>{rankingMetric=$('rankingMetricFilter')?.value||'energyKwh';rankingSelectedKey='';rankingPage=0;renderRanking();});
   bindEvent('rankingPeriodFilter','change',()=>{rankingPeriod=$('rankingPeriodFilter')?.value||'';rankingSelectedKey='';rankingPage=0;renderRanking();});
@@ -530,7 +535,6 @@ function bindEvents(){
   bindEvent('savingsNextBtn','click',()=>setSavingsPage(savingsPage+1));
   bindEvent('savingsLastBtn','click',()=>setSavingsPage(Math.max(0,Math.ceil(savingsRowsCache.length/SAVINGS_PAGE_SIZE)-1)));
   document.addEventListener('click',e=>{ const box=$('savingsSiteAutocomplete'); if(box && !box.contains(e.target)) closeSavingsSuggestions(); });
-  document.addEventListener('click',handlePlanButtonClick);
   bindEvent('qualityBody','click',handleQualityActionClick);
 }
 function initConfig(){
@@ -1961,6 +1965,7 @@ function handleQualityActionClick(e){
   const key=btn.dataset.qualitySiteKey; const row=aggregateBySite(state.records||[]).find(r=>r.key===key); if(!row) return;
   dashboardSiteKey=key;
   const field=siteAutocompleteState.get('dashboardSiteSearch'); if(field){field.input.value=row.displaySite||row.site;field.clear.classList.add('visible');}
+  if($('generateSelectedReportBtn')) $('generateSelectedReportBtn').disabled=false;
   if(window.simecoOpenSection) window.simecoOpenSection('seccion-3',{scroll:false});
   renderDashboard(); requestAnimationFrame(()=>$('siteProfile')?.scrollIntoView({behavior:'smooth',block:'center'}));
 }
@@ -2404,17 +2409,30 @@ function handlePlanButtonClick(ev){
   ev.preventDefault();
   ev.stopPropagation();
   const key = btn.getAttribute('data-site-key');
+  if(!key){alert('No fue posible identificar la sede seleccionada.');return;}
+  btn.disabled=true;
   btn.classList.add('is-generating');
-  btn.innerHTML = 'Generando…';
+  const originalHtml=btn.innerHTML;
+  btn.innerHTML = '⏳ Generando informe…';
   setTimeout(()=>{
-    generateManagementPlan(key);
-    btn.classList.remove('is-generating');
-    btn.innerHTML = '📄 Generar informe<br><small>Plan de Gestión</small>';
-  }, 30);
+    try{
+      const ok=generateManagementPlan(key);
+      if(!ok) throw new Error('No se pudo construir el informe con los registros de la sede.');
+    }catch(err){
+      console.error('Error al generar informe por sede:',err);
+      alert(`No fue posible generar el informe de esta sede. ${err?.message||'Intenta nuevamente.'}`);
+    }finally{
+      btn.disabled=false;
+      btn.classList.remove('is-generating');
+      btn.innerHTML = originalHtml || '📄 Generar informe<br><small>Plan de Gestión</small>';
+    }
+  }, 0);
 }
 
 function recordsForSiteKey(key){
-  return state.records.filter(r => siteKey(r.site, r.address) === key).sort((a,b)=>String(a.period).localeCompare(String(b.period)));
+  const indexed=recordsBySiteKey().get(key);
+  const rows=indexed ? [...indexed] : state.records.filter(r => siteKey(r.site, r.address) === key);
+  return rows.sort((a,b)=>String(a.period).localeCompare(String(b.period)));
 }
 
 function generateManagementPlan(key){
@@ -2422,7 +2440,7 @@ function generateManagementPlan(key){
   if(!recs.length){
     log('No se encontraron registros para generar el plan de gestión.');
     alert('No se encontraron registros para generar el plan de gestión de esta sede.');
-    return;
+    return false;
   }
   const site = preferredSiteName(recs[0]);
   const invoiceSite = recs[0].site || 'Sede educativa';
@@ -2460,6 +2478,28 @@ function generateManagementPlan(key){
   if(window.simecoOpenSection) window.simecoOpenSection('seccion-3', {scroll:false});
   requestAnimationFrame(()=>$('planPanel')?.scrollIntoView({behavior:'smooth',block:'start'}));
   log(`Plan de Gestión generado para ${site}.`);
+  return Boolean(CURRENT_PLAN_HTML);
+}
+
+function generateSelectedSiteReport(){
+  if(!dashboardSiteKey){
+    alert('Selecciona primero una institución o sede en el buscador de Informe por sede.');
+    $('dashboardSiteSearch')?.focus();
+    return;
+  }
+  const btn=$('generateSelectedReportBtn');
+  if(btn){btn.disabled=true;btn.textContent='⏳ Generando…';}
+  setTimeout(()=>{
+    try{
+      const ok=generateManagementPlan(dashboardSiteKey);
+      if(!ok) throw new Error('No se encontraron datos suficientes para construir el informe.');
+    }catch(err){
+      console.error('Error en informe por sede:',err);
+      alert(`No fue posible generar el informe. ${err?.message||''}`.trim());
+    }finally{
+      if(btn){btn.disabled=false;btn.textContent='📄 Generar informe de esta sede';}
+    }
+  },0);
 }
 
 function classifyEnergyIntensity(avgMonth){

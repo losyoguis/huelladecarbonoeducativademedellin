@@ -1,0 +1,12 @@
+SiMeCO₂ v73 — Corrección del Informe por sede
+
+- Se reforzó el flujo completo de generación del informe/Plan de Gestión.
+- La recuperación de registros de una sede usa el índice rápido por clave.
+- El botón de cada fila ahora maneja errores con try/catch/finally y nunca queda bloqueado silenciosamente.
+- generateManagementPlan devuelve un estado explícito de éxito/error.
+- Se agregó un botón directo “Generar informe de esta sede” junto al buscador de Informe por sede.
+- El botón directo solo se habilita después de seleccionar una sede válida.
+- Al limpiar la sede vuelve a deshabilitarse.
+- Se eliminó el listener global duplicado de los botones de Plan para evitar ejecuciones dobles.
+- Se mantienen descarga HTML y descarga/impresión PDF.
+- No se modificaron datos históricos, rankings ni cálculos.

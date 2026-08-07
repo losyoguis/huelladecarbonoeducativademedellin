@@ -1,0 +1,29 @@
+CONTROL DE CALIDAD SiMeCO₂ v73
+Fecha: 2026-08-07
+
+CORRECCIÓN PRINCIPAL
+Se revisó y reforzó la generación de Informe por sede / Plan de Gestión Ambiental.
+
+CAMBIOS
+- Recuperación rápida y confiable de registros usando el índice por sede.
+- Botones de generación con manejo de errores y restauración garantizada.
+- generateManagementPlan devuelve éxito/error explícito.
+- Nuevo botón directo “Generar informe de esta sede” junto al buscador.
+- El botón se habilita solo al seleccionar una sede válida.
+- Se eliminó el listener global duplicado de generación.
+- Se mantienen descarga PDF e HTML.
+- Se conserva la optimización de búsquedas de v72.
+
+INTEGRIDAD
+- 9.147 registros.
+- 567 instituciones/sedes.
+- 17 períodos oficiales.
+- Históricos y rankings sin cambios.
+
+PRUEBAS
+- npm run check: APROBADO.
+- npm test: APROBADO, incluida site-report-flow.test.js.
+- validar_sistema.py: APROBADO.
+- validar_historicos.py: APROBADO.
+
+RESULTADO: APROBADO.

@@ -1592,3 +1592,17 @@ img{content-visibility:auto}
 .searchable-select-option{
   contain:layout paint;
 }
+
+/* v73 · Generación robusta de informe por sede */
+.dashboard-generate-report{
+  margin-top:12px;
+  min-height:44px;
+}
+.dashboard-generate-report:disabled{
+  opacity:.48;
+  cursor:not-allowed;
+}
+.plan-btn.is-generating{
+  opacity:.72;
+  pointer-events:none;
+}

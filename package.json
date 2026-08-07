@@ -1,10 +1,10 @@
 {
-  "name": "simeco2-v72-rendimiento-busquedas",
-  "version": "72.0.0",
+  "name": "simeco2-v73-informe-sede-corregido",
+  "version": "73.0.0",
   "private": true,
   "description": "SiMeCO2 v67: rankings de consumo y ahorro identificados por nombre y dirección, carga compacta y Asistente data-first",
   "scripts": {
-    "test": "node tests/api-data.test.js && node tests/api-handlers.test.js && node tests/assistant-performance.test.js && node tests/ranking-savings.test.js && node tests/ranking-management-score.test.js && node tests/ranking-top3-interpretation.test.js && node tests/google-maps-addresses.test.js && node tests/school-map-location.test.js && node tests/search-performance.test.js",
+    "test": "node tests/api-data.test.js && node tests/api-handlers.test.js && node tests/assistant-performance.test.js && node tests/ranking-savings.test.js && node tests/ranking-management-score.test.js && node tests/ranking-top3-interpretation.test.js && node tests/google-maps-addresses.test.js && node tests/school-map-location.test.js && node tests/search-performance.test.js && node tests/site-report-flow.test.js",
     "check": "node --check app.js && node --check assistant.js && node --check institucional.js && node --check territorial.js && node --check api/chat.js && node --check api/health.js && node --check api/institutions.js && node --check api/institution.js && node --check api/history.js && node --check api/ranking.js && node --check api/quality.js && node --check api/compare.js && node --check api/_lib/simeco-data.js && node --check api/_lib/assistant-core.js"
   },
   "engines": {
