@@ -1,0 +1,14 @@
+SiMeCO2 v64 — Control de calidad
+
+APROBADO
+- npm test: aprobado.
+- npm run check: aprobado.
+- Auditoría de schemas strict: 8/8 herramientas válidas.
+- Cada propiedad de cada función strict está incluida en required.
+- additionalProperties=false en 8/8 herramientas.
+- buscar_institucion requiere query y limit.
+- Base cargada: 9.147 registros.
+- Instituciones/grupos: 567.
+- Periodos: 17.
+
+Nota: la prueba real con OpenAI debe hacerse tras desplegar en Vercel, porque la clave privada no se incluye en el paquete.

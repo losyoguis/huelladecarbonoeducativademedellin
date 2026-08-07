@@ -1,0 +1,12 @@
+SiMeCO2 v64 — corrección de Function Calling
+Fecha: 07/08/2026
+
+1. Se corrigió el esquema strict de la función buscar_institucion.
+   - Antes: properties incluía query y limit, pero required solo incluía query.
+   - Ahora: required incluye query y limit, como exige OpenAI para schemas strict.
+2. Se auditaron las 8 herramientas del Asistente Ambiental para verificar que required contenga todas las claves de properties y additionalProperties=false.
+3. Se añadió preconsulta determinista para preguntas de cantidad de sedes/instituciones.
+   - Usa data.institutions.length, data.records.length y número de periodos antes de redactar con IA.
+4. Se actualizó la versión del backend a v64-function-schema-fix-20260807.
+
+El error corregido era: Invalid schema for function 'buscar_institucion' ... Missing 'limit'.
