@@ -1,10 +1,10 @@
-/* SiMeCO2 Servicios Públicos - v55 históricos verificados y caché estable */
+/* SiMeCO2 Servicios Públicos - v59 calidad de datos, contratos separados, histórico multivariable, ranking por servicio y ficha integral */
 let FACTOR_CO2_KG_KWH = 0.126; // kg CO2e/kWh. Ajustable desde el dashboard.
 let TREE_CO2_KG_YEAR = 22; // kg CO2e capturados por árbol al año. Ajustable desde el dashboard.
 const FACTOR_KEY = 'simeco2_factores_ambientales_v8';
-const STORE_KEY = 'simeco2_servicios_v8';
+const STORE_KEY = 'simeco2_servicios_v12';
 const CONFIG_KEY = 'simeco2_repo_config_v7';
-const DATA_VERSION = 'v55-history-summary-20260801';
+const DATA_VERSION = 'v59-external-contracts-20260807';
 
 const $ = (id)=>document.getElementById(id);
 const state = loadStore();
@@ -23,8 +23,20 @@ let rankingPage = 0;
 let rankingRowsCache = [];
 let rankingPeriod = "";
 let rankingPriority = "";
+let rankingMetric = "energyKwh";
 let rankingSelectedKey = "";
 let rankingAutocompleteIndex = -1;
+
+const SERVICE_METRICS = {
+  energyKwh:{field:'energyKwh',label:'Energía eléctrica',short:'Energía',unit:'kWh',hasFlag:'hasEnergy',periodField:'energyPeriodCount',colorLabel:'eléctrico'},
+  waterM3:{field:'waterM3',label:'Agua',short:'Agua',unit:'m³',hasFlag:'hasWater',periodField:'waterPeriodCount',colorLabel:'hídrico'},
+  alcM3:{field:'alcM3',label:'Alcantarillado',short:'Alcantarillado',unit:'m³',hasFlag:'hasAlc',periodField:'alcPeriodCount',colorLabel:'de alcantarillado'},
+  gasM3:{field:'gasM3',label:'Gas natural',short:'Gas',unit:'m³',hasFlag:'hasGas',periodField:'gasPeriodCount',colorLabel:'de gas'},
+  wasteTon:{field:'wasteTon',label:'Aseo / residuos',short:'Residuos',unit:'t',hasFlag:'hasWaste',periodField:'wastePeriodCount',colorLabel:'de residuos'}
+};
+function serviceMetric(field){ return SERVICE_METRICS[field] || SERVICE_METRICS.energyKwh; }
+function selectedHistoryMetric(){ return serviceMetric($('compareMetric')?.value || 'energyKwh'); }
+function selectedRankingMetric(){ return serviceMetric(rankingMetric || $('rankingMetricFilter')?.value || 'energyKwh'); }
 
 const PROJECT_LOADING_FACTS = [
   'SiMeCO₂ transforma los consumos de servicios públicos en información útil para la gestión ambiental escolar.',
@@ -58,19 +70,42 @@ const CORREGIMIENTO_RULES = [
   ['santa elena','Santa Elena'],
   ['palmitas','San Sebastián de Palmitas']
 ];
+function getTerritorySyncMeta(record){
+  const sync=window.SIMECO_TERRITORIAL_SYNC;
+  if(!sync || !record) return null;
+  const exactKey=`${loose(record.site||'')}|${loose(record.address||'')}`;
+  if(sync[exactKey]) return sync[exactKey];
+  const address=loose(record.address||'');
+  if(!address) return null;
+  const matches=Object.values(sync).filter(item=>loose(item?.invoiceAddress||'')===address);
+  return matches.length===1 ? matches[0] : null;
+}
+const MEDELLIN_COMMUNES=['Popular','Santa Cruz','Manrique','Aranjuez','Castilla','Doce de Octubre','Robledo','Villa Hermosa','Buenos Aires','La Candelaria','Laureles-Estadio','La América','San Javier','El Poblado','Guayabal','Belén'];
 function territoryMeta(record){
   if(record && typeof record === 'object' && territoryMetaCache.has(record)) return territoryMetaCache.get(record);
-  const hay=loose(`${record?.site||''} ${record?.address||''}`);
-  const exact=TERRITORY_CATALOG.find(x=>x.match.some(m=>hay.includes(loose(m))));
+  const synced=getTerritorySyncMeta(record);
   let result;
-  if(exact) result={...exact};
-  else {
-    for(const [needle,name] of CORREGIMIENTO_RULES){
-      if(hay.includes(loose(needle))){ result={type:'Corregimiento',territory:name,nucleus:'Sin clasificar'}; break; }
-    }
-    if(!result){
-      const comuna=hay.match(/(?:comuna|c)\s*0?([1-9]|1[0-6])\b/);
-      result=comuna ? {type:'Comuna',territory:`Comuna ${Number(comuna[1])}`,nucleus:'Sin clasificar'} : {type:'Sin clasificar',territory:'Sin clasificar',nucleus:'Sin clasificar'};
+  if(synced){
+    result={
+      type:synced.territoryType||'Sin clasificar',
+      territory:synced.commune||synced.territory||'Sin clasificar',
+      nucleus:String(synced.nucleus||'Sin clasificar'),
+      neighborhood:synced.neighborhood||'',
+      zone:synced.zone||'',
+      confidence:synced.confidence||''
+    };
+  }else{
+    const hay=loose(`${record?.site||''} ${record?.address||''}`);
+    const exact=TERRITORY_CATALOG.find(x=>x.match.some(m=>hay.includes(loose(m))));
+    if(exact) result={...exact};
+    else {
+      for(const [needle,name] of CORREGIMIENTO_RULES){
+        if(hay.includes(loose(needle))){ result={type:'Corregimiento',territory:name,nucleus:'Sin clasificar'}; break; }
+      }
+      if(!result){
+        const comuna=hay.match(/(?:comuna|c)\s*0?([1-9]|1[0-6])\b/);
+        result=comuna ? {type:'Comuna',territory:MEDELLIN_COMMUNES[Number(comuna[1])-1]||`Comuna ${Number(comuna[1])}`,nucleus:'Sin clasificar'} : {type:'Sin clasificar',territory:'Sin clasificar',nucleus:'Sin clasificar'};
+      }
     }
   }
   if(record && typeof record === 'object') territoryMetaCache.set(record,result);
@@ -110,7 +145,7 @@ function updateTerritoryCascade(prefix,changed=''){
   if(changed==='type'){ if($(ids.territory)) $(ids.territory).value=''; if($(ids.nucleus)) $(ids.nucleus).value=''; }
   if(changed==='territory' && $(ids.nucleus)) $(ids.nucleus).value='';
   const metas=state.records.map(territoryMeta).filter(m=>!type||m.type===type);
-  const baseTerritories = type==='Comuna' ? Array.from({length:16},(_,i)=>`Comuna ${i+1}`) : type==='Corregimiento' ? ['Altavista','San Antonio de Prado','San Cristóbal','San Sebastián de Palmitas','Santa Elena'] : [];
+  const baseTerritories = type==='Comuna' ? MEDELLIN_COMMUNES : type==='Corregimiento' ? ['Altavista','San Antonio de Prado','San Cristóbal','San Sebastián de Palmitas','Santa Elena'] : [];
   const territories=[...new Set([...baseTerritories,...metas.map(m=>m.territory)])].filter(Boolean).sort((a,b)=>a.localeCompare(b,'es'));
   setSelectOptions(ids.territory,territories,'Todos los territorios');
   const territory=$(ids.territory)?.value||'';
@@ -321,7 +356,7 @@ function renderSiteAutocomplete(item,query=''){
   if(!options.length){
     item.list.innerHTML='<div class="autocomplete-empty">No se encontraron sedes. Prueba con otra palabra.</div>';
   }else{
-    item.list.innerHTML=options.map(x=>`<button type="button" class="autocomplete-option" role="option" data-key="${escapeHtml(x.key)}"><span><strong>${highlightMatch(x.site,q)}</strong><small>${highlightMatch(x.address||'Sin dirección registrada',q)} · ${escapeHtml(x.meta?.territory||'Sin clasificar')} · Núcleo ${escapeHtml(x.meta?.nucleus||'Sin clasificar')}</small></span><em>${x.periodCount} periodo${x.periodCount===1?'':'s'}</em></button>`).join('');
+    item.list.innerHTML=options.map(x=>`<button type="button" class="autocomplete-option" role="option" data-key="${escapeHtml(x.key)}"><span><strong>${highlightMatch(x.displaySite||x.site,q)}</strong><small>${x.displaySite!==x.site?`En factura: ${highlightMatch(x.site,q)} · `:''}${highlightMatch(x.address||'Sin dirección registrada',q)} · ${escapeHtml(x.meta?.territory||'Sin clasificar')} · Núcleo ${escapeHtml(x.meta?.nucleus||'Sin clasificar')}</small></span><em>${x.periodCount} periodo${x.periodCount===1?'':'s'}</em></button>`).join('');
   }
   item.list.hidden=false;
   item.input.setAttribute('aria-expanded','true');
@@ -329,7 +364,7 @@ function renderSiteAutocomplete(item,query=''){
 function chooseSiteFieldSuggestion(item,key){
   const option=siteSearchOptions(item.mode==='compare'?'compare':'dashboard').find(x=>x.key===key);
   if(!option) return;
-  item.input.value=option.site;
+  item.input.value=option.displaySite||option.site;
   item.clear.classList.add('visible');
   if(item.mode==='compare'){
     $('compareSite').value=key;
@@ -395,46 +430,55 @@ function initPdfJs(){
     pdfStatus.classList.add('bad');
   }
 }
+function bindEvent(id,event,handler,options){
+  const element=$(id);
+  if(element) element.addEventListener(event,handler,options);
+  return element;
+}
 function bindEvents(){
-  $("scanDataBtn").addEventListener("click", scanDataFolder);
-  document.querySelectorAll('.mobile-section-tab[data-action="actualizar"]').forEach(button=>{
-    button.addEventListener('click',()=>scanDataFolder());
-  });
-  $("localPdfInput").addEventListener("change", handleLocalPdf);
-  $("clearBtn").addEventListener("click", ()=>{ if(confirm("¿Reiniciar todos los datos importados?")){ localStorage.removeItem(STORE_KEY); location.reload(); }});
-  if($("saveRepoBtn")) $("saveRepoBtn").addEventListener("click", saveConfig);
-  if($("updateFactorsBtn")) $("updateFactorsBtn").addEventListener("click", updateFactors);
-  ["periodFilter","serviceFilter","sortFilter"].forEach(id=>$(id).addEventListener("change", applyFilters));
-  $("siteSearch").addEventListener("input", handleSiteSearchInput);
-  $("siteSearch").addEventListener("keydown", handleAutocompleteKeydown);
-  $("siteSearch").addEventListener("focus", ()=>renderAutocompleteSuggestions($("siteSearch").value));
-  $("clearSearchBtn").addEventListener("click", clearSiteSearch);
-  $("clearFiltersBtn").addEventListener("click", clearAllFilters);
-  $("siteSuggestions").addEventListener("mousedown", handleSuggestionClick);
-  document.addEventListener("click", e=>{ if(!$("siteAutocomplete").contains(e.target)) closeAutocomplete(); });
-  if($("downloadFilteredPdfBtn")) $("downloadFilteredPdfBtn").addEventListener("click", downloadFilteredPdfReport);
-  if($("downloadHistoryPdfBtn")) $("downloadHistoryPdfBtn").addEventListener("click", downloadHistoryPdfReport);
-  if($("compareMode")) $("compareMode").addEventListener("change", ()=>{ renderCompareControls(); comparePeriods(); });
-  if($("compareSite")) $("compareSite").addEventListener("change", ()=>{ renderCompareControls({keepSite:true}); comparePeriods(); });
+  bindEvent('scanDataBtn','click',scanDataFolder);
+  document.querySelectorAll('.mobile-section-tab[data-action="actualizar"]').forEach(button=>button.addEventListener('click',()=>scanDataFolder()));
+  bindEvent('localPdfInput','change',handleLocalPdf);
+  bindEvent('clearBtn','click',()=>{ if(confirm('¿Reiniciar todos los datos importados?')){ localStorage.removeItem(STORE_KEY); location.reload(); }});
+  bindEvent('saveRepoBtn','click',saveConfig);
+  bindEvent('updateFactorsBtn','click',updateFactors);
+  ['periodFilter','serviceFilter','sortFilter'].forEach(id=>bindEvent(id,'change',applyFilters));
+  bindEvent('siteSearch','input',handleSiteSearchInput);
+  bindEvent('siteSearch','keydown',handleAutocompleteKeydown);
+  bindEvent('siteSearch','focus',()=>renderAutocompleteSuggestions($('siteSearch')?.value||''));
+  bindEvent('clearSearchBtn','click',clearSiteSearch);
+  bindEvent('clearFiltersBtn','click',clearAllFilters);
+  bindEvent('siteSuggestions','mousedown',handleSuggestionClick);
+  document.addEventListener('click',e=>{ const box=$('siteAutocomplete'); if(box && !box.contains(e.target)) closeAutocomplete(); });
+  bindEvent('downloadFilteredPdfBtn','click',downloadFilteredPdfReport);
+  bindEvent('downloadHistoryPdfBtn','click',downloadHistoryPdfReport);
+  bindEvent('compareMode','change',()=>{renderCompareControls();comparePeriods();});
+  bindEvent('compareMetric','change',()=>{renderCompareControls({keepSite:true});comparePeriods();});
+  bindEvent('compareSite','change',()=>{renderCompareControls({keepSite:true});comparePeriods();});
   initSiteAutocompleteField({inputId:'compareSiteSearch',listId:'compareSiteSuggestions',clearId:'clearCompareSiteBtn',mode:'compare'});
   initSiteAutocompleteField({inputId:'dashboardSiteSearch',listId:'dashboardSiteSuggestions',clearId:'clearDashboardSiteBtn',mode:'dashboard'});
-  $("compareBtn").addEventListener("click", comparePeriods);
-  if($("printPlanBtn")) $("printPlanBtn").addEventListener("click", printCurrentPlan);
-  if($("environmentBody")) $("environmentBody").addEventListener("click", handlePlanButtonClick);
-  $("refreshRankingBtn")?.addEventListener("click", refreshFullRanking);
-  $("rankingPeriodFilter")?.addEventListener("change", ()=>{ rankingPeriod=$("rankingPeriodFilter").value||""; rankingSelectedKey=""; rankingPage=0; renderRanking(); });
-  $("rankingPriorityFilters")?.addEventListener("click", handleRankingPriorityClick);
-  $("rankingSiteSearch")?.addEventListener("input", handleRankingSearchInput);
-  $("rankingSiteSearch")?.addEventListener("focus", ()=>renderRankingSuggestions($("rankingSiteSearch").value));
-  $("rankingSiteSearch")?.addEventListener("keydown", handleRankingSearchKeydown);
-  $("rankingSiteSuggestions")?.addEventListener("mousedown", handleRankingSuggestionClick);
-  $("clearRankingSearchBtn")?.addEventListener("click", clearRankingSearch);
-  document.addEventListener("click", e=>{ const box=$("rankingSiteAutocomplete"); if(box && !box.contains(e.target)) closeRankingSuggestions(); });
-  $("rankingFirstBtn")?.addEventListener("click", ()=>setRankingPage(0));
-  $("rankingPrevBtn")?.addEventListener("click", ()=>setRankingPage(rankingPage-1));
-  $("rankingNextBtn")?.addEventListener("click", ()=>setRankingPage(rankingPage+1));
-  $("rankingLastBtn")?.addEventListener("click", ()=>setRankingPage(Math.max(0,Math.ceil(rankingRowsCache.length/RANKING_PAGE_SIZE)-1)));
-  document.addEventListener("click", handlePlanButtonClick);
+  bindEvent('compareBtn','click',comparePeriods);
+  bindEvent('printPlanBtn','click',printCurrentPlan);
+  bindEvent('downloadPlanBtn','click',downloadCurrentPlan);
+  bindEvent('exportCsvBtn','click',exportCsv);
+  bindEvent('exportJsonBtn','click',exportJson);
+  bindEvent('environmentBody','click',handlePlanButtonClick);
+  bindEvent('refreshRankingBtn','click',refreshFullRanking);
+  bindEvent('rankingMetricFilter','change',()=>{rankingMetric=$('rankingMetricFilter')?.value||'energyKwh';rankingSelectedKey='';rankingPage=0;renderRanking();});
+  bindEvent('rankingPeriodFilter','change',()=>{rankingPeriod=$('rankingPeriodFilter')?.value||'';rankingSelectedKey='';rankingPage=0;renderRanking();});
+  bindEvent('rankingPriorityFilters','click',handleRankingPriorityClick);
+  bindEvent('rankingSiteSearch','input',handleRankingSearchInput);
+  bindEvent('rankingSiteSearch','focus',()=>renderRankingSuggestions($('rankingSiteSearch')?.value||''));
+  bindEvent('rankingSiteSearch','keydown',handleRankingSearchKeydown);
+  bindEvent('rankingSiteSuggestions','mousedown',handleRankingSuggestionClick);
+  bindEvent('clearRankingSearchBtn','click',clearRankingSearch);
+  document.addEventListener('click',e=>{ const box=$('rankingSiteAutocomplete'); if(box && !box.contains(e.target)) closeRankingSuggestions(); });
+  bindEvent('rankingFirstBtn','click',()=>setRankingPage(0));
+  bindEvent('rankingPrevBtn','click',()=>setRankingPage(rankingPage-1));
+  bindEvent('rankingNextBtn','click',()=>setRankingPage(rankingPage+1));
+  bindEvent('rankingLastBtn','click',()=>setRankingPage(Math.max(0,Math.ceil(rankingRowsCache.length/RANKING_PAGE_SIZE)-1)));
+  document.addEventListener('click',handlePlanButtonClick);
+  bindEvent('qualityBody','click',handleQualityActionClick);
 }
 function initConfig(){
   const cfg = getRepoConfig();
@@ -544,9 +588,24 @@ function loadStore(){
     sites:rebuildSites(records)
   };
 }
+function compactStorePayload(){
+  const canonical=canonicalBundle();
+  const customFiles={};
+  Object.entries(state.files||{}).forEach(([name,meta])=>{
+    const base=canonical.files[name];
+    if(!base || (meta?.fingerprint && meta.fingerprint!==base.fingerprint)) customFiles[name]=meta;
+  });
+  const customSources=new Set(Object.keys(customFiles));
+  const records=(state.records||[]).filter(r=>customSources.has(r.source) || r.sourceUrl==='local' || !canonical.files[r.source]);
+  const summaries=(state.summaries||[]).filter(r=>customSources.has(r.source) || !canonical.files[r.source]);
+  return {dataVersion:DATA_VERSION,records,summaries,files:customFiles};
+}
 function saveStore(immediate=false){
   clearTimeout(saveTimer);
-  const persist=()=>{ try{ localStorage.setItem(STORE_KEY, JSON.stringify(state)); }catch(err){ console.warn('No fue posible guardar la caché local:',err); } };
+  const persist=()=>{
+    try{ localStorage.setItem(STORE_KEY,JSON.stringify(compactStorePayload())); }
+    catch(err){ console.warn('No fue posible guardar la caché local:',err); }
+  };
   if(immediate) persist(); else saveTimer=setTimeout(persist,120);
 }
 function scheduleRenderAll(){
@@ -554,11 +613,12 @@ function scheduleRenderAll(){
   renderFrame=requestAnimationFrame(()=>{ renderFrame=0; renderAll(); });
 }
 function log(msg){
-  const t = new Date().toLocaleTimeString();
-  $('logBox').textContent += `[${t}] ${msg}\n`;
-  $('logBox').scrollTop = $('logBox').scrollHeight;
+  const box=$('logBox');
+  if(!box){ console.info('[SiMeCO₂]',msg); return; }
+  const t=new Date().toLocaleTimeString();
+  box.textContent += `[${t}] ${msg}\n`;
+  box.scrollTop=box.scrollHeight;
 }
-
 async function scanDataFolder(options={}){
   if(isScanningData){
     log('La carga de facturas ya está en progreso. Espere un momento...');
@@ -923,6 +983,34 @@ function groupTextItemsIntoLines(items){
 }
 function cleanPdfText(s){ return String(s).replace(/\s+/g,' ').replace(/\s+([,.;:])/g,'$1').trim(); }
 function loose(s){ return cleanPdfText(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9$.,%#/-]+/g,' ').trim(); }
+function serviceExceptions(){
+  const source=window.SIMECO_SERVICE_EXCEPTIONS;
+  return Array.isArray(source?.exceptions)?source.exceptions:[];
+}
+function serviceExceptionForSite(row,service='energyKwh'){
+  if(!row) return null;
+  const normKey=value=>loose(value||'').replace(/[^a-z0-9]+/g,' ').trim();
+  const key=`${row.site||''}|${row.address||''}`;
+  return serviceExceptions().find(item=>item?.service===service && normKey(item?.key||'')===normKey(key)) || null;
+}
+function energyDataState(row){
+  if(row?.hasEnergy) return {code:'identified',label:'Energía identificada',shortLabel:'Identificada',detail:'La sede tiene lecturas eléctricas asociadas.',exception:null};
+  const exception=serviceExceptionForSite(row,'energyKwh');
+  if(exception) return {code:'external',label:exception.label||'Energía en contrato separado',shortLabel:exception.shortLabel||'Contrato separado',detail:exception.summary||exception.dataState||'La energía se gestiona mediante una fuente contractual separada.',exception};
+  return {code:'pending',label:'Energía no identificada',shortLabel:'No identificada',detail:`La sede tiene ${Number(row?.periodCount)||0} periodo(s) histórico(s), pero ninguna lectura eléctrica asociada a este nombre/dirección.`,exception:null};
+}
+function exceptionEvidenceHtml(exception){
+  if(!exception) return '';
+  const evidence=(exception.evidence||[]).map(item=>`<a class="secondary profile-evidence-link" href="${escapeHtml(item.url||'#')}" target="_blank" rel="noopener">${escapeHtml(item.title||'Ver evidencia')}</a>`).join('');
+  return `<div class="external-contract-note"><strong>${escapeHtml(exception.label||'Servicio en contrato separado')}</strong><p>${escapeHtml(exception.summary||exception.dataState||'')}</p>${evidence?`<div class="evidence-links">${evidence}</div>`:''}${exception.recommendedAction?`<small><strong>Acción:</strong> ${escapeHtml(exception.recommendedAction)}</small>`:''}</div>`;
+}
+function renderServiceExceptions(){
+  const panel=$('serviceExceptionsPanel'),body=$('serviceExceptionsBody');
+  if(!panel||!body) return;
+  const exceptions=serviceExceptions();
+  panel.hidden=!exceptions.length;
+  body.innerHTML=exceptions.map(ex=>`<article class="service-exception-card"><span class="quality-badge external">${escapeHtml(ex.shortLabel||ex.label||'Contrato separado')}</span><h3>${escapeHtml(ex.displayName||ex.site||'Sede')}</h3><p>${escapeHtml(ex.summary||'')}</p><small>${escapeHtml(ex.dataState||'')}</small><div class="evidence-links">${(ex.evidence||[]).map(ev=>`<a class="secondary" href="${escapeHtml(ev.url||'#')}" target="_blank" rel="noopener">${escapeHtml(ev.title||'Evidencia')}</a>`).join('')}</div></article>`).join('');
+}
 function compact(s){ return loose(s).replace(/\s+/g,''); }
 function isServiceMarker(line){
   const c = compact(line);
@@ -936,7 +1024,6 @@ function makeBlocks(lines){
       current = {page:row.page, lines:[row.text]};
     } else if(current){
       current.lines.push(row.text);
-      if(current.lines.length>120){ blocks.push(current); current=null; }
     }
   }
   if(current) blocks.push(current);
@@ -1001,79 +1088,107 @@ function extractHeader(line, nextLine){
   const address = parts.join(' - ').trim();
   return {site, address};
 }
-function extractServiceConsumption(text, service){
-  const lower = loose(text);
-  let start = 0;
-  if(service==='agua') start = Math.max(0, lower.indexOf('total agua')-900);
-  if(service==='alcantarillado') start = Math.max(0, lower.indexOf('total alcantarillado')-900);
-  if(service==='gas') start = Math.max(0, lower.indexOf('total gas')-900);
-  const fragment = text.slice(start, start+1100);
-  const m = fragment.match(/Lectura actual[\s\S]{0,150}?([\d.,]+)\s*m(?:t3|3|³)/i) || fragment.match(/Consumo\s+\w+-\d{2}\s+([\d.,]+)\s*x/i);
-  return m ? parseNumber(m[1]) : null;
+function metricSegment(text,targetPattern,previousPatterns=[]){
+  const target=new RegExp(`Total\\s+${targetPattern}\\b`,'i').exec(text);
+  if(!target) return '';
+  let start=0;
+  const prefix=text.slice(0,target.index);
+  previousPatterns.forEach(pattern=>{
+    const re=new RegExp(`Total\\s+${pattern}\\b`,'gi');
+    let match;
+    while((match=re.exec(prefix))) start=Math.max(start,match.index+match[0].length);
+  });
+  return text.slice(start,target.index);
 }
-function extractBeforeTotal(text,totalLabel,unit){
-  const idx = loose(text).indexOf(loose(totalLabel));
-  if(idx<0) return null;
-  const fragment = text.slice(Math.max(0,idx-800), idx+80);
-  const matches = [...fragment.matchAll(new RegExp('([\\d.,]+)\\s*m(?:t3|3|³)','gi'))];
-  if(matches.length) return parseNumber(matches[matches.length-1][1]);
+function lastMeasurementMatch(fragment,patterns,kind){
+  for(const pattern of patterns){
+    const matches=[...fragment.matchAll(pattern)];
+    if(matches.length) return parseMeasurement(matches[matches.length-1][1],kind);
+  }
   return null;
 }
+function extractServiceConsumption(text,service){
+  if(service==='agua'){
+    const segment=metricSegment(text,'(?:Agua|Acueducto)');
+    return lastMeasurementMatch(segment,[/Consumo\s+[A-Za-z]{3,4}-\d{2}\s+([\d.,]+)\s*x/gi,/([\d.,]+)\s*(?:m3|mt\s*3|m³)[\s\S]{0,80}?=\s*Consumo/gi],'water');
+  }
+  if(service==='alcantarillado'){
+    const segment=metricSegment(text,'Alcantarillado',['(?:Agua|Acueducto)']);
+    return lastMeasurementMatch(segment,[/Consumo\s+[A-Za-z]{3,4}-\d{2}\s+([\d.,]+)\s*x/gi,/([\d.,]+)\s*(?:m3|mt\s*3|m³)[\s\S]{0,80}?=\s*Consumo/gi],'water');
+  }
+  if(service==='gas'){
+    const segment=metricSegment(text,'Gas',['Energ[ií]a','Alcantarillado','(?:Agua|Acueducto)']);
+    return lastMeasurementMatch(segment,[/Consumo\s+[A-Za-z]{3,4}-\d{2}\s+([\d.,]+)\s*x/gi,/([\d.,]+)\s*(?:m3|mt\s*3|m³)[\s\S]{0,80}?=\s*Consumo/gi],'gas');
+  }
+  return null;
+}
+function extractBeforeTotal(text,totalLabel,unit){
+  const label=loose(totalLabel);
+  if(label.includes('alcantarillado')) return extractServiceConsumption(text,'alcantarillado');
+  if(label.includes('gas')) return extractServiceConsumption(text,'gas');
+  return extractServiceConsumption(text,'agua');
+}
 function extractEnergyKwh(text){
-  const matches = [...text.matchAll(/([\d.,]+)\s*kWh/gi)].map(m=>parseNumber(m[1])).filter(n=>Number.isFinite(n));
-  if(!matches.length) return null;
-  // En el bloque los kWh principales suelen estar junto a Lectura actual. Evitar valores de histórico muy altos si aparecen.
-  return matches[0];
+  const segment=metricSegment(text,'Energ[ií]a',['Alcantarillado','(?:Agua|Acueducto)']);
+  return lastMeasurementMatch(segment,[/Energ[ií]a(?:\s+activa)?\s+[A-Za-z]{3,4}-\d{2}\s+([\d.,]+)\s*x/gi,/Consumo\s+[A-Za-z]{3,4}-\d{2}\s+([\d.,]+)\s*x/gi,/([\d.,]+)\s*kWh[\s\S]{0,100}?=\s*Consumo/gi],'energy');
 }
 function extractWasteTon(text){
-  const m = text.match(/No Aprov-Ordinarios\s+([\d.,]+)/i) || text.match(/No aprovechables\s+([\d.,]+)/i);
-  return m ? parseNumber(m[1]) : null;
+  const values=[];
+  [/No\s+Aprov(?:echables)?-?Ordinarios\s+([\d.,]+)/i,/Barrido\s+y\s+limpieza\s+([\d.,]+)/i,/Limpieza\s+urbana\s+([\d.,]+)/i,/Rechazados\s+([\d.,]+)/i].forEach(re=>{
+    const match=text.match(re);const value=match?parseMeasurement(match[1],'ton'):null;
+    if(value!==null) values.push(value);
+  });
+  return values.length?round(values.reduce((a,b)=>a+b,0),5):null;
 }
 function valueAfter(text,label){
-  const idx = loose(text).indexOf(loose(label));
-  if(idx<0) return null;
-  const fragment = text.slice(idx, idx+220);
-  const m = fragment.match(/\$\s*-?\s*([\d.,]+)/);
-  return m ? parseMoney(m[1]) : null;
+  const re=new RegExp(`${String(label).replace(/[.*+?^${}()|[\\]\\]/g,'\\$&')}[\\s\\S]{0,220}?\\$\\s*-?\\s*([\\d.,]+)`,'i');
+  const match=text.match(re);
+  return match?parseMoney(match[1]):null;
 }
-function extractAfter(text,re){ const m = text.match(re); return m ? parseNumber(m[1]) : null; }
-function parseNumber(v){
+function extractAfter(text,re){ const m=text.match(re); return m?parseNumber(m[1]):null; }
+function parseMeasurement(v,kind='generic'){
   if(v==null) return null;
   let s=String(v).trim().replace(/\s/g,'').replace(/[^0-9,.-]/g,'');
   if(!s) return null;
-  const negative=s.startsWith('-');
-  s=s.replace(/-/g,'');
-  const commas=(s.match(/,/g)||[]).length;
-  const dots=(s.match(/\./g)||[]).length;
-
-  if(commas && dots){
-    // En las facturas colombianas el último separador suele ser el decimal.
-    if(s.lastIndexOf(',')>s.lastIndexOf('.')) s=s.replace(/\./g,'').replace(',','.');
-    else s=s.replace(/,/g,'');
-  }else if(dots){
-    const parts=s.split('.');
-    const looksThousands=parts.length>2 || (parts.length===2 && parts[1].length===3 && parts[0]!=='0');
-    if(looksThousands) s=parts.join('');
-  }else if(commas){
-    const parts=s.split(',');
-    const looksThousands=parts.length>2 || (parts.length===2 && parts[1].length===3 && parts[0]!=='0');
-    s=looksThousands ? parts.join('') : parts.join('.');
+  const negative=s.startsWith('-');s=s.replace(/-/g,'');
+  if(kind==='water'){
+    if(s.includes(',')) s=s.replace(/\./g,'').replace(',','.');
+    else if(s.includes('.')){const parts=s.split('.');if(parts.slice(1).every(part=>part.length===3)) s=parts.join('');}
+  }else if(kind==='gas'||kind==='ton'){
+    if(s.includes(',')) s=s.replace(/\./g,'').replace(',','.');
+    else if((s.match(/\./g)||[]).length>1){const parts=s.split('.');s=parts.slice(0,-1).join('')+'.'+parts.at(-1);}
+  }else if(kind==='energy'){
+    if(s.includes(',')&&s.includes('.')) s=s.replace(/\./g,'').replace(',','.');
+    else if(s.includes(',')) s=s.replace(',','.');
+    else if(s.includes('.')){const parts=s.split('.');if(parts.slice(1).every(part=>part.length===3)) s=parts.join('');}
+  }else{
+    const commas=(s.match(/,/g)||[]).length,dots=(s.match(/\./g)||[]).length;
+    if(commas&&dots){if(s.lastIndexOf(',')>s.lastIndexOf('.')) s=s.replace(/\./g,'').replace(',','.');else s=s.replace(/,/g,'');}
+    else if(dots){const parts=s.split('.');if(parts.length>2||(parts.length===2&&parts[1].length===3&&parts[0]!=='0')) s=parts.join('');}
+    else if(commas){const parts=s.split(',');s=(parts.length>2)?parts.join(''):parts.join('.');}
   }
-
-  const n=parseFloat((negative?'-':'')+s);
-  return Number.isFinite(n)?n:null;
+  const n=parseFloat((negative?'-':'')+s);return Number.isFinite(n)?n:null;
 }
+function parseNumber(v){ return parseMeasurement(v,'generic'); }
 function parseMoney(v){ return parseNumber(v); }
 function round(n,d=2){ return Number.isFinite(n) ? Math.round(n*Math.pow(10,d))/Math.pow(10,d) : 0; }
 function hasAnyMeasure(r){ return [r.waterM3,r.alcM3,r.energyKwh,r.gasM3,r.wasteValue,r.wasteTon].some(v=>v!==null && v!==undefined && v!==0); }
 function siteKey(site,address=''){ return `${loose(site)}|${loose(address)}`; }
+function preferredSiteName(record){
+  const meta=getTerritorySyncMeta(record);
+  return meta?.displayName || record?.site || 'Sin nombre';
+}
+function siteSearchHaystack(record){
+  const meta=getTerritorySyncMeta(record) || {};
+  return loose(`${record?.site||''} ${record?.address||''} ${meta.displayName||''} ${meta.matchedName||''} ${meta.aliases||''}`);
+}
 
 function searchTokens(value){ return loose(value).split(/\s+/).filter(Boolean); }
 function recordMatchesSearch(r, query){
   if(selectedSiteKey) return siteKey(r.site,r.address)===selectedSiteKey;
   const tokens = searchTokens(query);
   if(!tokens.length) return true;
-  const haystack = loose(`${r.site||''} ${r.address||''}`);
+  const haystack = siteSearchHaystack(r);
   return tokens.every(token=>haystack.includes(token));
 }
 function serviceHasValue(r, service){
@@ -1096,33 +1211,50 @@ function sortRecords(records){
   });
 }
 function filteredRecords(){
-  const q = $('siteSearch').value||'';
-  const p = $('periodFilter').value;
-  const service = $('serviceFilter').value;
+  const q=$('siteSearch')?.value||'';
+  const p=$('periodFilter')?.value||'';
+  const service=$('serviceFilter')?.value||'';
   return sortRecords(state.records.filter(r=>recordMatchesTerritory(r,territoryFilterValues('table')) && recordMatchesSearch(r,q) && (!p || r.period===p) && serviceHasValue(r,service)));
 }
 function applyFilters(immediate=false){
   clearTimeout(filterTimer);
-  const run=()=>{ renderTable(); renderDashboard(); renderFilterSummary(); syncAllSearchableSelects(); };
+  const run=()=>{renderTable();renderDashboard();renderFilterSummary();syncAllSearchableSelects();};
   if(immediate) run(); else filterTimer=setTimeout(run,90);
 }
 function clearSiteSearch(){
-  $('siteSearch').value=''; selectedSiteKey=''; $('clearSearchBtn').classList.remove('visible'); closeAutocomplete(); applyFilters(); $('siteSearch').focus();
+  const input=$('siteSearch');
+  if(!input) return;
+  input.value='';selectedSiteKey='';$('clearSearchBtn')?.classList.remove('visible');closeAutocomplete();applyFilters();input.focus();
 }
 function clearAllFilters(){
-  $('siteSearch').value=''; selectedSiteKey=''; ['territoryTypeFilter','territoryFilter','nucleusFilter'].forEach(id=>{if($(id)) $(id).value='';}); updateTerritoryCascade('table'); $('periodFilter').value=''; $('serviceFilter').value=''; $('sortFilter').value='period-desc'; $('clearSearchBtn').classList.remove('visible'); closeAutocomplete(); applyFilters();
+  const input=$('siteSearch'); if(input) input.value='';
+  selectedSiteKey='';
+  ['territoryTypeFilter','territoryFilter','nucleusFilter'].forEach(id=>{if($(id)) $(id).value='';});
+  updateTerritoryCascade('table');
+  if($('periodFilter')) $('periodFilter').value='';
+  if($('serviceFilter')) $('serviceFilter').value='';
+  if($('sortFilter')) $('sortFilter').value='period-desc';
+  $('clearSearchBtn')?.classList.remove('visible');closeAutocomplete();applyFilters();
 }
 function handleSiteSearchInput(){
-  selectedSiteKey=''; $('clearSearchBtn').classList.toggle('visible',Boolean($('siteSearch').value)); renderAutocompleteSuggestions($('siteSearch').value); applyFilters();
+  const input=$('siteSearch'); if(!input) return;
+  selectedSiteKey='';$('clearSearchBtn')?.classList.toggle('visible',Boolean(input.value));renderAutocompleteSuggestions(input.value);applyFilters();
 }
 function siteSearchOptions(scope='all'){
   const map = new Map();
   const records = scope==='compare' ? territoryScopedRecords('compare') : scope==='dashboard' ? territoryScopedRecords('dashboard') : scope==='table' ? territoryScopedRecords('table') : state.records;
-  for(const r of records){ const key=siteKey(r.site,r.address); if(!map.has(key)) map.set(key,{key,site:r.site||'Sin nombre',address:r.address||'',periods:new Set(),meta:territoryMeta(r)}); map.get(key).periods.add(r.period); }
+  for(const r of records){
+    const key=siteKey(r.site,r.address);
+    if(!map.has(key)){
+      const syncMeta=getTerritorySyncMeta(r) || {};
+      map.set(key,{key,site:r.site||'Sin nombre',displaySite:syncMeta.displayName||r.site||'Sin nombre',address:r.address||'',periods:new Set(),meta:territoryMeta(r),searchText:siteSearchHaystack(r),invoiceSite:r.site||''});
+    }
+    map.get(key).periods.add(r.period);
+  }
   return [...map.values()].map(x=>({...x,periodCount:x.periods.size}));
 }
 function suggestionScore(item, query){
-  const q=loose(query), site=loose(item.site), address=loose(item.address), all=`${site} ${address}`;
+  const q=loose(query), site=loose(item.displaySite||item.site), address=loose(item.address), all=item.searchText||`${site} ${address}`;
   if(!q) return 1;
   const tokens=searchTokens(q); if(!tokens.every(t=>all.includes(t))) return -1;
   let score=0; if(site===q) score+=1000; if(site.startsWith(q)) score+=600; if(site.includes(q)) score+=300; if(address.startsWith(q)) score+=120;
@@ -1135,17 +1267,21 @@ function highlightMatch(text, query){
   return safe;
 }
 function renderAutocompleteSuggestions(query=''){
-  const box=$('siteSuggestions'); const q=String(query||'').trim();
+  const box=$('siteSuggestions'),input=$('siteSearch'); if(!box||!input) return;
+  const q=String(query||'').trim();
   const options=siteSearchOptions('table').map(x=>({...x,score:suggestionScore(x,q)})).filter(x=>x.score>=0).sort((a,b)=>b.score-a.score || a.site.localeCompare(b.site,'es')).slice(0,10);
   autocompleteIndex=-1;
-  if(!options.length){ box.innerHTML='<div class="autocomplete-empty">No se encontraron sedes. Prueba con otra palabra.</div>'; box.hidden=false; $('siteSearch').setAttribute('aria-expanded','true'); return; }
-  box.innerHTML=options.map((x,i)=>`<button type="button" class="autocomplete-option" role="option" data-key="${escapeHtml(x.key)}" data-index="${i}"><span><strong>${highlightMatch(x.site,q)}</strong><small>${highlightMatch(x.address||'Sin dirección registrada',q)} · ${escapeHtml(x.meta?.territory||'Sin clasificar')} · Núcleo ${escapeHtml(x.meta?.nucleus||'Sin clasificar')}</small></span><em>${x.periodCount} periodo${x.periodCount===1?'':'s'}</em></button>`).join('');
-  box.hidden=false; $('siteSearch').setAttribute('aria-expanded','true');
+  if(!options.length){box.innerHTML='<div class="autocomplete-empty">No se encontraron sedes. Prueba con otra palabra.</div>';box.hidden=false;input.setAttribute('aria-expanded','true');return;}
+  box.innerHTML=options.map((x,i)=>`<button type="button" class="autocomplete-option" role="option" data-key="${escapeHtml(x.key)}" data-index="${i}"><span><strong>${highlightMatch(x.displaySite||x.site,q)}</strong><small>${x.displaySite!==x.site?`En factura: ${highlightMatch(x.site,q)} · `:''}${highlightMatch(x.address||'Sin dirección registrada',q)} · ${escapeHtml(x.meta?.territory||'Sin clasificar')} · Núcleo ${escapeHtml(x.meta?.nucleus||'Sin clasificar')}</small></span><em>${x.periodCount} periodo${x.periodCount===1?'':'s'}</em></button>`).join('');
+  box.hidden=false;input.setAttribute('aria-expanded','true');
 }
-function closeAutocomplete(){ $('siteSuggestions').hidden=true; $('siteSearch').setAttribute('aria-expanded','false'); autocompleteIndex=-1; }
+function closeAutocomplete(){
+  const box=$('siteSuggestions'),input=$('siteSearch');
+  if(box) box.hidden=true;if(input) input.setAttribute('aria-expanded','false');autocompleteIndex=-1;
+}
 function chooseSuggestion(button){
   const item=siteSearchOptions().find(x=>x.key===button.dataset.key); if(!item) return;
-  selectedSiteKey=item.key; $('siteSearch').value=item.site; $('clearSearchBtn').classList.add('visible'); closeAutocomplete(); applyFilters();
+  selectedSiteKey=item.key; $('siteSearch').value=item.displaySite||item.site; $('clearSearchBtn').classList.add('visible'); closeAutocomplete(); applyFilters();
 }
 function handleSuggestionClick(e){ const btn=e.target.closest('.autocomplete-option'); if(btn) chooseSuggestion(btn); }
 function handleAutocompleteKeydown(e){
@@ -1160,54 +1296,49 @@ function handleAutocompleteKeydown(e){
   opts.forEach((o,i)=>o.classList.toggle('active',i===autocompleteIndex)); opts[autocompleteIndex].scrollIntoView({block:'nearest'});
 }
 function renderFilterSummary(){
-  const recs=filteredRecords(); const uniqueSites=new Set(recs.map(r=>siteKey(r.site,r.address))).size;
-  $('filterResultCount').textContent=`${recs.length} registro${recs.length===1?'':'s'} · ${uniqueSites} sede${uniqueSites===1?'':'s'}`;
-  const chips=[]; const q=$('siteSearch').value.trim(); const p=$('periodFilter').value; const service=$('serviceFilter');
+  const count=$('filterResultCount'),active=$('activeFilters');
+  if(!count&&!active) return;
+  const recs=filteredRecords(),uniqueSites=new Set(recs.map(r=>siteKey(r.site,r.address))).size;
+  if(count) count.textContent=`${recs.length} registro${recs.length===1?'':'s'} · ${uniqueSites} sede${uniqueSites===1?'':'s'}`;
+  if(!active) return;
+  const chips=[],q=$('siteSearch')?.value.trim()||'',p=$('periodFilter')?.value||'',service=$('serviceFilter');
   const tf=territoryFilterValues('table');
   if(tf.type) chips.push(`<button type="button" data-clear="territoryType">Ámbito: ${escapeHtml(tf.type)} ×</button>`);
   if(tf.territory) chips.push(`<button type="button" data-clear="territory">Territorio: ${escapeHtml(tf.territory)} ×</button>`);
   if(tf.nucleus) chips.push(`<button type="button" data-clear="nucleus">Núcleo: ${escapeHtml(tf.nucleus)} ×</button>`);
   if(q) chips.push(`<button type="button" data-clear="search">Búsqueda: ${escapeHtml(q)} ×</button>`);
   if(p) chips.push(`<button type="button" data-clear="period">Periodo: ${escapeHtml(p)} ×</button>`);
-  if(service.value) chips.push(`<button type="button" data-clear="service">${escapeHtml(service.selectedOptions[0].textContent)} ×</button>`);
-  $('activeFilters').innerHTML=chips.join('') || '<span>Mostrando toda la información disponible.</span>';
-  $('activeFilters').querySelectorAll('button').forEach(btn=>btn.addEventListener('click',()=>{
-    const t=btn.dataset.clear;
-    if(t==='search') return clearSiteSearch();
-    if(t==='territoryType'){ $('territoryTypeFilter').value=''; updateTerritoryCascade('table','type'); }
-    else if(t==='territory'){ $('territoryFilter').value=''; updateTerritoryCascade('table','territory'); }
-    else if(t==='nucleus') $('nucleusFilter').value='';
-    else $(t==='period'?'periodFilter':'serviceFilter').value='';
+  if(service?.value) chips.push(`<button type="button" data-clear="service">${escapeHtml(service.selectedOptions[0]?.textContent||service.value)} ×</button>`);
+  active.innerHTML=chips.join('')||'<span>Mostrando toda la información disponible.</span>';
+  active.querySelectorAll('button').forEach(btn=>btn.addEventListener('click',()=>{
+    const t=btn.dataset.clear;if(t==='search') return clearSiteSearch();
+    if(t==='territoryType'){if($('territoryTypeFilter')) $('territoryTypeFilter').value='';updateTerritoryCascade('table','type');}
+    else if(t==='territory'){if($('territoryFilter')) $('territoryFilter').value='';updateTerritoryCascade('table','territory');}
+    else if(t==='nucleus'){if($('nucleusFilter')) $('nucleusFilter').value='';}
+    else {const el=$(t==='period'?'periodFilter':'serviceFilter');if(el) el.value='';}
     applyFilters();
   }));
 }
-function renderAll(){ recalculateCo2(); refreshAllTerritoryFilters(); renderControls(); renderCards(); renderExecutiveSummary(); renderProjectImpact(); renderDashboard(); renderTable(); drawChart(comparisonGroups('month')); updateHistorySourceNote(); refreshSiteAutocompleteFields(); }
+function renderAll(){
+  recalculateCo2();refreshAllTerritoryFilters();renderControls();renderCards();renderExecutiveSummary();renderProjectImpact();renderDashboard();renderDataQuality();renderTable();
+  if($('chart')) drawChart(comparisonGroups($('compareMode')?.value||'month'));
+  updateHistorySourceNote();refreshSiteAutocompleteFields();
+}
 function renderControls(){
-  const periods = [...new Set(state.records.map(r=>r.period))].sort();
-  const options = '<option value="">Todos los periodos</option>'+periods.map(p=>`<option value="${p}">${p}</option>`).join('');
-  const current = $('periodFilter').value;
-  $('periodFilter').innerHTML = options; $('periodFilter').value = current;
-  renderCompareControls();
-  renderFilterSummary();
-  syncAllSearchableSelects();
+  const periods=[...new Set(state.records.map(r=>r.period))].sort();
+  const periodFilter=$('periodFilter');
+  if(periodFilter){const current=periodFilter.value;periodFilter.innerHTML='<option value="">Todos los periodos</option>'+periods.map(p=>`<option value="${p}">${p}</option>`).join('');periodFilter.value=current;}
+  if($('compareA')&&$('compareB')) renderCompareControls();
+  renderFilterSummary();syncAllSearchableSelects();
 }
 function renderCards(){
-  const recs=state.records||[];
-  const official=officialSummaries();
+  const recs=state.records||[],official=officialSummaries();
   const periods=new Set([...recs.map(r=>r.period),...official.map(r=>r.period)].filter(Boolean)).size;
   const sites=new Set(recs.map(r=>siteKey(r.site,r.address))).size;
-  const detailSum=(field)=>recs.reduce((a,r)=>a+(Number(r[field])||0),0);
-  const officialSum=(field)=>official.reduce((a,r)=>a+(Number(r[field])||0),0);
-  const energy=official.length ? officialSum('energyKwh') : detailSum('energyKwh');
-  const water=official.length ? officialSum('waterM3') : detailSum('waterM3');
-  const co2kg=energy*FACTOR_CO2_KG_KWH;
-  $('kPeriods').textContent=periods;
-  $('kSites').textContent=sites;
-  $('kKwh').textContent=fmt(energy)+' kWh';
-  $('kCo2').textContent=fmt(co2kg/1000)+' t CO₂e';
-  if($('kTrees')) $('kTrees').textContent=fmt(Math.ceil(co2kg/TREE_CO2_KG_YEAR));
-  $('kWater').textContent=fmt(water)+' m³';
-  $('kWaste').textContent=fmt(detailSum('wasteTon'))+' t';
+  const detailSum=field=>recs.reduce((a,r)=>a+(Number(r[field])||0),0),officialSum=field=>official.reduce((a,r)=>a+(Number(r[field])||0),0);
+  const energy=official.length?officialSum('energyKwh'):detailSum('energyKwh'),water=official.length?officialSum('waterM3'):detailSum('waterM3'),co2kg=energy*FACTOR_CO2_KG_KWH;
+  const values={kPeriods:periods,kSites:sites,kKwh:fmt(energy)+' kWh',kCo2:fmt(co2kg/1000)+' t CO₂e',kTrees:fmt(Math.ceil(co2kg/TREE_CO2_KG_YEAR)),kWater:fmt(water)+' m³',kWaste:fmt(detailSum('wasteTon'))+' t'};
+  Object.entries(values).forEach(([id,value])=>{if($(id)) $(id).textContent=value;});
 }
 function renderSourceDownload(record){
   const name = String(record?.source || 'Factura PDF');
@@ -1221,21 +1352,15 @@ function renderSourceDownload(record){
   return `<a class="source-download" href="${safeUrl}" download="${escapeHtml(name)}" target="_blank" rel="noopener" title="Descargar factura PDF">${escapeHtml(name)} <span aria-hidden="true">↓</span></a>`;
 }
 function renderTable(){
-  const recs = filteredRecords();
-  renderFilterSummary();
-  $('recordsBody').innerHTML = recs.map(r=>`<tr>
-    <td data-label="Periodo">${r.period}</td>
-    <td data-label="Sede">${escapeHtml(r.site)}</td>
-    <td data-label="Dirección">${escapeHtml(r.address||'')}</td>
-    <td data-label="Agua m³">${num(r.waterM3)}</td>
-    <td data-label="Alc. m³">${num(r.alcM3)}</td>
-    <td data-label="Energía kWh">${num(r.energyKwh)}</td>
-    <td data-label="Gas m³">${num(r.gasM3)}</td>
-    <td data-label="Aseo $">${money(r.wasteValue)}</td>
-    <td data-label="Residuos t">${num(r.wasteTon)}</td>
-    <td data-label="CO₂ kg">${num(r.co2kg)}</td>
-    <td data-label="Fuente">${renderSourceDownload(r)}</td>
-  </tr>`).join('') || `<tr><td colspan="11"><div class="empty-filter-state"><strong>No hay coincidencias</strong><span>Prueba con menos palabras, cambia el periodo o limpia los filtros.</span><button type="button" onclick="clearAllFilters()" class="secondary">Limpiar filtros</button></div></td></tr>`;
+  const body=$('recordsBody');if(!body) return;
+  const recs=filteredRecords();renderFilterSummary();
+  const includeTerritory=(body.closest('table')?.querySelectorAll('thead th').length||0)>=13;
+  const rows=recs.map(r=>{
+    const meta=territoryMeta(r);
+    return `<tr><td data-label="Periodo">${escapeHtml(r.period)}</td><td data-label="Sede">${escapeHtml(r.site||'Sin nombre')}</td><td data-label="Dirección">${escapeHtml(r.address||'')}</td>${includeTerritory?`<td data-label="Comuna/Corregimiento">${escapeHtml(meta.territory||'Sin clasificar')}</td><td data-label="Núcleo">${escapeHtml(meta.nucleus||'Sin clasificar')}</td>`:''}<td data-label="Agua m³">${num(r.waterM3)}</td><td data-label="Alc. m³">${num(r.alcM3)}</td><td data-label="Energía kWh">${num(r.energyKwh)}</td><td data-label="Gas m³">${num(r.gasM3)}</td><td data-label="Aseo $">${money(r.wasteValue)}</td><td data-label="Residuos t">${num(r.wasteTon)}</td><td data-label="CO₂ kg">${num(r.co2kg)}</td><td data-label="Fuente">${renderSourceDownload(r)}</td></tr>`;
+  }).join('');
+  const cols=includeTerritory?13:11;
+  body.innerHTML=rows||`<tr><td colspan="${cols}"><div class="empty-filter-state"><strong>No hay coincidencias</strong><span>Prueba con menos palabras, cambia el periodo o limpia los filtros.</span><button type="button" onclick="clearAllFilters()" class="secondary">Limpiar filtros</button></div></td></tr>`;
 }
 function aggregateByPeriod(records){
   const map = {};
@@ -1261,23 +1386,41 @@ function aggregateSummariesByComparison(mode){
   for(const r of officialSummaries()){
     const key=groupKeyForPeriod(r.period,mode);
     if(!key) continue;
-    map[key] ||= {key,period:groupLabel(key,mode),energyKwh:0,waterM3:0,alcM3:0,gasM3:0,wasteTon:0,co2kg:0,records:0,official:true,sources:[]};
-    ['energyKwh','waterM3','alcM3','gasM3','co2kg'].forEach(k=>map[key][k]+=Number(r[k])||0);
+    map[key] ||= {key,period:groupLabel(key,mode),energyKwh:0,waterM3:0,alcM3:0,gasM3:0,wasteTon:0,co2kg:0,records:0,official:true,sources:[],metricCounts:{energyKwh:0,waterM3:0,alcM3:0,gasM3:0,wasteTon:0}};
+    ['energyKwh','waterM3','alcM3','gasM3'].forEach(k=>{
+      if(r[k]!==null && r[k]!==undefined && r[k]!=='' && Number.isFinite(Number(r[k]))){map[key][k]+=Number(r[k]);map[key].metricCounts[k]+=1;}
+    });
+    map[key].co2kg=map[key].energyKwh*FACTOR_CO2_KG_KWH;
     map[key].records+=1;
     if(r.source) map[key].sources.push(r.source);
   }
   return Object.values(map).sort((a,b)=>a.key.localeCompare(b.key));
 }
 function comparisonGroups(mode){
-  if(isGlobalCompareScope() && officialSummaries().length) return aggregateSummariesByComparison(mode);
+  const metric=selectedHistoryMetric();
+  // Los resúmenes oficiales contienen energía, agua, alcantarillado y gas. Para
+  // residuos se usa el detalle por sede porque ese indicador no está en la portada.
+  if(isGlobalCompareScope() && officialSummaries().length && metric.field!=='wasteTon') return aggregateSummariesByComparison(mode);
   return aggregateByComparison(recordsForCompareScope(),mode);
 }
+function historyGroupHasMetric(item,field){
+  if(!item) return false;
+  if(item.metricCounts && Object.prototype.hasOwnProperty.call(item.metricCounts,field)) return Number(item.metricCounts[field])>0;
+  return item[field]!==null && item[field]!==undefined && item[field]!=='' && Number.isFinite(Number(item[field]));
+}
 function updateHistorySourceNote(){
-  const el=$('historyDataSourceNote'); if(!el) return;
-  if(isGlobalCompareScope() && officialSummaries().length){
-    el.innerHTML='<strong>Dato verificado:</strong> el total de Medellín se toma del “Resumen de facturación” de la primera página de cada PDF. Así, la gráfica no cambia por caché, registros parciales o diferencias del lector de detalle.';
+  const el=$('historyDataSourceNote');if(!el) return;
+  const summaries=officialSummaries();
+  const metric=selectedHistoryMetric();
+  if(isGlobalCompareScope()&&summaries.length&&metric.field!=='wasteTon'){
+    const differences=summaries.map(r=>Math.abs(Number(r.reconciliation?.energyDifferencePct))).filter(Number.isFinite);
+    const maxDifference=differences.length?Math.max(...differences):null;
+    const last=summaries.at(-1)?.period||'';
+    el.innerHTML=`<strong>Histórico oficial estable · ${escapeHtml(metric.label)}:</strong> ${summaries.length} periodos verificados directamente en el “Resumen de facturación” de la página 1 de cada PDF${last?`, hasta ${escapeHtml(groupLabel(last,'month'))}`:''}. ${metric.field==='energyKwh'&&maxDifference!==null?`La conciliación del detalle por sede presenta una diferencia máxima de ${fmt(maxDifference)}% frente al total oficial.`:'La gráfica general utiliza el total oficial disponible para este servicio y no suma sedes parciales.'}`;
+  }else if(isGlobalCompareScope() && metric.field==='wasteTon'){
+    el.innerHTML='<strong>Histórico de residuos / aseo:</strong> este indicador no está consolidado como volumen en la portada de la factura. La gráfica se construye con los registros detallados de las sedes donde el dato de residuos está disponible.';
   }else{
-    el.innerHTML='<strong>Detalle por sede:</strong> la comparación corresponde a las lecturas asociadas a la institución o dirección seleccionada.';
+    el.innerHTML=`<strong>Detalle por sede · ${escapeHtml(metric.label)}:</strong> la comparación usa exclusivamente lecturas asociadas a la institución o dirección seleccionada. Los periodos sin lectura del indicador no se convierten en cero.`;
   }
 }
 function getSiteOptions(){
@@ -1340,8 +1483,11 @@ function aggregateByComparison(records, mode){
   for(const r of records){
     const key = groupKeyForPeriod(r.period, mode);
     if(!key) continue;
-    map[key] ||= {key, period:groupLabel(key, mode), energyKwh:0, waterM3:0, alcM3:0, gasM3:0, wasteTon:0, co2kg:0, records:0};
-    ['energyKwh','waterM3','alcM3','gasM3','wasteTon','co2kg'].forEach(k=>map[key][k]+=Number(r[k])||0);
+    map[key] ||= {key, period:groupLabel(key, mode), energyKwh:0, waterM3:0, alcM3:0, gasM3:0, wasteTon:0, co2kg:0, records:0, metricCounts:{energyKwh:0,waterM3:0,alcM3:0,gasM3:0,wasteTon:0}};
+    ['energyKwh','waterM3','alcM3','gasM3','wasteTon'].forEach(k=>{
+      if(recordHasReading(r,k)){map[key][k]+=Number(r[k])||0;map[key].metricCounts[k]+=1;}
+    });
+    map[key].co2kg=map[key].energyKwh*FACTOR_CO2_KG_KWH;
     map[key].records += 1;
   }
   return Object.values(map).sort((a,b)=>a.key.localeCompare(b.key));
@@ -1350,10 +1496,10 @@ function renderCompareControls(opts={}){
   if(!$('compareA') || !$('compareB')) return;
   const currentSite = opts.keepSite && $('compareSite') ? $('compareSite').value : ($('compareSite') ? $('compareSite').value : '');
   if($('compareSite')){
-    const siteOptions = aggregateBySite(territoryScopedRecords('compare')).map(x=>({site:x.site,address:x.address}));
+    const siteOptions = aggregateBySite(territoryScopedRecords('compare')).map(x=>({site:x.site,displaySite:x.displaySite,address:x.address}));
     $('compareSite').innerHTML = '<option value="">Todas las sedes</option>' + siteOptions.map(s=>{
       const key = siteKey(s.site,s.address);
-      const label = `${s.site}${s.address ? ' · '+s.address : ''}`;
+      const label = `${s.displaySite||s.site}${s.displaySite&&s.displaySite!==s.site?' · En factura: '+s.site:''}${s.address ? ' · '+s.address : ''}`;
       return `<option value="${escapeHtml(key)}">${escapeHtml(label)}</option>`;
     }).join('');
     if([...$('compareSite').options].some(o=>o.value===currentSite)) $('compareSite').value = currentSite;
@@ -1375,85 +1521,76 @@ function renderCompareControls(opts={}){
 function comparePeriods(){
   const mode = $('compareMode') ? $('compareMode').value : 'month';
   const site = $('compareSite') ? $('compareSite').value : '';
+  const metric=selectedHistoryMetric();
   const a=$('compareA').value, b=$('compareB').value;
   const agg = comparisonGroups(mode);
   const A = agg.find(x=>x.key===a), B = agg.find(x=>x.key===b);
   if(!A||!B){
     $('compareResult').innerHTML='<p class="bad">Se requieren al menos dos periodos equivalentes para comparar con el filtro seleccionado.</p>';
     if($('compareNarrative')) $('compareNarrative').textContent = 'Aún no hay suficientes datos comparables para generar una interpretación automática.';
-    drawChart(agg);
-    updateHistorySourceNote();
-    return;
+    drawChart(agg); updateHistorySourceNote(); return;
   }
   const siteText = site ? (($('compareSite').selectedOptions[0]||{}).textContent || 'Sede seleccionada') : 'Todas las sedes';
-  const metrics=A.official ? [['energyKwh','Energía','kWh'],['waterM3','Agua','m³'],['co2kg','CO₂','kg']] : [['energyKwh','Energía','kWh'],['waterM3','Agua','m³'],['co2kg','CO₂','kg'],['wasteTon','Residuos','t']];
-  const summary = `<div class="compare-summary"><strong>${escapeHtml(compareModeLabel(mode))}</strong><span>${escapeHtml(siteText)}</span><small>${escapeHtml(A.period)} vs ${escapeHtml(B.period)}</small></div>`;
-  $('compareResult').innerHTML = summary + metrics.map(([k,label,unit])=>{
-    const diff=(B[k]||0)-(A[k]||0); const pct=(A[k]||0)? diff/A[k]*100 : 0;
+  const hasA=historyGroupHasMetric(A,metric.field), hasB=historyGroupHasMetric(B,metric.field);
+  const summary = `<div class="compare-summary"><strong>${escapeHtml(compareModeLabel(mode))} · ${escapeHtml(metric.label)}</strong><span>${escapeHtml(siteText)}</span><small>${escapeHtml(A.period)} vs ${escapeHtml(B.period)}</small></div>`;
+  if(!hasA || !hasB){
+    $('compareResult').innerHTML=summary+`<div class="metric flat"><span>${escapeHtml(metric.label)}</span><strong>Comparación incompleta</strong><small>${!hasA?escapeHtml(A.period)+' sin lectura. ':''}${!hasB?escapeHtml(B.period)+' sin lectura.':''} Los datos ausentes no se interpretan como cero.</small></div>`;
+    if($('compareNarrative')) $('compareNarrative').innerHTML=`<strong>Interpretación automática:</strong> No es metodológicamente correcto calcular una variación de ${escapeHtml(metric.label.toLowerCase())} porque al menos uno de los periodos no tiene una lectura identificada para el alcance seleccionado.`;
+  }else{
+    const diff=(Number(B[metric.field])||0)-(Number(A[metric.field])||0); const pct=(Number(A[metric.field])||0)? diff/Number(A[metric.field])*100 : null;
     const trendClass = diff > 0 ? 'up' : diff < 0 ? 'down' : 'flat';
-    return `<div class="metric ${trendClass}"><span>${label}</span><strong>${fmt(diff)} ${unit}</strong><small>${escapeHtml(A.period)}: ${fmt(A[k])} · ${escapeHtml(B.period)}: ${fmt(B[k])} · ${pct>=0?'+':''}${fmt(pct)}%</small></div>`;
-  }).join('');
-  if($('compareNarrative')) $('compareNarrative').innerHTML = buildComparisonNarrative(A, B, mode, siteText);
-  drawChart(agg);
-  updateHistorySourceNote();
+    $('compareResult').innerHTML=summary+`<div class="metric ${trendClass}"><span>${escapeHtml(metric.label)}</span><strong>${diff>=0?'+':''}${fmt(diff)} ${metric.unit}</strong><small>${escapeHtml(A.period)}: ${fmt(A[metric.field])} ${metric.unit} · ${escapeHtml(B.period)}: ${fmt(B[metric.field])} ${metric.unit}${pct===null?'':` · ${pct>=0?'+':''}${fmt(pct)}%`}</small></div>${metric.field==='energyKwh'?`<div class="metric ${trendClass}"><span>Impacto en CO₂e</span><strong>${diff>=0?'+':''}${fmt(diff*FACTOR_CO2_KG_KWH/1000)} t</strong><small>Estimación asociada a la variación eléctrica.</small></div>`:''}`;
+    if($('compareNarrative')) $('compareNarrative').innerHTML = buildComparisonNarrative(A, B, mode, siteText, metric.field);
+  }
+  drawChart(agg); updateHistorySourceNote();
 }
 
+function compactAxisValue(value){
+  const n=Number(value)||0;
+  if(Math.abs(n)>=1000000) return `${fmt(n/1000000)} M`;
+  if(Math.abs(n)>=1000) return `${fmt(n/1000)} mil`;
+  return fmt(n);
+}
+function renderHistoryDataTable(data){
+  const box=$('historyDataTable');if(!box) return;
+  if(!data.length){box.innerHTML='';return;}
+  const metric=selectedHistoryMetric();
+  box.innerHTML=`<details><summary>Ver valores exactos de la gráfica (${data.length} periodos)</summary><div class="history-table-scroll"><table><thead><tr><th>Periodo</th><th>${escapeHtml(metric.label)} (${metric.unit})</th><th>Fuente</th></tr></thead><tbody>${data.map(item=>`<tr><td>${escapeHtml(item.period||groupLabel(item.key,'month'))}</td><td><strong>${historyGroupHasMetric(item,metric.field)?fmt(item[metric.field]):'Sin dato'}</strong></td><td>${item.official?'Resumen oficial de factura':'Detalle consolidado de sedes'}</td></tr>`).join('')}</tbody></table></div></details>`;
+}
 function drawChart(data){
-  chartData=data;
-  const c=$('chart'), ctx=c.getContext('2d');
-  ctx.clearRect(0,0,c.width,c.height);
-  ctx.fillStyle='#13312d';
-  ctx.font='bold 18px Arial';
-  ctx.fillText('Comparativo de energía por periodo (kWh)',24,34);
-  if(!data.length){
-    ctx.font='14px Arial';
-    ctx.fillText('Sin datos importados',24,80);
-    return;
+  chartData=Array.isArray(data)?data:[];
+  const metric=selectedHistoryMetric();
+  const c=$('chart');if(!c) return;
+  const ctx=c.getContext('2d');if(!ctx) return;
+  const cleanData=chartData.filter(item=>historyGroupHasMetric(item,metric.field));
+  const canvasWidth=Math.max(1100,Math.max(cleanData.length,1)*98+180),canvasHeight=470;
+  c.width=canvasWidth;c.height=canvasHeight;c.style.width=`${canvasWidth}px`;c.style.maxWidth='none';c.style.height=`${canvasHeight}px`;
+  ctx.clearRect(0,0,canvasWidth,canvasHeight);
+  ctx.fillStyle='#13312d';ctx.textAlign='left';ctx.font='bold 22px Arial';
+  ctx.fillText(`Comparativo de ${metric.label.toLowerCase()} por periodo (${metric.unit})`,28,38);
+  if(!cleanData.length){ctx.font='14px Arial';ctx.fillText(`Sin lecturas de ${metric.label.toLowerCase()} para el alcance seleccionado`,28,82);renderHistoryDataTable([]);return;}
+  const top=76,left=92,right=34,bottom=88,w=canvasWidth-left-right,h=canvasHeight-top-bottom,baseY=top+h;
+  const max=Math.max(...cleanData.map(d=>Number(d[metric.field])||0),1);
+  const magnitude=Math.pow(10,Math.max(0,Math.floor(Math.log10(max))-1));
+  const axisMax=Math.ceil(max/magnitude)*magnitude||max;
+  ctx.font='12px Arial';ctx.textAlign='right';ctx.fillStyle='#5a726c';ctx.strokeStyle='#e3efeb';ctx.lineWidth=1;
+  for(let step=0;step<=5;step++){
+    const value=axisMax*(5-step)/5,y=top+h*step/5;
+    ctx.beginPath();ctx.moveTo(left,y);ctx.lineTo(left+w,y);ctx.stroke(); ctx.fillText(compactAxisValue(value),left-10,y+4);
   }
-  const top = 56;
-  const pad = 76;
-  const bottomSpace = 90;
-  const w = c.width - pad*2;
-  const h = c.height - top - bottomSpace;
-  const baseY = top + h;
-  const max = Math.max(...data.map(d=>d.energyKwh), 1);
-  ctx.strokeStyle='#d7e6e2';
-  ctx.lineWidth=1;
-  ctx.beginPath();
-  ctx.moveTo(pad, top);
-  ctx.lineTo(pad, baseY);
-  ctx.lineTo(pad+w, baseY);
-  ctx.stroke();
-
-  const gap = w / data.length;
-  const bw = Math.max(26, Math.min(gap * 0.54, 52));
-  data.forEach((d,i)=>{
-    const x = pad + i*gap + gap/2 - bw/2;
-    const bh = (d.energyKwh / max) * h;
-    const y = baseY - bh;
-    const grad = ctx.createLinearGradient(0, y, 0, baseY);
-    grad.addColorStop(0, '#16d2a6');
-    grad.addColorStop(1, '#0b9878');
-    ctx.fillStyle = grad;
-    roundRect(ctx, x, y, bw, bh, 10);
-    ctx.fill();
-
-    ctx.fillStyle = '#13312d';
-    ctx.textAlign = 'center';
-    ctx.font = 'bold 11px Arial';
-    const preferredLabelY=y-10-(i%2?0:16);
-    const safeLabelY=Math.max(top+13+(i%2?16:0),preferredLabelY);
-    ctx.fillText(fmt(d.energyKwh), x + bw/2, safeLabelY);
-
-    const lines = chartLabelLines(d);
-    ctx.font = '11px Arial';
-    let labelY = baseY + 22;
-    lines.forEach(line => {
-      ctx.fillText(line, x + bw/2, labelY);
-      labelY += 13;
-    });
+  ctx.strokeStyle='#bfd7d0';ctx.beginPath();ctx.moveTo(left,top);ctx.lineTo(left,baseY);ctx.lineTo(left+w,baseY);ctx.stroke();
+  const gap=w/cleanData.length,bw=Math.max(34,Math.min(58,gap*.56));
+  cleanData.forEach((d,i)=>{
+    const value=Number(d[metric.field])||0,x=left+i*gap+gap/2-bw/2;
+    const rawHeight=(value/axisMax)*h,bh=value>0?Math.max(3,rawHeight):0,y=baseY-bh;
+    const grad=ctx.createLinearGradient(0,y,0,baseY);grad.addColorStop(0,'#16d2a6');grad.addColorStop(1,'#0b9878');ctx.fillStyle=grad;
+    if(bh>0){roundRect(ctx,x,y,bw,bh,Math.min(11,bh/2));ctx.fill();}
+    ctx.fillStyle='#13312d';ctx.textAlign='center';ctx.font='bold 12px Arial';
+    const labelRow=i%2,labelY=Math.max(top+14+labelRow*18,y-9-labelRow*2); ctx.fillText(fmt(value),x+bw/2,labelY);
+    ctx.font='12px Arial';let textY=baseY+23; chartLabelLines(d).forEach(line=>{ctx.fillText(line,x+bw/2,textY);textY+=15;});
   });
-  ctx.textAlign='left';
+  ctx.textAlign='left'; c.setAttribute('aria-label',`Comparativo de ${metric.label}: ${cleanData.map(d=>`${d.period||d.key}, ${fmt(d[metric.field])} ${metric.unit}`).join('; ')}`);
+  renderHistoryDataTable(cleanData);
 }
 function roundRect(ctx,x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
 
@@ -1496,31 +1633,25 @@ function downloadFilteredPdfReport(){
   openPdfPrintDocument('Informe de facturas por institución educativa',filters,`<div class="report-grid"><div class="metric"><span>Registros</span><strong>${recs.length}</strong></div><div class="metric"><span>Energía acumulada</span><strong>${fmt(energy)} kWh</strong></div><div class="metric"><span>Emisiones</span><strong>${fmt(co2/1000)} t CO₂e</strong></div></div><div class="report-card"><h2>Resumen de la consulta</h2><p>Agua acumulada: <strong>${fmt(water)} m³</strong></p></div><table><thead><tr><th>Periodo</th><th>Institución / sede</th><th>Dirección</th><th>Energía</th><th>Agua</th><th>CO₂e</th><th>Fuente</th></tr></thead><tbody>${rows}</tbody></table>`);
 }
 function downloadHistoryPdfReport(){
-  const mode=$('compareMode')?.value||'month';
-  const groups=comparisonGroups(mode);
-  if(!groups.length){alert('No hay datos históricos para generar el informe PDF.');return;}
+  const mode=$('compareMode')?.value||'month'; const metric=selectedHistoryMetric();
+  const groups=comparisonGroups(mode).filter(g=>historyGroupHasMetric(g,metric.field));
+  if(!groups.length){alert(`No hay datos históricos de ${metric.label.toLowerCase()} para generar el informe PDF.`);return;}
   const first=groups[0], last=groups[groups.length-1];
-  if($('compareA')) $('compareA').value=first.key;
-  if($('compareB')) $('compareB').value=last.key;
-  comparePeriods();
-  let rows='';
-  if(isGlobalCompareScope() && officialSummaries().length){
-    rows=[first,last].map(r=>`<tr><td>${escapeHtml(r.period)}</td><td>Total Medellín · Resumen oficial PDF</td><td>${fmt(r.energyKwh)} kWh</td><td>${fmt(r.co2kg/1000)} t</td><td>${fmt(r.waterM3)} m³</td></tr>`).join('');
-  }else{
-    const selectedKeys=new Set([first.key,last.key]);
-    rows=recordsForCompareScope().filter(r=>selectedKeys.has(groupKeyForPeriod(r.period,mode))).map(r=>`<tr><td>${escapeHtml(groupLabel(groupKeyForPeriod(r.period,mode),mode))}</td><td>${escapeHtml(r.site||'')}</td><td>${fmt(r.energyKwh)} kWh</td><td>${fmt((Number(r.energyKwh)||0)*FACTOR_CO2_KG_KWH/1000)} t</td><td>${fmt(r.waterM3)} m³</td></tr>`).join('');
-  }
+  if($('compareA')) $('compareA').value=first.key; if($('compareB')) $('compareB').value=last.key; comparePeriods();
+  const rows=[first,last].map(r=>`<tr><td>${escapeHtml(r.period)}</td><td>${isGlobalCompareScope()&&r.official?'Total Medellín · Resumen oficial PDF':'Alcance seleccionado'}</td><td>${fmt(r[metric.field])} ${metric.unit}</td></tr>`).join('');
   const narrative=$('compareNarrative')?.textContent||`Comparación entre ${first.period} y ${last.period}.`;
-  const sourceText=isGlobalCompareScope()?'Fuente: resumen consolidado oficial de la primera página de cada factura PDF.':'Fuente: lecturas detalladas de la sede seleccionada.';
-  openPdfPrintDocument('Informe histórico de consumos',`${first.period} vs ${last.period}`,`<div class="filters-line">${escapeHtml(sourceText)}</div><div class="report-card"><h2>Comparación seleccionada</h2><p>${escapeHtml(narrative)}</p></div><div class="report-grid"><div class="metric"><span>Periodo inicial</span><strong>${escapeHtml(first.period)}</strong></div><div class="metric"><span>Periodo final</span><strong>${escapeHtml(last.period)}</strong></div><div class="metric"><span>Variación de energía</span><strong>${fmt(last.energyKwh-first.energyKwh)} kWh</strong></div></div><table><thead><tr><th>Periodo</th><th>Alcance</th><th>Energía</th><th>CO₂e</th><th>Agua</th></tr></thead><tbody>${rows}</tbody></table>`);
+  const sourceText=isGlobalCompareScope()&&metric.field!=='wasteTon'?'Fuente: resumen consolidado oficial de la primera página de cada factura PDF.':'Fuente: registros detallados de las sedes incluidas en el filtro.';
+  const diff=Number(last[metric.field])-Number(first[metric.field]);
+  openPdfPrintDocument(`Informe histórico · ${metric.label}`,`${first.period} vs ${last.period}`,`<div class="filters-line">${escapeHtml(sourceText)}</div><div class="report-card"><h2>Comparación seleccionada</h2><p>${escapeHtml(narrative)}</p></div><div class="report-grid"><div class="metric"><span>Periodo inicial</span><strong>${escapeHtml(first.period)}</strong></div><div class="metric"><span>Periodo final</span><strong>${escapeHtml(last.period)}</strong></div><div class="metric"><span>Variación de ${escapeHtml(metric.short.toLowerCase())}</span><strong>${diff>=0?'+':''}${fmt(diff)} ${metric.unit}</strong></div></div><table><thead><tr><th>Periodo</th><th>Alcance</th><th>${escapeHtml(metric.label)}</th></tr></thead><tbody>${rows}</tbody></table>`);
 }
 
 function downloadDashboardPdfReport(){
-  const recs=dashboardFilteredRecords();
+  const recs=dashboardRecords();
   if(!recs.length){alert('No hay información para generar el informe PDF.');return;}
-  const agg=aggregateBySite(recs); const rows=agg.map((x,i)=>`<tr><td>${i+1}</td><td>${escapeHtml(x.site)}</td><td>${escapeHtml(x.address||'')}</td><td>${x.periods}</td><td>${fmt(x.energyKwh)} kWh</td><td>${fmt(x.co2kg/1000)} t</td><td>${Math.ceil(x.co2kg/TREE_CO2_KG_YEAR)}</td></tr>`).join('');
-  const energy=agg.reduce((a,x)=>a+x.energyKwh,0), co2=agg.reduce((a,x)=>a+x.co2kg,0);
-  openPdfPrintDocument('Informe ambiental por sede',activeTerritoryText('dashboard'),`<div class="report-grid"><div class="metric"><span>Sedes</span><strong>${agg.length}</strong></div><div class="metric"><span>Energía</span><strong>${fmt(energy)} kWh</strong></div><div class="metric"><span>CO₂ equivalente</span><strong>${fmt(co2/1000)} t</strong></div></div><table><thead><tr><th>#</th><th>Sede</th><th>Dirección</th><th>Periodos</th><th>Energía</th><th>CO₂e</th><th>Árboles</th></tr></thead><tbody>${rows}</tbody></table>`);
+  const agg=aggregateBySite(recs);
+  const rows=agg.map((x,i)=>`<tr><td>${i+1}</td><td>${escapeHtml(x.displaySite||x.site)}</td><td>${escapeHtml(x.address||'')}</td><td>${x.periodCount}</td><td>${x.hasEnergy?`${fmt(x.energyKwh)} kWh`:'No identificada'}</td><td>${x.hasEnergy?`${fmt(x.co2kg/1000)} t`:'No calculable'}</td><td>${x.hasEnergy?fmt(x.trees):'No calculable'}</td><td>${escapeHtml(qualityStatusForSite(x).label)}</td></tr>`).join('');
+  const energyRows=agg.filter(x=>x.hasEnergy),energy=energyRows.reduce((a,x)=>a+x.energyKwh,0),co2=energyRows.reduce((a,x)=>a+x.co2kg,0),pending=agg.filter(x=>!x.hasEnergy).length;
+  openPdfPrintDocument('Informe ambiental por sede',activeTerritoryText('dashboard'),`<div class="report-grid"><div class="metric"><span>Sedes</span><strong>${agg.length}</strong></div><div class="metric"><span>Energía identificada</span><strong>${fmt(energy)} kWh</strong></div><div class="metric"><span>Sedes con energía no identificada</span><strong>${pending}</strong></div></div><table><thead><tr><th>#</th><th>Sede</th><th>Dirección</th><th>Periodos</th><th>Energía</th><th>CO₂e</th><th>Árboles</th><th>Calidad</th></tr></thead><tbody>${rows}</tbody></table>`);
 }
 
 function exportCsv(){
@@ -1595,18 +1726,22 @@ function buildSmartAlerts(s){
   return alerts.slice(0,4);
 }
 
-function buildComparisonNarrative(A, B, mode, siteText){
-  const diff = (B.energyKwh||0) - (A.energyKwh||0);
-  const pct = (A.energyKwh||0) ? diff/A.energyKwh*100 : 0;
-  const co2Diff = diff * FACTOR_CO2_KG_KWH / 1000;
-  const scope = escapeHtml(siteText || 'Todas las sedes');
-  if(diff > 0){
-    return `<strong>Interpretación automática:</strong> En ${scope}, el consumo eléctrico aumentó <strong>${fmt(diff)} kWh</strong> frente al periodo base (${fmt(pct)}%). Este incremento representa aproximadamente <strong>${fmt(co2Diff)} t CO₂e adicionales</strong>. Se recomienda revisar cambios de jornada, uso de iluminación, equipos tecnológicos, ventilación y posibles consumos atípicos.`;
+function buildComparisonNarrative(A, B, mode, siteText, metricField='energyKwh'){
+  const metric=serviceMetric(metricField);
+  const av=Number(A?.[metric.field])||0, bv=Number(B?.[metric.field])||0;
+  const diff=bv-av, pct=av?diff/av*100:null;
+  const scope=escapeHtml(siteText||'Todas las sedes');
+  const direction=diff>0?'aumentó':diff<0?'disminuyó':'se mantuvo estable';
+  const amount=fmt(Math.abs(diff));
+  const pctText=pct===null?'':` (${fmt(Math.abs(pct))}%)`;
+  if(metric.field==='energyKwh'){
+    const co2Diff=Math.abs(diff)*FACTOR_CO2_KG_KWH/1000;
+    if(diff>0) return `<strong>Interpretación automática:</strong> En ${scope}, la energía ${direction} <strong>${amount} kWh</strong>${pctText}. El cambio equivale aproximadamente a <strong>${fmt(co2Diff)} t CO₂e adicionales</strong>. Se recomienda revisar jornadas, iluminación, climatización y equipos de mayor demanda.`;
+    if(diff<0) return `<strong>Interpretación automática:</strong> En ${scope}, la energía ${direction} <strong>${amount} kWh</strong>${pctText}. La reducción evita aproximadamente <strong>${fmt(co2Diff)} t CO₂e</strong>. Conviene documentar las prácticas que explican la disminución.`;
+    return `<strong>Interpretación automática:</strong> En ${scope}, la energía se mantuvo estable. Se recomienda sostener el monitoreo mensual y definir una meta gradual de eficiencia.`;
   }
-  if(diff < 0){
-    return `<strong>Interpretación automática:</strong> En ${scope}, el consumo eléctrico disminuyó <strong>${fmt(Math.abs(diff))} kWh</strong> frente al periodo base (${fmt(Math.abs(pct))}%). Esta reducción evita aproximadamente <strong>${fmt(Math.abs(co2Diff))} t CO₂e</strong>. Se recomienda identificar y documentar las prácticas que explican la disminución para replicarlas en otras sedes.`;
-  }
-  return `<strong>Interpretación automática:</strong> En ${scope}, el consumo eléctrico se mantuvo estable entre los periodos comparados. Se recomienda sostener el monitoreo mensual y definir una meta de reducción gradual.`;
+  const advice={waterM3:'revisar fugas, sanitarios, puntos de lavado, riego y hábitos de uso eficiente del agua',alcM3:'contrastar el comportamiento con el consumo de agua y revisar cambios operativos o posibles inconsistencias de lectura',gasM3:'revisar cocinas, laboratorios, calentadores, horarios de operación y posibles fugas',wasteTon:'revisar separación en la fuente, aprovechamiento, frecuencia de recolección y generación de residuos'}[metric.field]||'revisar las causas del cambio y documentar acciones de mejora';
+  return `<strong>Interpretación automática:</strong> En ${scope}, ${escapeHtml(metric.label.toLowerCase())} ${direction}${diff===0?'':` en <strong>${amount} ${metric.unit}</strong>${pctText}`}. Se recomienda ${advice}.`;
 }
 
 function escapeHtml(s){ return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
@@ -1614,34 +1749,100 @@ function fmt(n){ return new Intl.NumberFormat('es-CO',{maximumFractionDigits:2})
 function num(n){ return n==null||n==='' ? '—' : fmt(n); }
 function money(n){ return n==null||n==='' ? '—' : '$ '+fmt(n); }
 
-/* Dashboard ambiental por sede - v8 */
+/* Calidad de datos - v58 */
+function qualityStatusForSite(row){
+  const meta=territoryMeta({site:row.site,address:row.address});
+  const territorialOk=meta.type!=='Sin clasificar' && meta.territory!=='Sin clasificar';
+  if(!row.periodCount) return {code:'review',label:'En revisión',detail:'No hay periodos válidos asociados.'};
+  if(!row.hasEnergy){
+    const energyState=energyDataState(row);
+    if(energyState.code==='external') return {code:'external',label:'Energía en contrato separado',detail:energyState.detail};
+    return {code:'pending',label:'Energía no identificada',detail:energyState.detail};
+  }
+  if(row.energyPeriodCount<row.periodCount || !territorialOk){
+    const issues=[];
+    if(row.energyPeriodCount<row.periodCount) issues.push(`energía en ${row.energyPeriodCount}/${row.periodCount} periodos`);
+    if(!territorialOk) issues.push('clasificación territorial pendiente');
+    return {code:'partial',label:'Datos parciales',detail:issues.join(' · ')};
+  }
+  return {code:'complete',label:'Datos completos',detail:`Energía identificada en ${row.energyPeriodCount}/${row.periodCount} periodos y sede territorialmente vinculada.`};
+}
+function qualityCoverageText(row,periodField,hasFlag){ return row[hasFlag]?`${row[periodField]}/${row.periodCount}`:'Sin dato'; }
+function renderDataQuality(){
+  const body=$('qualityBody'); if(!body) return;
+  const rows=aggregateBySite(state.records||[]);
+  const total=rows.length, energy=rows.filter(r=>r.hasEnergy).length;
+  const external=rows.filter(r=>!r.hasEnergy && energyDataState(r).code==='external').length;
+  const pending=rows.filter(r=>!r.hasEnergy && energyDataState(r).code!=='external').length;
+  const territorial=rows.filter(r=>{const m=territoryMeta({site:r.site,address:r.address});return m.type!=='Sin clasificar'&&m.territory!=='Sin clasificar';}).length;
+  const pct=(n,d)=>d?100*n/d:0;
+  if($('qualityEnergyCoverage')) $('qualityEnergyCoverage').textContent=`${fmt(pct(energy,total))}%`;
+  if($('qualityEnergyCoverageDetail')) $('qualityEnergyCoverageDetail').textContent=`${energy} de ${total} sedes`;
+  if($('qualityEnergySites')) $('qualityEnergySites').textContent=fmt(energy);
+  if($('qualityPendingSites')) $('qualityPendingSites').textContent=fmt(pending);
+  if($('qualityExternalSites')) $('qualityExternalSites').textContent=fmt(external);
+  if($('qualityTerritoryCoverage')) $('qualityTerritoryCoverage').textContent=`${fmt(pct(territorial,total))}%`;
+  if($('qualityTerritoryCoverageDetail')) $('qualityTerritoryCoverageDetail').textContent=`${territorial} de ${total} sedes clasificadas`;
+  const statusCounts={complete:0,partial:0,pending:0,external:0,review:0}; rows.forEach(r=>statusCounts[qualityStatusForSite(r).code]++);
+  if($('qualitySummary')) $('qualitySummary').innerHTML=`<strong>${total} sedes evaluadas.</strong> ${statusCounts.complete} completas · ${statusCounts.partial} parciales · ${statusCounts.external} con energía en contrato separado · ${statusCounts.pending} con energía no identificada · ${statusCounts.review} en revisión. <span>Los estados describen cobertura y procedencia del dato, no desempeño ambiental.</span>`;
+  renderServiceExceptions();
+  const prioritized=[...rows].sort((a,b)=>{
+    const order={pending:0,external:1,review:2,partial:3,complete:4}; const qa=qualityStatusForSite(a),qb=qualityStatusForSite(b);
+    return order[qa.code]-order[qb.code] || String(a.displaySite||a.site).localeCompare(String(b.displaySite||b.site),'es');
+  }).slice(0,60);
+  body.innerHTML=prioritized.map(r=>{
+    const q=qualityStatusForSite(r), meta=territoryMeta({site:r.site,address:r.address}), energyState=energyDataState(r);
+    const energyCoverage=r.hasEnergy?qualityCoverageText(r,'energyPeriodCount','hasEnergy'):(energyState.code==='external'?'<span class="quality-badge external">Contrato separado</span>':'Sin dato');
+    return `<tr><td><strong>${escapeHtml(r.displaySite||r.site)}</strong>${r.displaySite!==r.site?`<small class="invoice-alias">En factura: ${escapeHtml(r.site)}</small>`:''}</td><td>${escapeHtml(r.address||'Sin dirección')}</td><td><span class="quality-badge ${q.code}" title="${escapeHtml(q.detail)}">${escapeHtml(q.label)}</span><small class="quality-detail">${escapeHtml(q.detail)}</small></td><td>${energyCoverage}</td><td>${qualityCoverageText(r,'waterPeriodCount','hasWater')}</td><td>${qualityCoverageText(r,'alcPeriodCount','hasAlc')}</td><td>${qualityCoverageText(r,'gasPeriodCount','hasGas')}</td><td>${qualityCoverageText(r,'wastePeriodCount','hasWaste')}</td><td>${meta.territory!=='Sin clasificar'?`${escapeHtml(meta.territory)}${meta.nucleus&&meta.nucleus!=='Sin clasificar'?` · N. ${escapeHtml(meta.nucleus)}`:''}`:'<span class="not-available">Pendiente</span>'}</td><td><button type="button" class="secondary quality-open-site" data-quality-site-key="${escapeHtml(r.key)}">Ver ficha</button></td></tr>`;
+  }).join('') || '<tr><td colspan="10">No hay registros para evaluar.</td></tr>';
+}
+function handleQualityActionClick(e){
+  const btn=e.target.closest('[data-quality-site-key]'); if(!btn) return;
+  const key=btn.dataset.qualitySiteKey; const row=aggregateBySite(state.records||[]).find(r=>r.key===key); if(!row) return;
+  dashboardSiteKey=key;
+  const field=siteAutocompleteState.get('dashboardSiteSearch'); if(field){field.input.value=row.displaySite||row.site;field.clear.classList.add('visible');}
+  if(window.simecoOpenSection) window.simecoOpenSection('seccion-3',{scroll:false});
+  renderDashboard(); requestAnimationFrame(()=>$('siteProfile')?.scrollIntoView({behavior:'smooth',block:'center'}));
+}
+
+/* Dashboard ambiental por sede - v9: conserva sedes aunque falte energía */
 function dashboardRecords(){
   const q = $('dashboardSiteSearch') ? $('dashboardSiteSearch').value||'' : '';
-  const p = '';
-  const service = '';
-  return state.records.filter(r=>recordMatchesTerritory(r,territoryFilterValues('dashboard')) && recordMatchesSearch(r,q) && (!dashboardSiteKey || siteKey(r.site,r.address)===dashboardSiteKey) && (!p || r.period===p) && serviceHasValue(r,service) && Number(r.energyKwh)>0);
+  const tokens=searchTokens(q);
+  return state.records.filter(r=>{
+    if(!recordMatchesTerritory(r,territoryFilterValues('dashboard'))) return false;
+    if(dashboardSiteKey) return siteKey(r.site,r.address)===dashboardSiteKey;
+    if(!tokens.length) return true;
+    const haystack=siteSearchHaystack(r);
+    return tokens.every(token=>haystack.includes(token));
+  });
 }
-function recordHasEnergyReading(record){
+function recordHasReading(record,field){
   if(!record) return false;
-  const raw=record.energyKwh;
+  const raw=record[field];
   return raw!==null && raw!==undefined && raw!=='' && Number.isFinite(Number(raw));
 }
+function recordHasEnergyReading(record){ return recordHasReading(record,'energyKwh'); }
 function aggregateBySite(records){
   const map = {};
   for(const r of records){
     const key = siteKey(r.site, r.address);
     if(!map[key]) map[key] = {
-      site:r.site||'Sin nombre', address:r.address||'', periods:new Set(), energyPeriods:new Set(),
-      energyKwh:0, co2kg:0, count:0, energyRecordCount:0
+      key, site:r.site||'Sin nombre', displaySite:preferredSiteName(r), address:r.address||'', periods:new Set(), energyPeriods:new Set(), waterPeriods:new Set(), alcPeriods:new Set(), gasPeriods:new Set(), wastePeriods:new Set(),
+      energyKwh:0, waterM3:0, alcM3:0, gasM3:0, wasteTon:0, wasteValue:0, co2kg:0, count:0, energyRecordCount:0, waterRecordCount:0, alcRecordCount:0, gasRecordCount:0, wasteRecordCount:0
     };
     const item=map[key];
     if(r.period) item.periods.add(r.period);
-    if(recordHasEnergyReading(r)){
+    if(recordHasReading(r,'energyKwh')){
       item.energyPeriods.add(r.period||`registro-${item.count}`);
       item.energyKwh += Number(r.energyKwh)||0;
-      item.co2kg += Number(r.co2kg)||((Number(r.energyKwh)||0)*FACTOR_CO2_KG_KWH);
+      item.co2kg += (Number(r.energyKwh)||0)*FACTOR_CO2_KG_KWH;
       item.energyRecordCount += 1;
     }
+    if(recordHasReading(r,'waterM3')){item.waterPeriods.add(r.period||`registro-${item.count}`);item.waterM3+=Number(r.waterM3)||0;item.waterRecordCount+=1;}
+    if(recordHasReading(r,'alcM3')){item.alcPeriods.add(r.period||`registro-${item.count}`);item.alcM3+=Number(r.alcM3)||0;item.alcRecordCount+=1;}
+    if(recordHasReading(r,'gasM3')){item.gasPeriods.add(r.period||`registro-${item.count}`);item.gasM3+=Number(r.gasM3)||0;item.gasRecordCount+=1;}
+    if(recordHasReading(r,'wasteTon') || recordHasReading(r,'wasteValue')){item.wastePeriods.add(r.period||`registro-${item.count}`);item.wasteTon+=Number(r.wasteTon)||0;item.wasteValue+=Number(r.wasteValue)||0;item.wasteRecordCount+=1;}
     item.count += 1;
   }
   return Object.values(map).map(x=>{
@@ -1649,45 +1850,112 @@ function aggregateBySite(records){
     const energyPeriodCount=x.energyPeriods.size;
     return {
       ...x,
-      periodCount,
-      energyPeriodCount,
+      periodCount, energyPeriodCount,
+      waterPeriodCount:x.waterPeriods.size, alcPeriodCount:x.alcPeriods.size, gasPeriodCount:x.gasPeriods.size, wastePeriodCount:x.wastePeriods.size,
       missingEnergyPeriodCount:Math.max(0,periodCount-energyPeriodCount),
-      hasEnergy:x.energyRecordCount>0,
-      trees:Math.ceil((x.co2kg||0)/TREE_CO2_KG_YEAR),
-      avgKwhMonth:energyPeriodCount ? x.energyKwh/energyPeriodCount : 0
+      hasEnergy:x.energyRecordCount>0, hasWater:x.waterRecordCount>0, hasAlc:x.alcRecordCount>0, hasGas:x.gasRecordCount>0, hasWaste:x.wasteRecordCount>0,
+      trees:x.energyRecordCount>0 ? Math.ceil((x.co2kg||0)/TREE_CO2_KG_YEAR) : null,
+      avgKwhMonth:energyPeriodCount ? x.energyKwh/energyPeriodCount : null
     };
-  }).sort((a,b)=>Number(b.hasEnergy)-Number(a.hasEnergy) || b.energyKwh-a.energyKwh || String(a.site).localeCompare(String(b.site),'es'));
+  }).sort((a,b)=>Number(b.hasEnergy)-Number(a.hasEnergy) || b.energyKwh-a.energyKwh || String(a.displaySite||a.site).localeCompare(String(b.displaySite||b.site),'es'));
 }
+function dashboardValue(row,field,unit=''){
+  const hasFlag={energyKwh:'hasEnergy',waterM3:'hasWater',alcM3:'hasAlc',gasM3:'hasGas',wasteTon:'hasWaste'}[field];
+  if(hasFlag && !row[hasFlag]) return '<span class="not-available">Sin dato</span>';
+  return `${fmt(row[field])}${unit?` ${unit}`:''}`;
+}
+function updateDashboardNotice(rows){
+  const notice=$('dashboardDataNotice');
+  if(!notice) return;
+  if(!rows.length){ notice.hidden=true; notice.innerHTML=''; return; }
+  if(dashboardSiteKey && rows.length===1){
+    const r=rows[0], available=[], energyState=energyDataState(r);
+    if(r.hasWater) available.push(`agua en ${r.waterPeriodCount} periodo(s)`);
+    if(r.hasAlc) available.push(`alcantarillado en ${r.alcPeriodCount} periodo(s)`);
+    if(r.hasGas) available.push(`gas en ${r.gasPeriodCount} periodo(s)`);
+    if(r.hasWaste) available.push(`aseo/residuos en ${r.wastePeriodCount} periodo(s)`);
+    if(!r.hasEnergy){
+      notice.hidden=false;
+      notice.className=`dashboard-data-notice ${energyState.code==='external'?'external':'warning'}`;
+      if(energyState.code==='external'){
+        notice.innerHTML=`<strong>La sede sí fue encontrada.</strong> Hay ${fmt(r.periodCount,0)} periodo(s) en el consolidado${available.length?` con ${escapeHtml(available.join(', '))}`:''}. <strong>La energía se gestiona mediante un contrato separado de usuario no regulado</strong>, por lo que los kWh no deben inferirse desde estas facturas. CO₂e, árboles y ranking energético quedan pendientes hasta integrar esa fuente. ${exceptionEvidenceHtml(energyState.exception)}`;
+      }else{
+        notice.innerHTML=`<strong>La sede sí fue encontrada.</strong> Hay ${fmt(r.periodCount,0)} periodo(s) en las facturas${available.length?` con ${escapeHtml(available.join(', '))}`:''}. <strong>La energía no está identificada en las facturas consolidadas para este nombre/dirección</strong>; por eso CO₂e, árboles y promedio eléctrico se muestran como “No calculable” y nunca como cero.`;
+      }
+      return;
+    }
+    notice.hidden=false;
+    notice.className='dashboard-data-notice ok';
+    notice.innerHTML=`<strong>Consulta encontrada:</strong> ${escapeHtml(r.displaySite||r.site)} tiene ${fmt(r.periodCount,0)} periodo(s) registrados y ${fmt(r.energyPeriodCount,0)} con lectura de energía eléctrica.`;
+    return;
+  }
+  notice.hidden=true; notice.innerHTML='';
+}
+function renderSiteProfile(rows){
+  const box=$('siteProfile'); if(!box) return;
+  if(!dashboardSiteKey || rows.length!==1){box.hidden=true;box.innerHTML='';return;}
+  const r=rows[0], recs=recordsForSiteKey(r.key), meta=territoryMeta(recs[0]||{site:r.site,address:r.address}), sync=getTerritorySyncMeta(recs[0]||{site:r.site,address:r.address})||{};
+  const quality=qualityStatusForSite(r), energyState=energyDataState(r); const periods=[...r.periods].sort(); const first=periods[0],last=periods[periods.length-1];
+  const latest=[...recs].sort((a,b)=>String(b.period).localeCompare(String(a.period)))[0];
+  const latestLink=latest?.sourceUrl&&latest.sourceUrl!=='local'?`<a class="secondary profile-evidence-link" href="${escapeHtml(latest.sourceUrl)}#page=${Math.max(1,Number(latest.page)||1)}" target="_blank" rel="noopener">Ver evidencia · ${escapeHtml(latest.source||'Factura')} · pág. ${Math.max(1,Number(latest.page)||1)}</a>`:'<span class="not-available">Sin enlace permanente a factura</span>';
+  const serviceCards=[['energyKwh','energyPeriodCount','hasEnergy'],['waterM3','waterPeriodCount','hasWater'],['alcM3','alcPeriodCount','hasAlc'],['gasM3','gasPeriodCount','hasGas'],['wasteTon','wastePeriodCount','hasWaste']].map(([field,pf,hf])=>{const m=serviceMetric(field);let strong=r[hf]?`${fmt(r[field])} ${m.unit}`:'No identificada',small=r[hf]?`${r[pf]}/${r.periodCount} periodos con lectura`:'Sin lectura asociada';if(field==='energyKwh'&&!r[hf]&&energyState.code==='external'){strong='Contrato separado';small='Consumo pendiente de integrar desde la fuente no regulada';}return `<article><span>${escapeHtml(m.label)}</span><strong>${strong}</strong><small>${small}</small></article>`;}).join('');
+  box.hidden=false;
+  box.innerHTML=`<div class="site-profile-head"><div><span class="section-kicker">Ficha integral de sede</span><h3>${escapeHtml(r.displaySite||r.site)}</h3><p>${escapeHtml(r.address||'Sin dirección registrada')}</p>${r.displaySite!==r.site?`<p class="invoice-alias">Nombre en factura: ${escapeHtml(r.site)}</p>`:''}</div><span class="quality-badge ${quality.code}" title="${escapeHtml(quality.detail)}">${escapeHtml(quality.label)}</span></div><div class="site-profile-meta"><span><strong>Territorio:</strong> ${escapeHtml(meta.territory||'Sin clasificar')}</span><span><strong>Núcleo:</strong> ${escapeHtml(meta.nucleus||'Sin clasificar')}</span><span><strong>Zona:</strong> ${escapeHtml(meta.zone||'Sin clasificar')}</span><span><strong>Periodo:</strong> ${escapeHtml(first||'—')} → ${escapeHtml(last||'—')}</span><span><strong>Confianza de vínculo:</strong> ${escapeHtml(sync.confidence||meta.confidence||'No definida')}${sync.matchScore?` · ${fmt(sync.matchScore)}%`:''}</span></div><div class="site-profile-services">${serviceCards}</div><div class="site-profile-quality"><strong>Lectura de calidad:</strong> ${escapeHtml(quality.detail)}${sync.note?` <span>${escapeHtml(sync.note)}</span>`:''}</div>${energyState.code==='external'?exceptionEvidenceHtml(energyState.exception):''}<div class="site-profile-evidence"><div><strong>Trazabilidad de factura consolidada</strong><p>La evidencia abre la factura y la página asociada al registro más reciente de esta sede.</p></div>${latestLink}</div>`;
+}
+
 function renderDashboard(){
   if(!$('environmentBody')) return;
   const rows = aggregateBySite(dashboardRecords());
-  const totalKwh = rows.reduce((a,r)=>a+r.energyKwh,0);
-  const totalCo2kg = rows.reduce((a,r)=>a+r.co2kg,0);
-  const totalTrees = Math.ceil(totalCo2kg / TREE_CO2_KG_YEAR);
-  $('dashTotalKwh').textContent = fmt(totalKwh) + ' kWh';
-  $('dashTotalCo2').textContent = fmt(totalCo2kg/1000) + ' t CO₂e';
-  $('dashTotalTrees').textContent = fmt(totalTrees) + ' árboles';
+  const energyRows=rows.filter(r=>r.hasEnergy);
+  const totalKwh = energyRows.reduce((a,r)=>a+r.energyKwh,0);
+  const totalCo2kg = energyRows.reduce((a,r)=>a+r.co2kg,0);
+  const totalTrees = energyRows.length ? Math.ceil(totalCo2kg / TREE_CO2_KG_YEAR) : null;
+  const totalWater = rows.filter(r=>r.hasWater).reduce((a,r)=>a+r.waterM3,0);
+  const totalAlc = rows.filter(r=>r.hasAlc).reduce((a,r)=>a+r.alcM3,0);
+  const totalGas = rows.filter(r=>r.hasGas).reduce((a,r)=>a+r.gasM3,0);
+  const totalWaste = rows.filter(r=>r.hasWaste).reduce((a,r)=>a+r.wasteTon,0);
+  const selectedNoEnergy=Boolean(dashboardSiteKey && rows.length===1 && !rows[0].hasEnergy);
+  const selectedEnergyState=selectedNoEnergy?energyDataState(rows[0]):null;
+  $('dashTotalKwh').textContent = selectedNoEnergy ? (selectedEnergyState?.code==='external'?'Contrato separado':'No identificada') : fmt(totalKwh) + ' kWh';
+  $('dashTotalCo2').textContent = selectedNoEnergy ? (selectedEnergyState?.code==='external'?'Pendiente de integrar':'No calculable') : fmt(totalCo2kg/1000) + ' t CO₂e';
+  $('dashTotalTrees').textContent = selectedNoEnergy ? (selectedEnergyState?.code==='external'?'Pendiente de integrar':'No calculable') : fmt(totalTrees||0) + ' árboles';
+  if($('dashTotalWater')) $('dashTotalWater').textContent = rows.some(r=>r.hasWater) ? fmt(totalWater)+' m³' : 'Sin dato';
+  if($('dashTotalAlc')) $('dashTotalAlc').textContent = rows.some(r=>r.hasAlc) ? fmt(totalAlc)+' m³' : 'Sin dato';
+  if($('dashTotalGas')) $('dashTotalGas').textContent = rows.some(r=>r.hasGas) ? fmt(totalGas)+' m³' : 'Sin dato';
+  if($('dashTotalWaste')) $('dashTotalWaste').textContent = rows.some(r=>r.hasWaste) ? fmt(totalWaste)+' t' : 'Sin dato';
+  updateDashboardNotice(rows);
+  renderSiteProfile(rows);
   if(!rows.length){
-    $('environmentBody').innerHTML = '<tr><td colspan="10">No hay registros de energía eléctrica para mostrar. Importa una factura PDF o revisa los filtros.</td></tr>';
+    $('environmentBody').innerHTML = '<tr><td colspan="14">No hay registros de servicios públicos para mostrar. Revisa la búsqueda o los filtros.</td></tr>';
     renderRanking();
     return;
   }
   const body = rows.map((r,i)=>{
-    const priority = classifyEnergyIntensity(r.avgKwhMonth);
+    const energyState=energyDataState(r);
+    const priority = r.hasEnergy ? classifyEnergyIntensity(r.avgKwhMonth) : (energyState.code==='external'?{level:'Energía en contrato separado',short:'Contrato separado',cls:'external'}:{level:'Energía no identificada',short:'No identificada',cls:'pending'});
+    const energyText=r.hasEnergy?`<strong>${fmt(r.energyKwh)}</strong>`:(energyState.code==='external'?'<span class="quality-badge external">Contrato separado</span>':'<span class="not-available">No identificada</span>');
+    const co2Text=r.hasEnergy?fmt(r.co2kg/1000):(energyState.code==='external'?'<span class="not-available">Pendiente de integrar</span>':'<span class="not-available">No calculable</span>');
+    const treesText=r.hasEnergy?`<strong>${fmt(r.trees)}</strong>`:(energyState.code==='external'?'<span class="not-available">Pendiente de integrar</span>':'<span class="not-available">No calculable</span>');
+    const avgText=r.hasEnergy?fmt(r.avgKwhMonth):(energyState.code==='external'?'<span class="not-available">Contrato separado</span>':'<span class="not-available">No identificada</span>');
+    const invoiceAlias=r.displaySite!==r.site?`<small class="invoice-alias">En factura: ${escapeHtml(r.site)}</small>`:'';
     return `<tr>
     <td data-label="#">${i+1}</td>
-    <td data-label="Sede">${escapeHtml(r.site)}</td>
+    <td data-label="Sede"><strong>${escapeHtml(r.displaySite||r.site)}</strong>${invoiceAlias}</td>
     <td data-label="Dirección">${escapeHtml(r.address)}</td>
     <td data-label="Periodos">${fmt(r.periodCount)}</td>
-    <td data-label="Energía total kWh"><strong>${fmt(r.energyKwh)}</strong></td>
-    <td data-label="CO₂e t">${fmt(r.co2kg/1000)}</td>
-    <td data-label="Árboles requeridos"><strong>${fmt(r.trees)}</strong></td>
-    <td data-label="Promedio kWh/mes">${fmt(r.avgKwhMonth)}</td>
+    <td data-label="Energía total kWh">${energyText}</td>
+    <td data-label="Agua m³">${dashboardValue(r,'waterM3')}</td>
+    <td data-label="Alcantarillado m³">${dashboardValue(r,'alcM3')}</td>
+    <td data-label="Gas m³">${dashboardValue(r,'gasM3')}</td>
+    <td data-label="Aseo / residuos t">${dashboardValue(r,'wasteTon')}</td>
+    <td data-label="CO₂e t">${co2Text}</td>
+    <td data-label="Árboles requeridos">${treesText}</td>
+    <td data-label="Promedio kWh/mes">${avgText}</td>
     <td data-label="Prioridad"><span class="priority-chip ${priority.cls}" title="${escapeHtml(priority.level)}">${escapeHtml(priority.short || priority.level)}</span></td>
-    <td data-label="Plan" class="plan-cell"><button type="button" class="plan-btn primary" data-site-key="${escapeHtml(siteKey(r.site,r.address))}" title="Generar, visualizar y descargar el Plan de Gestión de ${escapeHtml(r.site)}">📄 Generar informe<br><small>Plan de Gestión</small></button></td>
+    <td data-label="Plan" class="plan-cell"><button type="button" class="plan-btn primary" data-site-key="${escapeHtml(r.key)}" title="Generar, visualizar y descargar el Plan de Gestión de ${escapeHtml(r.displaySite||r.site)}">📄 Generar informe<br><small>${r.hasEnergy?'Plan de Gestión':'Informe con datos disponibles'}</small></button></td>
   </tr>`;
   }).join('');
-  const totalRow = `<tr class="total-row"><td colspan="4">TOTAL</td><td>${fmt(totalKwh)}</td><td>${fmt(totalCo2kg/1000)}</td><td>${fmt(totalTrees)}</td><td>—</td><td>—</td><td>—</td></tr>`;
+  const totalRow = `<tr class="total-row"><td colspan="4">TOTAL / DATOS DISPONIBLES</td><td>${energyRows.length?fmt(totalKwh):'—'}</td><td>${rows.some(r=>r.hasWater)?fmt(totalWater):'—'}</td><td>${rows.some(r=>r.hasAlc)?fmt(totalAlc):'—'}</td><td>${rows.some(r=>r.hasGas)?fmt(totalGas):'—'}</td><td>${rows.some(r=>r.hasWaste)?fmt(totalWaste):'—'}</td><td>${energyRows.length?fmt(totalCo2kg/1000):'—'}</td><td>${energyRows.length?fmt(totalTrees||0):'—'}</td><td>—</td><td>—</td><td>—</td></tr>`;
   $('environmentBody').innerHTML = totalRow + body;
   renderRanking();
 }
@@ -1705,228 +1973,62 @@ function renderRankingPeriodOptions(){
   else{select.value='';rankingPeriod='';}
 }
 function getFullRankingRows(){
-  // El ranking parte de la misma colección que alimenta Históricos. Así, una sede
-  // con facturas de agua, aseo u otro servicio sigue siendo localizable aunque aún
-  // no tenga una lectura eléctrica asociada. Esas sedes se ubican al final y se
-  // identifican como “Sin dato eléctrico”, sin inventar un consumo de 0 kWh.
+  const metric=selectedRankingMetric();
   const records=(state.records||[]).filter(r=>!rankingPeriod || r.period===rankingPeriod);
-  return aggregateBySite(records).filter(row=>{
+  return aggregateBySite(records).map(row=>{
+    const has=Boolean(row[metric.hasFlag]); const value=has?Number(row[metric.field])||0:null; const periodCount=Number(row[metric.periodField])||0;
+    const rankingExternal=metric.field==='energyKwh' && !has && energyDataState(row).code==='external';
+    return {...row,rankingHasValue:has,rankingValue:value,rankingPeriodCount:periodCount,rankingExternal};
+  }).filter(row=>{
     if(!rankingPriority) return true;
-    return row.hasEnergy && classifyEnergyIntensity(row.avgKwhMonth).cls===rankingPriority;
-  });
+    return metric.field==='energyKwh' && row.hasEnergy && classifyEnergyIntensity(row.avgKwhMonth).cls===rankingPriority;
+  }).sort((a,b)=>Number(b.rankingHasValue)-Number(a.rankingHasValue) || (Number(b.rankingValue)||0)-(Number(a.rankingValue)||0) || String(a.displaySite||a.site).localeCompare(String(b.displaySite||b.site),'es'));
 }
 function updateRankingPriorityButtons(){
-  document.querySelectorAll('#rankingPriorityFilters [data-priority]').forEach(btn=>{
-    const active=(btn.dataset.priority||'')===rankingPriority;
-    btn.classList.toggle('is-active',active);
-    btn.setAttribute('aria-pressed',String(active));
-  });
+  const metric=selectedRankingMetric();
+  document.querySelectorAll('#rankingPriorityFilters [data-priority]').forEach(btn=>{const active=(btn.dataset.priority||'')===rankingPriority;btn.classList.toggle('is-active',active);btn.setAttribute('aria-pressed',String(active));btn.disabled=metric.field!=='energyKwh';});
 }
 function handleRankingPriorityClick(e){
-  const btn=e.target.closest('[data-priority]');
-  if(!btn) return;
-  rankingPriority=btn.dataset.priority||'';
-  rankingSelectedKey='';
-  rankingPage=0;
-  if($('rankingSiteSearch')) $('rankingSiteSearch').value='';
-  $('clearRankingSearchBtn')?.classList.remove('visible');
-  closeRankingSuggestions();
-  renderRanking();
-  log(`Ranking filtrado por prioridad: ${rankingPriority ? ({high:'Alta',medium:'Media',low:'Preventiva'}[rankingPriority]||rankingPriority) : 'Todas'}.`);
+  const btn=e.target.closest('[data-priority]'); if(!btn||selectedRankingMetric().field!=='energyKwh') return;
+  rankingPriority=btn.dataset.priority||''; rankingSelectedKey=''; rankingPage=0; if($('rankingSiteSearch')) $('rankingSiteSearch').value=''; $('clearRankingSearchBtn')?.classList.remove('visible'); closeRankingSuggestions(); renderRanking();
 }
-function rankingSearchOptions(){
-  return rankingRowsCache.map((r,index)=>({...r,index,key:siteKey(r.site,r.address)}));
-}
-function closeRankingSuggestions(){
-  const list=$('rankingSiteSuggestions'), input=$('rankingSiteSearch');
-  if(list) list.hidden=true;
-  if(input) input.setAttribute('aria-expanded','false');
-  rankingAutocompleteIndex=-1;
-}
-function clearRankingSearch(){
-  rankingSelectedKey='';
-  rankingAutocompleteIndex=-1;
-  if($('rankingSiteSearch')) $('rankingSiteSearch').value='';
-  if($('clearRankingSearchBtn')) $('clearRankingSearchBtn').classList.remove('visible');
-  closeRankingSuggestions();
-  rankingPage=0;
-  drawSiteChart(rankingRowsCache);
-}
+function rankingSearchOptions(){ return rankingRowsCache.map((r,index)=>({...r,index,key:siteKey(r.site,r.address)})); }
+function closeRankingSuggestions(){const list=$('rankingSiteSuggestions'),input=$('rankingSiteSearch');if(list)list.hidden=true;if(input)input.setAttribute('aria-expanded','false');rankingAutocompleteIndex=-1;}
+function clearRankingSearch(){rankingSelectedKey='';rankingAutocompleteIndex=-1;if($('rankingSiteSearch'))$('rankingSiteSearch').value='';if($('clearRankingSearchBtn'))$('clearRankingSearchBtn').classList.remove('visible');closeRankingSuggestions();rankingPage=0;drawSiteChart(rankingRowsCache);}
 function rankingMatches(query){
-  const tokens=loose(query).split(/\s+/).filter(Boolean);
-  const opts=rankingSearchOptions();
-  if(!tokens.length) return opts.slice(0,20);
-  return opts.map(o=>{
-    const hay=loose(`${o.site} ${o.address}`);
-    if(!tokens.every(t=>hay.includes(t))) return null;
-    let score=0; const site=loose(o.site), address=loose(o.address);
-    tokens.forEach(t=>{ if(site.startsWith(t)) score+=8; else if(site.includes(t)) score+=5; if(address.includes(t)) score+=2; });
-    return {...o,score};
-  }).filter(Boolean).sort((a,b)=>b.score-a.score||a.index-b.index).slice(0,20);
+  const tokens=loose(query).split(/\s+/).filter(Boolean),opts=rankingSearchOptions(); if(!tokens.length)return opts.slice(0,20);
+  return opts.map(o=>{const hay=loose(`${o.displaySite||o.site} ${o.site} ${o.address}`);if(!tokens.every(t=>hay.includes(t)))return null;let score=0;const site=loose(`${o.displaySite||''} ${o.site||''}`),address=loose(o.address);tokens.forEach(t=>{if(site.startsWith(t))score+=8;else if(site.includes(t))score+=5;if(address.includes(t))score+=2;});return {...o,score};}).filter(Boolean).sort((a,b)=>b.score-a.score||a.index-b.index).slice(0,20);
 }
-function highlightRankingMatch(value,query){
-  const safe=escapeHtml(value||'');
-  const token=loose(query).split(/\s+/).filter(Boolean)[0];
-  if(!token) return safe;
-  const raw=String(value||''); const idx=loose(raw).indexOf(token);
-  if(idx<0) return safe;
-  return `${escapeHtml(raw.slice(0,idx))}<mark>${escapeHtml(raw.slice(idx,idx+token.length))}</mark>${escapeHtml(raw.slice(idx+token.length))}`;
-}
+function highlightRankingMatch(value,query){const safe=escapeHtml(value||''),token=loose(query).split(/\s+/).filter(Boolean)[0];if(!token)return safe;const raw=String(value||''),idx=loose(raw).indexOf(token);if(idx<0)return safe;return `${escapeHtml(raw.slice(0,idx))}<mark>${escapeHtml(raw.slice(idx,idx+token.length))}</mark>${escapeHtml(raw.slice(idx+token.length))}`;}
 function renderRankingSuggestions(query=''){
-  const list=$('rankingSiteSuggestions'), input=$('rankingSiteSearch');
-  if(!list||!input) return;
-  const matches=rankingMatches(query);
-  rankingAutocompleteIndex=-1;
-  list.innerHTML=matches.length?matches.map((o,i)=>{
-    const coverage=o.hasEnergy
-      ? `${o.energyPeriodCount} periodo${o.energyPeriodCount===1?'':'s'} con energía de ${o.periodCount} histórico${o.periodCount===1?'':'s'}`
-      : `${o.periodCount} periodo${o.periodCount===1?'':'s'} histórico${o.periodCount===1?'':'s'} · Sin dato eléctrico`;
-    return `<button type="button" class="autocomplete-option" role="option" data-ranking-key="${escapeHtml(o.key)}" data-ranking-index="${o.index}"><span><strong>${highlightRankingMatch(o.site,query)}</strong><small>${highlightRankingMatch(o.address||'Sin dirección',query)} · ${escapeHtml(coverage)}</small></span><em>${o.hasEnergy?`Puesto ${o.index+1}`:'Pendiente'}</em></button>`;
-  }).join(''):'<div class="autocomplete-empty">No se encontraron instituciones o sedes en los históricos.</div>';
-  list.hidden=false; input.setAttribute('aria-expanded','true');
+  const list=$('rankingSiteSuggestions'),input=$('rankingSiteSearch');if(!list||!input)return;const metric=selectedRankingMetric(),matches=rankingMatches(query);rankingAutocompleteIndex=-1;
+  list.innerHTML=matches.length?matches.map((o,i)=>{const coverage=o.rankingHasValue?`${o.rankingPeriodCount}/${o.periodCount} periodos con ${metric.short.toLowerCase()}`:(o.rankingExternal?'Energía en contrato separado · consumo pendiente de integrar':`${o.periodCount} periodo${o.periodCount===1?'':'s'} · Sin dato de ${metric.short.toLowerCase()}`);return `<button type="button" class="autocomplete-option" role="option" data-ranking-key="${escapeHtml(o.key)}" data-ranking-index="${o.index}"><span><strong>${highlightRankingMatch(o.displaySite||o.site,query)}</strong><small>${highlightRankingMatch(o.address||'Sin dirección',query)} · ${escapeHtml(coverage)}</small></span><em>${o.rankingHasValue?`Puesto ${o.index+1}`:(o.rankingExternal?'Contrato separado':'Pendiente')}</em></button>`;}).join(''):'<div class="autocomplete-empty">No se encontraron instituciones o sedes en los históricos.</div>';
+  list.hidden=false;input.setAttribute('aria-expanded','true');
 }
-function handleRankingSearchInput(){
-  rankingSelectedKey='';
-  const value=$('rankingSiteSearch').value;
-  $('clearRankingSearchBtn')?.classList.toggle('visible',Boolean(value));
-  renderRankingSuggestions(value);
-}
-function selectRankingSuggestion(key,index){
-  const row=rankingRowsCache[index] || rankingRowsCache.find(r=>siteKey(r.site,r.address)===key);
-  if(!row) return;
-  rankingSelectedKey=key;
-  $('rankingSiteSearch').value=row.site;
-  $('clearRankingSearchBtn')?.classList.add('visible');
-  closeRankingSuggestions();
-  const actualIndex=rankingRowsCache.findIndex(r=>siteKey(r.site,r.address)===key);
-  rankingPage=Math.max(0,Math.floor(actualIndex/RANKING_PAGE_SIZE));
-  drawSiteChart(rankingRowsCache);
-  requestAnimationFrame(()=>$('siteChart')?.scrollIntoView({behavior:'smooth',block:'center'}));
-}
-function handleRankingSuggestionClick(e){
-  const btn=e.target.closest('[data-ranking-key]'); if(!btn) return;
-  e.preventDefault(); selectRankingSuggestion(btn.dataset.rankingKey,Number(btn.dataset.rankingIndex));
-}
-function handleRankingSearchKeydown(e){
-  const list=$('rankingSiteSuggestions');
-  const options=[...(list?.querySelectorAll('.autocomplete-option')||[])];
-  if(e.key==='ArrowDown'){e.preventDefault();rankingAutocompleteIndex=Math.min(rankingAutocompleteIndex+1,options.length-1);}
-  else if(e.key==='ArrowUp'){e.preventDefault();rankingAutocompleteIndex=Math.max(rankingAutocompleteIndex-1,0);}
-  else if(e.key==='Enter' && rankingAutocompleteIndex>=0 && options[rankingAutocompleteIndex]){e.preventDefault();options[rankingAutocompleteIndex].dispatchEvent(new MouseEvent('mousedown',{bubbles:true}));return;}
-  else if(e.key==='Escape'){closeRankingSuggestions();return;} else return;
-  options.forEach((o,i)=>o.classList.toggle('active',i===rankingAutocompleteIndex));
-  options[rankingAutocompleteIndex]?.scrollIntoView({block:'nearest'});
-}
+function handleRankingSearchInput(){rankingSelectedKey='';const value=$('rankingSiteSearch').value;$('clearRankingSearchBtn')?.classList.toggle('visible',Boolean(value));renderRankingSuggestions(value);}
+function selectRankingSuggestion(key,index){const row=rankingRowsCache[index]||rankingRowsCache.find(r=>siteKey(r.site,r.address)===key);if(!row)return;rankingSelectedKey=key;$('rankingSiteSearch').value=row.displaySite||row.site;$('clearRankingSearchBtn')?.classList.add('visible');closeRankingSuggestions();const actualIndex=rankingRowsCache.findIndex(r=>siteKey(r.site,r.address)===key);rankingPage=Math.max(0,Math.floor(actualIndex/RANKING_PAGE_SIZE));drawSiteChart(rankingRowsCache);requestAnimationFrame(()=>$('siteChart')?.scrollIntoView({behavior:'smooth',block:'center'}));}
+function handleRankingSuggestionClick(e){const btn=e.target.closest('[data-ranking-key]');if(!btn)return;e.preventDefault();selectRankingSuggestion(btn.dataset.rankingKey,Number(btn.dataset.rankingIndex));}
+function handleRankingSearchKeydown(e){const list=$('rankingSiteSuggestions'),options=[...(list?.querySelectorAll('.autocomplete-option')||[])];if(e.key==='ArrowDown'){e.preventDefault();rankingAutocompleteIndex=Math.min(rankingAutocompleteIndex+1,options.length-1);}else if(e.key==='ArrowUp'){e.preventDefault();rankingAutocompleteIndex=Math.max(rankingAutocompleteIndex-1,0);}else if(e.key==='Enter'&&rankingAutocompleteIndex>=0&&options[rankingAutocompleteIndex]){e.preventDefault();options[rankingAutocompleteIndex].dispatchEvent(new MouseEvent('mousedown',{bubbles:true}));return;}else if(e.key==='Escape'){closeRankingSuggestions();return;}else return;options.forEach((o,i)=>o.classList.toggle('active',i===rankingAutocompleteIndex));options[rankingAutocompleteIndex]?.scrollIntoView({block:'nearest'});}
 function refreshFullRanking(){
-  dashboardSiteKey='';
-  const field=siteAutocompleteState.get('dashboardSiteSearch');
-  if(field){field.input.value='';field.clear.classList.remove('visible');}
-  rankingPeriod=''; rankingPriority=''; rankingSelectedKey=''; rankingPage=0;
-  renderRankingPeriodOptions();
-  if($('rankingPeriodFilter')) $('rankingPeriodFilter').value='';
-  if($('rankingSiteSearch')) $('rankingSiteSearch').value='';
-  $('clearRankingSearchBtn')?.classList.remove('visible');
-  closeRankingSuggestions();
-  rankingRowsCache=getFullRankingRows();
-  drawSiteChart(rankingRowsCache);
-  log('Ranking actualizado: se muestran nuevamente todas las sedes y todos los meses.');
+  dashboardSiteKey='';const field=siteAutocompleteState.get('dashboardSiteSearch');if(field){field.input.value='';field.clear.classList.remove('visible');}
+  rankingPeriod='';rankingPriority='';rankingSelectedKey='';rankingPage=0;rankingMetric=$('rankingMetricFilter')?.value||'energyKwh';renderRankingPeriodOptions();if($('rankingPeriodFilter'))$('rankingPeriodFilter').value='';if($('rankingSiteSearch'))$('rankingSiteSearch').value='';$('clearRankingSearchBtn')?.classList.remove('visible');closeRankingSuggestions();rankingRowsCache=getFullRankingRows();drawSiteChart(rankingRowsCache);log('Ranking actualizado: se muestran todas las sedes para el servicio seleccionado.');
 }
-function setRankingPage(page){
-  const pages=Math.max(1,Math.ceil(rankingRowsCache.length/RANKING_PAGE_SIZE));
-  rankingPage=Math.max(0,Math.min(Number(page)||0,pages-1));
-  drawSiteChart(rankingRowsCache);
-}
+function setRankingPage(page){const pages=Math.max(1,Math.ceil(rankingRowsCache.length/RANKING_PAGE_SIZE));rankingPage=Math.max(0,Math.min(Number(page)||0,pages-1));drawSiteChart(rankingRowsCache);}
 function renderRanking(){
-  renderRankingPeriodOptions();
-  updateRankingPriorityButtons();
-  rankingRowsCache=getFullRankingRows();
-  if(rankingSelectedKey && !rankingRowsCache.some(r=>siteKey(r.site,r.address)===rankingSelectedKey)){
-    rankingSelectedKey='';
-    if($('rankingSiteSearch')) $('rankingSiteSearch').value='';
-    $('clearRankingSearchBtn')?.classList.remove('visible');
-  }
-  const pages=Math.max(1,Math.ceil(rankingRowsCache.length/RANKING_PAGE_SIZE));
-  if(rankingPage>=pages) rankingPage=pages-1;
-  drawSiteChart(rankingRowsCache);
+  renderRankingPeriodOptions(); rankingMetric=$('rankingMetricFilter')?.value||rankingMetric||'energyKwh'; if(rankingMetric!=='energyKwh')rankingPriority='';updateRankingPriorityButtons();rankingRowsCache=getFullRankingRows();
+  if(rankingSelectedKey&&!rankingRowsCache.some(r=>siteKey(r.site,r.address)===rankingSelectedKey)){rankingSelectedKey='';if($('rankingSiteSearch'))$('rankingSiteSearch').value='';$('clearRankingSearchBtn')?.classList.remove('visible');}
+  const metric=selectedRankingMetric(); if($('rankingTitle'))$('rankingTitle').textContent=`Ranking de sedes por ${metric.label.toLowerCase()}`; if($('rankingDescription'))$('rankingDescription').textContent=`Ordena de mayor a menor ${metric.label.toLowerCase()}. Las sedes sin lectura para este indicador permanecen visibles al final y no se interpretan como consumo cero.`;
+  const pages=Math.max(1,Math.ceil(rankingRowsCache.length/RANKING_PAGE_SIZE));if(rankingPage>=pages)rankingPage=pages-1;drawSiteChart(rankingRowsCache);
 }
 function drawSiteChart(rows){
-  const c = $('siteChart');
-  if(!c) return;
-  const ctx = c.getContext('2d');
-  ctx.clearRect(0,0,c.width,c.height);
-  ctx.fillStyle='#13312d';
-  ctx.font='bold 17px Arial';
-  ctx.textAlign='left';
-  ctx.fillText('Ranking de sedes por consumo eléctrico registrado (kWh)',24,34);
-  ctx.font='12px Arial';
-  ctx.fillStyle='#637772';
-  ctx.fillText(`Mayor a menor consumo · ${rankingPeriod ? groupLabel(rankingPeriod,'month') : 'todos los meses'} · ${rankingPriority ? 'prioridad '+({high:'alta',medium:'media',low:'preventiva'}[rankingPriority]||rankingPriority) : 'incluye sedes sin dato eléctrico al final'} · vista de 10 sedes.`,24,54);
-
-  const total=rows.length;
-  const pages=Math.max(1,Math.ceil(total/RANKING_PAGE_SIZE));
-  rankingPage=Math.max(0,Math.min(rankingPage,pages-1));
-  const start=rankingPage*RANKING_PAGE_SIZE;
-  const visible=rows.slice(start,start+RANKING_PAGE_SIZE);
-  const end=Math.min(start+visible.length,total);
-  if($('rankingPageInfo')) $('rankingPageInfo').textContent=total ? `${start+1}–${end} de ${total} sedes · Página ${rankingPage+1} de ${pages}` : 'Sin sedes disponibles';
-  ['rankingFirstBtn','rankingPrevBtn'].forEach(id=>{if($(id)) $(id).disabled=rankingPage===0||!total;});
-  ['rankingNextBtn','rankingLastBtn'].forEach(id=>{if($(id)) $(id).disabled=rankingPage>=pages-1||!total;});
-  const measuredRows=rows.filter(r=>r.hasEnergy);
-  const pendingRows=rows.filter(r=>!r.hasEnergy);
-  const most=measuredRows[0], least=measuredRows[measuredRows.length-1];
-  if($('rankingExtremes')){
-    $('rankingExtremes').innerHTML=total ? `${most?`<article><span>Mayor consumo</span><strong>${escapeHtml(most.site)}</strong><small>${fmt(most.energyKwh)} kWh registrados</small></article>`:'<article><span>Mayor consumo</span><strong>Sin datos eléctricos</strong><small>No hay lecturas para comparar</small></article>'}${least?`<article><span>Menor consumo con dato</span><strong>${escapeHtml(least.site)}</strong><small>${fmt(least.energyKwh)} kWh registrados</small></article>`:'<article><span>Menor consumo con dato</span><strong>Sin datos eléctricos</strong><small>No hay lecturas para comparar</small></article>'}<article><span>Cobertura del ranking</span><strong>${measuredRows.length} con energía · ${pendingRows.length} pendientes</strong><small>${total} sedes presentes en históricos</small></article>` : '<p>No hay sedes históricas para construir el ranking.</p>';
-  }
-
-  if(!visible.length){ ctx.fillStyle='#13312d'; ctx.fillText('Sin datos históricos para graficar',24,92); return; }
-  const padL = 255;
-  const padR = 28;
-  const valueX = Math.max(735, c.width - 330);
-  const top = 82;
-  const rowH = 36;
-  const barH = 20;
-  const max = Math.max(...measuredRows.map(r=>r.energyKwh),1);
-  const maxBarW = Math.max(180, valueX - padL - 18);
-  ctx.font='12px Arial';
-  visible.forEach((r,i)=>{
-    const y = top + i*rowH;
-    const position=start+i+1;
-    const rawLabel=`${position}. ${r.site||''}`;
-    const label = rawLabel.length>36 ? rawLabel.slice(0,36)+'…' : rawLabel;
-    const isSelected = rankingSelectedKey && siteKey(r.site,r.address)===rankingSelectedKey;
-    if(isSelected){
-      ctx.fillStyle='#fff3bf';
-      roundRect(ctx,12,y-7,c.width-24,rowH-1,10); ctx.fill();
-    }
-    ctx.fillStyle=isSelected?'#075846':'#315650';
-    ctx.font=isSelected?'bold 12px Arial':'12px Arial';
-    ctx.textAlign='right';
-    ctx.fillText(label, padL-12, y+15);
-    if(r.hasEnergy){
-      const bw = Math.max(5, (r.energyKwh/max)*maxBarW);
-      const grad = ctx.createLinearGradient(padL,0,padL+bw,0);
-      grad.addColorStop(0,'#0b9878');
-      grad.addColorStop(1,'#0fc39a');
-      ctx.fillStyle=grad;
-      roundRect(ctx,padL,y,bw,barH,8); ctx.fill();
-    }else{
-      ctx.save();
-      ctx.setLineDash([6,5]);
-      ctx.strokeStyle='#9cafaa';
-      ctx.lineWidth=1.5;
-      roundRect(ctx,padL,y,maxBarW,barH,8); ctx.stroke();
-      ctx.restore();
-    }
-    const available = c.width - valueX - padR;
-    const fullLabel = r.hasEnergy
-      ? `${fmt(r.energyKwh)} kWh · ${fmt(r.co2kg/1000)} t CO₂e · ${fmt(r.trees)} árboles · ${r.energyPeriodCount}/${r.periodCount} periodos`
-      : `Sin dato eléctrico · ${r.periodCount} periodo${r.periodCount===1?'':'s'} histórico${r.periodCount===1?'':'s'}`;
-    ctx.fillStyle=r.hasEnergy?'#13312d':'#637772';
-    ctx.textAlign='left';
-    ctx.font=r.hasEnergy?'bold 11.5px Arial':'italic 11.5px Arial';
-    ctx.fillText(fitCanvasText(ctx, fullLabel, available), valueX, y+15);
-  });
-  ctx.textAlign='left';
+  const c=$('siteChart');if(!c)return;const ctx=c.getContext('2d'),metric=selectedRankingMetric();ctx.clearRect(0,0,c.width,c.height);ctx.fillStyle='#13312d';ctx.font='bold 17px Arial';ctx.textAlign='left';ctx.fillText(`Ranking de sedes por ${metric.label.toLowerCase()} (${metric.unit})`,24,34);ctx.font='12px Arial';ctx.fillStyle='#637772';ctx.fillText(`Mayor a menor · ${rankingPeriod?groupLabel(rankingPeriod,'month'):'todos los meses'} · sin dato/contrato separado al final · vista de 10 sedes.`,24,54);
+  const total=rows.length,pages=Math.max(1,Math.ceil(total/RANKING_PAGE_SIZE));rankingPage=Math.max(0,Math.min(rankingPage,pages-1));const start=rankingPage*RANKING_PAGE_SIZE,visible=rows.slice(start,start+RANKING_PAGE_SIZE),end=Math.min(start+visible.length,total);
+  if($('rankingPageInfo'))$('rankingPageInfo').textContent=total?`${start+1}–${end} de ${total} sedes · Página ${rankingPage+1} de ${pages}`:'Sin sedes disponibles';['rankingFirstBtn','rankingPrevBtn'].forEach(id=>{if($(id))$(id).disabled=rankingPage===0||!total;});['rankingNextBtn','rankingLastBtn'].forEach(id=>{if($(id))$(id).disabled=rankingPage>=pages-1||!total;});
+  const measured=rows.filter(r=>r.rankingHasValue),external=rows.filter(r=>r.rankingExternal),pending=rows.filter(r=>!r.rankingHasValue&&!r.rankingExternal),most=measured[0],least=measured[measured.length-1];
+  if($('rankingExtremes'))$('rankingExtremes').innerHTML=total?`${most?`<article><span>Mayor ${escapeHtml(metric.short.toLowerCase())}</span><strong>${escapeHtml(most.displaySite||most.site)}</strong><small>${fmt(most.rankingValue)} ${metric.unit}</small></article>`:'<article><span>Mayor valor</span><strong>Sin lecturas</strong><small>No hay datos para comparar</small></article>'}${least?`<article><span>Menor valor con dato</span><strong>${escapeHtml(least.displaySite||least.site)}</strong><small>${fmt(least.rankingValue)} ${metric.unit}</small></article>`:''}<article><span>Cobertura</span><strong>${measured.length} con dato · ${external.length} contrato separado · ${pending.length} pendientes</strong><small>${total} sedes históricas</small></article>`:'<p>No hay sedes históricas para construir el ranking.</p>';
+  if(!visible.length){ctx.fillStyle='#13312d';ctx.fillText('Sin datos históricos para graficar',24,92);return;}
+  const padL=255,padR=28,valueX=Math.max(735,c.width-330),top=82,rowH=36,barH=20,max=Math.max(...measured.map(r=>Number(r.rankingValue)||0),1),maxBarW=Math.max(180,valueX-padL-18);ctx.font='12px Arial';
+  visible.forEach((r,i)=>{const y=top+i*rowH,position=start+i+1,rawLabel=`${position}. ${r.displaySite||r.site||''}`,label=rawLabel.length>36?rawLabel.slice(0,36)+'…':rawLabel,isSelected=rankingSelectedKey&&siteKey(r.site,r.address)===rankingSelectedKey;if(isSelected){ctx.fillStyle='#fff3bf';roundRect(ctx,12,y-7,c.width-24,rowH-1,10);ctx.fill();}ctx.fillStyle=isSelected?'#075846':'#315650';ctx.font=isSelected?'bold 12px Arial':'12px Arial';ctx.textAlign='right';ctx.fillText(label,padL-12,y+15);if(r.rankingHasValue){const bw=Math.max(5,(r.rankingValue/max)*maxBarW),grad=ctx.createLinearGradient(padL,0,padL+bw,0);grad.addColorStop(0,'#0b9878');grad.addColorStop(1,'#0fc39a');ctx.fillStyle=grad;roundRect(ctx,padL,y,bw,barH,8);ctx.fill();}else{ctx.save();ctx.setLineDash([6,5]);ctx.strokeStyle='#9cafaa';ctx.lineWidth=1.5;roundRect(ctx,padL,y,maxBarW,barH,8);ctx.stroke();ctx.restore();}const available=c.width-valueX-padR,fullLabel=r.rankingHasValue?`${fmt(r.rankingValue)} ${metric.unit} · ${r.rankingPeriodCount}/${r.periodCount} periodos`:(r.rankingExternal?'Contrato separado · consumo pendiente de integrar':`Sin dato de ${metric.short.toLowerCase()} · ${r.periodCount} periodo${r.periodCount===1?'':'s'}`);ctx.fillStyle=r.rankingHasValue?'#13312d':'#637772';ctx.textAlign='left';ctx.font=r.rankingHasValue?'bold 11.5px Arial':'italic 11.5px Arial';ctx.fillText(fitCanvasText(ctx,fullLabel,available),valueX,y+15);});ctx.textAlign='left';
 }
 
 function fitCanvasText(ctx, text, maxWidth){
@@ -1978,34 +2080,41 @@ function generateManagementPlan(key){
     alert('No se encontraron registros para generar el plan de gestión de esta sede.');
     return;
   }
-  const site = recs[0].site || 'Sede educativa';
+  const site = preferredSiteName(recs[0]);
+  const invoiceSite = recs[0].site || 'Sede educativa';
   const address = recs[0].address || 'Sin dirección registrada';
   const periods = [...new Set(recs.map(r=>r.period))].sort();
-  const energy = recs.reduce((a,r)=>a+(Number(r.energyKwh)||0),0);
+  const energyRecs=recs.filter(recordHasEnergyReading);
+  const hasEnergy=energyRecs.length>0;
+  const energyPeriods=[...new Set(energyRecs.map(r=>r.period).filter(Boolean))];
+  const energy = energyRecs.reduce((a,r)=>a+(Number(r.energyKwh)||0),0);
   const water = recs.reduce((a,r)=>a+(Number(r.waterM3)||0),0);
+  const alc = recs.reduce((a,r)=>a+(Number(r.alcM3)||0),0);
+  const gas = recs.reduce((a,r)=>a+(Number(r.gasM3)||0),0);
   const waste = recs.reduce((a,r)=>a+(Number(r.wasteTon)||0),0);
-  const co2kg = energy * FACTOR_CO2_KG_KWH;
-  const co2t = co2kg / 1000;
-  const trees = Math.ceil(co2kg / TREE_CO2_KG_YEAR);
-  const avgMonth = periods.length ? energy / periods.length : energy;
-  const annualProjection = avgMonth * 12;
-  const target15 = annualProjection * 0.15;
-  const target40 = annualProjection * 0.40;
-  const solar80 = annualProjection * 0.80;
-  const co2Target15 = target15 * FACTOR_CO2_KG_KWH / 1000;
-  const co2Target40 = target40 * FACTOR_CO2_KG_KWH / 1000;
-  const co2Solar80 = solar80 * FACTOR_CO2_KG_KWH / 1000;
-  const intensity = classifyEnergyIntensity(avgMonth);
+  const co2kg = hasEnergy ? energy * FACTOR_CO2_KG_KWH : null;
+  const co2t = hasEnergy ? co2kg / 1000 : null;
+  const trees = hasEnergy ? Math.ceil(co2kg / TREE_CO2_KG_YEAR) : null;
+  const avgMonth = hasEnergy ? energy / Math.max(1,energyPeriods.length) : null;
+  const annualProjection = hasEnergy ? avgMonth * 12 : null;
+  const target15 = hasEnergy ? annualProjection * 0.15 : null;
+  const target40 = hasEnergy ? annualProjection * 0.40 : null;
+  const solar80 = hasEnergy ? annualProjection * 0.80 : null;
+  const co2Target15 = hasEnergy ? target15 * FACTOR_CO2_KG_KWH / 1000 : null;
+  const co2Target40 = hasEnergy ? target40 * FACTOR_CO2_KG_KWH / 1000 : null;
+  const co2Solar80 = hasEnergy ? solar80 * FACTOR_CO2_KG_KWH / 1000 : null;
+  const energyException=serviceExceptionForSite(recs[0],'energyKwh');
+  const intensity = hasEnergy ? classifyEnergyIntensity(avgMonth) : (energyException?{level:'Energía en contrato separado',short:'Contrato separado',cls:'external',text:energyException.summary||energyException.dataState}:{level:'Energía no identificada',short:'No identificada',cls:'pending',text:'Las facturas cargadas contienen información de la sede, pero no una lectura de energía eléctrica individualizada para este nombre/dirección. Esto no significa consumo cero: debe investigarse si la cuenta está facturada bajo otro nombre, producto, contrato o dirección.'});
   const latest = recs[recs.length-1];
   const generatedAt = new Date().toLocaleDateString('es-CO', {year:'numeric', month:'long', day:'numeric'});
 
   CURRENT_PLAN_FILENAME = `plan-gestion-${slugify(site)}.html`;
-  CURRENT_PLAN_HTML = buildPlanHtml({site,address,periods,energy,water,waste,co2t,trees,avgMonth,annualProjection,target15,target40,solar80,co2Target15,co2Target40,co2Solar80,intensity,latest,generatedAt,recs});
-  $('planReport').className = 'plan-report';
-  $('planReport').innerHTML = CURRENT_PLAN_HTML;
-  $('printPlanBtn').disabled = false;
+  CURRENT_PLAN_HTML = buildPlanHtml({site,invoiceSite,address,periods,energyPeriods,hasEnergy,energyException,energy,water,alc,gas,waste,co2t,trees,avgMonth,annualProjection,target15,target40,solar80,co2Target15,co2Target40,co2Solar80,intensity,latest,generatedAt,recs});
+  if($('planReport')){$('planReport').className='plan-report';$('planReport').innerHTML=CURRENT_PLAN_HTML;}
+  if($('printPlanBtn')) $('printPlanBtn').disabled=false;
+  if($('downloadPlanBtn')) $('downloadPlanBtn').disabled=false;
   if(window.simecoOpenSection) window.simecoOpenSection('seccion-3', {scroll:false});
-  requestAnimationFrame(()=>$('planPanel').scrollIntoView({behavior:'smooth', block:'start'}));
+  requestAnimationFrame(()=>$('planPanel')?.scrollIntoView({behavior:'smooth',block:'start'}));
   log(`Plan de Gestión generado para ${site}.`);
 }
 
@@ -2020,11 +2129,14 @@ function buildPlanMetricSeries(recs){
   return [...recs]
     .map(r=>({
       period:String(r.period||''),
-      energy:Number(r.energyKwh)||0,
+      hasEnergy:recordHasEnergyReading(r),
+      energy:recordHasEnergyReading(r)?Number(r.energyKwh):null,
       water:Number(r.waterM3)||0,
+      alc:Number(r.alcM3)||0,
+      gas:Number(r.gasM3)||0,
       waste:Number(r.wasteTon)||0,
-      co2:((Number(r.energyKwh)||0)*FACTOR_CO2_KG_KWH)/1000,
-      trees:Math.ceil(((Number(r.energyKwh)||0)*FACTOR_CO2_KG_KWH)/TREE_CO2_KG_YEAR),
+      co2:recordHasEnergyReading(r)?(Number(r.energyKwh)*FACTOR_CO2_KG_KWH)/1000:null,
+      trees:recordHasEnergyReading(r)?Math.ceil((Number(r.energyKwh)*FACTOR_CO2_KG_KWH)/TREE_CO2_KG_YEAR):null,
       source:r.source||'PDF'
     }))
     .sort((a,b)=>a.period.localeCompare(b.period));
@@ -2091,6 +2203,7 @@ function buildPlanBarChartSvg(rows, cfg={}){
 }
 
 function buildPlanReductionCharts(d){
+  if(!d.hasEnergy) return `<div class="plan-note plan-data-warning"><strong>Escenarios eléctricos pendientes:</strong> no se calculan metas de kWh ni CO₂e porque la sede no tiene una lectura de energía asociada en las facturas cargadas.</div>`;
   const energyRows = [
     {period:'Base', value:d.annualProjection},
     {period:'Meta 15%', value:d.target15},
@@ -2128,78 +2241,64 @@ function buildPlanReductionCharts(d){
 function buildPlanMonthlyCharts(d){
   const rows = buildPlanMetricSeries(d.recs);
   const cards = [];
-  cards.push(buildPlanBarChartSvg(rows, {
-    title:'Consumo de energía eléctrica por periodo',
-    subtitle:`Histórico de consumo facturado en kWh para la sede ${d.site}.`,
-    gradId:'planEnergyPeriods',
-    colorA:'#19caa4', colorB:'#0a9978',
-    getValue:(r)=>r.energy,
-    formatValue:(v)=>fmt(v),
-    formatLabel:(r)=>escapeHtml(r.period)
-  }));
-  cards.push(buildPlanBarChartSvg(rows, {
-    title:'Consumo de agua por periodo (m³)',
-    subtitle:'Permite identificar periodos de mayor demanda hídrica y posibles oportunidades de ahorro.',
-    gradId:'planWaterPeriods',
-    colorA:'#8ed0ff', colorB:'#2f84d6',
-    getValue:(r)=>r.water,
-    formatValue:(v)=>fmt(v),
-    formatLabel:(r)=>escapeHtml(r.period)
-  }));
-  cards.push(buildPlanBarChartSvg(rows, {
-    title:'Emisiones estimadas de CO₂e por periodo (t)',
-    subtitle:`Calculadas a partir del factor ${fmt(FACTOR_CO2_KG_KWH)} kg CO₂e/kWh.`,
-    gradId:'planCo2Periods',
-    colorA:'#66c2ff', colorB:'#1c77d3',
-    getValue:(r)=>r.co2,
-    formatValue:(v)=>fmt(v),
-    formatLabel:(r)=>escapeHtml(r.period)
-  }));
-  cards.push(buildPlanBarChartSvg(rows, {
-    title:'Árboles equivalentes requeridos por periodo',
-    subtitle:'Estimación de árboles necesarios para compensar las emisiones asociadas al consumo del periodo.',
-    gradId:'planTreesPeriods',
-    colorA:'#acd95c', colorB:'#5ca61c',
-    getValue:(r)=>r.trees,
-    formatValue:(v)=>fmt(v),
-    formatLabel:(r)=>escapeHtml(r.period)
-  }));
-  if(rows.some(r => r.waste > 0)){
-    cards.push(buildPlanBarChartSvg(rows, {
-      title:'Residuos / aseo por periodo (t)',
-      subtitle:'Comportamiento mensual del componente de residuos identificado en la factura consolidada.',
-      gradId:'planWastePeriods',
-      colorA:'#ffcf70', colorB:'#d58d12',
-      getValue:(r)=>r.waste,
-      formatValue:(v)=>fmt(v),
-      formatLabel:(r)=>escapeHtml(r.period)
+  if(d.hasEnergy){
+    cards.push(buildPlanBarChartSvg(rows.filter(r=>r.hasEnergy), {
+      title:'Consumo de energía eléctrica por periodo',
+      subtitle:`Histórico de consumo facturado en kWh para la sede ${d.site}.`,
+      gradId:'planEnergyPeriods', colorA:'#19caa4', colorB:'#0a9978', getValue:(r)=>r.energy, formatValue:(v)=>fmt(v), formatLabel:(r)=>escapeHtml(r.period)
     }));
   }
+  if(rows.some(r=>r.water>0)) cards.push(buildPlanBarChartSvg(rows, {
+    title:'Consumo de agua por periodo (m³)', subtitle:'Permite identificar periodos de mayor demanda hídrica y posibles oportunidades de ahorro.', gradId:'planWaterPeriods', colorA:'#8ed0ff', colorB:'#2f84d6', getValue:(r)=>r.water, formatValue:(v)=>fmt(v), formatLabel:(r)=>escapeHtml(r.period)
+  }));
+  if(d.hasEnergy){
+    cards.push(buildPlanBarChartSvg(rows.filter(r=>r.hasEnergy), {
+      title:'Emisiones estimadas de CO₂e por periodo (t)', subtitle:`Calculadas a partir del factor ${fmt(FACTOR_CO2_KG_KWH)} kg CO₂e/kWh.`, gradId:'planCo2Periods', colorA:'#66c2ff', colorB:'#1c77d3', getValue:(r)=>r.co2, formatValue:(v)=>fmt(v), formatLabel:(r)=>escapeHtml(r.period)
+    }));
+    cards.push(buildPlanBarChartSvg(rows.filter(r=>r.hasEnergy), {
+      title:'Árboles equivalentes requeridos por periodo', subtitle:'Estimación de árboles necesarios para compensar las emisiones asociadas al consumo del periodo.', gradId:'planTreesPeriods', colorA:'#acd95c', colorB:'#5ca61c', getValue:(r)=>r.trees, formatValue:(v)=>fmt(v), formatLabel:(r)=>escapeHtml(r.period)
+    }));
+  }
+  if(rows.some(r => r.waste > 0)) cards.push(buildPlanBarChartSvg(rows, {
+    title:'Residuos / aseo por periodo (t)', subtitle:'Comportamiento mensual del componente de residuos identificado en la factura consolidada.', gradId:'planWastePeriods', colorA:'#ffcf70', colorB:'#d58d12', getValue:(r)=>r.waste, formatValue:(v)=>fmt(v), formatLabel:(r)=>escapeHtml(r.period)
+  }));
+  if(!cards.length) return '<div class="plan-chart-empty">No hay indicadores cuantitativos suficientes para generar gráficas de esta sede.</div>';
   return `<div class="plan-visual-grid">${cards.join('')}</div>`;
 }
 
 function buildPlanSummaryCards(d){
   const rows = buildPlanMetricSeries(d.recs);
   if(!rows.length) return '';
-  const maxEnergy = rows.reduce((a,b)=>a.energy>=b.energy?a:b);
-  const maxWater = rows.reduce((a,b)=>a.water>=b.water?a:b);
-  const maxCo2 = rows.reduce((a,b)=>a.co2>=b.co2?a:b);
-  const avgEnergy = rows.reduce((s,r)=>s+r.energy,0) / rows.length;
-  return `
-    <div class="plan-summary-grid">
-      <div><span>Periodo de mayor consumo eléctrico</span><strong>${escapeHtml(maxEnergy.period)}</strong><small>${fmt(maxEnergy.energy)} kWh</small></div>
-      <div><span>Promedio mensual de energía</span><strong>${fmt(avgEnergy)} kWh</strong><small>${rows.length} periodo(s) analizado(s)</small></div>
-      <div><span>Periodo de mayor consumo de agua</span><strong>${escapeHtml(maxWater.period)}</strong><small>${fmt(maxWater.water)} m³</small></div>
-      <div><span>Mayor impacto en CO₂e</span><strong>${escapeHtml(maxCo2.period)}</strong><small>${fmt(maxCo2.co2)} t CO₂e</small></div>
-    </div>`;
+  const cards=[];
+  const energyRows=rows.filter(r=>r.hasEnergy);
+  if(energyRows.length){
+    const maxEnergy=energyRows.reduce((a,b)=>a.energy>=b.energy?a:b);
+    const avgEnergy=energyRows.reduce((sum,r)=>sum+r.energy,0)/energyRows.length;
+    const maxCo2=energyRows.reduce((a,b)=>a.co2>=b.co2?a:b);
+    cards.push(`<div><span>Periodo de mayor consumo eléctrico</span><strong>${escapeHtml(maxEnergy.period)}</strong><small>${fmt(maxEnergy.energy)} kWh</small></div>`);
+    cards.push(`<div><span>Promedio mensual de energía</span><strong>${fmt(avgEnergy)} kWh</strong><small>${energyRows.length} periodo(s) con dato</small></div>`);
+    cards.push(`<div><span>Mayor impacto en CO₂e</span><strong>${escapeHtml(maxCo2.period)}</strong><small>${fmt(maxCo2.co2)} t CO₂e</small></div>`);
+  }else{
+    cards.push(d.energyException?'<div><span>Consumo eléctrico</span><strong>Contrato separado</strong><small>Pendiente de integrar desde la fuente no regulada</small></div>':'<div><span>Consumo eléctrico</span><strong>Sin dato asociado</strong><small>No se interpreta como 0 kWh</small></div>');
+  }
+  if(rows.some(r=>r.water>0)){
+    const maxWater=rows.reduce((a,b)=>a.water>=b.water?a:b);
+    cards.push(`<div><span>Periodo de mayor consumo de agua</span><strong>${escapeHtml(maxWater.period)}</strong><small>${fmt(maxWater.water)} m³</small></div>`);
+  }
+  return `<div class="plan-summary-grid">${cards.join('')}</div>`;
 }
 
 function buildPlanHtml(d){
   const periodText = d.periods.length ? `${d.periods[0]} a ${d.periods[d.periods.length-1]} (${d.periods.length} periodo(s) importado(s))` : 'Sin periodo';
-  const monthlyRows = d.recs.map(r=>`<tr><td>${escapeHtml(r.period)}</td><td>${fmt(r.energyKwh)} kWh</td><td>${fmt(Number(r.waterM3)||0)} m³</td><td>${fmt((Number(r.energyKwh)||0)*FACTOR_CO2_KG_KWH/1000)} t CO₂e</td><td>${fmt(Math.ceil(((Number(r.energyKwh)||0)*FACTOR_CO2_KG_KWH)/TREE_CO2_KG_YEAR))}</td><td>${fmt(Number(r.wasteTon)||0)} t</td><td>${escapeHtml(r.source||'PDF')}</td></tr>`).join('');
+  const monthlyRows = d.recs.map(r=>{ const hasEnergy=recordHasEnergyReading(r); return `<tr><td>${escapeHtml(r.period)}</td><td>${hasEnergy?`${fmt(r.energyKwh)} kWh`:(d.energyException?'<span class="not-available">Contrato separado</span>':'<span class="not-available">Sin dato</span>')}</td><td>${recordHasReading(r,'waterM3')?`${fmt(r.waterM3)} m³`:'—'}</td><td>${recordHasReading(r,'alcM3')?`${fmt(r.alcM3)} m³`:'—'}</td><td>${recordHasReading(r,'gasM3')?`${fmt(r.gasM3)} m³`:'—'}</td><td>${hasEnergy?`${fmt(Number(r.energyKwh)*FACTOR_CO2_KG_KWH/1000)} t CO₂e`:'No calculable'}</td><td>${hasEnergy?fmt(Math.ceil((Number(r.energyKwh)*FACTOR_CO2_KG_KWH)/TREE_CO2_KG_YEAR)):'No calculable'}</td><td>${recordHasReading(r,'wasteTon')?`${fmt(r.wasteTon)} t`:'—'}</td><td>${escapeHtml(r.source||'PDF')}</td></tr>`; }).join('');
   const summaryCards = buildPlanSummaryCards(d);
   const monthlyCharts = buildPlanMonthlyCharts(d);
   const reductionCharts = buildPlanReductionCharts(d);
+  const energyStatusNote=d.hasEnergy?'':(d.energyException?`<p class="plan-note plan-data-warning external-contract-note"><strong>Energía en contrato separado:</strong> ${escapeHtml(d.energyException.summary||d.energyException.dataState)} El consumo eléctrico queda pendiente de integrar desde esa fuente y no se interpreta como 0 kWh.</p>`:`<p class="plan-note plan-data-warning"><strong>Energía no identificada en la factura consolidada:</strong> la sede aparece en ${d.periods.length} periodo(s), pero ninguno incluye una lectura eléctrica individualizada para este nombre/dirección. Esto no implica consumo cero. El sistema conserva los datos de agua, alcantarillado, gas y aseo que sí existan y evita interpretar la ausencia como 0 kWh.</p>`);
+  const energyGoals=d.hasEnergy?`<table class="plan-table"><thead><tr><th>Horizonte</th><th>Meta</th><th>Reducción estimada</th><th>CO₂e evitado estimado</th></tr></thead><tbody><tr><td>Corto plazo · 1 año</td><td>Reducir 15% del consumo mediante hábitos, control operativo, sensores y LED.</td><td>${fmt(d.target15)} kWh/año</td><td>${fmt(d.co2Target15)} t CO₂e/año</td></tr><tr><td>Mediano plazo · 3 años</td><td>Reducir 40% mediante eficiencia energética integral y gestión sistemática.</td><td>${fmt(d.target40)} kWh/año</td><td>${fmt(d.co2Target40)} t CO₂e/año</td></tr><tr><td>Escenario solar</td><td>Reducir hasta 80% de compra a la red, sujeto a cubierta disponible, radiación y dimensionamiento.</td><td>${fmt(d.solar80)} kWh/año</td><td>${fmt(d.co2Solar80)} t CO₂e/año</td></tr></tbody></table>`:(d.energyException?`<table class="plan-table"><thead><tr><th>Prioridad</th><th>Acción requerida</th><th>Resultado esperado</th></tr></thead><tbody><tr><td>1 · Integración contractual</td><td>Obtener la facturación o medición mensual del contrato de energía para usuario no regulado correspondiente a la sede.</td><td>Incorporar una serie kWh verificable sin mezclarla con el consolidado educativo.</td></tr><tr><td>2 · Trazabilidad</td><td>Registrar contrato, producto/medidor, periodo y documento fuente para cada lectura.</td><td>Mantener evidencia auditable de la energía.</td></tr><tr><td>3 · Línea base</td><td>Calcular CO₂e y metas de reducción solo después de integrar lecturas eléctricas verificadas.</td><td>Evitar estimaciones basadas en ausencia de datos.</td></tr></tbody></table>`:`<table class="plan-table"><thead><tr><th>Prioridad</th><th>Acción requerida</th><th>Resultado esperado</th></tr></thead><tbody><tr><td>1 · Identificación</td><td>Localizar la cuenta, contrato o medidor de energía que corresponde a la sede y verificar si está facturado bajo otro nombre o dirección.</td><td>Vincular correctamente la fuente eléctrica.</td></tr><tr><td>2 · Asociación</td><td>Actualizar la equivalencia institucional en SiMeCO₂ sin modificar los valores originales de la factura.</td><td>Contar con una serie mensual trazable.</td></tr><tr><td>3 · Línea base</td><td>Acumular al menos tres periodos de energía antes de fijar porcentajes de reducción.</td><td>Evitar metas basadas en datos incompletos.</td></tr></tbody></table>`);
+  const commitmentText=d.hasEnergy?`La sede educativa <strong>${escapeHtml(d.site)}</strong> se compromete a promover una gestión responsable de la energía eléctrica, asignando capacidades humanas, pedagógicas y técnicas para reducir progresivamente su huella de carbono y fortalecer una cultura ambiental escolar.`:(d.energyException?`La sede educativa <strong>${escapeHtml(d.site)}</strong> se compromete a integrar con trazabilidad la información eléctrica proveniente de su contratación separada como usuario no regulado y a mantener acciones preventivas de eficiencia mientras se construye una línea base verificable.`:`La sede educativa <strong>${escapeHtml(d.site)}</strong> se compromete a fortalecer la calidad y trazabilidad de sus datos de servicios públicos, identificar la cuenta eléctrica correspondiente y mantener acciones preventivas de uso eficiente mientras se construye una línea base energética confiable.`);
+  const objectiveText=d.hasEnergy?`Reducir la huella de carbono en alcance 2 de la sede <strong>${escapeHtml(d.site)}</strong> mediante estrategias de eficiencia energética, monitoreo del consumo, educación ambiental y evaluación de soluciones solares fotovoltaicas.`:(d.energyException?`Integrar la serie mensual de consumo eléctrico de la fuente contractual separada de <strong>${escapeHtml(d.site)}</strong>, conservar el seguimiento de los demás servicios y establecer una línea base energética auditable antes de calcular emisiones de alcance 2 o metas porcentuales de reducción.`:`Completar la identificación y asociación del consumo eléctrico de la sede <strong>${escapeHtml(d.site)}</strong>, conservar el seguimiento de agua y residuos disponible y establecer una línea base energética verificable antes de calcular emisiones de alcance 2 o metas porcentuales de reducción.`);
+  const indicatorsRows=d.hasEnergy?`<tr><td>Consumo eléctrico mensual</td><td>kWh facturados por mes</td><td>Mensual</td><td>Disminución progresiva</td></tr><tr><td>Emisiones alcance 2</td><td>kWh × ${fmt(FACTOR_CO2_KG_KWH)} kg CO₂e/kWh</td><td>Mensual</td><td>Reducir 15% en un año</td></tr><tr><td>Árboles equivalentes</td><td>kg CO₂e ÷ ${fmt(TREE_CO2_KG_YEAR)} kg/árbol/año</td><td>Semestral</td><td>Disminuir necesidad de compensación</td></tr>`:`<tr><td>Cobertura del dato eléctrico</td><td>Periodos con kWh asociados ÷ periodos de factura × 100</td><td>Mensual</td><td>Alcanzar 100% antes de calcular la huella de alcance 2</td></tr><tr><td>Consumo de agua</td><td>m³ facturados por mes</td><td>Mensual</td><td>Mantener seguimiento y detectar variaciones atípicas</td></tr><tr><td>Trazabilidad documental</td><td>Facturas con fuente y página identificada ÷ facturas revisadas × 100</td><td>Mensual</td><td>100%</td></tr>`;
   return `
     <article class="plan-document">
       <div class="plan-cover">
@@ -2207,7 +2306,7 @@ function buildPlanHtml(d){
           <p class="plan-code">Código: GEI-R-001 · Plan de Reducciones 2025</p>
           <h2>Plan de Gestión de Reducción de GEI</h2>
           <h3>${escapeHtml(d.site)}</h3>
-          <p>${escapeHtml(d.address)}</p>
+          <p>${escapeHtml(d.address)}</p>${d.invoiceSite&&d.invoiceSite!==d.site?`<p class="plan-invoice-alias">Nombre en factura: ${escapeHtml(d.invoiceSite)}</p>`:''}
         </div>
         <div class="plan-badge ${d.intensity.cls}">${escapeHtml(d.intensity.level)}</div>
       </div>
@@ -2220,14 +2319,17 @@ function buildPlanHtml(d){
       </div>
 
       <h3>1. Diagnóstico energético y ambiental</h3>
-      <p>Este informe personalizado toma como línea base los registros importados desde las facturas EPM procesadas por SiMeCO₂. El objetivo es orientar acciones concretas para minimizar el consumo de energía eléctrica de la sede y reducir sus emisiones indirectas de gases de efecto invernadero en alcance 2.</p>
+      <p>Este informe personalizado toma como base los registros importados desde las facturas EPM procesadas por SiMeCO₂. Conserva los servicios que sí aparecen asociados a la sede y diferencia explícitamente un dato ausente de un consumo igual a cero.</p>${energyStatusNote}
       <div class="plan-kpi-grid">
-        <div><span>Energía acumulada</span><strong>${fmt(d.energy)} kWh</strong></div>
-        <div><span>Promedio mensual</span><strong>${fmt(d.avgMonth)} kWh/mes</strong></div>
-        <div><span>Proyección anual</span><strong>${fmt(d.annualProjection)} kWh/año</strong></div>
-        <div><span>CO₂e estimado</span><strong>${fmt(d.co2t)} t CO₂e</strong></div>
-        <div><span>Árboles equivalentes</span><strong>${fmt(d.trees)} árboles/año</strong></div>
+        <div><span>Energía acumulada</span><strong>${d.hasEnergy?`${fmt(d.energy)} kWh`:(d.energyException?'Contrato separado':'Sin dato')}</strong></div>
+        <div><span>Promedio mensual</span><strong>${d.hasEnergy?`${fmt(d.avgMonth)} kWh/mes`:'No calculable'}</strong></div>
+        <div><span>Proyección anual</span><strong>${d.hasEnergy?`${fmt(d.annualProjection)} kWh/año`:'No calculable'}</strong></div>
+        <div><span>CO₂e estimado</span><strong>${d.hasEnergy?`${fmt(d.co2t)} t CO₂e`:'No calculable'}</strong></div>
+        <div><span>Árboles equivalentes</span><strong>${d.hasEnergy?`${fmt(d.trees)} árboles/año`:'No calculable'}</strong></div>
         <div><span>Agua registrada</span><strong>${fmt(d.water)} m³</strong></div>
+        <div><span>Alcantarillado</span><strong>${fmt(d.alc)} m³</strong></div>
+        <div><span>Gas registrado</span><strong>${d.gas?`${fmt(d.gas)} m³`:'Sin dato'}</strong></div>
+        <div><span>Residuos / aseo</span><strong>${d.waste?`${fmt(d.waste)} t`:'Sin dato'}</strong></div>
       </div>
       <p class="plan-note"><strong>Lectura técnica:</strong> ${escapeHtml(d.intensity.text)}</p>
       <h3>1.1 Panel gráfico del diagnóstico</h3>
@@ -2236,25 +2338,19 @@ function buildPlanHtml(d){
       ${monthlyCharts}
 
       <h3>2. Declaración de compromiso institucional</h3>
-      <p>La sede educativa <strong>${escapeHtml(d.site)}</strong> se compromete a promover una gestión responsable de la energía eléctrica, asignando capacidades humanas, pedagógicas y técnicas para reducir progresivamente su huella de carbono y fortalecer una cultura ambiental escolar.</p>
+      <p>${commitmentText}</p>
 
       <h3>3. Objetivo general</h3>
-      <p>Reducir la huella de carbono en alcance 2 de la sede <strong>${escapeHtml(d.site)}</strong> mediante estrategias de eficiencia energética, monitoreo del consumo, educación ambiental y evaluación de soluciones solares fotovoltaicas.</p>
+      <p>${objectiveText}</p>
 
-      <h3>4. Metas de reducción sugeridas</h3>
-      <table class="plan-table">
-        <thead><tr><th>Horizonte</th><th>Meta</th><th>Reducción estimada</th><th>CO₂e evitado estimado</th></tr></thead>
-        <tbody>
-          <tr><td>Corto plazo · 1 año</td><td>Reducir 15% del consumo mediante hábitos, control operativo, sensores y LED.</td><td>${fmt(d.target15)} kWh/año</td><td>${fmt(d.co2Target15)} t CO₂e/año</td></tr>
-          <tr><td>Mediano plazo · 3 años</td><td>Reducir 40% mediante eficiencia energética integral y gestión sistemática.</td><td>${fmt(d.target40)} kWh/año</td><td>${fmt(d.co2Target40)} t CO₂e/año</td></tr>
-          <tr><td>Escenario solar</td><td>Reducir hasta 80% de compra a la red, sujeto a cubierta disponible, radiación y dimensionamiento.</td><td>${fmt(d.solar80)} kWh/año</td><td>${fmt(d.co2Solar80)} t CO₂e/año</td></tr>
-        </tbody>
-      </table>
+      <h3>4. Metas y acciones sugeridas</h3>
+      ${energyGoals}
       ${reductionCharts}
 
-      <h3>5. Acciones recomendadas para minimizar el consumo eléctrico</h3>
+      <h3>5. Acciones recomendadas de gestión y eficiencia</h3>
       <div class="actions-grid">
-        <div><strong>Diagnóstico y línea base</strong><p>Revisar facturas mensuales, validar medidores, construir tendencia kWh/mes y detectar meses atípicos.</p></div>
+        ${d.hasEnergy?'':(d.energyException?`<div><strong>Integrar la fuente eléctrica separada</strong><p>Solicitar la facturación o medición del contrato de usuario no regulado y vincularla a la sede con trazabilidad documental.</p></div>`:`<div><strong>Asociar la cuenta eléctrica</strong><p>Verificar contrato, medidor, nombre facturado y dirección para identificar dónde aparece el consumo de energía de esta sede.</p></div>`)}
+        <div><strong>Diagnóstico y línea base</strong><p>${d.hasEnergy?'Revisar facturas mensuales, validar medidores, construir tendencia kWh/mes y detectar meses atípicos.':'Conservar los servicios ya identificados y construir la tendencia eléctrica únicamente cuando existan lecturas verificadas.'}</p></div>
         <div><strong>Iluminación eficiente</strong><p>Sustituir luminarias fluorescentes o incandescentes por LED y priorizar zonas de mayor permanencia.</p></div>
         <div><strong>Sensores y control horario</strong><p>Instalar sensores de movimiento en baños, corredores, oficinas y espacios de uso intermitente.</p></div>
         <div><strong>Gestión de computadores</strong><p>Activar suspensión automática, apagar equipos al finalizar jornada y renovar gradualmente equipos ineficientes.</p></div>
@@ -2288,23 +2384,36 @@ function buildPlanHtml(d){
       <table class="plan-table compact">
         <thead><tr><th>Indicador</th><th>Fórmula</th><th>Frecuencia</th><th>Meta</th></tr></thead>
         <tbody>
-          <tr><td>Consumo eléctrico mensual</td><td>kWh facturados por mes</td><td>Mensual</td><td>Disminución progresiva</td></tr>
-          <tr><td>Emisiones alcance 2</td><td>kWh × ${fmt(FACTOR_CO2_KG_KWH)} kg CO₂e/kWh</td><td>Mensual</td><td>Reducir 15% en un año</td></tr>
-          <tr><td>Árboles equivalentes</td><td>kg CO₂e ÷ ${fmt(TREE_CO2_KG_YEAR)} kg/árbol/año</td><td>Semestral</td><td>Disminuir necesidad de compensación</td></tr>
-          <tr><td>Cultura energética</td><td>Personas capacitadas ÷ población objetivo × 100</td><td>Semestral</td><td>Capacitar mínimo 80%</td></tr>
+          ${indicatorsRows}
+          <tr><td>Cultura ambiental y energética</td><td>Personas capacitadas ÷ población objetivo × 100</td><td>Semestral</td><td>Capacitar mínimo 80%</td></tr>
         </tbody>
       </table>
 
       <h3>8. Registros mensuales usados por el plan</h3>
       <p>La siguiente tabla resume los datos importados que soportan el diagnóstico y las comparaciones del plan de gestión. Se incluyen los principales indicadores mensuales medibles para la sede.</p>
       <table class="plan-table compact">
-        <thead><tr><th>Periodo</th><th>Energía</th><th>Agua</th><th>CO₂e</th><th>Árboles</th><th>Residuos</th><th>Fuente</th></tr></thead>
+        <thead><tr><th>Periodo</th><th>Energía</th><th>Agua</th><th>Alc.</th><th>Gas</th><th>CO₂e</th><th>Árboles</th><th>Residuos</th><th>Fuente</th></tr></thead>
         <tbody>${monthlyRows}</tbody>
       </table>
 
       <h3>9. Responsable y seguimiento</h3>
       <p><strong>Responsable sugerido:</strong> líder ambiental de la sede, comité escolar ambiental, directivos docentes y equipo de apoyo técnico. <strong>Frecuencia:</strong> mensual para carga de facturas, semestral para revisión del plan y anual para informe de resultados.</p>
     </article>`;
+}
+
+function collectEmbeddedStyles(){
+  const chunks=[];
+  [...document.styleSheets].forEach(sheet=>{
+    try{ chunks.push([...sheet.cssRules].map(rule=>rule.cssText).join('\n')); }catch(_err){}
+  });
+  return chunks.join('\n');
+}
+function downloadCurrentPlan(){
+  if(!CURRENT_PLAN_HTML){alert('Primero genera el informe de una sede.');return;}
+  const styles=collectEmbeddedStyles();
+  const documentHtml=`<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Plan de Gestión Ambiental - SiMeCO₂</title><style>${styles}</style></head><body><main style="max-width:1200px;margin:24px auto;padding:0 16px">${CURRENT_PLAN_HTML}</main></body></html>`;
+  downloadBlob(documentHtml,CURRENT_PLAN_FILENAME,'text/html;charset=utf-8');
+  log(`Informe HTML descargado: ${CURRENT_PLAN_FILENAME}.`);
 }
 
 function printCurrentPlan(){

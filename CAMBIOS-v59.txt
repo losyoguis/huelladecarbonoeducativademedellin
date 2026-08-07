@@ -1,0 +1,20 @@
+SiMeCO₂ v59 — Investigación de cuentas y contratos separados
+Fecha: 07/08/2026
+
+CAMBIOS PRINCIPALES
+- Nuevo catálogo data/excepciones-servicios.json/js para servicios gestionados fuera del consolidado educativo.
+- INEM José Félix de Restrepo: estado energético corregido a “Energía en contrato separado”.
+- El sistema ya no agrupa este caso con “energía no identificada”.
+- Calidad de datos: nuevo KPI y estado “Contrato separado”, con evidencia verificable.
+- Dashboard y ficha de sede: muestran la procedencia contractual y evitan 0 kWh, CO₂e o árboles ficticios.
+- Ranking energético: la sede queda fuera de puestos medidos hasta integrar consumos verificables y se marca “Contrato separado”.
+- Consulta institucional: energía “Contrato separado” y CO₂e “Pendiente de integrar”.
+- Plan de Gestión: prioriza integrar la facturación/medición del contrato de usuario no regulado antes de establecer línea base o metas de reducción.
+- Caché de datos renovada a simeco2_servicios_v12.
+
+EVIDENCIA INEM
+- Gaceta Oficial de Medellín Nº 5274: necesidad 50552 para suministro de energía/potencia como usuario no regulado, incluyendo INEM, Carrera 48 Nº 1-125.
+- Proceso 2026 de suministro para usuario no regulado con documento “CDP 4000125207 Educación INEM.pdf”.
+
+IMPORTANTE
+El estado “Contrato separado” describe procedencia del dato. No significa consumo cero. Los kWh deben incorporarse únicamente desde una fuente contractual o de medición verificable.

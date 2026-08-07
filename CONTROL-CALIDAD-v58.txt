@@ -1,0 +1,20 @@
+CONTROL DE CALIDAD INTEGRAL — SiMeCO₂ v58
+Fecha: 2026-08-07
+
+ALCANCE
+Auditoría estática del código, estructura HTML, referencias locales, bundles de datos, sintaxis e integridad documental.
+No sustituye una prueba visual automatizada en todos los navegadores y dispositivos.
+
+PRUEBAS EJECUTADAS
+- OK: JSON validados: 4
+- OK: JavaScript validados con node --check: 8
+- OK: Herramientas Python compiladas: 4
+- OK: HTML auditados: 5
+- OK: No hay archivos residuales llamados '1' ni copias obsoletas minificadas
+- OK: Marcadores funcionales críticos de v58 presentes
+- OK: Bundles JS cargados: 9147 registros, 17 resúmenes, 246 coincidencias territoriales
+- OK: Regresión INEM: 17 periodos conservados, energía ausente explícita y alias oficial verificado
+- OK: Históricos, conciliación e integridad de los 17 PDF aprobados
+
+RESULTADO
+APROBADO

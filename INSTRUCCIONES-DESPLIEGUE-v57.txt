@@ -1,0 +1,31 @@
+INSTRUCCIONES DE DESPLIEGUE — SiMeCO₂ v57
+
+PRUEBA LOCAL
+1. Descomprima el ZIP.
+2. Abra una terminal dentro de la carpeta SiMeCO2-v57-consultas-completas.
+3. Ejecute: python3 -m http.server 8000
+4. Abra: http://localhost:8000/
+
+GITHUB PAGES
+1. Cree o abra el repositorio del proyecto.
+2. Suba todos los archivos y carpetas, incluidos los 17 PDF de data/.
+3. Vaya a Settings > Pages.
+4. Elija Deploy from a branch.
+5. Seleccione la rama principal y la carpeta /(root).
+6. Guarde y espere la URL pública.
+7. Abra la URL y fuerce una recarga completa la primera vez.
+
+GOOGLE SITES
+1. En Google Sites seleccione Insertar > Incorporar > URL.
+2. Pegue la dirección pública de GitHub Pages, no una ruta local.
+3. Ajuste la altura del marco para evitar doble desplazamiento vertical.
+4. Compruebe cámara, descargas y ventanas emergentes desde la URL publicada.
+
+ACTUALIZACIÓN DE DATOS
+- Los datos precargados funcionan sin procesar nuevamente los PDF.
+- Para leer facturas nuevas el navegador necesita conexión a internet para cargar PDF.js.
+- Después de reemplazar o agregar PDF, ejecute las herramientas de generación y validación antes de publicar.
+
+CONTROL FINAL
+Ejecute: python3 tools/validar_sistema.py
+El resultado esperado es: APROBADO.

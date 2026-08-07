@@ -1,0 +1,32 @@
+SiMeCO₂ v58 · 2026-08-07
+
+MEJORAS PRINCIPALES
+1. Calidad y cobertura de datos por sede
+   - Estados: Datos completos, Datos parciales, Energía no identificada y En revisión.
+   - Cobertura energética y territorial visible.
+   - Tabla priorizada de sedes que requieren verificación.
+   - La ausencia de una lectura nunca se interpreta como consumo cero.
+
+2. Histórico multivariable
+   - Selector: Energía, Agua, Alcantarillado, Gas natural y Aseo/Residuos.
+   - La gráfica, comparación, interpretación y tabla exacta cambian con el indicador.
+   - Para energía/agua/alcantarillado/gas del consolidado general se usan resúmenes oficiales.
+   - Para residuos se usa el detalle por sede, ya que no existe un total volumétrico oficial en portada.
+
+3. Ranking por servicio
+   - Ranking seleccionable por energía, agua, alcantarillado, gas o residuos.
+   - Sedes sin dato permanecen visibles al final como pendientes.
+   - No se asigna valor cero a datos ausentes.
+
+4. Ficha integral de sede
+   - Nombre oficial y alias de factura.
+   - Dirección, territorio, núcleo, zona y confianza del vínculo.
+   - Cobertura por servicio y periodo.
+   - Estado de calidad.
+   - Trazabilidad a la factura/página más reciente.
+
+5. Correcciones
+   - Mensajes sobre energía faltante cambiados a “Energía no identificada en la factura consolidada”.
+   - Se aclara expresamente que esto no significa consumo cero.
+   - Corregido un cierre HTML duplicado del asistente.
+   - Caché de datos renovada a simeco2_servicios_v11.

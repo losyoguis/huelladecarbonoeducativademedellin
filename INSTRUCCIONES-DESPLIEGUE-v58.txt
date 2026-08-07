@@ -1,0 +1,37 @@
+INSTRUCCIONES DE DESPLIEGUE — SiMeCO₂ v58
+
+PRUEBA LOCAL
+1. Descomprima el ZIP.
+2. Abra una terminal dentro de la carpeta SiMeCO2-v58-calidad-multiservicio.
+3. Ejecute: python3 -m http.server 8000
+4. Abra: http://localhost:8000/
+5. Busque “INEM José Félix de Restrepo” y compruebe que energía aparezca como “No identificada”, no 0 kWh.
+6. En Histórico cambie el indicador a Agua y confirme que el INEM muestre sus periodos disponibles.
+7. En Ranking cambie el servicio y confirme que las sedes sin lectura queden al final como “Sin dato”, sin recibir valor cero.
+
+GITHUB PAGES
+1. Reemplace TODOS los archivos de la versión anterior por los de v58, conservando la estructura de carpetas.
+2. Incluya la carpeta data/ completa y sus 17 PDF.
+3. Publique desde la rama/carpeta configurada en Settings > Pages.
+4. Cuando finalice el despliegue, haga una recarga completa del navegador para descartar la caché v57.
+5. Verifique index.html, dashboard.html, busqueda-institucional.html, filtros-territoriales.html y aula-climatica.html.
+
+GOOGLE SITES
+1. Incruste la URL pública de GitHub Pages: Insertar > Incorporar > URL.
+2. No incruste archivos locales ni el ZIP.
+3. Ajuste la altura del marco para evitar doble desplazamiento.
+4. Pruebe búsquedas, PDF, descargas y ventanas emergentes desde la versión publicada.
+
+NOVEDADES A COMPROBAR EN V58
+- Panel Calidad de datos.
+- Histórico multivariable: energía, agua, alcantarillado, gas y residuos.
+- Ranking por servicio con cobertura explícita.
+- Ficha integral de sede y vínculo a la evidencia PDF/página.
+- Diferenciación entre 0 real, dato ausente y energía no identificada.
+
+CONTROL FINAL
+Ejecute: python3 tools/validar_sistema.py
+Resultado esperado: APROBADO.
+
+NOTA METODOLÓGICA
+“Energía no identificada” significa que las facturas consolidadas cargadas no presentan una lectura eléctrica individualizada para ese nombre/dirección. No equivale a 0 kWh y no prueba que la sede no consuma electricidad.

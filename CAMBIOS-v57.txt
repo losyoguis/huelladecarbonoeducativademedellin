@@ -1,0 +1,13 @@
+SiMeCO₂ v57 — Cambios principales
+
+1. El Dashboard ambiental ya NO elimina una sede cuando no tiene lectura de energía.
+2. Se diferencia “Sin dato” de un consumo real de 0 kWh.
+3. Se muestran agua, alcantarillado, gas y aseo/residuos cuando están disponibles.
+4. Se agregó una advertencia explicativa cuando la sede existe pero no tiene energía asociada.
+5. Se vinculó “Inem J F De Rpo” (Cr 48 Cl 1 -125) con “I.E. INEM José Félix de Restrepo”, Núcleo 932, El Poblado.
+6. El autocompletado busca por nombre de factura, nombre institucional oficial, alias y dirección.
+7. Los Planes de Gestión ya no calculan CO₂e, árboles o metas de reducción con un dato eléctrico ausente. En ese caso generan un informe con los servicios disponibles y un plan de calidad de datos.
+8. Se renovó la versión de caché local para evitar resultados heredados.
+
+Archivos actualizados: app.js, styles.css, index.html, dashboard.html, data/sincronizacion-territorial.js, data/sincronizacion-territorial.json, VERSION.txt.
+Archivo creado: CAMBIOS-v57.txt.

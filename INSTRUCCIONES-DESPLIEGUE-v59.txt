@@ -1,0 +1,7 @@
+SiMeCO₂ v59 — Despliegue
+1. Reemplazar todos los archivos del sitio por el contenido de esta carpeta/ZIP.
+2. Conservar la estructura data/, assets/ y tools/.
+3. Publicar también data/excepciones-servicios.js y data/excepciones-servicios.json.
+4. Hacer una recarga completa del navegador (Shift+Recargar / Ctrl+F5) una vez.
+5. Verificar la búsqueda “INEM” en Dashboard e Institucional: debe mostrar “Contrato separado”, no 0 kWh.
+6. Verificar que Agua/Alcantarillado/Aseo continúan visibles y que el ranking energético no asigna puesto medido al INEM.

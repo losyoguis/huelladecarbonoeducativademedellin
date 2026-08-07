@@ -1,305 +1,189 @@
-# SiMeCO₂ v55 — Históricos verificados y caché estable
+# SiMeCO₂ v58 — Calidad de datos, histórico multivariable y trazabilidad por sede
 
-- El gráfico general de históricos usa el total oficial **ACTUAL** del “Resumen de facturación” de la primera página de cada PDF.
-- Los totales dejan de depender de registros parciales, del orden de lectura de PDF.js o de cachés antiguas del navegador.
-- Los resúmenes consolidados se guardan separados de las sedes, por lo que no alteran el ranking ni crean instituciones ficticias.
-- La caché se migró a una versión nueva y combina datos precargados con facturas nuevas sin duplicarlas.
-- Cuando cambia una factura, sus registros anteriores se sustituyen en lugar de acumularse.
-- Se incluyó el resumen oficial de julio de 2026 y un control automático de integridad y coherencia.
-- La gráfica alterna la altura de etiquetas para reducir superposiciones.
+Plataforma web de la **Huella de Carbono Educativa de Medellín** para consultar facturas de servicios públicos, comparar periodos, priorizar sedes, generar informes y construir planes de gestión ambiental escolar.
 
----
+## Corrección principal del histórico
 
-# SiMeCO₂ v52 — Progreso de carga y aplicación móvil
+Las dos gráficas observadas no representaban una variación real del consumo. El sistema estaba mezclando resultados parciales de la lectura detallada de los PDF con datos almacenados previamente en el navegador. Según el orden de carga, algunos meses podían aparecer completos y otros incompletos.
 
-- Barra de progreso real por factura y página durante la lectura de los PDF.
-- Métricas en vivo de facturas verificadas, páginas procesadas y registros consolidados.
-- Etapas visuales de localización, lectura, consolidación y finalización.
-- Información pedagógica rotativa sobre SiMeCO₂ mientras se cargan los datos.
-- Interfaz móvil reorganizada con navegación inferior, tarjetas, formularios y tablas adaptadas.
-- Corrección del botón móvil **Actualizar**, separadores numéricos colombianos y consultas sin datos del asistente.
+Desde v56 se separaron claramente las dos fuentes:
 
----
+- **Histórico general de Medellín:** utiliza únicamente el valor **ACTUAL** del “Resumen de facturación” de la página 1 de cada PDF oficial.
+- **Búsqueda, ranking e informe por sede:** utilizan los registros detallados extraídos del cuerpo de cada factura.
+- **Conciliación:** cada periodo compara el detalle por sede con el total oficial y registra la diferencia porcentual.
 
-# SiMeCO₂ v51 — Asistente Ambiental integrado
+Así, la gráfica general ya no depende del orden de procesamiento de PDF.js ni de una caché previa.
 
-- Botón flotante en la esquina inferior derecha.
-- Chat integrado, adaptable a computador y celular.
-- Respuestas basadas en los datos reales cargados por la plataforma.
-- Consultas sobre mayor y menor consumo, top 10, sedes, periodos, emisiones, agua y prioridad.
-- Explicaciones pedagógicas de alcance 2, CO₂e, cálculo de emisiones y equivalencia de árboles.
-- Funciona localmente sin exponer claves API ni depender de un servidor externo.
-- Preparado para una futura conexión segura con la API de OpenAI mediante backend.
+## Datos incluidos
 
----
+- 17 facturas PDF oficiales.
+- 17 periodos entre enero de 2025 y julio de 2026.
+- 9.147 registros detallados por sede y servicio.
+- 533 registros detallados para julio de 2026.
+- 0 claves duplicadas.
+- 0 registros con nombre de sede vacío.
+- 246 coincidencias territoriales verificadas o de referencia.
 
-# SiMeCO₂ v50 — Indicadores explicados
+Los totales oficiales de energía que alimentan la gráfica general están en `data/resumenes.json`. El detalle está en `data/registros.json`.
 
-- Se eliminó el bloque duplicado de indicadores del resumen ejecutivo.
-- Cada indicador general incluye una explicación clara de su significado e interpretación.
-- Se conserva una única vista consolidada de huella, periodos, sedes, energía, árboles, agua y residuos.
 
----
+## Mejoras de v58
 
-# SiMeCO₂ v48 — Ranking por mes y búsqueda directa
+### Calidad y cobertura de datos
 
-- El ranking puede filtrarse por un mes específico o mostrar todos los meses acumulados.
-- Se añadió un buscador con autocompletado por institución, sede y dirección.
-- Cada sugerencia muestra el puesto de la sede dentro del ranking filtrado.
-- Al seleccionar una sede, la plataforma abre directamente la página de 10 donde está ubicada y resalta su fila.
-- El botón **Actualizar ranking** limpia el mes y la búsqueda para restaurar el ranking completo.
+- Nuevo panel **Calidad y trazabilidad** con cobertura energética y territorial.
+- Estados por sede: **Datos completos**, **Datos parciales**, **Energía no identificada** y **En revisión**.
+- La ausencia de una lectura ya no se interpreta como consumo cero.
+- Tabla de sedes que requieren verificación con acceso directo a su ficha integral.
 
----
+### Histórico multivariable
 
-# SiMeCO₂ v46 — Optimización de velocidad
+- El histórico ya no está limitado a energía: permite seleccionar **Energía, Agua, Alcantarillado, Gas natural y Aseo/Residuos**.
+- La gráfica, la tabla de valores exactos, la comparación, la interpretación automática y el informe PDF cambian según el indicador seleccionado.
+- Energía, agua, alcantarillado y gas usan el resumen oficial cuando se consulta todo Medellín.
+- Residuos usa el detalle por sede porque no existe un total volumétrico equivalente en la portada de la factura.
 
-- Inicio inmediato usando los datos guardados en el navegador.
-- Verificación de facturas nuevas en segundo plano cuando ya existe información local.
-- Caché del navegador para PDF y recursos, evitando descargas repetidas.
-- Escritura de datos en `localStorage` agrupada para reducir bloqueos.
-- Filtros con respuesta diferida corta para evitar renderizados en cada tecla.
-- Liberación de memoria después de leer cada página PDF y pausas breves para mantener la interfaz activa.
-- Renderizado diferido de paneles y secciones no visibles.
-- Scripts con carga `defer` y conexión anticipada al CDN de PDF.js.
-- Limpieza de archivos duplicados y residuos de versiones anteriores.
+### Ranking por servicio
 
----
+- El ranking puede ordenarse por energía, agua, alcantarillado, gas o residuos.
+- Las sedes sin lectura del servicio seleccionado permanecen visibles al final como pendientes.
+- No se asigna artificialmente 0 a un dato faltante.
 
-# SiMeCO₂ v45 — Tablas compactas y direcciones legibles
+### Ficha integral por sede
 
-- Se redujo el ancho de la columna **Dirección** en el dashboard por sede.
-- Las direcciones largas, incluso con guiones bajos o códigos continuos, ahora se dividen en varias líneas sin invadir otras columnas.
-- La tabla **Facturas por I.E.** se compactó para mostrar más columnas simultáneamente.
-- Se ajustaron anchos, tipografía, encabezados y botón de Plan de Gestión para aprovechar mejor el espacio disponible.
-- En pantallas pequeñas se conserva la visualización adaptable y el desplazamiento cuando sea necesario.
+- Nombre oficial y alias usado en la factura.
+- Dirección, comuna/corregimiento, núcleo, zona y confianza del vínculo.
+- Cobertura por servicio y número de periodos.
+- Estado de calidad de datos.
+- Enlace de trazabilidad a la factura y página más reciente asociada a la sede.
 
----
+### Consulta institucional
 
-# SiMeCO₂ v44 — Comparación inicial/final y PDF estable
+- `busqueda-institucional.html` conserva valores faltantes como tales.
+- Para una sede sin electricidad individualizada se muestra **“No identificada”** y CO₂e **“No calculable”**, en vez de 0.
+- La búsqueda reconoce el nombre oficial, nombre de factura y alias sincronizados.
 
-- Histórico selecciona automáticamente el primer y el último periodo disponible.
-- Se corrigió la generación del informe histórico PDF.
-- Los informes se abren en una vista previa independiente y solo muestran el diálogo de impresión al pulsar **Guardar como PDF**, evitando bloquear la plataforma.
-- Se eliminó el botón PDF general del dashboard por sede.
-- Se reforzó la generación del Plan de Gestión por sede para evitar doble ejecución o bloqueo de la página.
+### Caché
 
----
+- Nueva versión: `simeco2_servicios_v11`, para evitar reutilizar estados anteriores incompatibles.
 
-# SiMeCO₂ v43 — Interfaz sin filtros territoriales
+## Mejoras de v57
 
-- Se retiraron de la interfaz los filtros por comuna, corregimiento y núcleo educativo.
-- Histórico conserva la comparación por tipo, sede y periodos.
-- Informe por sede conserva el buscador institucional y la descarga PDF.
-- Facturas por I.E. conserva búsqueda por sede, periodo, servicio y ordenamiento.
-- Los controles internos se mantienen ocultos para garantizar compatibilidad con la lógica existente.
+### Consultas institucionales y datos faltantes
 
----
+- Una sede ya no desaparece del Dashboard por no tener lectura de energía eléctrica.
+- El sistema diferencia **“Sin dato”** de un consumo real de **0 kWh**.
+- El Dashboard muestra también agua, alcantarillado, gas y aseo/residuos cuando están disponibles.
+- Se incorporó una advertencia explicativa para sedes con otros servicios registrados pero sin energía asociada.
+- Se vinculó **“Inem J F De Rpo” (Cr 48 Cl 1 -125)** con **“I.E. INEM José Félix de Restrepo”**, Núcleo 932, El Poblado.
+- El autocompletado acepta nombre oficial, nombre abreviado de factura, alias y dirección.
+- Los Planes de Gestión no calculan CO₂e, árboles ni metas porcentuales cuando falta el dato eléctrico; generan en su lugar un plan de calidad y asociación de datos.
+- Nueva versión de caché: `simeco2_servicios_v10`.
 
-# SiMeCO₂ v42 — Etiquetas más claras y prioridades con mayor contraste
+## Mejoras heredadas de v56
 
-- El gráfico histórico ahora muestra etiquetas de periodo más comprensibles, con abreviaturas de mes y año.
-- La columna **Prioridad** del dashboard muestra solo el nivel: **Alta**, **Media** o **Preventiva**.
-- La leyenda y los chips de prioridad usan colores con mayor contraste para facilitar la lectura.
+### Históricos
 
----
+- Fuente oficial estable para todos los periodos.
+- Escala vertical y cuadrícula legibles.
+- Contenedor horizontal desplazable para evitar que 17 periodos se amontonen.
+- Etiquetas de valores exactos y tabla accesible debajo de la gráfica.
+- Nota visible que informa si el gráfico usa el resumen oficial o el detalle de una sede.
+- Comparación inicial/final e informe histórico en PDF.
 
-# SiMeCO₂ v39 — Carga automática de facturas
+### Carga y almacenamiento
 
-- Las facturas se cargan automáticamente al abrir la plataforma.
-- Se muestra el mensaje “Espere, cargando facturas...” durante el proceso.
-- Se evita ejecutar dos cargas simultáneas.
-- El botón Actualizar datos continúa disponible para actualizaciones manuales posteriores.
-- Se informa visualmente cuando la carga finaliza o presenta un error.
+- La versión v56 introdujo la caché `simeco2_servicios_v9`; v57 la renueva a `simeco2_servicios_v10` para invalidar resultados anteriores.
+- Los 9.147 registros canónicos se cargan desde los archivos JS del proyecto y no se duplican en `localStorage`.
+- El navegador solo conserva archivos importados o modificados por el usuario.
+- Al reemplazar una factura se eliminan primero sus registros anteriores.
+- Las facturas se identifican por Git blob SHA-1 y se verifican también con SHA-256.
 
----
+### Lectura de facturas
 
-# SiMeCO₂ v37
+- Parser contextual para formatos numéricos colombianos.
+- Segmentación por “Prestación del servicio” para manejar continuaciones entre páginas.
+- Lectura diferenciada de energía, agua, alcantarillado, gas, aseo y residuos.
+- Se eliminó el corte fijo que podía descartar información de bloques extensos.
+- Julio de 2026 quedó precargado y no depende de procesamiento posterior.
 
-## Novedad principal
-Todos los campos de selección usados para búsqueda, filtros y comparaciones cuentan ahora con autocompletado: se puede escribir para filtrar opciones, navegar con flechas y confirmar con Enter.
+### Sistema completo
 
-Incluye autocompletado en tipo de comparación, sede, periodos, filtro de periodo, servicio y ordenamiento, además del buscador institucional existente. Se conserva la lógica original de los selectores y la compatibilidad con GitHub Pages y Google Sites.
+- Inicialización segura aunque una página no contenga todos los controles del `index`.
+- Tablas adaptadas automáticamente al número de columnas de cada módulo.
+- Filtros por nombre o dirección con observación visible para el usuario.
+- Sincronización territorial por sede y dirección, con nombres reales de comunas y corregimientos.
+- Exportación CSV y JSON de la consulta.
+- Plan de Gestión Ambiental descargable como PDF o HTML independiente.
+- Limpieza de archivos residuales y copias obsoletas.
 
-# SiMeCO₂ · Plataforma de Huella de Carbono Educativa v32
+## Estructura principal
 
-Sistema web en HTML, CSS y JavaScript para medir, visualizar e interpretar la huella de carbono educativa a partir del consumo de servicios públicos de sedes educativas.
+- `index.html`: aplicación principal.
+- `dashboard.html`: informe ambiental por sede.
+- `aula-climatica.html`: módulo pedagógico y de registros.
+- `busqueda-institucional.html`: consulta institucional.
+- `filtros-territoriales.html`: consulta territorial.
+- `app.js`: lógica principal.
+- `styles.css`: estilos generales y responsive.
+- `assistant.js`: Asistente Ambiental local.
+- `data/registros.js` / `data/registros.json`: detalle precargado.
+- `data/resumenes.js` / `data/resumenes.json`: totales oficiales.
+- `data/manifest.json`: integridad, tamaño, páginas y periodos de los PDF.
+- `data/sincronizacion-territorial.js`: clasificación territorial.
+- `tools/`: regeneración y validación de los datos.
 
-## Propósito
+## Ejecución local
 
-SiMeCO₂ transforma información de facturas en indicadores ambientales comprensibles para directivos, docentes, estudiantes y aliados técnicos. La plataforma permite estimar emisiones de CO₂e en alcance 2, priorizar sedes con mayor consumo eléctrico y generar planes de gestión ambiental escolar.
+No abra el proyecto únicamente con `file://`, porque algunos navegadores limitan la lectura de recursos locales. Desde la carpeta del proyecto ejecute:
 
-## Mejoras incorporadas en v32
-
-- Portada institucional con enfoque de proyecto educativo ambiental.
-- Resumen ejecutivo automático con lectura interpretativa.
-- Indicadores de impacto del proyecto.
-- Alertas inteligentes sobre sedes prioritarias, aumentos o reducciones de consumo.
-- Comparación de periodos con interpretación automática.
-- Ranking de sedes con clasificación de prioridad: alta, media y preventiva.
-- Dashboard por sede con chips de prioridad.
-- Plan de Gestión fortalecido con matriz operativa, responsables, indicadores y evidencias.
-- Módulo pedagógico “Aula climática / Guardianes Climáticos”.
-- Se elimina el botón de modo presentación de la portada para una interfaz más limpia.
-- Mejoras responsive tipo app móvil: navegación inferior y tablas convertidas en tarjetas.
-- Textos institucionales más claros y orientados a toma de decisiones.
-
-## Archivos principales
-
-```text
-index.html        Estructura de la plataforma
-styles.css        Diseño visual, responsive y experiencia móvil
-app.js            Lógica de lectura, cálculos, visualizaciones, planes e interpretaciones
-data/             Carpeta con archivos de soporte y PDF existentes
+```bash
+python3 -m http.server 8000
 ```
 
-## Uso básico
+Luego abra `http://localhost:8000/`.
 
-1. Publicar el proyecto en GitHub Pages o abrirlo en un servidor local.
-2. Entrar a la web.
-3. Presionar **Actualizar datos ahora** o usar **Cargar factura PDF local** para pruebas.
-4. Revisar el resumen ejecutivo, dashboard, ranking y comparación de periodos.
-5. En el dashboard por sede, presionar **Generar informe / Plan de Gestión**.
-6. Descargar o imprimir el informe institucional.
+## Publicación en GitHub Pages
 
-## Metodología ambiental
+1. Suba **todo el contenido** del proyecto al repositorio, conservando la carpeta `data`.
+2. En GitHub vaya a **Settings → Pages**.
+3. Seleccione la rama de publicación y la carpeta raíz.
+4. Espere la publicación y abra la URL generada.
+5. Para insertarla en Google Sites use **Insertar → Incorporar → URL**.
 
-Las emisiones se calculan con la fórmula:
+La información precargada funciona desde los archivos locales del proyecto. La lectura de facturas nuevas usa PDF.js desde CDN y requiere conexión a internet.
 
-```text
-Emisiones CO₂e = consumo eléctrico en kWh × factor de emisión kg CO₂e/kWh
+## Controles de calidad
+
+Ejecute:
+
+```bash
+python3 tools/validar_sistema.py
 ```
 
-El sistema permite modificar el factor de emisión y la equivalencia de captura anual por árbol desde el dashboard ambiental.
+Este control verifica:
 
-## Recomendación de publicación
+- sintaxis de todos los JavaScript;
+- compilación de las herramientas Python;
+- validez de JSON;
+- referencias locales e IDs HTML;
+- orden de los scripts de datos;
+- carga de los bundles JS;
+- número de registros y periodos;
+- duplicados y nombres vacíos;
+- conciliación de energía, agua, alcantarillado y gas;
+- tamaño, páginas, SHA-256 y Git blob SHA-1 de los 17 PDF.
 
-Para GitHub Pages, subir todos los archivos conservando esta estructura. El archivo principal debe llamarse `index.html`.
+Los resultados quedan en:
 
+- `CONTROL-CALIDAD-v57.txt`
+- `CONTROL-CALIDAD-HISTORICOS-v56.txt`
 
+## Alcance de la validación
 
-## Actualización v31 · Footer institucional Los Yoguis
-
-Esta versión incorpora un pie de página institucional con la imagen oficial de Los Yoguis y el enlace central a `www.losyoguis.com`.
-
-Archivos actualizados:
-
-- `index.html`
-- `styles.css`
-- `assets/los-yoguis-footer.png`
-
-## Mejoras incorporadas en v32
-
-- Se rediseñó el bloque **Actualizando los datos** con una apariencia más llamativa e institucional.
-- Se incorporó el mensaje: carga de facturas de servicios públicos de todas las Instituciones Educativas de Medellín desde el año 2025.
-- Se añadieron distintivos visuales de alcance: Medellín, Instituciones Educativas y Desde 2025.
-- Se conservaron los identificadores funcionales de botones y lectura PDF para mantener la compatibilidad del sistema.
+La entrega fue sometida a validación estática, estructural, sintáctica, documental y de integridad de datos. El entorno de construcción bloquea la navegación automatizada del navegador a rutas locales; por eso la validación visual final debe hacerse en la URL definitiva de GitHub Pages y dentro de Google Sites. La validación estática y de regresión específica para el caso INEM queda incluida en `tools/validar_sistema.py`.
 
 
-## Cabecera Los Yoguis v31
+## v59 · Contratos separados y trazabilidad energética
 
-- Cabecera adaptada al estilo visual Guardianes Climáticos / Los Yoguis.
-- Botón principal hacia **Red Escolar de Pluviómetros de Medellín**.
-- Logo Los Yoguis integrado en cabecera y favicon.
-- Se mantiene la tarjeta destacada de **Huella de Carbono Educativa de Medellín**.
-
-
-## Ajuste visual v31
-
-- Se agregó movimiento al botón principal **Actualizar datos ahora** mediante pulso, brillo, barrido luminoso e ícono de actualización animado.
-- El botón conserva accesibilidad con `aria-label` y respeta `prefers-reduced-motion`.
-
-
-## Actualización v34 — Autocompletado y filtros
-
-- Buscador inteligente por institución, sede y dirección.
-- Coincidencias sin depender de tildes y con múltiples palabras.
-- Sugerencias ordenadas por relevancia, dirección y periodos disponibles.
-- Navegación del autocompletado con teclado (flechas, Enter y Escape).
-- Selección exacta de una sede.
-- Filtros combinables por periodo y servicio con datos.
-- Ordenamiento por periodo, sede, energía y CO₂e.
-- Contador de registros y sedes visibles.
-- Etiquetas de filtros activos y limpieza individual o general.
-- Estado vacío con orientación para recuperar resultados.
-- `manifest.json` actualizado con todos los PDF incluidos.
-
-
-## Ajuste v34
-- El módulo de carga y actualización de facturas se ubicó como primera sección después del encabezado y la navegación principal.
-- Se eliminó el módulo “Indicadores de avance y alertas inteligentes”.
-
-## Versión 35 · Organización en cuatro secciones
-
-La plataforma se reorganizó como una aplicación de cuatro secciones internas, sin recargar la página y conservando todos los cálculos y controles:
-
-1. Resumen institucional: carga de facturas, lectura ejecutiva e indicadores generales.
-2. Análisis temporal: comparación de periodos y ranking de sedes.
-3. Gestión por sede: dashboard ambiental y planes de gestión institucional.
-4. Aula y registros: Guardianes Climáticos, autocompletado, filtros, exportaciones y tabla de registros.
-
-La navegación funciona mediante pestañas superiores y una barra móvil. Los enlaces directos y los botones de generación de planes activan automáticamente la sección correspondiente.
-
-## Versión 36 · cinco módulos
-
-- Se eliminaron los dos botones del encabezado principal.
-- El módulo 1 ahora se llama **Actualizar datos** y su botón ejecuta directamente la actualización de facturas.
-- El módulo 2 se llama **Histórico**.
-- El módulo 3 se llama **Informe por sede**.
-- El módulo 4 se llama **Facturas por I.E.** e incluye filtros, registros y descarga directa de la factura desde la columna Fuente.
-- Se creó el módulo 5 **Aula**, donde se trasladó íntegramente Guardianes Climáticos.
-
-
-## Versión 39
-- Autocompletado de instituciones y sedes en Histórico.
-- Buscador con autocompletado en Informe por sede.
-- Búsqueda tolerante a tildes, nombres parciales y direcciones.
-- Navegación por teclado y limpieza rápida de cada buscador.
-
-## Versión 40 · filtros territoriales jerárquicos
-
-Se incorporaron filtros combinables en Histórico, Informe por sede y Facturas por I.E.:
-
-- Ámbito territorial: Medellín, comuna, corregimiento o registros sin clasificar.
-- Comuna o corregimiento dependiente del ámbito elegido.
-- Núcleo educativo dependiente del territorio.
-- Institución o sede con autocompletado limitado por los filtros territoriales activos.
-
-La clasificación prioriza coincidencias institucionales conocidas y reglas territoriales presentes en el nombre o la dirección. Los registros que todavía no tienen una relación territorial confiable se conservan bajo **Sin clasificar**, evitando asignaciones inventadas. Para ampliar la cobertura se deben añadir relaciones verificadas al catálogo `TERRITORY_CATALOG` de `app.js`.
-
-
-## Versión 41
-- Filtros territoriales visibles en Histórico, Informe por sede y Facturas por I.E.
-- Listado base de las 16 comunas y los 5 corregimientos de Medellín.
-- Descargas de resultados limitadas a informes en PDF mediante una plantilla institucional mejorada.
-- Eliminadas las exportaciones CSV, JSON y HTML.
-
-## Novedades v52 · progreso de carga y experiencia móvil
-
-- Barra de progreso real durante la lectura de facturas.
-- Indicadores en vivo de facturas verificadas, páginas leídas y registros consolidados.
-- Etapas visibles: localizar, leer PDF, consolidar y finalizar.
-- Datos pedagógicos rotativos sobre el proyecto mientras se procesa la información.
-- Pantalla de carga adaptada a computador, tableta y móvil.
-- Navegación móvil inferior con apariencia de aplicación.
-- Cabecera, tarjetas, formularios, tablas, gráficos y asistente reorganizados para pantallas pequeñas.
-- El botón móvil **Actualizar** también ejecuta la búsqueda y lectura de facturas.
-- Corrección de separadores numéricos colombianos, por ejemplo `2.684 kWh` se interpreta como `2684 kWh`.
-- El asistente ya no reutiliza información de otros meses cuando el periodo consultado no tiene datos.
-
-Para probar el proyecto localmente, ejecútalo mediante un servidor web (por ejemplo, Live Server o `python3 -m http.server`) porque los navegadores restringen la lectura de `manifest.json` y PDF al abrir `index.html` directamente con `file://`.
-
-## SiMeCO₂ v53 — Ranking sincronizado con Históricos
-
-- El ranking ahora parte de la misma colección de sedes que utiliza la búsqueda histórica.
-- Las sedes con facturas de agua, aseo u otros servicios, pero sin lectura eléctrica, ya no desaparecen: se muestran al final como **Sin dato eléctrico**.
-- El autocompletado del ranking informa cuántos periodos históricos tiene la sede y cuántos contienen energía.
-- La prioridad Alta, Media o Preventiva solo se calcula cuando existe una lectura eléctrica válida; no se inventan consumos de 0 kWh para datos ausentes.
-- El resumen del ranking muestra cuántas sedes tienen energía y cuántas siguen pendientes de asociación o lectura eléctrica.
-
-## SiMeCO₂ v54 — Orientación para búsquedas por dirección
-
-- Se agregó una observación visible en los buscadores de Histórico, Ranking, Informe por sede, Facturas por I.E. y las consultas institucionales/territoriales.
-- El mensaje indica: **“Si el nombre de la sede no aparece, búscala por la dirección registrada en la factura.”**
-- Se actualizaron los textos de ayuda y los marcadores de búsqueda para dejar claro que el sistema acepta nombres y direcciones.
-- La observación es responsive y conserva una lectura clara en computador, tableta y móvil.
-
+SiMeCO₂ distingue ahora tres estados eléctricos diferentes: consumo medido, energía no identificada y energía gestionada mediante contrato separado. La primera excepción verificada es la I.E. INEM José Félix de Restrepo (Cr 48 Cl 1 -125): el consolidado educativo contiene otros servicios, mientras la documentación pública del Distrito identifica la sede dentro del suministro de energía para usuario no regulado. La plataforma no asigna 0 kWh ni calcula CO₂e/ranking energético hasta incorporar una serie eléctrica verificable de esa fuente.

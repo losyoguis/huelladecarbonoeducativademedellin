@@ -1,0 +1,53 @@
+CAMBIOS — SiMeCO₂ v56
+Fecha: 1 de agosto de 2026
+
+1. HISTÓRICO GENERAL
+- Se corrigió la fuente de la gráfica global.
+- Cada periodo usa el total ACTUAL de energía del resumen de la página 1 del PDF.
+- Se impide que el histórico cambie según el orden de lectura o la caché del navegador.
+- Se incorporó tabla de valores exactos, cuadrícula, escala y desplazamiento horizontal.
+- Se agregó una nota que identifica la fuente de la gráfica.
+
+2. DATOS
+- Se regeneraron 9.147 registros detallados desde 17 PDF.
+- Se incluyeron 533 registros de julio de 2026.
+- Se generaron 17 resúmenes oficiales conciliados.
+- Se eliminaron duplicados y nombres de sede vacíos.
+- Se actualizaron registros.js, registros.json, resumenes.js, resumenes.json y manifest.json.
+
+3. PARSER DE PDF
+- Segmentación global por prestación del servicio.
+- Corrección de continuaciones entre páginas.
+- Interpretación contextual de separadores colombianos.
+- Extracción independiente de energía, agua, alcantarillado, gas, aseo y residuos.
+- Eliminación del límite fijo de líneas por bloque.
+
+4. CACHÉ Y ESTABILIDAD
+- STORE_KEY actualizado a simeco2_servicios_v9.
+- DATA_VERSION actualizado a v56-reconciled-data-20260801.
+- localStorage solo guarda importaciones o modificaciones del usuario.
+- Los datos canónicos se recargan siempre desde los bundles del proyecto.
+- Al reemplazar una factura se sustituyen sus registros, sin acumulación.
+
+5. TERRITORIO Y BÚSQUEDA
+- Sincronización territorial enlazada en index, dashboard y aula.
+- Coincidencia exacta por sede/dirección y respaldo por dirección única.
+- Uso de nombres reales de comunas y corregimientos.
+- Búsqueda por nombre o dirección y observación visible de ayuda.
+
+6. INFORMES Y PLANES
+- Descarga CSV y JSON de la consulta activa.
+- Plan de Gestión Ambiental descargable como PDF o HTML.
+- Corrección de la función de informe ambiental por sede.
+- Tablas con número de columnas adaptable por página.
+
+7. LIMPIEZA
+- Eliminados app.min.js, styles.min.css y js/app.js por ser copias obsoletas.
+- Eliminados archivos residuales llamados “1”.
+- Eliminadas carpetas vacías css, js y docs.
+
+8. CONTROL DE CALIDAD
+- Nuevas herramientas validar_historicos.py y validar_sistema.py.
+- Validación SHA-256, Git blob SHA-1, tamaño y páginas de los 17 PDF.
+- Validación de JSON, JavaScript, Python, HTML, referencias y bundles.
+- Resultado integral: APROBADO.

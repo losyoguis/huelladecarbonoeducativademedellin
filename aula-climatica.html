@@ -9,7 +9,7 @@
   <meta name="description" content="Sistema interactivo para medir, interpretar y gestionar la huella de carbono educativa a partir del consumo de servicios públicos." />
   <link rel="icon" type="image/png" href="assets/los-yoguis-logo.png" />
   <link rel="apple-touch-icon" href="assets/los-yoguis-logo.png" />
-  <link rel="stylesheet" href="styles.css?v=54-observacion-busqueda" />
+  <link rel="stylesheet" href="styles.css?v=59-calidad-multiservicio" />
 </head>
 <body class="standalone-page aula-page app-ready" data-page="aula">
   <header class="module-page-header" id="module-top">
@@ -183,9 +183,13 @@
         <label>Periodo B <select id="compareB"></select></label>
         <button id="compareBtn" class="primary">Comparar</button>
       </div>
+      <div id="historyDataSourceNote" class="history-source-note" role="note"></div>
       <div id="compareNarrative" class="interpretation-box">Selecciona dos periodos para generar una interpretación automática.</div>
       <div id="compareResult" class="compare-result"></div>
-      <canvas id="chart" width="1100" height="420" aria-label="Gráfico comparativo"></canvas>
+      <div class="history-chart-scroll" role="region" aria-label="Gráfica histórica desplazable" tabindex="0">
+        <canvas id="chart" width="1100" height="420" aria-label="Gráfico comparativo"></canvas>
+      </div>
+      <div id="historyDataTable" class="history-data-table"></div>
     </section>
 
     <section class="panel module-access-panel" id="modulos-principales">
@@ -450,9 +454,11 @@
   </footer>
 
   
-  <script defer src="data/registros.js?v=55-datos-base"></script>
-  <script defer src="data/resumenes.js?v=55-historicos-verificados"></script>
+  <script defer src="data/registros.js?v=59-datos-calidad"></script>
+  <script defer src="data/resumenes.js?v=59-historicos-multiservicio"></script>
+  <script defer src="data/sincronizacion-territorial.js?v=59-territorios"></script>
+  <script defer src="data/excepciones-servicios.js?v=59-contratos-separados"></script>
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-  <script defer src="app.js?v=55-historicos-verificados"></script>
+  <script defer src="app.js?v=59-contratos-separados"></script>
 </body>
 </html>

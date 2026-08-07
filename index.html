@@ -14,7 +14,7 @@
   <meta name="description" content="Sistema interactivo para medir, interpretar y gestionar la huella de carbono educativa a partir del consumo de servicios públicos." />
   <link rel="icon" type="image/png" href="assets/los-yoguis-logo.png" />
   <link rel="apple-touch-icon" href="assets/los-yoguis-logo.png" />
-  <link rel="stylesheet" href="styles.css?v=54-observacion-busqueda" />
+  <link rel="stylesheet" href="styles.css?v=59-calidad-multiservicio" />
 </head>
 <body>
   <div class="invoice-loading active" id="invoiceLoading" role="status" aria-live="assertive" aria-hidden="false">
@@ -187,6 +187,40 @@
       </article>
     </section>
 
+    <section class="panel quality-panel" id="calidad-datos">
+      <div class="section-head">
+        <div>
+          <span class="section-kicker">Calidad y trazabilidad</span>
+          <h2>Estado de la información por sede</h2>
+          <p class="muted">Distingue datos completos, parciales y servicios no identificados. Una ausencia nunca se interpreta automáticamente como consumo cero.</p>
+        </div>
+        <div class="quality-legend" aria-label="Estados de calidad">
+          <span class="quality-badge complete">Datos completos</span>
+          <span class="quality-badge partial">Datos parciales</span>
+          <span class="quality-badge pending">Energía no identificada</span>
+          <span class="quality-badge external">Energía en contrato separado</span>
+          <span class="quality-badge review">En revisión</span>
+        </div>
+      </div>
+      <div class="quality-kpis" aria-label="Indicadores de cobertura">
+        <article><span>Cobertura energética</span><strong id="qualityEnergyCoverage">0%</strong><small id="qualityEnergyCoverageDetail">0 de 0 sedes</small></article>
+        <article><span>Con energía identificada</span><strong id="qualityEnergySites">0</strong><small>Sedes con al menos una lectura kWh</small></article>
+        <article><span>Por verificar</span><strong id="qualityPendingSites">0</strong><small>Sedes con históricos pero sin energía asociada</small></article>
+        <article><span>Contrato separado</span><strong id="qualityExternalSites">0</strong><small>Sedes cuya energía se gestiona en otra fuente contractual</small></article>
+        <article><span>Vinculación territorial</span><strong id="qualityTerritoryCoverage">0%</strong><small id="qualityTerritoryCoverageDetail">0 de 0 sedes clasificadas</small></article>
+      </div>
+      <div class="quality-summary" id="qualitySummary" role="status" aria-live="polite"></div>
+      <div class="service-exceptions" id="serviceExceptionsPanel" hidden>
+        <div class="service-exceptions-head"><div><strong>Excepciones verificadas</strong><p>Servicios que no aparecen en el consolidado educativo porque se gestionan mediante una fuente contractual separada.</p></div></div>
+        <div id="serviceExceptionsBody" class="service-exceptions-grid"></div>
+      </div>
+      <div class="table-wrap quality-table-wrap">
+        <table class="quality-data-table">
+          <thead><tr><th>Sede</th><th>Dirección</th><th>Estado</th><th>Energía</th><th>Agua</th><th>Alc.</th><th>Gas</th><th>Aseo</th><th>Territorio</th><th>Acción</th></tr></thead>
+          <tbody id="qualityBody"></tbody>
+        </table>
+      </div>
+    </section>
 
 
     </div>
@@ -214,6 +248,15 @@
             <option value="year">Año vs año</option>
           </select>
         </label>
+        <label>Indicador histórico
+          <select id="compareMetric">
+            <option value="energyKwh">Energía eléctrica (kWh)</option>
+            <option value="waterM3">Agua (m³)</option>
+            <option value="alcM3">Alcantarillado (m³)</option>
+            <option value="gasM3">Gas natural (m³)</option>
+            <option value="wasteTon">Aseo / residuos (t)</option>
+          </select>
+        </label>
         <label class="compare-site-field">Sede
           <div class="autocomplete site-autocomplete" id="compareSiteAutocomplete">
             <input id="compareSiteSearch" type="search" autocomplete="off" spellcheck="false" placeholder="Todas las sedes" aria-autocomplete="list" aria-controls="compareSiteSuggestions" aria-expanded="false" />
@@ -233,18 +276,30 @@
       <div id="historyDataSourceNote" class="history-source-note" role="note"></div>
       <div id="compareNarrative" class="interpretation-box">Selecciona dos periodos para generar una interpretación automática.</div>
       <div id="compareResult" class="compare-result"></div>
-      <canvas id="chart" width="1100" height="420" aria-label="Gráfico comparativo"></canvas>
+      <div class="history-chart-scroll" role="region" aria-label="Gráfica histórica desplazable" tabindex="0">
+        <canvas id="chart" width="1100" height="420" aria-label="Gráfico comparativo"></canvas>
+      </div>
+      <div id="historyDataTable" class="history-data-table"></div>
     </section>
 
     <section class="panel ranking-panel" id="ranking-sedes">
       <div class="section-head">
         <div>
           <span class="section-kicker">Priorización</span>
-          <h2>Ranking de sedes por consumo eléctrico registrado</h2>
-          <p class="muted">Incluye todas las sedes presentes en los históricos. Las que aún no tienen lectura eléctrica aparecen al final como “Sin dato eléctrico”.</p>
+          <h2 id="rankingTitle">Ranking de sedes por servicio público</h2>
+          <p class="muted" id="rankingDescription">Ordena las sedes por el servicio seleccionado. Las sedes sin lectura para ese indicador se mantienen visibles al final como “Sin dato”.</p>
         </div>
       </div>
       <div class="ranking-filter-bar" aria-label="Filtros y búsqueda del ranking">
+        <label>Servicio del ranking
+          <select id="rankingMetricFilter">
+            <option value="energyKwh">Energía eléctrica</option>
+            <option value="waterM3">Agua</option>
+            <option value="alcM3">Alcantarillado</option>
+            <option value="gasM3">Gas natural</option>
+            <option value="wasteTon">Aseo / residuos</option>
+          </select>
+        </label>
         <label>Mes del ranking
           <select id="rankingPeriodFilter"><option value="">Todos los meses</option></select>
         </label>
@@ -268,7 +323,7 @@
       </div>
       <div id="rankingExtremes" class="ranking-extremes" aria-live="polite"></div>
       <div class="chart-card environmental-ranking-chart">
-        <canvas id="siteChart" width="1100" height="500" aria-label="Ranking de sedes por consumo eléctrico registrado, incluyendo sedes pendientes de dato eléctrico"></canvas>
+        <canvas id="siteChart" width="1100" height="500" aria-label="Ranking de sedes por servicio público, incluyendo sedes sin dato del indicador seleccionado"></canvas>
       </div>
       <div class="ranking-pagination" aria-label="Paginación del ranking">
         <button id="rankingFirstBtn" class="secondary" type="button" title="Ver las primeras 10 sedes">« Primera</button>
@@ -320,6 +375,14 @@
         <article class="big-total"><span>Total CO₂ equivalente</span><strong id="dashTotalCo2">0 t CO₂e</strong></article>
         <article class="big-total"><span>Árboles necesarios</span><strong id="dashTotalTrees">0 árboles</strong></article>
       </div>
+      <div class="dashboard-services-grid" aria-label="Otros servicios públicos registrados">
+        <article class="service-total"><span>Agua registrada</span><strong id="dashTotalWater">0 m³</strong></article>
+        <article class="service-total"><span>Alcantarillado</span><strong id="dashTotalAlc">0 m³</strong></article>
+        <article class="service-total"><span>Gas natural</span><strong id="dashTotalGas">0 m³</strong></article>
+        <article class="service-total"><span>Aseo / residuos</span><strong id="dashTotalWaste">0 t</strong></article>
+      </div>
+      <div id="dashboardDataNotice" class="dashboard-data-notice" hidden></div>
+      <section id="siteProfile" class="site-profile" hidden aria-live="polite"></section>
       <div class="table-wrap dashboard-table-wrap">
         <table class="dashboard-data-table">
           <thead>
@@ -329,6 +392,10 @@
               <th>Dirección</th>
               <th>Periodos</th>
               <th>Energía total kWh</th>
+              <th>Agua m³</th>
+              <th>Alc. m³</th>
+              <th>Gas m³</th>
+              <th>Aseo / residuos t</th>
               <th>CO₂e t</th>
               <th>Árboles requeridos</th>
               <th>Promedio kWh/mes</th>
@@ -350,6 +417,7 @@
         </div>
         <div class="plan-actions">
           <button id="printPlanBtn" class="primary pdf-only-action" disabled>Descargar informe PDF</button>
+          <button id="downloadPlanBtn" class="secondary" disabled>Descargar HTML</button>
         </div>
       </div>
       <div id="planReport" class="plan-empty">Aún no se ha seleccionado una sede. Usa el botón <strong>Plan de Gestión</strong> en la tabla del Dashboard ambiental por sede.</div>
@@ -507,7 +575,7 @@
   <script>
     (() => {
       const sectionForTarget = {
-        inicio: 'seccion-1', importacion: 'seccion-1', 'resumen-ejecutivo': 'seccion-1', cards: 'seccion-1',
+        inicio: 'seccion-1', importacion: 'seccion-1', 'resumen-ejecutivo': 'seccion-1', cards: 'seccion-1', 'calidad-datos': 'seccion-1',
         'comparar-periodos': 'seccion-2', 'ranking-sedes': 'seccion-2',
         'dashboard-ambiental': 'seccion-3', planPanel: 'seccion-3',
         registros: 'seccion-4', 'aula-climatica': 'seccion-5'
@@ -562,10 +630,12 @@
     })();
   </script>
 
-  <script defer src="data/registros.js?v=55-datos-base"></script>
-  <script defer src="data/resumenes.js?v=55-historicos-verificados"></script>
+  <script defer src="data/registros.js?v=59-datos-calidad"></script>
+  <script defer src="data/resumenes.js?v=59-historicos-multiservicio"></script>
+  <script defer src="data/sincronizacion-territorial.js?v=59-territorios"></script>
+  <script defer src="data/excepciones-servicios.js?v=59-contratos-separados"></script>
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-  <script defer src="app.js?v=55-historicos-verificados"></script>
-  <script defer src="assistant.js?v=55-historicos-verificados"></script>
+  <script defer src="app.js?v=59-contratos-separados"></script>
+  <script defer src="assistant.js?v=58-calidad-multiservicio"></script>
 </body>
 </html>
