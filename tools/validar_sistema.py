@@ -58,7 +58,7 @@ def main():
     if 'pdf-lib.min.js' in search: errors.append('Búsqueda institucional todavía carga PDF-Lib al inicio')
     if 'ensurePdfLib' not in (ROOT/'institucional.js').read_text(encoding='utf8'): errors.append('Falta carga bajo demanda de PDF-Lib')
     app=(ROOT/'app.js').read_text(encoding='utf8')
-    for marker in ["simeco2_servicios_v16","v70-direcciones-google-maps-20260807","function ensurePdfJs","RECORD_TABLE_PAGE_SIZE = 200","function renderRecordPagination","function renderSavingsRanking","function monthBefore","function rankingAddressText","function drawRankingIdentity","function googleMapsAddressUrl","handleRankingCanvasMapClick","handleSavingsCanvasMapClick","La verificación de PDF queda bajo demanda"]:
+    for marker in ["simeco2_servicios_v16","v71-ubicacion-precisa-colegios-20260807","function ensurePdfJs","RECORD_TABLE_PAGE_SIZE = 200","function renderRecordPagination","function renderSavingsRanking","function monthBefore","function rankingAddressText","function drawRankingIdentity","function googleMapsAddressUrl","handleRankingCanvasMapClick","handleSavingsCanvasMapClick","La verificación de PDF queda bajo demanda"]:
         if marker not in app: errors.append(f'Falta marcador requerido en app.js: {marker}')
     checks.append('PDF.js/PDF-Lib bajo demanda y tabla paginada')
 
