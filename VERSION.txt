@@ -1,1 +1,1 @@
-v69 - Interpretación automática Top 3 del ranking de ahorro
+v70 - Direcciones clicables con Google Maps

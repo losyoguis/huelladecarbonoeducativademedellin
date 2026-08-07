@@ -1522,3 +1522,29 @@ img{content-visibility:auto}
   .savings-top3-head{align-items:flex-start;flex-direction:column}
   .savings-top3-head p{text-align:left;max-width:none}
 }
+
+
+/* v70 · Direcciones vinculadas a Google Maps */
+.map-address{
+  display:inline-flex;
+  align-items:center;
+  gap:.25rem;
+  max-width:100%;
+  color:#08765e;
+  font-weight:650;
+  text-decoration:none;
+  border-bottom:1px dashed rgba(8,118,94,.42);
+  cursor:pointer;
+  transition:color .15s ease,border-color .15s ease,background .15s ease;
+}
+.map-address:hover,.map-address:focus-visible{
+  color:#045c49;
+  border-bottom-color:#045c49;
+  background:rgba(15,195,154,.08);
+  outline:none;
+}
+.map-address-unavailable{color:inherit}
+.ranking-extremes .map-address,.savings-top3-address .map-address{font-weight:600}
+@media (max-width:720px){
+  .map-address{white-space:normal;overflow-wrap:anywhere}
+}

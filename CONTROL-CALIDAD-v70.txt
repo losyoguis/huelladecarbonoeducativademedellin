@@ -1,0 +1,35 @@
+CONTROL DE CALIDAD SiMeCO₂ v70
+Fecha: 2026-08-07
+
+CAMBIO PRINCIPAL
+Todas las direcciones visibles de los módulos principales se vinculan con Google Maps.
+
+COBERTURA
+- Ranking general: dirección clicable dentro del canvas.
+- Ranking de ahorro: dirección clicable dentro del canvas.
+- Tarjetas de extremos de ambos rankings.
+- Top 3 e interpretación del ranking de ahorro.
+- Dashboard / Plan de Gestión Ambiental.
+- Tabla de registros.
+- Tabla de calidad.
+- Informes por institución.
+- Búsqueda institucional.
+- Módulo territorial.
+- Autocompletados principales: clic específico sobre la dirección abre Maps sin cambiar la selección.
+
+SEGURIDAD Y COMPORTAMIENTO
+- Google Maps Search con api=1.
+- Se añade Medellín, Antioquia, Colombia al texto de búsqueda.
+- Nueva pestaña.
+- noopener/noreferrer.
+- Las direcciones ausentes no generan enlaces.
+
+VALIDACIONES
+- npm run check: APROBADO.
+- npm test: APROBADO.
+- validar_sistema.py: APROBADO.
+- validar_historicos.py: APROBADO.
+- 9.147 registros.
+- 567 instituciones/sedes agrupadas.
+- 17 períodos históricos.
+RESULTADO: APROBADO.

@@ -1,0 +1,9 @@
+SiMeCO₂ v70 — Direcciones clicables con Google Maps
+
+- Las direcciones visibles del sistema se convierten en accesos a Google Maps.
+- El enlace usa Google Maps Search y añade Medellín, Antioquia, Colombia para mejorar la geolocalización.
+- Los enlaces abren en una nueva pestaña con rel=noopener noreferrer.
+- Se aplicó a tablas de registros, calidad, dashboard, ficha integral, informes, búsqueda institucional, módulo territorial, tarjetas de ranking y Top 3 de ahorro.
+- En los dos rankings dibujados en canvas, la cápsula de dirección es clicable y cambia el cursor a mano.
+- En sugerencias/autocompletado, hacer clic específicamente en la dirección abre Maps sin seleccionar accidentalmente otra sede.
+- Las direcciones no disponibles permanecen como texto y no generan enlaces falsos.
