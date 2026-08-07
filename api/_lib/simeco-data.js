@@ -200,7 +200,8 @@ function monthlyRows(list) {
       result[field] = s.available ? s.value : null;
     }
     const co2 = sumNullable(rows, 'co2kg');
-    result.co2kg = co2.available ? co2.value : null;
+    // Si no existe energía identificada en el periodo, CO₂e de alcance 2 no es calculable.
+    result.co2kg = result.energyKwh === null ? null : (co2.available ? co2.value : null);
     result.cost = {};
     for (const [field, metric] of Object.entries(METRICS)) {
       const s = sumNullable(rows, metric.valueField);
@@ -370,6 +371,47 @@ function ranking(metric = 'energyKwh', opts = {}) {
   };
 }
 
+
+function rankingStatusForInstitution(query, metric = 'energyKwh', opts = {}) {
+  if (!METRICS[metric]) metric = 'energyKwh';
+  const item = resolveInstitution(query);
+  if (item.notFound || item.ambiguous) return item;
+  const period = opts.period || null;
+  const year = opts.year || null;
+  const list = periodFilter(item.records, period, year);
+  const quality = qualityForInstitution(item, list.length ? list : item.records);
+  if (!list.length) {
+    return {
+      institution:{key:item.key,name:item.displayName}, metric:{field:metric,...METRICS[metric]}, filter:{period,year},
+      included:false, position:null, value:null, reason:'No hay registros para el periodo solicitado.',
+      qualityStatus:quality.status, qualityLabel:quality.label, quality
+    };
+  }
+  const s = sumNullable(list, metric);
+  if (!s.available) {
+    return {
+      institution:{key:item.key,name:item.displayName}, metric:{field:metric,...METRICS[metric]}, filter:{period,year},
+      included:false, position:null, value:null, reason:quality.label,
+      qualityStatus:quality.status, qualityLabel:quality.label, quality
+    };
+  }
+  const ranked = [];
+  for (const candidate of institutions) {
+    const candidateList = periodFilter(candidate.records, period, year);
+    if (!candidateList.length) continue;
+    const cs = sumNullable(candidateList, metric);
+    if (!cs.available) continue;
+    ranked.push({key:candidate.key,name:candidate.displayName,value:cs.value});
+  }
+  ranked.sort((a,b)=>b.value-a.value || a.name.localeCompare(b.name,'es'));
+  const index = ranked.findIndex(r=>r.key===item.key);
+  return {
+    institution:{key:item.key,name:item.displayName}, metric:{field:metric,...METRICS[metric]}, filter:{period,year},
+    included:index>=0, position:index>=0?index+1:null, value:s.value, totalRanked:ranked.length,
+    reason:index>=0?null:quality.label, qualityStatus:quality.status, qualityLabel:quality.label, quality
+  };
+}
+
 function compareInstitutions(queries, metric = 'energyKwh', opts = {}) {
   if (!Array.isArray(queries)) queries = [queries];
   if (!METRICS[metric]) metric = 'energyKwh';
@@ -430,6 +472,7 @@ module.exports = {
   institutionReport,
   history,
   ranking,
+  rankingStatusForInstitution,
   compareInstitutions,
   cityIndicators,
   qualityReport,

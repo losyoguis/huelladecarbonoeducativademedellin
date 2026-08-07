@@ -28,6 +28,12 @@ const TOOL_DEFS = [
     strict:true,
   },
   {
+    type:'function', name:'obtener_posicion_institucion',
+    description:'Indica si una institución entra o no en el ranking de un servicio, su posición cuando aplica y la razón exacta cuando queda excluida. Úsala para preguntas como por qué una I.E. no aparece en el ranking.',
+    parameters:{type:'object',properties:{query:{type:'string'},metric:{type:'string',enum:['energyKwh','waterM3','alcM3','gasM3','wasteTon']},period:{type:['string','null']},year:{type:['string','null']}},required:['query','metric','period','year'],additionalProperties:false},
+    strict:true,
+  },
+  {
     type:'function', name:'comparar_instituciones',
     description:'Compara hasta ocho instituciones usando un mismo indicador y periodo/año.',
     parameters:{type:'object',properties:{queries:{type:'array',items:{type:'string'},minItems:2,maxItems:8},metric:{type:'string',enum:['energyKwh','waterM3','alcM3','gasM3','wasteTon']},period:{type:['string','null']},year:{type:['string','null']}},required:['queries','metric','period','year'],additionalProperties:false},
@@ -53,6 +59,7 @@ function runTool(name,args={}) {
     case 'obtener_informe_institucion': return data.institutionReport(args.query,{period:args.period||undefined,year:args.year||undefined});
     case 'obtener_historico': return data.history(args.query,args.metric,{year:args.year||undefined});
     case 'obtener_ranking': return data.ranking(args.metric,{period:args.period||undefined,year:args.year||undefined,limit:args.limit});
+    case 'obtener_posicion_institucion': return data.rankingStatusForInstitution(args.query,args.metric,{period:args.period||undefined,year:args.year||undefined});
     case 'comparar_instituciones': return data.compareInstitutions(args.queries,args.metric,{period:args.period||undefined,year:args.year||undefined});
     case 'obtener_calidad_datos': return data.qualityReport(args.query||undefined);
     case 'obtener_indicadores_ciudad': return data.cityIndicators({period:args.period||undefined,year:args.year||undefined});
@@ -70,6 +77,9 @@ REGLAS DE DATOS:
 5. Si la búsqueda es ambigua, presenta las coincidencias y pide al usuario escoger; no adivines.
 6. Los datos estructurados son la fuente de verdad para valores numéricos. Las evidencias sirven para trazabilidad.
 7. Si falta información, dilo explícitamente. No inventes productos, direcciones, contratos, costos ni consumos.
+8. Si recibes un bloque DATOS PRECONSULTADOS, úsalo como fuente de verdad y no sustituyas ninguna cifra por una estimación.
+9. Para preguntas '¿por qué [institución] no aparece en el ranking?', responde sobre ESA institución usando su estado de inclusión/exclusión; no devuelvas un top 10 salvo que el usuario lo pida.
+10. No inventes niveles como 'Preventiva', 'Alta' o similares si no vienen en los datos estructurados de la consulta.
 
 ESTILO:
 - Responde en español claro, útil para estudiantes, docentes, rectores y líderes ambientales.
@@ -78,6 +88,63 @@ ESTILO:
 - Cuando haya evidencia, menciona factura/periodo/página de forma breve si aporta valor.
 - Las equivalencias ambientales son pedagógicas y no compensaciones certificadas.
 - Mantén respuestas normales entre 120 y 450 palabras salvo que el usuario pida más detalle.`;
+
+function normalizeText(value) {
+  return String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').replace(/\s+/g,' ').trim();
+}
+
+function metricFromMessage(message) {
+  const q = normalizeText(message);
+  if (/agua|acueducto/.test(q)) return 'waterM3';
+  if (/alcantarillado/.test(q)) return 'alcM3';
+  if (/gas/.test(q)) return 'gasM3';
+  if (/residuo|aseo/.test(q)) return 'wasteTon';
+  return 'energyKwh';
+}
+
+function periodHints(message) {
+  const q = normalizeText(message);
+  const iso = q.match(/\b(20\d{2})[ -](0?[1-9]|1[0-2])\b/);
+  if (iso) return {period:`${iso[1]}-${String(iso[2]).padStart(2,'0')}`,year:null};
+  const year = (q.match(/\b20\d{2}\b/) || [])[0] || null;
+  return {period:null,year};
+}
+
+function institutionCandidateFromMessage(message) {
+  let q = normalizeText(message);
+  q = q.replace(/\b(dame|hazme|genera|generame|un|una|el|la|los|las|informe|reporte|analisis|analiza|porque|por|que|no|aparece|esta|en|del|de|ranking|top|puesto|posicion|energia|energetico|electrica|consumo|consumio|agua|acueducto|alcantarillado|gas|residuos|aseo|co2|huella|institucion|institucional|sede|ie|i e)\b/g,' ').replace(/\s+/g,' ').trim();
+  return q;
+}
+
+function preconsultData(message) {
+  const raw = String(message || '');
+  const q = normalizeText(raw);
+  const metric = metricFromMessage(raw);
+  const hints = periodHints(raw);
+  const candidate = institutionCandidateFromMessage(raw);
+  let institution = null;
+  if (candidate && candidate.length >= 3) {
+    const resolved = data.resolveInstitution(candidate);
+    if (resolved && !resolved.notFound && !resolved.ambiguous) institution = resolved.displayName;
+  }
+  const out = { intent:'general' };
+  if (institution && /ranking|puesto|posicion|aparece/.test(q)) {
+    out.intent='institution_ranking_status';
+    out.rankingStatus=data.rankingStatusForInstitution(institution,metric,{period:hints.period||undefined,year:hints.year||undefined});
+    out.institutionReport=data.institutionReport(institution,{period:hints.period||undefined,year:hints.year||undefined});
+    return out;
+  }
+  if (institution && /informe|reporte|analisis|consumo|huella|co2|agua|energia|gas|residuo|aseo/.test(q)) {
+    out.intent='institution_report';
+    out.institutionReport=data.institutionReport(institution,{period:hints.period||undefined,year:hints.year||undefined});
+    return out;
+  }
+  if (/ranking|top/.test(q)) {
+    out.intent='ranking';
+    out.ranking=data.ranking(metric,{period:hints.period||undefined,year:hints.year||undefined,limit:10});
+  }
+  return out;
+}
 
 function sanitizeHistory(history) {
   if (!Array.isArray(history)) return [];
@@ -114,7 +181,9 @@ async function openAIRequest(payload, apiKey) {
 }
 
 async function answerWithOpenAI({message,history,apiKey,model,safetyIdentifier}) {
-  const input = [...sanitizeHistory(history), {role:'user',content:String(message).slice(0,1800)}];
+  const grounded = preconsultData(message);
+  const groundText = `DATOS PRECONSULTADOS SIMECO2 (fuente de verdad):\n${JSON.stringify(grounded)}`;
+  const input = [...sanitizeHistory(history), {role:'developer',content:groundText.slice(0,18000)}, {role:'user',content:String(message).slice(0,1800)}];
   let response = await openAIRequest({
     model,
     instructions:SYSTEM_PROMPT,
@@ -153,7 +222,7 @@ async function answerWithOpenAI({message,history,apiKey,model,safetyIdentifier})
     }, apiKey);
     rounds += 1;
   }
-  return { text: extractText(response) || 'No pude construir una respuesta con los datos disponibles.', responseId:response.id, model };
+  return { text: extractText(response) || 'No pude construir una respuesta con los datos disponibles.', responseId:response.id, model, groundedIntent:grounded.intent };
 }
 
 module.exports = {TOOL_DEFS,SYSTEM_PROMPT,runTool,answerWithOpenAI};
