@@ -4,7 +4,7 @@ let TREE_CO2_KG_YEAR = 22; // kg CO2e capturados por árbol al año. Ajustable d
 const FACTOR_KEY = 'simeco2_factores_ambientales_v8';
 const STORE_KEY = 'simeco2_servicios_v16';
 const CONFIG_KEY = 'simeco2_repo_config_v7';
-const DATA_VERSION = 'v71-ubicacion-precisa-colegios-20260807';
+const DATA_VERSION = 'v72-rendimiento-busquedas-20260807';
 
 const $ = (id)=>document.getElementById(id);
 const state = loadStore();
@@ -15,6 +15,12 @@ let isScanningData = false;
 let dashboardSiteKey = "";
 const siteAutocompleteState = new Map();
 const territoryMetaCache = new WeakMap();
+const recordSearchTextCache = new WeakMap();
+const siteSearchOptionsCache = new Map();
+const autocompleteTimers = new Map();
+let recordsBySiteKeyCache = null;
+let filteredRecordsCache = {key:'',rows:null};
+let siteSearchDataRevision = 0;
 let saveTimer = 0;
 let filterTimer = 0;
 let renderFrame = 0;
@@ -241,7 +247,7 @@ function enhanceSearchableSelect(select){
   searchableSelects.set(select.id,item);
   const render=()=>renderSearchableOptions(item,input.value);
   input.addEventListener('focus',render);
-  input.addEventListener('input',render);
+  input.addEventListener('input',()=>scheduleAutocomplete(`select:${select.id}`,render,30));
   input.addEventListener('keydown',e=>handleSearchableKeydown(e,item));
   toggle.addEventListener('click',()=>{ if(list.hidden){ input.focus(); renderSearchableOptions(item,''); } else closeSearchableSelect(item); });
   list.addEventListener('mousedown',e=>{
@@ -327,6 +333,15 @@ function syncAllSearchableSelects(){
 }
 
 
+function scheduleAutocomplete(key,callback,delay=45){
+  const prev=autocompleteTimers.get(key);
+  if(prev) clearTimeout(prev);
+  autocompleteTimers.set(key,setTimeout(()=>{
+    autocompleteTimers.delete(key);
+    requestAnimationFrame(callback);
+  },delay));
+}
+
 function initSiteAutocompleteField(config){
   const input=$(config.inputId), list=$(config.listId), clear=$(config.clearId);
   if(!input || !list || !clear) return;
@@ -335,15 +350,12 @@ function initSiteAutocompleteField(config){
   input.addEventListener('input',()=>{
     stateItem.index=-1;
     clear.classList.toggle('visible',Boolean(input.value));
-    if(config.mode==='compare'){
-      $('compareSite').value='';
-      renderCompareControls({keepSite:true});
-      comparePeriods();
-    }else{
-      dashboardSiteKey='';
-      renderDashboard();
-    }
-    renderSiteAutocomplete(stateItem,input.value);
+    // Mientras se escribe solo se actualizan sugerencias; los cálculos pesados
+    // se ejecutan al seleccionar una sede o al limpiar el campo.
+    if(config.mode==='compare') $('compareSite').value='';
+    else dashboardSiteKey='';
+    const value=input.value;
+    scheduleAutocomplete(`field:${config.inputId}`,()=>renderSiteAutocomplete(stateItem,value),35);
   });
   input.addEventListener('focus',()=>renderSiteAutocomplete(stateItem,input.value));
   input.addEventListener('keydown',e=>handleSiteFieldKeydown(e,stateItem));
@@ -964,6 +976,7 @@ async function handleLocalPdf(ev){
 function addImport(result, fingerprint){
   // Sustituye la versión anterior de la misma factura para evitar duplicados y cachés mezcladas.
   state.records=(state.records||[]).filter(r=>r.source!==result.fileName);
+  invalidateSearchCaches();
   const existingKeys=new Set();
   for(const r of result.records||[]){
     if(!existingKeys.has(r.key)){ state.records.push(r); existingKeys.add(r.key); }
@@ -1229,8 +1242,35 @@ function preferredSiteName(record){
   return meta?.institutionDisplayName || meta?.displayName || record?.site || 'Sin nombre';
 }
 function siteSearchHaystack(record){
+  if(record && recordSearchTextCache.has(record)) return recordSearchTextCache.get(record);
   const meta=getTerritorySyncMeta(record) || {};
-  return loose(`${record?.site||''} ${record?.address||''} ${meta.institutionDisplayName||''} ${meta.displayName||''} ${meta.matchedName||''} ${meta.aliases||''} ${meta.institutionRole||''}`);
+  const text=loose(`${record?.site||''} ${record?.address||''} ${meta.institutionDisplayName||''} ${meta.displayName||''} ${meta.matchedName||''} ${meta.aliases||''} ${meta.institutionRole||''}`);
+  if(record && typeof record==='object') recordSearchTextCache.set(record,text);
+  return text;
+}
+function invalidateSearchCaches(){
+  siteSearchDataRevision++;
+  siteSearchOptionsCache.clear();
+  recordsBySiteKeyCache=null;
+  filteredRecordsCache={key:'',rows:null};
+}
+function recordsBySiteKey(){
+  if(recordsBySiteKeyCache) return recordsBySiteKeyCache;
+  const map=new Map();
+  for(const r of state.records||[]){
+    const key=siteKey(r.site,r.address);
+    if(!map.has(key)) map.set(key,[]);
+    map.get(key).push(r);
+  }
+  recordsBySiteKeyCache=map;
+  return map;
+}
+function searchScopeSignature(scope){
+  if(scope==='compare'||scope==='dashboard'||scope==='table'){
+    const f=territoryFilterValues(scope);
+    return `${scope}|${f.type||''}|${f.territory||''}|${f.nucleus||''}|${state.records.length}|${siteSearchDataRevision}`;
+  }
+  return `all|${state.records.length}|${siteSearchDataRevision}`;
 }
 
 function searchTokens(value){ return loose(value).split(/\s+/).filter(Boolean); }
@@ -1264,12 +1304,18 @@ function filteredRecords(){
   const q=$('siteSearch')?.value||'';
   const p=$('periodFilter')?.value||'';
   const service=$('serviceFilter')?.value||'';
-  return sortRecords(state.records.filter(r=>recordMatchesTerritory(r,territoryFilterValues('table')) && recordMatchesSearch(r,q) && (!p || r.period===p) && serviceHasValue(r,service)));
+  const tf=territoryFilterValues('table');
+  const sort=$('sortFilter')?.value||'period-desc';
+  const cacheKey=[siteSearchDataRevision,selectedSiteKey,q,p,service,tf.type||'',tf.territory||'',tf.nucleus||'',sort].join('|');
+  if(filteredRecordsCache.key===cacheKey && filteredRecordsCache.rows) return filteredRecordsCache.rows;
+  const rows=sortRecords(state.records.filter(r=>recordMatchesTerritory(r,tf) && recordMatchesSearch(r,q) && (!p || r.period===p) && serviceHasValue(r,service)));
+  filteredRecordsCache={key:cacheKey,rows};
+  return rows;
 }
-function applyFilters(immediate=false){
+function applyFilters(immediate=false,delay=120){
   clearTimeout(filterTimer);
-  const run=()=>{recordTablePage=0;renderTable();renderDashboard();renderFilterSummary();syncAllSearchableSelects();};
-  if(immediate) run(); else filterTimer=setTimeout(run,90);
+  const run=()=>requestAnimationFrame(()=>{recordTablePage=0;filteredRecordsCache={key:'',rows:null};renderTable();renderFilterSummary();syncAllSearchableSelects();});
+  if(immediate) run(); else filterTimer=setTimeout(run,delay);
 }
 function clearSiteSearch(){
   const input=$('siteSearch');
@@ -1288,31 +1334,51 @@ function clearAllFilters(){
 }
 function handleSiteSearchInput(){
   const input=$('siteSearch'); if(!input) return;
-  selectedSiteKey='';$('clearSearchBtn')?.classList.toggle('visible',Boolean(input.value));renderAutocompleteSuggestions(input.value);applyFilters();
+  selectedSiteKey='';
+  $('clearSearchBtn')?.classList.toggle('visible',Boolean(input.value));
+  const value=input.value;
+  scheduleAutocomplete('main-site-search',()=>renderAutocompleteSuggestions(value),35);
+  applyFilters(false,220);
 }
 function siteSearchOptions(scope='all'){
+  const signature=searchScopeSignature(scope);
+  const cached=siteSearchOptionsCache.get(signature);
+  if(cached) return cached;
   const map = new Map();
   const records = scope==='compare' ? territoryScopedRecords('compare') : scope==='dashboard' ? territoryScopedRecords('dashboard') : scope==='table' ? territoryScopedRecords('table') : state.records;
   for(const r of records){
     const key=siteKey(r.site,r.address);
     if(!map.has(key)){
       const syncMeta=getTerritorySyncMeta(r) || {};
-      map.set(key,{key,site:r.site||'Sin nombre',displaySite:syncMeta.institutionDisplayName||syncMeta.displayName||r.site||'Sin nombre',address:r.address||'',periods:new Set(),addresses:new Set(),invoiceSites:new Set(),meta:territoryMeta(r),searchText:siteSearchHaystack(r),invoiceSite:r.site||''});
+      const displaySite=syncMeta.institutionDisplayName||syncMeta.displayName||r.site||'Sin nombre';
+      map.set(key,{key,site:r.site||'Sin nombre',displaySite,address:r.address||'',periods:new Set(),addresses:new Set(),invoiceSites:new Set(),meta:territoryMeta(r),searchText:'',invoiceSite:r.site||''});
     }
     const item=map.get(key);
     item.periods.add(r.period);
     if(r.address) item.addresses.add(r.address);
     if(r.site) item.invoiceSites.add(r.site);
-    item.searchText=loose(`${item.searchText||''} ${siteSearchHaystack(r)}`);
+    // Evita concatenar repetidamente el mismo texto para cada periodo.
+    if(!item.searchText) item.searchText=siteSearchHaystack(r);
+    else {
+      const extra=siteSearchHaystack(r);
+      if(extra && !item.searchText.includes(extra)) item.searchText+=` ${extra}`;
+    }
   }
-  return [...map.values()].map(x=>({...x,periodCount:x.periods.size,siteCount:x.addresses.size||1,addressLabel:x.addresses.size>1?`${x.addresses.size} sedes · ${[...x.addresses].join(' / ')}`:(x.address||'Sin dirección registrada'),invoiceSiteLabel:[...x.invoiceSites].join(' / ')}));
+  const result=[...map.values()].map(x=>{
+    const siteNorm=loose(x.displaySite||x.site),addressNorm=loose(x.address),searchNorm=x.searchText||`${siteNorm} ${addressNorm}`;
+    return {...x,periodCount:x.periods.size,siteCount:x.addresses.size||1,addressLabel:x.addresses.size>1?`${x.addresses.size} sedes · ${[...x.addresses].join(' / ')}`:(x.address||'Sin dirección registrada'),invoiceSiteLabel:[...x.invoiceSites].join(' / '),_siteNorm:siteNorm,_addressNorm:addressNorm,_searchNorm:searchNorm};
+  });
+  siteSearchOptionsCache.set(signature,result);
+  return result;
 }
+
 function suggestionScore(item, query){
-  const q=loose(query), site=loose(item.displaySite||item.site), address=loose(item.address), all=item.searchText||`${site} ${address}`;
+  const q=loose(query), site=item._siteNorm||loose(item.displaySite||item.site), address=item._addressNorm||loose(item.address), all=item._searchNorm||item.searchText||`${site} ${address}`;
   if(!q) return 1;
   const tokens=searchTokens(q); if(!tokens.every(t=>all.includes(t))) return -1;
   let score=0; if(site===q) score+=1000; if(site.startsWith(q)) score+=600; if(site.includes(q)) score+=300; if(address.startsWith(q)) score+=120;
-  tokens.forEach(t=>{ if(site.split(' ').some(w=>w.startsWith(t))) score+=40; else if(site.includes(t)) score+=20; else score+=5; });
+  const words=site.split(' ');
+  tokens.forEach(t=>{ if(words.some(w=>w.startsWith(t))) score+=40; else if(site.includes(t)) score+=20; else score+=5; });
   return score;
 }
 function highlightMatch(text, query){
@@ -1334,7 +1400,7 @@ function closeAutocomplete(){
   if(box) box.hidden=true;if(input) input.setAttribute('aria-expanded','false');autocompleteIndex=-1;
 }
 function chooseSuggestion(button){
-  const item=siteSearchOptions().find(x=>x.key===button.dataset.key); if(!item) return;
+  const item=siteSearchOptions('table').find(x=>x.key===button.dataset.key); if(!item) return;
   selectedSiteKey=item.key; $('siteSearch').value=item.displaySite||item.site; $('clearSearchBtn').classList.add('visible'); closeAutocomplete(); applyFilters();
 }
 function handleSuggestionClick(e){ const btn=e.target.closest('.autocomplete-option'); if(btn) chooseSuggestion(btn); }
@@ -1374,7 +1440,7 @@ function renderFilterSummary(){
   }));
 }
 function renderAll(){
-  recalculateCo2();refreshAllTerritoryFilters();renderControls();renderCards();renderExecutiveSummary();renderProjectImpact();renderDashboard();renderDataQuality();renderTable();
+  recalculateCo2();refreshAllTerritoryFilters();renderControls();renderCards();renderExecutiveSummary();renderProjectImpact();renderDashboard();renderDataQuality();renderTable();renderRanking();
   if($('chart')) drawChart(comparisonGroups($('compareMode')?.value||'month'));
   updateHistorySourceNote();refreshSiteAutocompleteFields();
 }
@@ -1902,10 +1968,11 @@ function handleQualityActionClick(e){
 /* Dashboard ambiental por sede - v9: conserva sedes aunque falte energía */
 function dashboardRecords(){
   const q = $('dashboardSiteSearch') ? $('dashboardSiteSearch').value||'' : '';
-  const tokens=searchTokens(q);
-  return state.records.filter(r=>{
-    if(!recordMatchesTerritory(r,territoryFilterValues('dashboard'))) return false;
-    if(dashboardSiteKey) return siteKey(r.site,r.address)===dashboardSiteKey;
+  const tokens=searchTokens(q),territory=territoryFilterValues('dashboard');
+  const source=dashboardSiteKey ? (recordsBySiteKey().get(dashboardSiteKey)||[]) : state.records;
+  return source.filter(r=>{
+    if(!recordMatchesTerritory(r,territory)) return false;
+    if(dashboardSiteKey) return true;
     if(!tokens.length) return true;
     const haystack=siteSearchHaystack(r);
     return tokens.every(token=>haystack.includes(token));
@@ -2024,7 +2091,6 @@ function renderDashboard(){
   renderSiteProfile(rows);
   if(!rows.length){
     $('environmentBody').innerHTML = '<tr><td colspan="14">No hay registros de servicios públicos para mostrar. Revisa la búsqueda o los filtros.</td></tr>';
-    renderRanking();
     return;
   }
   const body = rows.map((r,i)=>{
@@ -2054,7 +2120,6 @@ function renderDashboard(){
   }).join('');
   const totalRow = `<tr class="total-row"><td colspan="4">TOTAL / DATOS DISPONIBLES</td><td>${energyRows.length?fmt(totalKwh):'—'}</td><td>${rows.some(r=>r.hasWater)?fmt(totalWater):'—'}</td><td>${rows.some(r=>r.hasAlc)?fmt(totalAlc):'—'}</td><td>${rows.some(r=>r.hasGas)?fmt(totalGas):'—'}</td><td>${rows.some(r=>r.hasWaste)?fmt(totalWaste):'—'}</td><td>${energyRows.length?fmt(totalCo2kg/1000):'—'}</td><td>${energyRows.length?fmt(totalTrees||0):'—'}</td><td>—</td><td>—</td><td>—</td></tr>`;
   $('environmentBody').innerHTML = totalRow + body;
-  renderRanking();
 }
 
 function getRankingPeriods(){
@@ -2102,7 +2167,7 @@ function renderRankingSuggestions(query=''){
   list.innerHTML=matches.length?matches.map((o,i)=>{const coverage=o.rankingHasValue?`${o.rankingPeriodCount}/${o.periodCount} periodos con ${metric.short.toLowerCase()}`:(o.rankingExternal?'Energía en contrato separado · consumo pendiente de integrar':`${o.periodCount} periodo${o.periodCount===1?'':'s'} · Sin dato de ${metric.short.toLowerCase()}`);return `<button type="button" class="autocomplete-option" role="option" data-ranking-key="${escapeHtml(o.key)}" data-ranking-index="${o.index}"><span><strong>${highlightRankingMatch(o.displaySite||o.site,query)}</strong><small>${mapAddressAction(o.address,highlightRankingMatch(o.address||'Sin dirección',query),o.displaySite||o.site)} · ${escapeHtml(coverage)}</small></span><em>${o.rankingHasValue?`Puesto ${o.index+1}`:(o.rankingExternal?'Contrato separado':'Pendiente')}</em></button>`;}).join(''):'<div class="autocomplete-empty">No se encontraron instituciones o sedes en los históricos.</div>';
   list.hidden=false;input.setAttribute('aria-expanded','true');
 }
-function handleRankingSearchInput(){rankingSelectedKey='';const value=$('rankingSiteSearch').value;$('clearRankingSearchBtn')?.classList.toggle('visible',Boolean(value));renderRankingSuggestions(value);}
+function handleRankingSearchInput(){rankingSelectedKey='';const value=$('rankingSiteSearch').value;$('clearRankingSearchBtn')?.classList.toggle('visible',Boolean(value));scheduleAutocomplete('ranking-search',()=>renderRankingSuggestions(value),30);}
 function selectRankingSuggestion(key,index){const row=rankingRowsCache[index]||rankingRowsCache.find(r=>siteKey(r.site,r.address)===key);if(!row)return;rankingSelectedKey=key;$('rankingSiteSearch').value=row.displaySite||row.site;$('clearRankingSearchBtn')?.classList.add('visible');closeRankingSuggestions();const actualIndex=rankingRowsCache.findIndex(r=>siteKey(r.site,r.address)===key);rankingPage=Math.max(0,Math.floor(actualIndex/RANKING_PAGE_SIZE));drawSiteChart(rankingRowsCache);requestAnimationFrame(()=>$('siteChart')?.scrollIntoView({behavior:'smooth',block:'center'}));}
 function handleRankingSuggestionClick(e){const map=e.target.closest('[data-map-address]');if(map){e.preventDefault();e.stopPropagation();openAddressInGoogleMaps(map.dataset.mapAddress,map.dataset.mapSchool||'');return;}const btn=e.target.closest('[data-ranking-key]');if(!btn)return;e.preventDefault();selectRankingSuggestion(btn.dataset.rankingKey,Number(btn.dataset.rankingIndex));}
 function handleRankingSearchKeydown(e){const list=$('rankingSiteSuggestions'),options=[...(list?.querySelectorAll('.autocomplete-option')||[])];if(e.key==='ArrowDown'){e.preventDefault();rankingAutocompleteIndex=Math.min(rankingAutocompleteIndex+1,options.length-1);}else if(e.key==='ArrowUp'){e.preventDefault();rankingAutocompleteIndex=Math.max(rankingAutocompleteIndex-1,0);}else if(e.key==='Enter'&&rankingAutocompleteIndex>=0&&options[rankingAutocompleteIndex]){e.preventDefault();options[rankingAutocompleteIndex].dispatchEvent(new MouseEvent('mousedown',{bubbles:true}));return;}else if(e.key==='Escape'){closeRankingSuggestions();return;}else return;options.forEach((o,i)=>o.classList.toggle('active',i===rankingAutocompleteIndex));options[rankingAutocompleteIndex]?.scrollIntoView({block:'nearest'});}
@@ -2227,7 +2292,7 @@ function renderSavingsSuggestions(query=''){
   list.innerHTML=matches.length?matches.map(o=>`<button type="button" class="autocomplete-option" role="option" data-savings-key="${escapeHtml(o.key)}" data-savings-index="${o.index}"><span><strong>${highlightRankingMatch(o.displaySite||o.site,query)}</strong><small>${mapAddressAction(o.address,highlightRankingMatch(o.address||'Sin dirección',query),o.displaySite||o.site)} · ${savingsPeriod?`${fmt(o.savingsKwh)} kWh ahorrados`:`${o.decreaseCount}/${o.comparisons.length} comparaciones a la baja`}</small></span><em>Puesto ${o.index+1}</em></button>`).join(''):'<div class="autocomplete-empty">No hay sedes con ahorro verificable para esta selección.</div>';
   list.hidden=false;input.setAttribute('aria-expanded','true');
 }
-function handleSavingsSearchInput(){savingsSelectedKey='';const value=$('savingsSiteSearch').value;$('clearSavingsSearchBtn')?.classList.toggle('visible',Boolean(value));renderSavingsSuggestions(value);}
+function handleSavingsSearchInput(){savingsSelectedKey='';const value=$('savingsSiteSearch').value;$('clearSavingsSearchBtn')?.classList.toggle('visible',Boolean(value));scheduleAutocomplete('savings-search',()=>renderSavingsSuggestions(value),30);}
 function selectSavingsSuggestion(key,index){const row=savingsRowsCache[index]||savingsRowsCache.find(r=>r.key===key);if(!row)return;savingsSelectedKey=key;$('savingsSiteSearch').value=row.displaySite||row.site;$('clearSavingsSearchBtn')?.classList.add('visible');closeSavingsSuggestions();const actualIndex=savingsRowsCache.findIndex(r=>r.key===key);savingsPage=Math.max(0,Math.floor(actualIndex/SAVINGS_PAGE_SIZE));drawSavingsChart(savingsRowsCache);requestAnimationFrame(()=>$('savingsSiteChart')?.scrollIntoView({behavior:'smooth',block:'center'}));}
 function handleSavingsSuggestionClick(e){const map=e.target.closest('[data-map-address]');if(map){e.preventDefault();e.stopPropagation();openAddressInGoogleMaps(map.dataset.mapAddress,map.dataset.mapSchool||'');return;}const btn=e.target.closest('[data-savings-key]');if(!btn)return;e.preventDefault();selectSavingsSuggestion(btn.dataset.savingsKey,Number(btn.dataset.savingsIndex));}
 function handleSavingsSearchKeydown(e){const list=$('savingsSiteSuggestions'),options=[...(list?.querySelectorAll('.autocomplete-option')||[])];if(e.key==='ArrowDown'){e.preventDefault();savingsAutocompleteIndex=Math.min(savingsAutocompleteIndex+1,options.length-1);}else if(e.key==='ArrowUp'){e.preventDefault();savingsAutocompleteIndex=Math.max(savingsAutocompleteIndex-1,0);}else if(e.key==='Enter'&&savingsAutocompleteIndex>=0&&options[savingsAutocompleteIndex]){e.preventDefault();options[savingsAutocompleteIndex].dispatchEvent(new MouseEvent('mousedown',{bubbles:true}));return;}else if(e.key==='Escape'){closeSavingsSuggestions();return;}else return;options.forEach((o,i)=>o.classList.toggle('active',i===savingsAutocompleteIndex));options[savingsAutocompleteIndex]?.scrollIntoView({block:'nearest'});}

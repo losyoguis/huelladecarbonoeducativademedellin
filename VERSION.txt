@@ -1,1 +1,1 @@
-v71 - Ubicación precisa de colegios en Google Maps
+v72 - Optimización integral de rendimiento y búsquedas

@@ -1581,3 +1581,14 @@ img{content-visibility:auto}
 @media (max-width:640px){
   .school-map-link::after{display:none}
 }
+
+/* v72 · aislamiento de repintado para búsquedas */
+.autocomplete-list,
+.institution-suggestions,
+.searchable-select-list{
+  contain:layout paint;
+}
+.autocomplete-option,
+.searchable-select-option{
+  contain:layout paint;
+}

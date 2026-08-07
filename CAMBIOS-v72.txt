@@ -1,0 +1,23 @@
+SiMeCO₂ v72 — Optimización integral de rendimiento y búsquedas
+
+OBJETIVO
+Eliminar el bloqueo al escribir en los campos de búsqueda y reducir cálculos/DOM innecesarios.
+
+MEJORAS PRINCIPALES
+- Caché de opciones de sedes por ámbito y filtros territoriales.
+- Caché WeakMap del texto normalizado de búsqueda por registro.
+- Índice rápido de registros por sede para consultas del dashboard.
+- Caché de resultados filtrados para evitar recorrer/ordenar 9.147 registros dos veces en la misma actualización.
+- Debounce no bloqueante + requestAnimationFrame en autocompletados.
+- El dashboard y la comparación ya no se recalculan en cada tecla; se actualizan al seleccionar una sede o limpiar.
+- La búsqueda general espera una pausa breve antes de filtrar la tabla.
+- Los rankings ya no se recalculan como efecto secundario de cada render del dashboard.
+- El ranking se renderiza una sola vez en renderAll y solo cuando corresponde.
+- Los selectores buscables globales usan actualización diferida.
+- Búsqueda institucional optimizada con debounce.
+- Módulo territorial optimizado para no reconstruir todo en cada pulsación.
+- Se mantiene el límite visual de sugerencias y la navegación con teclado.
+- No se modificaron los datos históricos ni los cálculos de consumo/ahorro.
+
+RESULTADO
+La pulsación de teclas queda desacoplada de los procesos pesados, por lo que el campo debe responder inmediatamente incluso con la base completa cargada.

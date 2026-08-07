@@ -53,6 +53,7 @@ for(const item of institutions.values()){
 const institutionList = [...institutions.values()].sort((a,b) => (a.displaySite||a.site).localeCompare(b.displaySite||b.site, 'es', {numeric:true}));
 let selectedKey = '';
 let suggestionIndex = -1;
+let institutionSearchTimer = 0;
 
 function unique(values) { return [...new Set(values.filter(Boolean))]; }
 function selectedInstitution() { return institutions.get(selectedKey) || null; }
@@ -208,7 +209,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   populateGlobalFilters();
   $('institutionSearchStatus').textContent = `${fmt(institutionList.length,0)} instituciones o sedes disponibles en la base de facturas.`;
-  $('institutionSearch').addEventListener('input', e => { selectedKey = ''; showSuggestions(e.target.value); });
+  $('institutionSearch').addEventListener('input', e => { selectedKey = ''; clearTimeout(institutionSearchTimer); const value=e.target.value; institutionSearchTimer=setTimeout(()=>requestAnimationFrame(()=>showSuggestions(value)),35); });
   $('institutionSearch').addEventListener('keydown', e => {
     const buttons = [...$('institutionSuggestions').querySelectorAll('button')];
     if (!buttons.length) return;

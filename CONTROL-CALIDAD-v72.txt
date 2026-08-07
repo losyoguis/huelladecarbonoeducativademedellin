@@ -1,0 +1,38 @@
+CONTROL DE CALIDAD SiMeCO₂ v72
+Fecha: 2026-08-07
+
+OBJETIVO
+Optimizar la respuesta del sistema, especialmente los campos de búsqueda/autocompletado.
+
+OPTIMIZACIONES APLICADAS
+- Caché de opciones de sedes por ámbito.
+- Caché WeakMap de textos normalizados.
+- Índice registros → sede.
+- Caché de resultados filtrados.
+- Debounce de 30–35 ms para sugerencias.
+- Filtro pesado de tabla diferido 220 ms mientras se escribe.
+- Dashboard y comparación NO se recalculan en cada tecla.
+- Ranking NO se recalcula como efecto secundario del dashboard.
+- Búsquedas de ranking y ahorro diferidas.
+- Selectores buscables diferidos.
+- Búsqueda institucional diferida.
+- Módulo territorial diferido.
+- Aislamiento de repintado CSS en listas de sugerencias.
+- Tabla principal conserva paginación de 200 registros.
+- PDF.js/PDF-Lib continúan bajo demanda.
+
+INTEGRIDAD
+- 9.147 registros.
+- 567 instituciones/sedes agrupadas.
+- 17 períodos oficiales.
+- Histórico y conciliación sin cambios.
+- Google Maps / ubicación de colegios conservada.
+- Ranking de ahorro e Índice de Gestión conservados.
+
+PRUEBAS
+- npm run check: APROBADO.
+- npm test: APROBADO, incluida prueba search-performance.
+- validar_sistema.py: APROBADO.
+- validar_historicos.py: APROBADO.
+
+RESULTADO: APROBADO.
