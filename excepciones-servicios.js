@@ -1,0 +1,38 @@
+window.SIMECO_SERVICE_EXCEPTIONS = {
+  "version": "v59-service-exceptions-20260807",
+  "generatedAt": "2026-08-07",
+  "description": "Excepciones verificadas en las que un servicio no aparece en el consolidado educativo porque se gestiona mediante una fuente o contrato separado. Estas excepciones no aportan consumos hasta que exista una serie de datos verificable.",
+  "exceptions": [
+    {
+      "key": "inem j f de rpo|cr 48 cl 1 125",
+      "site": "Inem J F De Rpo",
+      "displayName": "I.E. INEM José Félix de Restrepo",
+      "address": "Cr 48 Cl 1 -125",
+      "service": "energyKwh",
+      "status": "external_contract",
+      "label": "Energía en contrato separado",
+      "shortLabel": "Contrato separado",
+      "confidence": "Alta",
+      "summary": "La energía eléctrica del INEM no forma parte del consolidado de facturas educativas analizado. El Distrito de Medellín identifica esta sede como punto de suministro de energía para usuario no regulado mediante contratación separada.",
+      "dataState": "Consumo pendiente de integrar desde la fuente del contrato de usuario no regulado",
+      "zeroMeaning": false,
+      "evidence": [
+        {
+          "type": "official",
+          "title": "Gaceta Oficial de Medellín Nº 5274",
+          "date": "2023-12-15",
+          "url": "https://www.medellin.gov.co/es/wp-content/uploads/2025/04/Gaceta-Oficial-5274.pdf",
+          "detail": "La necesidad 50552 define un contrato para suministrar energía y potencia eléctrica al Distrito como usuario no regulado e incluye expresamente a la Institución Educativa INEM José Félix de Restrepo, Carrera 48 Nº 1-125."
+        },
+        {
+          "type": "secop_mirror",
+          "title": "Proceso de contratación de energía del Distrito de Medellín · 2026",
+          "date": "2026-06-24",
+          "url": "https://colombialicita.com/licitacion/305842497",
+          "detail": "El proceso 2026 para usuario no regulado relaciona el documento 'CDP 4000125207 Educación INEM.pdf', corroborando que la sede continúa siendo atendida por una contratación eléctrica separada."
+        }
+      ],
+      "recommendedAction": "Solicitar o incorporar la facturación/medición del contrato de usuario no regulado correspondiente al INEM. Hasta entonces, no calcular kWh, CO₂e, árboles ni posición en el ranking energético para esta sede."
+    }
+  ]
+};
