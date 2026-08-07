@@ -8,10 +8,11 @@ module.exports = async function handler(req,res) {
   const apiKey = process.env.OPENAI_API_KEY;
   const model = process.env.OPENAI_MODEL || 'gpt-5-mini';
   const probe = String(req.query?.probe || '') === '1';
+  res.setHeader('Cache-Control', probe ? 'no-store' : 'public, s-maxage=60, stale-while-revalidate=300');
   const payload = {
     ok:true,
     service:'SiMeCO2 API',
-    version:'v64-function-schema-fix-20260807',
+    version:'v65-rendimiento-consultas-20260807',
     aiConfigured:Boolean(apiKey),
     model,
     records:data.records.length,
