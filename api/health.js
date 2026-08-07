@@ -6,12 +6,12 @@ module.exports = async function handler(req,res) {
   if (!enforceOrigin(req,res)) return;
   if (req.method !== 'GET') return res.status(405).json({error:'Usa GET.'});
   const apiKey = process.env.OPENAI_API_KEY;
-  const model = process.env.OPENAI_MODEL || 'gpt-5.6-terra';
+  const model = process.env.OPENAI_MODEL || 'gpt-5-mini';
   const probe = String(req.query?.probe || '') === '1';
   const payload = {
     ok:true,
     service:'SiMeCO2 API',
-    version:'v62-grounded-assistant-20260807',
+    version:'v63-api-model-fix-20260807',
     aiConfigured:Boolean(apiKey),
     model,
     records:data.records.length,
