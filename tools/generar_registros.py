@@ -333,13 +333,37 @@ def main() -> None:
         "records": records,
     }
     (DATA / "registros.json").write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
-    compact = json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
+    # Compatibilidad histórica: conserva el bundle completo, aunque la web v65 usa el compacto.
+    compact_legacy = json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
     (DATA / "registros.js").write_text(
-        "window.SIMECO_PRELOADED_BUNDLE = " + compact + ";\n" +
+        "window.SIMECO_PRELOADED_BUNDLE = " + compact_legacy + ";\n" +
         "window.SIMECO_REGISTROS = window.SIMECO_PRELOADED_BUNDLE.records;\n",
         encoding="utf-8",
     )
-    print(f"Generados {len(records):,} registros detallados.")
+
+    # v65: diccionarios para campos repetidos. Reduce notablemente transferencia y parseo.
+    dict_columns = ["period", "site", "address", "source", "sourceUrl", "type"]
+    dictionaries = {col: list(dict.fromkeys(row.get(col) for row in records)) for col in dict_columns}
+    indexes = {col: {value: idx for idx, value in enumerate(values)} for col, values in dictionaries.items()}
+    all_columns = list(dict.fromkeys(col for row in records for col in row.keys()))
+    other_columns = [col for col in all_columns if col not in dict_columns]
+    columns = dict_columns + other_columns
+    rows = [
+        [*(indexes[col][row.get(col)] for col in dict_columns), *(row.get(col) for col in other_columns)]
+        for row in records
+    ]
+    compact_payload = {"version":"v65-compact","dictColumns":dict_columns,"d":dictionaries,"c":columns,"r":rows}
+    (DATA / "registros.compact.json").write_text(json.dumps(compact_payload, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+    compact_js = json.dumps({"d":dictionaries,"c":columns,"r":rows}, ensure_ascii=False, separators=(",", ":"))
+    decoder = (
+        "/* SiMeCO2 v65 · registros compactos */\n"
+        "(()=>{'use strict';const P=" + compact_js + ",D=P.d,C=P.c,N=" + str(len(dict_columns)) + ";"
+        "const R=P.r.map(a=>{const o={};for(let i=0;i<C.length;i++){const k=C[i];o[k]=i<N?D[k][a[i]]:a[i];}return o;});"
+        "window.SIMECO_PRELOADED_BUNDLE={version:'v65-compact-20260807',generatedFrom:'facturas PDF verificadas',records:R};"
+        "window.SIMECO_REGISTROS=R;})();\n"
+    )
+    (DATA / "registros.compact.js").write_text(decoder, encoding="utf-8")
+    print(f"Generados {len(records):,} registros detallados y bundles compactos v65.")
 
 
 if __name__ == "__main__":
