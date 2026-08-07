@@ -1,3 +1,10 @@
+## Actualización v67 — Identificación por dirección en rankings
+
+- El ranking de consumo muestra cada I.E./sede junto a su dirección.
+- El ranking de ahorro muestra cada I.E./sede junto a su dirección.
+- La dirección se presenta en una cápsula visual contigua al nombre para diferenciar sedes con nombres similares.
+- Se conserva búsqueda, filtros, paginación, tratamiento de datos faltantes y cálculo de ahorro de v66.
+
 ## Actualización v66 — Ranking de ahorro eléctrico
 
 Se incorpora un segundo ranking debajo del ranking de consumo. Este nuevo módulo reconoce las sedes que disminuyen su energía mes a mes, permite seleccionar un periodo y compara únicamente contra el mes calendario anterior cuando ambos poseen una lectura válida. La tendencia general resume el ahorro neto y la constancia de las disminuciones sin inventar comparaciones a través de meses faltantes.

@@ -1,0 +1,8 @@
+SiMeCO₂ v67 · Identificación por dirección en rankings · 2026-08-07
+
+CAMBIOS
+- Ranking de sedes por servicio: cada fila muestra nombre de la institución/sede y dirección en una sección visual contigua.
+- Ranking de ahorro eléctrico: cada fila muestra nombre de la institución/sede y dirección en una sección visual contigua.
+- Las tarjetas de extremos (mayor/menor consumo y mayor ahorro/constancia) incluyen también dirección.
+- Se conserva la búsqueda por nombre/dirección, paginación, filtros por mes y reglas de datos faltantes.
+- Se conserva intacta la base de datos y la lógica de v66.

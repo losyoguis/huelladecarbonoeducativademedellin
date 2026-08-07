@@ -1467,3 +1467,9 @@ img{content-visibility:auto}
 #savingsSiteChart{display:block;height:auto;margin-top:18px;max-height:460px}
 @media(max-width:900px){.savings-filter-bar{grid-template-columns:1fr 1fr}.savings-filter-bar .ranking-refresh-btn{grid-column:1/-1;width:100%}}
 @media(max-width:620px){.savings-filter-bar{grid-template-columns:1fr}.savings-filter-bar .ranking-refresh-btn{grid-column:auto}.savings-legend{align-items:flex-start;flex-direction:column}}
+
+/* v67 · Nombre + dirección visibles en los dos rankings */
+.environmental-ranking-chart{overflow-x:auto;-webkit-overflow-scrolling:touch}
+#siteChart,#savingsSiteChart{min-width:1100px}
+.ranking-extremes small{line-height:1.4;overflow-wrap:anywhere}
+@media(max-width:1180px){#siteChart,#savingsSiteChart{min-width:1100px}}

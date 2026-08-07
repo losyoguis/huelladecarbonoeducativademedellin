@@ -1,0 +1,9 @@
+CONTROL DE CALIDAD SiMeCO₂ v67 — Dirección visible en rankings
+
+Validar antes de despliegue:
+1. npm run check
+2. npm test
+3. python tools/validar_sistema.py
+4. python tools/validar_historicos.py
+
+Criterio visual v67: los dos rankings deben mostrar, en cada fila, nombre + dirección + barra + valor.
