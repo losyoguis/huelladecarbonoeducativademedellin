@@ -1,0 +1,20 @@
+SiMeCO₂ v61 · API + Asistente Ambiental IA
+Fecha: 07/08/2026
+
+NUEVO
+- API propia de SiMeCO₂ con endpoints de salud, instituciones, ficha, histórico, ranking, calidad y comparación.
+- Endpoint POST /api/chat conectado a OpenAI Responses API mediante function calling.
+- Herramientas internas para que la IA consulte los datos estructurados antes de responder cifras.
+- Integración del Asistente Ambiental existente con la API, conservando fallback local.
+- Indicador visible: IA conectada / Consultando / Modo local.
+- Configuración pública separada en assistant-config.js; no contiene secretos.
+- Backend sin dependencias npm externas; usa Node >=20 y fetch nativo.
+- Preparación para despliegue serverless en Vercel.
+- Control de origen CORS, límite básico de solicitudes por IP, límite de longitud y safety_identifier seudónimo.
+- Pruebas automáticas de datos y endpoints.
+
+REGLAS DE INTEGRIDAD
+- null nunca se convierte en 0.
+- INEM conserva el estado energia_contrato_separado; no se generan kWh/CO₂e ficticios.
+- Fe y Alegría Santo Domingo Savio conserva la agrupación de dos sedes y sus totales verificados.
+- Los datos numéricos provienen de los JSON de SiMeCO₂; la IA solo interpreta resultados de herramientas.

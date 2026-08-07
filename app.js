@@ -2,9 +2,9 @@
 let FACTOR_CO2_KG_KWH = 0.126; // kg CO2e/kWh. Ajustable desde el dashboard.
 let TREE_CO2_KG_YEAR = 22; // kg CO2e capturados por árbol al año. Ajustable desde el dashboard.
 const FACTOR_KEY = 'simeco2_factores_ambientales_v8';
-const STORE_KEY = 'simeco2_servicios_v13';
+const STORE_KEY = 'simeco2_servicios_v14';
 const CONFIG_KEY = 'simeco2_repo_config_v7';
-const DATA_VERSION = 'v60-institution-groups-20260807';
+const DATA_VERSION = 'v61-api-assistant-20260807';
 
 const $ = (id)=>document.getElementById(id);
 const state = loadStore();

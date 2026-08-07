@@ -1,10 +1,11 @@
-/* Asistente Ambiental SiMeCO2 v52 — funcionamiento local, periodos validados y seguro */
+/* Asistente Ambiental SiMeCO2 v61 — OpenAI API con fallback local seguro */
 (() => {
   'use strict';
 
   const ui = {};
   const history = [];
-  const MAX_HISTORY = 24;
+  const MAX_HISTORY = 16;
+  const config = window.SIMECO_ASSISTANT_CONFIG || {};
   const monthMap = {
     enero:'01', febrero:'02', marzo:'03', abril:'04', mayo:'05', junio:'06',
     julio:'07', agosto:'08', septiembre:'09', setiembre:'09', octubre:'10', noviembre:'11', diciembre:'12'
@@ -18,7 +19,19 @@
   const format = value => new Intl.NumberFormat('es-CO', { maximumFractionDigits: 2 }).format(number(value));
   const escape = value => String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
   const records = () => (typeof state !== 'undefined' && Array.isArray(state.records)) ? state.records : [];
-  const siteId = record => normalize(`${record.site || ''}|${record.address || ''}`);
+  const assistantMeta = record => {
+    try{ if(typeof getTerritorySyncMeta === 'function') return getTerritorySyncMeta(record) || {}; }catch{}
+    return {};
+  };
+  const siteId = record => {
+    const meta=assistantMeta(record);
+    return meta.institutionGroupId ? `institution:${normalize(meta.institutionGroupId)}` : normalize(`${record.site || ''}|${record.address || ''}`);
+  };
+  const assistantEnergyException = record => {
+    const list=Array.isArray(window.SIMECO_SERVICE_EXCEPTIONS?.exceptions) ? window.SIMECO_SERVICE_EXCEPTIONS.exceptions : [];
+    const key=normalize(`${record.site || ''}|${record.address || ''}`);
+    return list.find(ex=>ex.service==='energyKwh' && normalize(ex.key||`${ex.site||''}|${ex.address||''}`)===key) || null;
+  };
 
   function periodFromQuestion(question){
     const q = normalize(question);
@@ -44,16 +57,19 @@
     list.forEach(record => {
       const key = siteId(record);
       if(!key) return;
-      if(!map.has(key)) map.set(key, { key, site:record.site || 'Sede sin nombre', address:record.address || '', energy:0, water:0, co2:0, waste:0, periods:new Set(), rows:0 });
+      const meta=assistantMeta(record);
+      if(!map.has(key)) map.set(key, { key, site:meta.institutionDisplayName || meta.displayName || meta.matchedName || record.site || 'Sede sin nombre', address:record.address || '', searchText:'', energy:0, water:0, co2:0, waste:0, energyAvailable:false, waterAvailable:false, energyException:null, periods:new Set(), rows:0 });
       const item = map.get(key);
-      item.energy += number(record.energyKwh);
-      item.water += number(record.waterM3);
-      item.co2 += number(record.co2kg);
+      item.searchText += ` ${record.site||''} ${record.address||''} ${meta.displayName||''} ${meta.institutionDisplayName||''} ${meta.matchedName||''} ${meta.aliases||''}`;
+      if(record.energyKwh!==null && record.energyKwh!==undefined && record.energyKwh!==''){ item.energy += number(record.energyKwh); item.energyAvailable=true; }
+      if(record.waterM3!==null && record.waterM3!==undefined && record.waterM3!==''){ item.water += number(record.waterM3); item.waterAvailable=true; }
+      if(record.co2kg!==null && record.co2kg!==undefined && record.co2kg!=='') item.co2 += number(record.co2kg);
       item.waste += number(record.wasteTon);
+      item.energyException = item.energyException || assistantEnergyException(record);
       if(record.period) item.periods.add(record.period);
       item.rows += 1;
     });
-    return [...map.values()].map(item => ({...item, periodCount:item.periods.size, avg:item.periods.size ? item.energy/item.periods.size : item.energy})).sort((a,b)=>b.energy-a.energy);
+    return [...map.values()].map(item => ({...item, energy:item.energyAvailable?item.energy:null, water:item.waterAvailable?item.water:null, co2:item.energyAvailable?item.co2:null, periodCount:item.periods.size, avg:item.energyAvailable && item.periods.size ? item.energy/item.periods.size : null})).sort((a,b)=>(b.energy??-1)-(a.energy??-1));
   }
 
   function fuzzyScore(text, query){
@@ -84,7 +100,7 @@
       .replace(/\b20\d{2}\b/g,' ')
       .split(/\s+/).filter(token=>token.length>=3).join(' ').trim();
     if(!q) return null;
-    const candidates = items.map(item => ({item, score:Math.max(fuzzyScore(item.site,q), fuzzyScore(`${item.site} ${item.address}`,q))})).sort((a,b)=>b.score-a.score);
+    const candidates = items.map(item => ({item, score:Math.max(fuzzyScore(item.site,q), fuzzyScore(`${item.site} ${item.address} ${item.searchText||''}`,q))})).sort((a,b)=>b.score-a.score);
     return candidates[0]?.score >= 80 ? candidates[0].item : null;
   }
 
@@ -156,6 +172,11 @@
       const rows = scope.filter(record => siteId(record) === site.key);
       const summary = aggregate(rows)[0] || site;
       const priority = priorityFor(summary.avg);
+      if(summary.energy===null){
+        const status=summary.energyException ? `La energía está marcada como **${summary.energyException.label||'contrato separado'}**: ${summary.energyException.dataState||summary.energyException.summary||'consumo aún no integrado'}.` : 'La energía no está identificada en los datos disponibles; esto no significa 0 kWh.';
+        if(/(agua|acueducto)/.test(q)) return `${period ? `En ${readablePeriod(period)}, ` : ''}**${summary.site}** registra ${format(summary.water)} m³ de agua. ${status}`;
+        return `Para **${summary.site}**, ${status} ${summary.water!==null?`El sistema sí registra ${format(summary.water)} m³ de agua en el alcance consultado.`:''}`;
+      }
       if(/(prioridad|clasificacion|nivel)/.test(q)) return `La clasificación de **${summary.site}** es **${priority.short || priority.level}**, con un promedio aproximado de ${format(summary.avg)} kWh por periodo.`;
       if(/(agua|acueducto)/.test(q)) return `${period ? `En ${readablePeriod(period)}, ` : ''}**${summary.site}** registra ${format(summary.water)} m³ de agua en los datos disponibles.`;
       if(/(emision|co2|huella)/.test(q)) return `${period ? `En ${readablePeriod(period)}, ` : ''}**${summary.site}** registra una huella estimada de ${format(summary.co2/1000)} t CO₂e asociada al consumo eléctrico.`;
@@ -172,7 +193,72 @@
   }
 
   function markdownLite(text){
-    return escape(text).replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
+    let html = escape(text)
+      .replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')
+      .replace(/`([^`]+)`/g,'<code>$1</code>')
+      .replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>');
+    return html.replace(/\n/g,'<br>');
+  }
+
+  function resolvedApiUrl(){
+    const override = localStorage.getItem('simeco2_assistant_api_url');
+    if(override) return override;
+    if(config.apiUrl) return String(config.apiUrl).trim();
+    if(/vercel\.app$/i.test(location.hostname) || location.hostname==='localhost' || location.hostname==='127.0.0.1') return '/api/chat';
+    return '';
+  }
+
+  function assistantSessionId(){
+    const key='simeco2_assistant_session_v61';
+    let id=localStorage.getItem(key);
+    if(!id){ id=(window.crypto?.randomUUID?.() || `simeco-${Date.now()}-${Math.random().toString(36).slice(2)}`); localStorage.setItem(key,id); }
+    return id;
+  }
+
+  function setAssistantStatus(mode, detail=''){
+    const badge=document.getElementById('simecoAssistantStatus');
+    if(!badge) return;
+    badge.dataset.mode=mode;
+    if(mode==='ai') badge.textContent='IA conectada';
+    else if(mode==='checking') badge.textContent='Consultando…';
+    else if(mode==='error') badge.textContent='Modo local';
+    else badge.textContent='Modo local';
+    badge.title=detail || (mode==='ai'?'Respuestas con OpenAI + datos SiMeCO₂':'Respuestas básicas desde el navegador');
+  }
+
+  async function probeApi(){
+    const apiUrl=resolvedApiUrl();
+    if(!config.preferAI || !apiUrl){ setAssistantStatus('local','API de IA no configurada en el cliente.'); return; }
+    const healthUrl=apiUrl.replace(/\/chat(?:\?.*)?$/,'/health');
+    try{
+      setAssistantStatus('checking','Verificando conexión con el servidor.');
+      const response=await fetch(healthUrl,{method:'GET',cache:'no-store'});
+      const payload=await response.json().catch(()=>({}));
+      if(!response.ok) throw new Error(payload?.error||`API ${response.status}`);
+      if(payload.aiConfigured) setAssistantStatus('ai',`API SiMeCO₂ ${payload.version||''} · ${payload.model||'OpenAI'}`);
+      else setAssistantStatus('error','La API de datos está disponible, pero OPENAI_API_KEY no está configurada.');
+    }catch(error){ setAssistantStatus('error',error?.message||'API no disponible'); }
+  }
+
+  async function apiAnswer(question){
+    const apiUrl=resolvedApiUrl();
+    if(!config.preferAI || !apiUrl) return null;
+    const controller=new AbortController();
+    const timer=setTimeout(()=>controller.abort(), Number(config.timeoutMs)||30000);
+    try{
+      setAssistantStatus('checking');
+      const prior=history.slice(0,-1).slice(-8).map(item=>({role:item.role,text:item.text}));
+      const response=await fetch(apiUrl,{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({message:question,history:prior,sessionId:assistantSessionId()}),
+        signal:controller.signal
+      });
+      const payload=await response.json().catch(()=>({}));
+      if(!response.ok || !payload?.text) throw new Error(payload?.error || `API ${response.status}`);
+      setAssistantStatus('ai',`Modelo: ${payload.model||'OpenAI'}`);
+      return payload.text;
+    } finally { clearTimeout(timer); }
   }
 
   function addMessage(role, text){
@@ -185,9 +271,9 @@
     if(history.length > MAX_HISTORY) history.shift();
   }
 
-  function sendQuestion(text){
+  async function sendQuestion(text){
     const question = String(text || '').trim();
-    if(!question) return;
+    if(!question || ui.send.disabled) return;
     addMessage('user', question);
     ui.input.value = '';
     ui.send.disabled = true;
@@ -196,12 +282,24 @@
     typing.innerHTML = '<div><span></span><span></span><span></span></div>';
     ui.messages.appendChild(typing);
     ui.messages.scrollTop = ui.messages.scrollHeight;
-    setTimeout(() => {
+    try{
+      let responseText=null;
+      try{ responseText=await apiAnswer(question); }
+      catch(error){
+        console.warn('Asistente IA no disponible; se usa respuesta local.',error);
+        setAssistantStatus('error',error?.message||'API no disponible');
+      }
+      if(!responseText) responseText=answer(question);
       typing.remove();
-      addMessage('assistant', answer(question));
+      addMessage('assistant', responseText);
+    }catch(error){
+      typing.remove();
+      addMessage('assistant','No pude completar la consulta. Intenta nuevamente o usa los módulos de Histórico, Ranking y Búsqueda Institucional.');
+      setAssistantStatus('error',error?.message||'Error');
+    }finally{
       ui.send.disabled = false;
       ui.input.focus();
-    }, 260);
+    }
   }
 
   function openAssistant(open = true){
@@ -231,7 +329,8 @@
     ui.form.addEventListener('submit',event=>{event.preventDefault();sendQuestion(ui.input.value);});
     document.querySelectorAll('[data-assistant-question]').forEach(button=>button.addEventListener('click',()=>sendQuestion(button.dataset.assistantQuestion)));
     document.addEventListener('keydown',event=>{if(event.key==='Escape' && ui.panel.classList.contains('open')) openAssistant(false);});
-    addMessage('assistant','Hola. Soy el Asistente Ambiental SiMeCO₂. Puedo responder usando los datos reales cargados en esta plataforma.');
+    addMessage('assistant','Hola. Soy el Asistente Ambiental SiMeCO₂. Puedo consultar los datos reales del proyecto y, cuando la API esté configurada, generar informes, comparaciones, históricos y análisis con IA.');
+    probeApi();
   }
 
   document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded',init) : init();

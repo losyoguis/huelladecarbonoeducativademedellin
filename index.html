@@ -549,7 +549,7 @@
       <header class="simeco-assistant-header">
         <div>
           <span class="simeco-assistant-avatar" aria-hidden="true">🌱</span>
-          <div><strong>Asistente Ambiental</strong><small>Consulta los datos de SiMeCO₂</small></div>
+          <div><strong>Asistente Ambiental</strong><small>Consulta los datos de SiMeCO₂</small><span id="simecoAssistantStatus" class="simeco-assistant-status" data-mode="local">Modo local</span></div>
         </div>
         <div class="simeco-assistant-header-actions">
           <button id="simecoAssistantReset" type="button" title="Nueva conversación" aria-label="Nueva conversación">↻</button>
@@ -558,10 +558,10 @@
       </header>
       <div id="simecoAssistantMessages" class="simeco-assistant-messages" aria-live="polite"></div>
       <div class="simeco-assistant-suggestions" aria-label="Preguntas sugeridas">
-        <button type="button" data-assistant-question="¿Qué sede consume más?">Mayor consumo</button>
-        <button type="button" data-assistant-question="Muéstrame el top 10">Top 10</button>
-        <button type="button" data-assistant-question="¿Qué significa alcance 2?">Alcance 2</button>
-        <button type="button" data-assistant-question="¿Cómo se calcula la huella de carbono?">Cálculo CO₂e</button>
+        <button type="button" data-assistant-question="Dame un informe de Fe y Alegría Santo Domingo Savio">Informe I.E.</button>
+        <button type="button" data-assistant-question="¿Qué instituciones tienen problemas de calidad de datos?">Calidad de datos</button>
+        <button type="button" data-assistant-question="Muéstrame el top 10 de energía en julio de 2026">Top 10</button>
+        <button type="button" data-assistant-question="¿Por qué el INEM no tiene energía en el ranking?">Caso INEM</button>
       </div>
       <form id="simecoAssistantForm" class="simeco-assistant-form">
         <label class="sr-only" for="simecoAssistantInput">Escribe tu pregunta</label>
@@ -635,7 +635,8 @@
   <script defer src="data/sincronizacion-territorial.js?v=60-territorios"></script>
   <script defer src="data/excepciones-servicios.js?v=60-instituciones"></script>
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-  <script defer src="app.js?v=60-instituciones"></script>
-  <script defer src="assistant.js?v=58-calidad-multiservicio"></script>
+  <script defer src="app.js?v=61-api-asistente"></script>
+  <script defer src="assistant-config.js?v=61-api"></script>
+  <script defer src="assistant.js?v=61-api"></script>
 </body>
 </html>

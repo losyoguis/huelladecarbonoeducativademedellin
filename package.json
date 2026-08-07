@@ -1,0 +1,13 @@
+{
+  "name": "simeco2-v61-api-asistente",
+  "version": "61.0.0",
+  "private": true,
+  "description": "SiMeCO2 v61: API de datos y Asistente Ambiental con OpenAI Responses API",
+  "scripts": {
+    "test": "node tests/api-data.test.js && node tests/api-handlers.test.js",
+    "check": "node --check api/chat.js && node --check api/health.js && node --check api/institutions.js && node --check api/institution.js && node --check api/history.js && node --check api/ranking.js && node --check api/quality.js && node --check api/compare.js && node --check api/_lib/simeco-data.js && node --check api/_lib/assistant-core.js && node --check assistant.js"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

@@ -1437,3 +1437,12 @@ img{content-visibility:auto}
 .institution-external-note{display:block;margin-top:10px;padding:10px 12px;border-radius:12px;background:#f3f8ff;border:1px solid #9fc0e8}
 .institution-external-note a{margin-left:6px}
 @media(max-width:760px){.evidence-links{flex-direction:column}.evidence-links .secondary,.evidence-links a{width:100%;text-align:center}}
+
+/* v61 · Estado del Asistente Ambiental conectado a API */
+.simeco-assistant-status{display:inline-flex;align-items:center;gap:5px;margin-top:5px;padding:3px 7px;border:1px solid rgba(255,255,255,.28);border-radius:999px;background:rgba(255,255,255,.11);color:#eafff9;font-size:.62rem;font-weight:800;letter-spacing:.01em}
+.simeco-assistant-status::before{content:'';width:6px;height:6px;border-radius:50%;background:#cbd5d1}
+.simeco-assistant-status[data-mode="ai"]::before{background:#7fffc7;box-shadow:0 0 0 3px rgba(127,255,199,.16)}
+.simeco-assistant-status[data-mode="checking"]::before{background:#ffe18a;animation:simecoStatusPulse 1s infinite ease-in-out}
+.simeco-assistant-status[data-mode="error"]::before{background:#ffd0a8}
+.simeco-assistant-message a{color:#08745c;font-weight:800;text-decoration:underline;text-underline-offset:2px}.simeco-assistant-message.user a{color:#fff}.simeco-assistant-message code{padding:1px 4px;border-radius:5px;background:#edf5f2;font-size:.82em}
+@keyframes simecoStatusPulse{50%{opacity:.35;transform:scale(.8)}}

@@ -1,3 +1,3 @@
-SiMeCO₂ v60 · Agrupación institucional por sedes
-Fecha: 2026-08-07
-Base: v59
+SiMeCO₂ v61
+API propia + Asistente Ambiental IA
+07/08/2026

@@ -191,3 +191,9 @@ La entrega fue sometida a validación estática, estructural, sintáctica, docum
 ## v59 · Contratos separados y trazabilidad energética
 
 SiMeCO₂ distingue ahora tres estados eléctricos diferentes: consumo medido, energía no identificada y energía gestionada mediante contrato separado. La primera excepción verificada es la I.E. INEM José Félix de Restrepo (Cr 48 Cl 1 -125): el consolidado educativo contiene otros servicios, mientras la documentación pública del Distrito identifica la sede dentro del suministro de energía para usuario no regulado. La plataforma no asigna 0 kWh ni calcula CO₂e/ranking energético hasta incorporar una serie eléctrica verificable de esa fuente.
+
+## v61 · API y Asistente Ambiental IA
+
+La v61 añade una API serverless en `/api` y conecta el widget **Asistente Ambiental** con OpenAI mediante function calling. La clave de OpenAI permanece en el servidor. Si la API no está configurada o falla, el asistente vuelve automáticamente al modo local básico.
+
+Consulta `API-SIMECO2-v61.md` e `INSTRUCCIONES-DESPLIEGUE-v61.txt` antes de publicar.

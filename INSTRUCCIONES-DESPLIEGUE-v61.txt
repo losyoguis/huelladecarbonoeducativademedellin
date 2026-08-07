@@ -1,0 +1,39 @@
+SiMeCO₂ v61 · Despliegue del Asistente Ambiental
+=================================================
+
+OPCIÓN RECOMENDADA: PUBLICAR TODO EN VERCEL
+--------------------------------------------
+1. Sube el contenido completo de esta carpeta a un repositorio de GitHub.
+2. En Vercel: Add New > Project > importa ese repositorio.
+3. No necesitas comando de compilación. El sitio es estático y `/api/*` se ejecuta como funciones Node.
+4. En Project Settings > Environment Variables crea:
+   OPENAI_API_KEY = tu clave (solo en Vercel, nunca en archivos del repositorio)
+   OPENAI_MODEL = gpt-5.6-terra
+   SIMECO_MAX_REQUESTS_PER_MINUTE = 12
+5. Si frontend y API están en el mismo dominio de Vercel, `assistant-config.js` puede quedar con apiUrl vacío.
+6. Publica y prueba primero `/api/health`. Debe devolver `ok: true` y `aiConfigured: true`.
+7. Abre el sitio y prueba:
+   "Dame un informe de Fe y Alegría Santo Domingo Savio"
+   "¿Por qué el INEM no aparece en el ranking de energía?"
+8. Si lo incrustas en Google Sites, inserta la URL pública del sitio Vercel.
+
+OPCIÓN 2: CONSERVAR GITHUB PAGES COMO FRONTEND
+----------------------------------------------
+1. Publica el backend v61 en Vercel.
+2. En `assistant-config.js` coloca la URL completa:
+   apiUrl: 'https://TU-PROYECTO.vercel.app/api/chat'
+3. En Vercel configura `SIMECO_ALLOWED_ORIGINS` con el origen exacto de GitHub Pages, por ejemplo:
+   https://usuario.github.io
+4. Vuelve a publicar el frontend.
+5. No uses `https://sites.google.com` como único origen si el iframe realmente carga GitHub Pages: el fetch se origina desde GitHub Pages.
+
+SEGURIDAD
+---------
+- Nunca publiques OPENAI_API_KEY en GitHub.
+- La API de chat limita longitud de preguntas y aplica un límite básico por IP.
+- Para producción con tráfico alto conviene reemplazar el rate limit en memoria por Upstash/Redis, Cloudflare o el mecanismo del proveedor.
+- Configura `SIMECO_ALLOWED_ORIGINS`; no uses `*` para el chat en producción.
+
+MODO DE CONTINGENCIA
+--------------------
+Si la API o OpenAI no responden, el widget conserva el asistente local anterior para consultas básicas. El indicador superior cambia a "Modo local". Así el sitio no queda inutilizable por una caída externa.
