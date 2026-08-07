@@ -1548,3 +1548,36 @@ img{content-visibility:auto}
 @media (max-width:720px){
   .map-address{white-space:normal;overflow-wrap:anywhere}
 }
+
+
+/* v71 · Ubicación precisa de colegios */
+.school-map-link,
+.school-map-action{
+  position:relative;
+}
+.school-map-link::after{
+  content:"Ver ubicación";
+  display:inline-block;
+  margin-left:.35rem;
+  padding:.08rem .38rem;
+  border-radius:999px;
+  background:rgba(8,118,94,.09);
+  color:#08765e;
+  font-size:.72em;
+  font-weight:700;
+  vertical-align:middle;
+}
+.school-map-action{
+  cursor:pointer;
+  color:#08765e;
+  font-weight:650;
+  border-bottom:1px dashed rgba(8,118,94,.42);
+}
+.school-map-action:hover,
+.school-map-action:focus-visible{
+  color:#045c49;
+  border-bottom-color:#045c49;
+}
+@media (max-width:640px){
+  .school-map-link::after{display:none}
+}

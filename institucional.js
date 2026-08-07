@@ -3,15 +3,17 @@
 const $ = id => document.getElementById(id);
 const norm = value => String(value ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
 const esc = value => String(value ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
-const mapsUrl = address => {
+const mapsUrl = (address,schoolName='') => {
   const raw=String(address||'').replace(/^\s*\d+\s+sedes:\s*/i,'').trim();
+  const school=String(schoolName||'').replace(/\s+/g,' ').trim();
   if(!raw || /sin direcci[oó]n/i.test(raw)) return '';
-  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${raw}, Medellín, Antioquia, Colombia`)}`;
+  const query=[school,raw,'Medellín','Antioquia','Colombia'].filter(Boolean).join(', ');
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
 };
-const mapLink = (address,label) => {
-  const raw=String(address||'').trim(), text=String(label||raw||'Sin dirección registrada');
-  const url=mapsUrl(raw);
-  return url ? `<a class="map-address" href="${esc(url)}" target="_blank" rel="noopener noreferrer" title="Abrir esta dirección en Google Maps">📍 ${esc(text)}</a>` : `<span class="map-address-unavailable">${esc(text)}</span>`;
+const mapLink = (address,label,schoolName='') => {
+  const raw=String(address||'').trim(), text=String(label||raw||'Sin dirección registrada'), school=String(schoolName||'').trim();
+  const url=mapsUrl(raw,school);
+  return url ? `<a class="map-address school-map-link" href="${esc(url)}" target="_blank" rel="noopener noreferrer" title="Abrir ubicación del colegio en Google Maps">🏫 ${esc(text)}</a>` : `<span class="map-address-unavailable">${esc(text)}</span>`;
 };
 const number = value => Number.isFinite(Number(value)) ? Number(value) : 0;
 const nullableNumber = value => (value === null || value === undefined || value === '') ? null : (Number.isFinite(Number(value)) ? Number(value) : null);
@@ -77,7 +79,7 @@ function showSuggestions(query) {
     const memberText=item.records.map(r=>{const m=metaOf(r);return `${r.site} ${r.address||''} ${m.displayName||''} ${m.matchedName||''} ${m.aliases||''} ${m.institutionRole||''}`;}).join(' ');
     return norm(`${item.displaySite||''} ${item.site} ${item.address} ${meta.institutionDisplayName||''} ${meta.matchedName||''} ${meta.aliases||''} ${memberText}`).includes(q);
   }).slice(0, 15);
-  box.innerHTML = matches.map((item, index) => `<button type="button" role="option" data-key="${esc(item.key)}" data-index="${index}"><strong>${esc(item.displaySite||item.site)}</strong><span>${item.invoiceSites?.size>1?`En factura: ${esc([...item.invoiceSites].join(' / '))} · `:(item.displaySite!==item.site?`En factura: ${esc(item.site)} · `:'')}${item.address?`<span class="map-address-action" data-map-address="${esc(item.address)}" title="Abrir esta dirección en Google Maps">📍 ${esc(item.address)}</span>`:'Sin dirección registrada'}</span></button>`).join('');
+  box.innerHTML = matches.map((item, index) => `<button type="button" role="option" data-key="${esc(item.key)}" data-index="${index}"><strong>${esc(item.displaySite||item.site)}</strong><span>${item.invoiceSites?.size>1?`En factura: ${esc([...item.invoiceSites].join(' / '))} · `:(item.displaySite!==item.site?`En factura: ${esc(item.site)} · `:'')}${item.address?`<span class="map-address-action school-map-action" data-map-address="${esc(item.address)}" data-map-school="${esc(item.displaySite||item.site)}" title="Abrir ubicación precisa del colegio en Google Maps">🏫 ${esc(item.address)}</span>`:'Sin dirección registrada'}</span></button>`).join('');
   box.hidden = !matches.length;
   suggestionIndex = -1;
 }
@@ -129,7 +131,7 @@ function renderReport() {
   $('institutionEmpty').hidden = true;
   $('institutionReport').hidden = false;
   $('institutionName').textContent = item.displaySite || item.site;
-  $('institutionAddress').innerHTML = mapLink(item.address,item.address || 'Sin dirección registrada en la factura');
+  $('institutionAddress').innerHTML = mapLink(item.address,item.address || 'Sin dirección registrada en la factura',item.displaySite||item.site);
   $('institutionMeta').innerHTML = [meta.zone, meta.commune, meta.nucleus ? `Núcleo ${meta.nucleus}` : ''].filter(v => v && v !== 'Sin clasificar').map(v => `<span>${esc(v)}</span>`).join('') || '<span>Información territorial pendiente de clasificación</span>';
   if(item.invoiceSites?.size>1) $('institutionMeta').innerHTML += `<span>${item.invoiceSites.size} sedes integradas</span><span>En factura: ${esc([...item.invoiceSites].join(' / '))}</span>`; else if(item.displaySite!==item.site) $('institutionMeta').innerHTML += `<span>En factura: ${esc(item.site)}</span>`;
   const hasEnergy=filtered.some(r=>r.energyKwh!==null), hasWater=filtered.some(r=>r.waterM3!==null), hasGas=filtered.some(r=>r.gasM3!==null), energyException=serviceExceptionFor(item);
@@ -215,7 +217,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   $('institutionSuggestions').addEventListener('click', e => {
     const map=e.target.closest('[data-map-address]');
-    if(map){e.preventDefault();e.stopPropagation();const url=mapsUrl(map.dataset.mapAddress);if(url)window.open(url,'_blank','noopener,noreferrer');return;}
+    if(map){e.preventDefault();e.stopPropagation();const url=mapsUrl(map.dataset.mapAddress,map.dataset.mapSchool||'');if(url)window.open(url,'_blank','noopener,noreferrer');return;}
     const button = e.target.closest('button[data-key]'); if (button) selectInstitution(button.dataset.key);
   });
   document.addEventListener('click', e => { if (!e.target.closest('.institutional-search-field')) $('institutionSuggestions').hidden = true; });

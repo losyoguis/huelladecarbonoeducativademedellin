@@ -1,0 +1,10 @@
+SiMeCO₂ v71 — Ubicación precisa de colegios
+
+- La búsqueda en Google Maps ya no utiliza únicamente la dirección.
+- Ahora combina: nombre de la I.E./sede + dirección + Medellín + Antioquia + Colombia.
+- Esto ayuda a Google Maps a resolver el establecimiento educativo como lugar (POI) y no solo como una calle.
+- Se reemplazó el marcador visual de dirección por el icono de colegio 🏫.
+- Enlaces y acciones muestran “Ver ubicación” cuando corresponde.
+- Se aplicó en ranking general, ranking de ahorro, Top 3, tarjetas, tablas, ficha integral, Plan de Gestión, búsqueda institucional, autocompletados y módulo territorial.
+- En los rankings canvas, la zona clicable conserva nombre de colegio + dirección y abre la consulta conjunta.
+- Si Google Maps reconoce el colegio por nombre y dirección, abre su ficha/punto exacto; no se inventan coordenadas cuando la base original no las contiene.

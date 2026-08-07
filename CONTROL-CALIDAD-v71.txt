@@ -1,0 +1,35 @@
+CONTROL DE CALIDAD SiMeCO₂ v71
+Fecha: 2026-08-07
+
+CAMBIO PRINCIPAL
+Ubicación de colegios mejorada en Google Maps.
+
+COMPORTAMIENTO
+- La consulta de Maps combina nombre de la I.E./sede + dirección + Medellín + Antioquia + Colombia.
+- El sistema usa el icono visual de colegio 🏫 para identificar los accesos de ubicación.
+- Los rankings canvas conservan nombre de colegio y dirección en su zona clicable.
+- La búsqueda se abre en una nueva pestaña y permite a Google Maps resolver el colegio como establecimiento educativo.
+- No se inventan coordenadas cuando la fuente de datos no contiene latitud/longitud.
+
+COBERTURA
+- Ranking general.
+- Ranking de ahorro.
+- Top 3 e interpretación.
+- Tarjetas de extremos.
+- Tabla de registros.
+- Calidad de datos.
+- Dashboard / ficha integral.
+- Plan de Gestión Ambiental.
+- Búsqueda institucional.
+- Autocompletados.
+- Módulo territorial.
+
+VALIDACIONES
+- npm run check: APROBADO.
+- npm test: APROBADO.
+- validar_sistema.py: APROBADO.
+- validar_historicos.py: APROBADO.
+- 9.147 registros.
+- 567 instituciones/sedes agrupadas.
+- 17 períodos oficiales.
+RESULTADO: APROBADO.
