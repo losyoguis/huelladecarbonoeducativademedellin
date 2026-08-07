@@ -1,0 +1,34 @@
+SiMeCO₂ v65 · Rendimiento y consultas ligeras · 07/08/2026
+
+OBJETIVO
+Reducir carga inicial, memoria, DOM y consumo de OpenAI sin perder funciones ni trazabilidad.
+
+CAMBIOS PRINCIPALES
+1. data/registros.compact.js reemplaza la carga web de data/registros.js.
+   - Registros idénticos: 9.147.
+   - Peso JS: 4.235.762 → 1.720.466 bytes (-59,4%).
+2. data/registros.compact.json es usado por la API para reducir lectura/parsing en cold starts.
+3. El logo principal se sirve desde assets/los-yoguis-logo-optimized.png.
+   - 772.178 → 109.625 bytes (-85,8%).
+4. PDF.js ya no se descarga al iniciar. Se carga únicamente al actualizar/importar facturas.
+5. PDF-Lib ya no se descarga al abrir Búsqueda Institucional. Se carga al extraer una página.
+6. Se desactiva el escaneo automático de los 17 PDF cuando ya existen datos precargados.
+   - El botón Actualizar conserva la verificación manual completa.
+7. La tabla de registros renderiza 200 filas por página en vez de hasta 9.147 filas simultáneamente.
+8. Asistente Ambiental data-first:
+   - Conteos, informes institucionales, ranking, calidad, consumos y caso INEM se resuelven directamente desde SiMeCO₂.
+   - Estas consultas no gastan tokens de OpenAI y siguen operativas si hay cuota agotada.
+   - OpenAI se reserva para análisis profundos o preguntas abiertas.
+9. Cuando hay datos preconsultados, la llamada de IA usa una sola petición sin herramientas y menor contexto.
+10. Historial enviado a IA: máximo 4 mensajes de 900 caracteres.
+11. Máximo de salida IA reducido a 900 tokens para consultas avanzadas.
+12. El estado del asistente consulta /api/health sin probe de OpenAI; ?probe=1 queda solo para diagnóstico manual.
+13. Caché en navegador y servidor de 5 minutos para preguntas repetidas.
+14. Endpoints GET de datos habilitan caché CDN de corta duración.
+15. Recursos estáticos grandes reciben políticas de caché apropiadas en Vercel.
+16. Se mantiene null != 0 y las excepciones verificadas, incluido INEM con contrato separado.
+
+CASOS DE REGRESIÓN
+- Fe y Alegría Santo Domingo Savio: 73.924 kWh, 14.600 m³ agua, 17 periodos, 2 sedes agrupadas.
+- INEM José Félix de Restrepo: energía null, estado energia_contrato_separado, no se convierte en 0.
+- Top julio 2026 usa realmente 2026-07 (no todo el año).

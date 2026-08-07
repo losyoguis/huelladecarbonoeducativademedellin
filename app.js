@@ -2,9 +2,9 @@
 let FACTOR_CO2_KG_KWH = 0.126; // kg CO2e/kWh. Ajustable desde el dashboard.
 let TREE_CO2_KG_YEAR = 22; // kg CO2e capturados por árbol al año. Ajustable desde el dashboard.
 const FACTOR_KEY = 'simeco2_factores_ambientales_v8';
-const STORE_KEY = 'simeco2_servicios_v15';
+const STORE_KEY = 'simeco2_servicios_v16';
 const CONFIG_KEY = 'simeco2_repo_config_v7';
-const DATA_VERSION = 'v63-api-model-fix-20260807';
+const DATA_VERSION = 'v65-rendimiento-consultas-20260807';
 
 const $ = (id)=>document.getElementById(id);
 const state = loadStore();
@@ -26,6 +26,8 @@ let rankingPriority = "";
 let rankingMetric = "energyKwh";
 let rankingSelectedKey = "";
 let rankingAutocompleteIndex = -1;
+const RECORD_TABLE_PAGE_SIZE = 200;
+let recordTablePage = 0;
 
 const SERVICE_METRICS = {
   energyKwh:{field:'energyKwh',label:'Energía eléctrica',short:'Energía',unit:'kWh',hasFlag:'hasEnergy',periodField:'energyPeriodCount',colorLabel:'eléctrico'},
@@ -185,11 +187,10 @@ window.addEventListener('DOMContentLoaded', () => {
     initSearchableSelects();
     refreshAllTerritoryFilters();
     if(state.records.length){
-      log(`Datos cargados desde memoria local: ${state.records.length} registros.`);
-      setInvoiceLoading(false, 'Datos listos. Verificando facturas nuevas...');
-      setTimeout(() => scanDataFolder({automatic:true, quiet:true}), 900);
+      log(`Datos listos: ${state.records.length} registros precargados. La verificación de PDF queda bajo demanda para acelerar el inicio.`);
+      setInvoiceLoading(false, 'Datos listos para consultar.');
     }else{
-      log('Espere, cargando facturas...');
+      log('No se encontraron registros precargados. Iniciando recuperación de facturas...');
       setTimeout(() => scanDataFolder({automatic:true}), 180);
     }
   });
@@ -420,15 +421,31 @@ function refreshSiteAutocompleteFields(){
   }
 }
 
+let pdfJsPromise = null;
 function initPdfJs(){
   const pdfStatus = $('pdfStatus');
   if(window.pdfjsLib){
-    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-    if(pdfStatus) pdfStatus.textContent = 'PDF.js activo';
+    window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    if(pdfStatus){ pdfStatus.textContent = 'PDF.js activo'; pdfStatus.classList.remove('bad'); }
   } else if(pdfStatus) {
-    pdfStatus.textContent = 'PDF.js no cargó';
-    pdfStatus.classList.add('bad');
+    pdfStatus.textContent = 'PDF.js se cargará solo al actualizar/importar facturas';
+    pdfStatus.classList.remove('bad');
   }
+}
+function ensurePdfJs(){
+  if(window.pdfjsLib){ initPdfJs(); return Promise.resolve(window.pdfjsLib); }
+  if(pdfJsPromise) return pdfJsPromise;
+  const pdfStatus=$('pdfStatus');
+  if(pdfStatus) pdfStatus.textContent='Cargando lector PDF…';
+  pdfJsPromise=new Promise((resolve,reject)=>{
+    const script=document.createElement('script');
+    script.src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+    script.async=true;
+    script.onload=()=>{ initPdfJs(); resolve(window.pdfjsLib); };
+    script.onerror=()=>{ pdfJsPromise=null; if(pdfStatus){pdfStatus.textContent='No fue posible cargar PDF.js';pdfStatus.classList.add('bad');} reject(new Error('No fue posible cargar PDF.js. Revisa la conexión a internet.')); };
+    document.head.appendChild(script);
+  });
+  return pdfJsPromise;
 }
 function bindEvent(id,event,handler,options){
   const element=$(id);
@@ -539,13 +556,16 @@ function cloneData(value){
   try{return structuredClone(value);}catch{return JSON.parse(JSON.stringify(value));}
 }
 function canonicalBundle(){
-  const records=Array.isArray(window.SIMECO_REGISTROS) ? cloneData(window.SIMECO_REGISTROS) : [];
+  // v65: los datos precargados ya son objetos nuevos reconstruidos por el bundle compacto.
+  // Evitamos structuredClone de miles de registros en cada arranque; al recargar la página
+  // el bundle vuelve a reconstruirse desde cero, por lo que compartir estos objetos es seguro.
+  const records=Array.isArray(window.SIMECO_REGISTROS) ? window.SIMECO_REGISTROS : [];
   const bundle=window.SIMECO_SUMMARY_BUNDLE && typeof window.SIMECO_SUMMARY_BUNDLE==='object' ? window.SIMECO_SUMMARY_BUNDLE : {};
-  const summaries=Array.isArray(bundle.summaries) ? cloneData(bundle.summaries) : [];
+  const summaries=Array.isArray(bundle.summaries) ? bundle.summaries : [];
   const sourceNames=new Set(records.map(r=>r?.source).filter(Boolean));
   const files={};
   Object.entries(bundle.files||{}).forEach(([name,meta])=>{
-    if(sourceNames.has(name)) files[name]={...cloneData(meta), fingerprint:meta.fingerprint||meta.sha||name};
+    if(sourceNames.has(name)) files[name]={...meta, fingerprint:meta.fingerprint||meta.sha||name};
   });
   return {records,summaries,files};
 }
@@ -934,7 +954,8 @@ function addImport(result, fingerprint){
 }
 
 async function parsePdfArrayBuffer(arrayBuffer, fileName, sourceUrl, onProgress=null){
-  if(!window.pdfjsLib) throw new Error('PDF.js no está cargado.');
+  await ensurePdfJs();
+  if(!window.pdfjsLib) throw new Error('PDF.js no está disponible.');
   const pdf = await pdfjsLib.getDocument({data:arrayBuffer}).promise;
   log(`PDF cargado: ${fileName}, ${pdf.numPages} páginas.`);
   if(typeof onProgress==='function') onProgress({currentPage:0,totalPages:pdf.numPages});
@@ -1223,7 +1244,7 @@ function filteredRecords(){
 }
 function applyFilters(immediate=false){
   clearTimeout(filterTimer);
-  const run=()=>{renderTable();renderDashboard();renderFilterSummary();syncAllSearchableSelects();};
+  const run=()=>{recordTablePage=0;renderTable();renderDashboard();renderFilterSummary();syncAllSearchableSelects();};
   if(immediate) run(); else filterTimer=setTimeout(run,90);
 }
 function clearSiteSearch(){
@@ -1360,17 +1381,34 @@ function renderSourceDownload(record){
   const safeUrl = escapeHtml(url);
   return `<a class="source-download" href="${safeUrl}" download="${escapeHtml(name)}" target="_blank" rel="noopener" title="Descargar factura PDF">${escapeHtml(name)} <span aria-hidden="true">↓</span></a>`;
 }
+function renderRecordPagination(total){
+  const body=$('recordsBody'); const wrap=body?.closest('.table-wrap'); if(!wrap) return;
+  let nav=wrap.parentElement?.querySelector('.records-pagination');
+  if(!nav){nav=document.createElement('div');nav.className='records-pagination';wrap.insertAdjacentElement('afterend',nav);}
+  const pages=Math.max(1,Math.ceil(total/RECORD_TABLE_PAGE_SIZE));
+  recordTablePage=Math.max(0,Math.min(recordTablePage,pages-1));
+  const start=total?recordTablePage*RECORD_TABLE_PAGE_SIZE+1:0;
+  const end=Math.min(total,(recordTablePage+1)*RECORD_TABLE_PAGE_SIZE);
+  nav.innerHTML=`<span>Mostrando <strong>${start}-${end}</strong> de <strong>${total}</strong> registros</span><div><button type="button" class="secondary" data-record-page="prev" ${recordTablePage<=0?'disabled':''}>← Anterior</button><span>Página ${recordTablePage+1} de ${pages}</span><button type="button" class="secondary" data-record-page="next" ${recordTablePage>=pages-1?'disabled':''}>Siguiente →</button></div>`;
+  nav.querySelector('[data-record-page="prev"]')?.addEventListener('click',()=>{recordTablePage=Math.max(0,recordTablePage-1);renderTable();wrap.scrollIntoView({block:'start',behavior:'smooth'});});
+  nav.querySelector('[data-record-page="next"]')?.addEventListener('click',()=>{recordTablePage=Math.min(pages-1,recordTablePage+1);renderTable();wrap.scrollIntoView({block:'start',behavior:'smooth'});});
+}
 function renderTable(){
   const body=$('recordsBody');if(!body) return;
   const recs=filteredRecords();renderFilterSummary();
   const includeTerritory=(body.closest('table')?.querySelectorAll('thead th').length||0)>=13;
-  const rows=recs.map(r=>{
+  const pages=Math.max(1,Math.ceil(recs.length/RECORD_TABLE_PAGE_SIZE));
+  recordTablePage=Math.max(0,Math.min(recordTablePage,pages-1));
+  const visible=recs.slice(recordTablePage*RECORD_TABLE_PAGE_SIZE,(recordTablePage+1)*RECORD_TABLE_PAGE_SIZE);
+  const rows=visible.map(r=>{
     const meta=territoryMeta(r);
     return `<tr><td data-label="Periodo">${escapeHtml(r.period)}</td><td data-label="Sede">${escapeHtml(r.site||'Sin nombre')}</td><td data-label="Dirección">${escapeHtml(r.address||'')}</td>${includeTerritory?`<td data-label="Comuna/Corregimiento">${escapeHtml(meta.territory||'Sin clasificar')}</td><td data-label="Núcleo">${escapeHtml(meta.nucleus||'Sin clasificar')}</td>`:''}<td data-label="Agua m³">${num(r.waterM3)}</td><td data-label="Alc. m³">${num(r.alcM3)}</td><td data-label="Energía kWh">${num(r.energyKwh)}</td><td data-label="Gas m³">${num(r.gasM3)}</td><td data-label="Aseo $">${money(r.wasteValue)}</td><td data-label="Residuos t">${num(r.wasteTon)}</td><td data-label="CO₂ kg">${num(r.co2kg)}</td><td data-label="Fuente">${renderSourceDownload(r)}</td></tr>`;
   }).join('');
   const cols=includeTerritory?13:11;
   body.innerHTML=rows||`<tr><td colspan="${cols}"><div class="empty-filter-state"><strong>No hay coincidencias</strong><span>Prueba con menos palabras, cambia el periodo o limpia los filtros.</span><button type="button" onclick="clearAllFilters()" class="secondary">Limpiar filtros</button></div></td></tr>`;
+  renderRecordPagination(recs.length);
 }
+
 function aggregateByPeriod(records){
   const map = {};
   for(const r of records){

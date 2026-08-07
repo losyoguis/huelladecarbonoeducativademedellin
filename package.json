@@ -1,11 +1,11 @@
 {
-  "name": "simeco2-v64-function-schema-fix",
-  "version": "64.0.0",
+  "name": "simeco2-v65-rendimiento-consultas",
+  "version": "65.0.0",
   "private": true,
-  "description": "SiMeCO2 v64: API de datos y Asistente Ambiental con OpenAI Responses API, schemas strict corregidos",
+  "description": "SiMeCO2 v65: carga compacta, PDF.js bajo demanda y Asistente data-first con IA selectiva",
   "scripts": {
-    "test": "node tests/api-data.test.js && node tests/api-handlers.test.js",
-    "check": "node --check api/chat.js && node --check api/health.js && node --check api/institutions.js && node --check api/institution.js && node --check api/history.js && node --check api/ranking.js && node --check api/quality.js && node --check api/compare.js && node --check api/_lib/simeco-data.js && node --check api/_lib/assistant-core.js && node --check assistant.js"
+    "test": "node tests/api-data.test.js && node tests/api-handlers.test.js && node tests/assistant-performance.test.js",
+    "check": "node --check app.js && node --check assistant.js && node --check institucional.js && node --check territorial.js && node --check api/chat.js && node --check api/health.js && node --check api/institutions.js && node --check api/institution.js && node --check api/history.js && node --check api/ranking.js && node --check api/quality.js && node --check api/compare.js && node --check api/_lib/simeco-data.js && node --check api/_lib/assistant-core.js"
   },
   "engines": {
     "node": ">=20"

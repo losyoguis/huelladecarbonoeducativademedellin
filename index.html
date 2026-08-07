@@ -2,7 +2,6 @@
 <html lang="es">
 <head>
   <meta charset="utf-8" />
-  <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#0b3b31" />
   <meta name="mobile-web-app-capable" content="yes" />
@@ -12,15 +11,15 @@
   <link rel="manifest" href="manifest.webmanifest" />
   <title>SiMeCO₂ · Plataforma de Huella de Carbono Educativa</title>
   <meta name="description" content="Sistema interactivo para medir, interpretar y gestionar la huella de carbono educativa a partir del consumo de servicios públicos." />
-  <link rel="icon" type="image/png" href="assets/los-yoguis-logo.png" />
-  <link rel="apple-touch-icon" href="assets/los-yoguis-logo.png" />
-  <link rel="stylesheet" href="styles.css?v=60-calidad-multiservicio" />
+  <link rel="icon" type="image/png" href="assets/los-yoguis-logo-optimized.png" />
+  <link rel="apple-touch-icon" href="assets/los-yoguis-logo-optimized.png" />
+  <link rel="stylesheet" href="styles.css?v=65-rendimiento" />
 </head>
 <body>
   <div class="invoice-loading active" id="invoiceLoading" role="status" aria-live="assertive" aria-hidden="false">
     <div class="invoice-loading-card">
       <div class="invoice-loading-brand">
-        <img src="assets/los-yoguis-logo.png" alt="" aria-hidden="true" />
+        <img src="assets/los-yoguis-logo-optimized.png" alt="" aria-hidden="true" />
         <div>
           <span>SiMeCO₂ · Los Yoguis</span>
           <small>Huella de Carbono Educativa de Medellín</small>
@@ -77,7 +76,7 @@
 
     <div class="hero-showcase-card">
       <div class="hero-logo-frame" aria-hidden="true">
-        <img src="assets/los-yoguis-logo.png" alt="" class="hero-yoguis-logo" />
+        <img src="assets/los-yoguis-logo-optimized.png" alt="" class="hero-yoguis-logo" />
       </div>
       <div class="hero-title-block hero-yoguis-content">
         <p class="mjb-chip">Ciencia escolar · energía · clima · territorio</p>
@@ -630,13 +629,13 @@
     })();
   </script>
 
-  <script defer src="data/registros.js?v=60-datos-calidad"></script>
+  <script defer src="data/registros.compact.js?v=65-rendimiento"></script>
   <script defer src="data/resumenes.js?v=60-historicos-multiservicio"></script>
   <script defer src="data/sincronizacion-territorial.js?v=60-territorios"></script>
   <script defer src="data/excepciones-servicios.js?v=60-instituciones"></script>
-  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-  <script defer src="app.js?v=61-api-asistente"></script>
-  <script defer src="assistant-config.js?v=62-grounded"></script>
-  <script defer src="assistant.js?v=62-grounded"></script>
+  
+  <script defer src="app.js?v=65-rendimiento"></script>
+  <script defer src="assistant-config.js?v=65-rendimiento"></script>
+  <script defer src="assistant.js?v=65-rendimiento"></script>
 </body>
 </html>

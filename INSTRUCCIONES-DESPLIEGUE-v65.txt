@@ -1,0 +1,19 @@
+DESPLIEGUE SiMeCO₂ v65
+
+1. Reemplaza el contenido del repositorio GitHub por el contenido completo de esta carpeta.
+2. Conserva OPENAI_API_KEY únicamente en Vercel Environment Variables. No la subas a GitHub.
+3. Haz commit en main. Vercel creará automáticamente un nuevo Production Deployment.
+4. Espera estado Ready.
+5. Prueba:
+   /api/health
+   Debe indicar version v65-rendimiento-consultas-20260807.
+6. ?probe=1 queda disponible solo para diagnóstico manual de OpenAI; la página ya no lo llama automáticamente.
+7. Prueba en el asistente:
+   - ¿Cuántas sedes hay?
+   - Dame un informe de Fe y Alegría Santo Domingo Savio.
+   - ¿Por qué el INEM no aparece en el ranking de energía?
+   Estas tres consultas deben responder incluso si OpenAI no tiene cuota, porque salen del Data Engine de SiMeCO₂.
+8. Prueba una consulta avanzada, por ejemplo:
+   - Analiza profundamente la evolución de Fe y Alegría y propone un plan de acción.
+   Esta sí puede utilizar OpenAI si existe cuota disponible.
+9. Tras publicar, realiza una recarga completa (Cmd+Shift+R / Ctrl+Shift+R) una vez.

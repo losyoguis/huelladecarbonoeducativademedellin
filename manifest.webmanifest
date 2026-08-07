@@ -11,7 +11,7 @@
   "theme_color": "#0b3b31",
   "icons": [
     {
-      "src": "assets/los-yoguis-logo.png",
+      "src": "assets/los-yoguis-logo-optimized.png",
       "sizes": "any",
       "type": "image/png",
       "purpose": "any maskable"

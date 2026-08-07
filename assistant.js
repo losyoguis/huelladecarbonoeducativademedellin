@@ -1,10 +1,12 @@
-/* Asistente Ambiental SiMeCO2 v62 — IA grounded + fallback local explícito */
+/* Asistente Ambiental SiMeCO2 v65 — consultas ligeras: API de datos primero, IA solo cuando aporta valor */
 (() => {
   'use strict';
 
   const ui = {};
   const history = [];
-  const MAX_HISTORY = 16;
+  const MAX_HISTORY = 10;
+  const responseCache = new Map();
+  const RESPONSE_CACHE_TTL = 5 * 60 * 1000;
   const config = window.SIMECO_ASSISTANT_CONFIG || {};
   const monthMap = {
     enero:'01', febrero:'02', marzo:'03', abril:'04', mayo:'05', junio:'06',
@@ -209,7 +211,7 @@
   }
 
   function assistantSessionId(){
-    const key='simeco2_assistant_session_v63';
+    const key='simeco2_assistant_session_v65';
     let id=localStorage.getItem(key);
     if(!id){ id=(window.crypto?.randomUUID?.() || `simeco-${Date.now()}-${Math.random().toString(36).slice(2)}`); localStorage.setItem(key,id); }
     return id;
@@ -220,35 +222,51 @@
     if(!badge) return;
     badge.dataset.mode=mode;
     if(mode==='ai') badge.textContent='IA conectada';
+    else if(mode==='data') badge.textContent='Datos SiMeCO₂';
+    else if(mode==='ready') badge.textContent='API lista';
     else if(mode==='checking') badge.textContent='Consultando…';
-    else if(mode==='error') badge.textContent='Modo local';
+    else if(mode==='error') badge.textContent='API no disponible';
     else badge.textContent='Modo local';
-    badge.title=detail || (mode==='ai'?'Respuestas con OpenAI + datos SiMeCO₂':'Respuestas básicas desde el navegador');
+    badge.title=detail || (mode==='ai'?'Respuesta elaborada con OpenAI + datos SiMeCO₂':mode==='data'?'Respuesta directa desde los datos verificados de SiMeCO₂':mode==='ready'?'API de SiMeCO₂ disponible':'Respuesta básica desde el navegador');
   }
 
   async function probeApi(){
     const apiUrl=resolvedApiUrl();
-    if(!config.preferAI || !apiUrl){ setAssistantStatus('local','API de IA no configurada en el cliente.'); return; }
-    const healthUrl=apiUrl.replace(/\/chat(?:\?.*)?$/,'/health?probe=1');
+    if(!apiUrl){ setAssistantStatus('local','API no configurada en el cliente.'); return; }
+    const healthUrl=apiUrl.replace(/\/chat(?:\?.*)?$/,'/health');
+    const cacheKey='simeco2_health_v65';
     try{
-      setAssistantStatus('checking','Verificando conexión con el servidor.');
-      const response=await fetch(healthUrl,{method:'GET',cache:'no-store'});
+      const cached=JSON.parse(sessionStorage.getItem(cacheKey)||'null');
+      if(cached && Date.now()-cached.at<10*60*1000){
+        setAssistantStatus(cached.aiConfigured?'ready':'data',`API SiMeCO₂ ${cached.version||''}${cached.aiConfigured?' · IA configurada':''}`);
+        return;
+      }
+    }catch{}
+    try{
+      setAssistantStatus('checking','Verificando la API de datos.');
+      const response=await fetch(healthUrl,{method:'GET',cache:'default'});
       const payload=await response.json().catch(()=>({}));
       if(!response.ok) throw new Error(payload?.error||`API ${response.status}`);
-      if(payload.aiConfigured && payload.aiReachable) setAssistantStatus('ai',`API SiMeCO₂ ${payload.version||''} · ${payload.model||'OpenAI'}`);
-      else if(payload.aiConfigured) setAssistantStatus('error',`OpenAI configurado, pero el modelo/API no está disponible (${payload.aiProbe||payload.aiProbeStatus||'probe fallido'}).`);
-      else setAssistantStatus('error','La API de datos está disponible, pero OPENAI_API_KEY no está configurada.');
+      try{sessionStorage.setItem(cacheKey,JSON.stringify({at:Date.now(),version:payload.version,aiConfigured:Boolean(payload.aiConfigured)}));}catch{}
+      setAssistantStatus(payload.aiConfigured?'ready':'data',`API SiMeCO₂ ${payload.version||''}${payload.aiConfigured?` · ${payload.model||'OpenAI'} disponible para análisis`:''}`);
     }catch(error){ setAssistantStatus('error',error?.message||'API no disponible'); }
   }
 
+  function cacheKeyForQuestion(question){ return normalize(question).slice(0,600); }
   async function apiAnswer(question){
     const apiUrl=resolvedApiUrl();
-    if(!config.preferAI || !apiUrl) return null;
+    if(!apiUrl) return null;
+    const cacheKey=cacheKeyForQuestion(question);
+    const cached=responseCache.get(cacheKey);
+    if(cached && Date.now()-cached.at<RESPONSE_CACHE_TTL){
+      setAssistantStatus(cached.mode==='ai'?'ai':'data',cached.mode==='ai'?'Respuesta en caché de IA':'Respuesta en caché de datos SiMeCO₂');
+      return cached.text;
+    }
     const controller=new AbortController();
-    const timer=setTimeout(()=>controller.abort(), Number(config.timeoutMs)||30000);
+    const timer=setTimeout(()=>controller.abort(), Number(config.timeoutMs)||15000);
     try{
       setAssistantStatus('checking');
-      const prior=history.slice(0,-1).slice(-8).map(item=>({role:item.role,text:item.text}));
+      const prior=history.slice(0,-1).slice(-4).map(item=>({role:item.role,text:String(item.text||'').slice(0,900)}));
       const response=await fetch(apiUrl,{
         method:'POST',
         headers:{'Content-Type':'application/json'},
@@ -257,7 +275,10 @@
       });
       const payload=await response.json().catch(()=>({}));
       if(!response.ok || !payload?.text) { const err=new Error([payload?.error,payload?.detail,payload?.code].filter(Boolean).join(' · ') || `API ${response.status}`); err.code=payload?.code; throw err; }
-      setAssistantStatus('ai',`Modelo: ${payload.model||'OpenAI'}`);
+      const mode=payload.mode==='ai'?'ai':'data';
+      setAssistantStatus(mode,mode==='ai'?`Modelo: ${payload.model||'OpenAI'}`:'Respuesta directa desde la base verificada de SiMeCO₂');
+      responseCache.set(cacheKey,{at:Date.now(),text:payload.text,mode});
+      if(responseCache.size>40) responseCache.delete(responseCache.keys().next().value);
       return payload.text;
     } finally { clearTimeout(timer); }
   }
@@ -291,7 +312,7 @@
         console.warn('Asistente IA no disponible.',error);
         setAssistantStatus('error',error?.message||'API no disponible');
         if(config.preferAI && apiUrl){
-          responseText=`La consulta con IA falló y no voy a reemplazarla por datos locales potencialmente mezclados. ${error?.message ? 'Detalle: '+error.message : 'Revisa /api/health?probe=1 y los logs de Vercel.'}`;
+          responseText=`La consulta avanzada no pudo completarse. ${error?.message ? 'Detalle: '+error.message : 'Revisa el estado de la API.'} Las consultas de consumo, históricos, ranking y calidad siguen disponibles desde los datos verificados de SiMeCO₂.`;
         }
       }
       if(!responseText) responseText=answer(question);

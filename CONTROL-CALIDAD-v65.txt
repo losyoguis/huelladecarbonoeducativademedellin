@@ -1,0 +1,36 @@
+CONTROL DE CALIDAD · SiMeCO₂ v65
+Fecha: 07/08/2026
+Resultado: APROBADO
+
+Datos
+- 9.147 registros detallados.
+- 567 instituciones/sedes agrupadas para consulta.
+- 17 periodos.
+- Bundle compacto reconstruye los mismos valores que registros.json.
+
+Rendimiento
+- registros.js anterior: 4.235.762 bytes.
+- registros.compact.js: 1.720.466 bytes.
+- Reducción: 59,4% en el bundle de registros cargado por el navegador.
+- Logo: 772.178 → 109.625 bytes (-85,8%).
+- PDF.js: carga bajo demanda.
+- PDF-Lib: carga bajo demanda.
+- Escaneo automático de PDF: desactivado cuando hay datos precargados.
+- Tabla de registros: paginación de 200 filas; no se inyectan 9.147 <tr> al inicio.
+
+Consultas
+- ¿Cuántas sedes hay?: respuesta data-first sin OpenAI.
+- Informe Fe y Alegría: respuesta data-first con 73.924 kWh.
+- Caso INEM: contrato separado y nunca 0 kWh.
+- Top 10 julio 2026: aplica filtro mensual correcto.
+- Schemas strict: todas las propiedades declaradas en required.
+- La cuota de OpenAI no bloquea consultas estructuradas.
+
+Validaciones
+- JSON: OK.
+- JavaScript node --check: OK.
+- Python: OK.
+- Referencias HTML locales: OK.
+- npm run check: OK.
+- npm test: OK.
+- tools/validar_sistema.py: APROBADO.

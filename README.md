@@ -197,3 +197,9 @@ SiMeCO₂ distingue ahora tres estados eléctricos diferentes: consumo medido, e
 La v61 añade una API serverless en `/api` y conecta el widget **Asistente Ambiental** con OpenAI mediante function calling. La clave de OpenAI permanece en el servidor. Si la API no está configurada o falla, el asistente vuelve automáticamente al modo local básico.
 
 Consulta `API-SIMECO2-v61.md` e `INSTRUCCIONES-DESPLIEGUE-v61.txt` antes de publicar.
+
+## v65 · Rendimiento y consultas data-first
+
+La versión 65 optimiza la carga sin cambiar la fuente de verdad. El navegador usa `data/registros.compact.js` (mismos 9.147 registros), PDF.js/PDF-Lib se cargan bajo demanda y la tabla detallada pagina 200 filas. El asistente resuelve consultas estructuradas directamente desde la API de SiMeCO₂; OpenAI se reserva para análisis avanzados. Por ello, conteos, informes institucionales, ranking, calidad de datos y casos como INEM pueden seguir respondiendo aunque exista una incidencia temporal de cuota de IA.
+
+Para diagnóstico de OpenAI usa manualmente `/api/health?probe=1`. La interfaz normal usa `/api/health` y no consume una comprobación a OpenAI en cada apertura.

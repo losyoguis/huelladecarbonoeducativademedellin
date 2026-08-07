@@ -1446,3 +1446,13 @@ img{content-visibility:auto}
 .simeco-assistant-status[data-mode="error"]::before{background:#ffd0a8}
 .simeco-assistant-message a{color:#08745c;font-weight:800;text-decoration:underline;text-underline-offset:2px}.simeco-assistant-message.user a{color:#fff}.simeco-assistant-message code{padding:1px 4px;border-radius:5px;background:#edf5f2;font-size:.82em}
 @keyframes simecoStatusPulse{50%{opacity:.35;transform:scale(.8)}}
+
+/* v65 · rendimiento: renderizado progresivo y paginación de tablas extensas */
+.records-pagination{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin:14px 0 0;padding:12px 14px;border:1px solid rgba(12,126,99,.18);border-radius:16px;background:rgba(240,250,247,.82);font-size:.92rem;color:#315e54}
+.records-pagination>div{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.records-pagination button{min-height:38px;padding:8px 14px}
+.records-pagination button:disabled{opacity:.45;cursor:not-allowed}
+@supports (content-visibility:auto){
+  main>.panel,.app-section>.panel{content-visibility:auto;contain-intrinsic-size:700px}
+}
+@media (max-width:720px){.records-pagination{align-items:stretch}.records-pagination>div{justify-content:space-between;width:100%}.records-pagination button{flex:1}}

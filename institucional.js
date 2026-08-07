@@ -138,10 +138,26 @@ function renderReport() {
   const evidence=energyException?` <span class="institution-external-note"><strong>Importante:</strong> ${esc(energyException.summary||energyException.dataState||'')} ${(energyException.evidence||[]).map(ev=>`<a href="${esc(ev.url)}" target="_blank" rel="noopener">${esc(ev.title||'Evidencia')}</a>`).join(' · ')}</span>`:'';
   $('institutionSearchStatus').innerHTML = `Mostrando <strong>${fmt(rows.length,0)} mes(es)</strong> y <strong>${fmt(filtered.length,0)} registro(s)</strong> de ${esc(item.displaySite||item.site)} · ${esc(energyStatus)}.${evidence}`;
 }
+
+let pdfLibPromise=null;
+function ensurePdfLib(){
+  if(window.PDFLib?.PDFDocument) return Promise.resolve(window.PDFLib);
+  if(pdfLibPromise) return pdfLibPromise;
+  pdfLibPromise=new Promise((resolve,reject)=>{
+    const script=document.createElement('script');
+    script.src='https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js';
+    script.async=true;
+    script.onload=()=>resolve(window.PDFLib);
+    script.onerror=()=>{pdfLibPromise=null;reject(new Error('No fue posible cargar la herramienta PDF.'));};
+    document.head.appendChild(script);
+  });
+  return pdfLibPromise;
+}
 async function downloadPage(button) {
   const originalText = button.textContent;
   button.disabled = true; button.textContent = 'Preparando…';
   try {
+    await ensurePdfLib();
     if (!window.PDFLib?.PDFDocument) throw new Error('La herramienta para extraer páginas no está disponible.');
     const response = await fetch(button.dataset.url, {cache:'force-cache'});
     if (!response.ok) throw new Error(`No fue posible abrir el PDF (${response.status}).`);
