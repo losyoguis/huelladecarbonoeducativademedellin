@@ -1456,3 +1456,14 @@ img{content-visibility:auto}
   main>.panel,.app-section>.panel{content-visibility:auto;contain-intrinsic-size:700px}
 }
 @media (max-width:720px){.records-pagination{align-items:stretch}.records-pagination>div{justify-content:space-between;width:100%}.records-pagination button{flex:1}}
+
+/* v66 · Ranking de ahorro eléctrico */
+.savings-ranking-panel{border-top:4px solid #10a985}
+.savings-ranking-panel .section-kicker{color:#087a61}
+.savings-filter-bar{grid-template-columns:minmax(240px,.8fr) minmax(320px,1.4fr) auto}
+.savings-legend{display:flex;gap:10px 18px;align-items:center;flex-wrap:wrap;margin:8px 0 14px;padding:12px 14px;border:1px solid var(--line);border-radius:16px;background:#f7fffc;color:var(--muted);font-size:.82rem}
+.savings-legend span{display:inline-flex;gap:4px;align-items:center}
+.savings-legend strong{color:var(--brand)}
+#savingsSiteChart{display:block;height:auto;margin-top:18px;max-height:460px}
+@media(max-width:900px){.savings-filter-bar{grid-template-columns:1fr 1fr}.savings-filter-bar .ranking-refresh-btn{grid-column:1/-1;width:100%}}
+@media(max-width:620px){.savings-filter-bar{grid-template-columns:1fr}.savings-filter-bar .ranking-refresh-btn{grid-column:auto}.savings-legend{align-items:flex-start;flex-direction:column}}

@@ -1,0 +1,9 @@
+SiMeCO₂ v66 — Despliegue
+
+1. Publica la carpeta completa conservando la estructura actual.
+2. Para GitHub Pages, index.html continúa siendo el punto de entrada principal.
+3. Para Vercel, conserva vercel.json y la carpeta api/ para el Asistente Ambiental.
+4. La interfaz carga data/registros.compact.js y mantiene los PDF oficiales en data/.
+5. El nuevo Ranking de Ahorro se encuentra en la sección Histórico, debajo del ranking de consumo.
+6. No requiere nuevas variables de entorno. OPENAI_API_KEY sigue siendo opcional y solo se usa para consultas que requieren IA.
+7. Tras desplegar, prueba: ranking tradicional, ranking de ahorro en “Tendencia general”, filtro “Julio 2026 vs Junio 2026”, búsqueda por sede y paginación.

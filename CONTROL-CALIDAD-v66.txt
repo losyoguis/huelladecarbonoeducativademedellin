@@ -1,0 +1,17 @@
+CONTROL DE CALIDAD SiMeCO₂ v66 — Ranking de ahorro eléctrico
+Fecha: 2026-08-07
+
+RESULTADOS
+- npm run check: APROBADO.
+- npm test: APROBADO.
+- tools/validar_sistema.py: APROBADO.
+- tools/validar_historicos.py: APROBADO.
+- Registros detallados conservados: 9.147.
+- Instituciones/sedes agrupadas conservadas: 567.
+- Periodos oficiales conservados: 17.
+- Comparación junio→julio 2026: 376 instituciones/sedes presentan reducción verificable.
+- Primer ahorro junio→julio 2026 en la prueba automática: INST EDUC FRANCISCO MIRANDA, 3.600 kWh (7.440 → 3.840 kWh).
+- Meses faltantes no se comparan: noviembre 2025 NO se enlaza con agosto 2025; diciembre 2025 sí se compara con noviembre 2025.
+- INEM no aparece como ahorro eléctrico al no tener consumo kWh integrado en estas facturas.
+
+RESULTADO GENERAL: APROBADO.

@@ -333,6 +333,49 @@
       </div>
     </section>
 
+    <section class="panel ranking-panel savings-ranking-panel" id="ranking-ahorro-energia">
+      <div class="section-head">
+        <div>
+          <span class="section-kicker">Eficiencia y ahorro</span>
+          <h2>Ranking de sedes por ahorro de energía eléctrica</h2>
+          <p class="muted">Reconoce las sedes que reducen su consumo frente al mes calendario anterior. En la tendencia general se valora la constancia de las disminuciones y el ahorro acumulado; los meses faltantes no se comparan.</p>
+        </div>
+      </div>
+      <div class="ranking-filter-bar savings-filter-bar" aria-label="Filtros y búsqueda del ranking de ahorro">
+        <label>Periodo evaluado
+          <select id="savingsPeriodFilter">
+            <option value="">Tendencia general · todos los meses</option>
+          </select>
+          <small>Al elegir un mes se compara únicamente contra el mes calendario anterior.</small>
+        </label>
+        <label>Localizar institución o sede
+          <div class="autocomplete site-autocomplete" id="savingsSiteAutocomplete">
+            <input id="savingsSiteSearch" type="search" autocomplete="off" spellcheck="false" placeholder="Escribe el nombre o la dirección…" aria-autocomplete="list" aria-controls="savingsSiteSuggestions" aria-expanded="false" />
+            <button id="clearSavingsSearchBtn" class="clear-search" type="button" title="Borrar búsqueda" aria-label="Borrar búsqueda">×</button>
+            <div id="savingsSiteSuggestions" class="autocomplete-list" role="listbox" hidden></div>
+          </div>
+          <small class="search-address-note"><strong>Sugerencia:</strong> si el nombre de la sede no aparece, búscala por la dirección registrada en la factura.</small>
+        </label>
+        <button id="refreshSavingsRankingBtn" class="secondary ranking-refresh-btn" type="button">↻ Actualizar ahorro</button>
+      </div>
+      <div class="savings-legend" aria-label="Cómo se interpreta el ranking de ahorro">
+        <span><strong>↓ Ahorro:</strong> el consumo bajó frente al mes anterior.</span>
+        <span><strong>Constancia:</strong> número y proporción de comparaciones mensuales con reducción.</span>
+        <span><strong>Integridad:</strong> solo se comparan meses consecutivos con lectura eléctrica válida.</span>
+      </div>
+      <div id="savingsRankingExtremes" class="ranking-extremes" aria-live="polite"></div>
+      <div class="chart-card environmental-ranking-chart savings-ranking-chart">
+        <canvas id="savingsSiteChart" width="1100" height="500" aria-label="Ranking de sedes por ahorro mensual de energía eléctrica"></canvas>
+      </div>
+      <div class="ranking-pagination" aria-label="Paginación del ranking de ahorro">
+        <button id="savingsFirstBtn" class="secondary" type="button">« Primera</button>
+        <button id="savingsPrevBtn" class="secondary" type="button">‹ Anteriores</button>
+        <strong id="savingsPageInfo">1–10 de 0 sedes</strong>
+        <button id="savingsNextBtn" class="secondary" type="button">Siguientes ›</button>
+        <button id="savingsLastBtn" class="secondary" type="button">Última »</button>
+      </div>
+    </section>
+
     </div>
 
     <div class="app-section" id="seccion-3" data-page-title="Informe por sede">
@@ -575,7 +618,7 @@
     (() => {
       const sectionForTarget = {
         inicio: 'seccion-1', importacion: 'seccion-1', 'resumen-ejecutivo': 'seccion-1', cards: 'seccion-1', 'calidad-datos': 'seccion-1',
-        'comparar-periodos': 'seccion-2', 'ranking-sedes': 'seccion-2',
+        'comparar-periodos': 'seccion-2', 'ranking-sedes': 'seccion-2', 'ranking-ahorro-energia': 'seccion-2',
         'dashboard-ambiental': 'seccion-3', planPanel: 'seccion-3',
         registros: 'seccion-4', 'aula-climatica': 'seccion-5'
       };
@@ -629,12 +672,12 @@
     })();
   </script>
 
-  <script defer src="data/registros.compact.js?v=65-rendimiento"></script>
+  <script defer src="data/registros.compact.js?v=66-ranking-ahorro"></script>
   <script defer src="data/resumenes.js?v=60-historicos-multiservicio"></script>
   <script defer src="data/sincronizacion-territorial.js?v=60-territorios"></script>
   <script defer src="data/excepciones-servicios.js?v=60-instituciones"></script>
   
-  <script defer src="app.js?v=65-rendimiento"></script>
+  <script defer src="app.js?v=66-ranking-ahorro"></script>
   <script defer src="assistant-config.js?v=65-rendimiento"></script>
   <script defer src="assistant.js?v=65-rendimiento"></script>
 </body>

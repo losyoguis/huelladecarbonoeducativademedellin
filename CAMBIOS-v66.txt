@@ -1,0 +1,10 @@
+SiMeCO₂ v66 · Ranking de ahorro eléctrico · 2026-08-07
+
+1. Se agregó debajo del ranking de consumo un nuevo “Ranking de sedes por ahorro de energía eléctrica”.
+2. El ranking mensual compara cada sede únicamente con el mes calendario inmediatamente anterior y exige lectura eléctrica válida en ambos meses.
+3. Los periodos faltantes (por ejemplo, meses no disponibles en la base) no se enlazan artificialmente y no se interpretan como ahorro.
+4. La tendencia general calcula comparaciones mensuales consecutivas, número de meses a la baja, porcentaje de constancia y ahorro neto.
+5. Se agregó filtro de periodo, autocompletar por nombre/dirección, botón de actualización, tarjetas de resumen y paginación de 10 en 10.
+6. El ranking mensual se ordena de mayor a menor ahorro en kWh. La tendencia general se ordena por ahorro neto positivo y muestra la constancia mensual como indicador complementario.
+7. Se mantienen intactos los históricos oficiales, el ranking original, las 9.147 filas consolidadas, la agrupación institucional y las excepciones de energía en contrato separado.
+8. Se añadió una prueba automática específica para verificar el cálculo de ahorro y que no se comparen meses no consecutivos.

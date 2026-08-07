@@ -4,7 +4,7 @@ let TREE_CO2_KG_YEAR = 22; // kg CO2e capturados por árbol al año. Ajustable d
 const FACTOR_KEY = 'simeco2_factores_ambientales_v8';
 const STORE_KEY = 'simeco2_servicios_v16';
 const CONFIG_KEY = 'simeco2_repo_config_v7';
-const DATA_VERSION = 'v65-rendimiento-consultas-20260807';
+const DATA_VERSION = 'v66-ranking-ahorro-20260807';
 
 const $ = (id)=>document.getElementById(id);
 const state = loadStore();
@@ -26,6 +26,12 @@ let rankingPriority = "";
 let rankingMetric = "energyKwh";
 let rankingSelectedKey = "";
 let rankingAutocompleteIndex = -1;
+let savingsPage = 0;
+let savingsRowsCache = [];
+let savingsPeriod = "";
+let savingsSelectedKey = "";
+let savingsAutocompleteIndex = -1;
+const SAVINGS_PAGE_SIZE = 10;
 const RECORD_TABLE_PAGE_SIZE = 200;
 let recordTablePage = 0;
 
@@ -494,6 +500,18 @@ function bindEvents(){
   bindEvent('rankingPrevBtn','click',()=>setRankingPage(rankingPage-1));
   bindEvent('rankingNextBtn','click',()=>setRankingPage(rankingPage+1));
   bindEvent('rankingLastBtn','click',()=>setRankingPage(Math.max(0,Math.ceil(rankingRowsCache.length/RANKING_PAGE_SIZE)-1)));
+  bindEvent('savingsPeriodFilter','change',()=>{savingsPeriod=$('savingsPeriodFilter')?.value||'';savingsSelectedKey='';savingsPage=0;renderSavingsRanking();});
+  bindEvent('savingsSiteSearch','input',handleSavingsSearchInput);
+  bindEvent('savingsSiteSearch','focus',()=>renderSavingsSuggestions($('savingsSiteSearch')?.value||''));
+  bindEvent('savingsSiteSearch','keydown',handleSavingsSearchKeydown);
+  bindEvent('savingsSiteSuggestions','mousedown',handleSavingsSuggestionClick);
+  bindEvent('clearSavingsSearchBtn','click',clearSavingsSearch);
+  bindEvent('refreshSavingsRankingBtn','click',refreshSavingsRanking);
+  bindEvent('savingsFirstBtn','click',()=>setSavingsPage(0));
+  bindEvent('savingsPrevBtn','click',()=>setSavingsPage(savingsPage-1));
+  bindEvent('savingsNextBtn','click',()=>setSavingsPage(savingsPage+1));
+  bindEvent('savingsLastBtn','click',()=>setSavingsPage(Math.max(0,Math.ceil(savingsRowsCache.length/SAVINGS_PAGE_SIZE)-1)));
+  document.addEventListener('click',e=>{ const box=$('savingsSiteAutocomplete'); if(box && !box.contains(e.target)) closeSavingsSuggestions(); });
   document.addEventListener('click',handlePlanButtonClick);
   bindEvent('qualityBody','click',handleQualityActionClick);
 }
@@ -2069,6 +2087,7 @@ function renderRanking(){
   if(rankingSelectedKey&&!rankingRowsCache.some(r=>siteKey(r.site,r.address)===rankingSelectedKey)){rankingSelectedKey='';if($('rankingSiteSearch'))$('rankingSiteSearch').value='';$('clearRankingSearchBtn')?.classList.remove('visible');}
   const metric=selectedRankingMetric(); if($('rankingTitle'))$('rankingTitle').textContent=`Ranking de sedes por ${metric.label.toLowerCase()}`; if($('rankingDescription'))$('rankingDescription').textContent=`Ordena de mayor a menor ${metric.label.toLowerCase()}. Las sedes sin lectura para este indicador permanecen visibles al final y no se interpretan como consumo cero.`;
   const pages=Math.max(1,Math.ceil(rankingRowsCache.length/RANKING_PAGE_SIZE));if(rankingPage>=pages)rankingPage=pages-1;drawSiteChart(rankingRowsCache);
+  renderSavingsRanking();
 }
 function drawSiteChart(rows){
   const c=$('siteChart');if(!c)return;const ctx=c.getContext('2d'),metric=selectedRankingMetric();ctx.clearRect(0,0,c.width,c.height);ctx.fillStyle='#13312d';ctx.font='bold 17px Arial';ctx.textAlign='left';ctx.fillText(`Ranking de sedes por ${metric.label.toLowerCase()} (${metric.unit})`,24,34);ctx.font='12px Arial';ctx.fillStyle='#637772';ctx.fillText(`Mayor a menor · ${rankingPeriod?groupLabel(rankingPeriod,'month'):'todos los meses'} · sin dato/contrato separado al final · vista de 10 sedes.`,24,54);
@@ -2079,6 +2098,99 @@ function drawSiteChart(rows){
   if(!visible.length){ctx.fillStyle='#13312d';ctx.fillText('Sin datos históricos para graficar',24,92);return;}
   const padL=255,padR=28,valueX=Math.max(735,c.width-330),top=82,rowH=36,barH=20,max=Math.max(...measured.map(r=>Number(r.rankingValue)||0),1),maxBarW=Math.max(180,valueX-padL-18);ctx.font='12px Arial';
   visible.forEach((r,i)=>{const y=top+i*rowH,position=start+i+1,rawLabel=`${position}. ${r.displaySite||r.site||''}`,label=rawLabel.length>36?rawLabel.slice(0,36)+'…':rawLabel,isSelected=rankingSelectedKey&&siteKey(r.site,r.address)===rankingSelectedKey;if(isSelected){ctx.fillStyle='#fff3bf';roundRect(ctx,12,y-7,c.width-24,rowH-1,10);ctx.fill();}ctx.fillStyle=isSelected?'#075846':'#315650';ctx.font=isSelected?'bold 12px Arial':'12px Arial';ctx.textAlign='right';ctx.fillText(label,padL-12,y+15);if(r.rankingHasValue){const bw=Math.max(5,(r.rankingValue/max)*maxBarW),grad=ctx.createLinearGradient(padL,0,padL+bw,0);grad.addColorStop(0,'#0b9878');grad.addColorStop(1,'#0fc39a');ctx.fillStyle=grad;roundRect(ctx,padL,y,bw,barH,8);ctx.fill();}else{ctx.save();ctx.setLineDash([6,5]);ctx.strokeStyle='#9cafaa';ctx.lineWidth=1.5;roundRect(ctx,padL,y,maxBarW,barH,8);ctx.stroke();ctx.restore();}const available=c.width-valueX-padR,fullLabel=r.rankingHasValue?`${fmt(r.rankingValue)} ${metric.unit} · ${r.rankingPeriodCount}/${r.periodCount} periodos`:(r.rankingExternal?'Contrato separado · consumo pendiente de integrar':`Sin dato de ${metric.short.toLowerCase()} · ${r.periodCount} periodo${r.periodCount===1?'':'s'}`);ctx.fillStyle=r.rankingHasValue?'#13312d':'#637772';ctx.textAlign='left';ctx.font=r.rankingHasValue?'bold 11.5px Arial':'italic 11.5px Arial';ctx.fillText(fitCanvasText(ctx,fullLabel,available),valueX,y+15);});ctx.textAlign='left';
+}
+
+
+function monthBefore(period){
+  const m=String(period||'').match(/^(\d{4})-(\d{2})$/); if(!m) return '';
+  const d=new Date(Number(m[1]),Number(m[2])-2,1);
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+}
+function energyBySitePeriod(){
+  const map=new Map();
+  for(const r of state.records||[]){
+    if(!r.period || !recordHasEnergyReading(r)) continue;
+    const key=siteKey(r.site,r.address), id=`${key}@@${r.period}`;
+    if(!map.has(id)) map.set(id,{key,period:r.period,site:r.site||'Sin nombre',displaySite:preferredSiteName(r),address:r.address||'',energyKwh:0});
+    map.get(id).energyKwh += Number(r.energyKwh)||0;
+  }
+  return map;
+}
+function getSavingsPeriods(){
+  return getRankingPeriods().filter(period=>getRankingPeriods().includes(monthBefore(period)));
+}
+function renderSavingsPeriodOptions(){
+  const select=$('savingsPeriodFilter'); if(!select) return;
+  const periods=getSavingsPeriods(), current=savingsPeriod||select.value||'';
+  select.innerHTML='<option value="">Tendencia general · todos los meses</option>'+periods.map(p=>`<option value="${escapeHtml(p)}">${escapeHtml(groupLabel(p,'month'))} vs ${escapeHtml(groupLabel(monthBefore(p),'month'))}</option>`).join('');
+  if(periods.includes(current)){select.value=current;savingsPeriod=current;} else {select.value='';savingsPeriod='';}
+}
+function buildSavingsRows(){
+  const byPeriod=energyBySitePeriod(), periods=getRankingPeriods(), siteMeta=new Map();
+  for(const item of byPeriod.values()) if(!siteMeta.has(item.key)) siteMeta.set(item.key,item);
+  const rows=[];
+  for(const [key,meta] of siteMeta.entries()){
+    const comparisons=[];
+    const targets=savingsPeriod?[savingsPeriod]:periods.filter(p=>periods.includes(monthBefore(p)));
+    for(const currentPeriod of targets){
+      const previousPeriod=monthBefore(currentPeriod);
+      const prev=byPeriod.get(`${key}@@${previousPeriod}`), curr=byPeriod.get(`${key}@@${currentPeriod}`);
+      if(!prev||!curr) continue;
+      const previous=Number(prev.energyKwh)||0,current=Number(curr.energyKwh)||0;
+      const delta=previous-current, pct=previous>0?(delta/previous)*100:null;
+      comparisons.push({previousPeriod,currentPeriod,previous,current,delta,pct});
+    }
+    if(!comparisons.length) continue;
+    const decreases=comparisons.filter(c=>c.delta>0), increases=comparisons.filter(c=>c.delta<0), equals=comparisons.filter(c=>c.delta===0);
+    const savingsKwh=decreases.reduce((a,c)=>a+c.delta,0), increaseKwh=increases.reduce((a,c)=>a+Math.abs(c.delta),0), netSavingsKwh=comparisons.reduce((a,c)=>a+c.delta,0);
+    const decreaseRate=100*decreases.length/comparisons.length;
+    if(savingsPeriod){
+      const c=comparisons[0];
+      if(!(c&&c.delta>0)) continue;
+      rows.push({...meta,comparisons,decreaseCount:1,increaseCount:0,equalCount:0,decreaseRate:100,savingsKwh:c.delta,netSavingsKwh:c.delta,increaseKwh:0,previousKwh:c.previous,currentKwh:c.current,savingsPercent:c.pct,rankingValue:c.delta});
+    }else{
+      if(!decreases.length || netSavingsKwh<=0) continue;
+      rows.push({...meta,comparisons,decreaseCount:decreases.length,increaseCount:increases.length,equalCount:equals.length,decreaseRate,savingsKwh,netSavingsKwh,increaseKwh,savingsPercent:null,rankingValue:netSavingsKwh});
+    }
+  }
+  return rows.sort((a,b)=>{
+    if(savingsPeriod) return (b.rankingValue-a.rankingValue) || ((b.savingsPercent||0)-(a.savingsPercent||0)) || String(a.displaySite||a.site).localeCompare(String(b.displaySite||b.site),'es');
+    return (b.rankingValue-a.rankingValue) || (b.decreaseCount-a.decreaseCount) || (b.decreaseRate-a.decreaseRate) || String(a.displaySite||a.site).localeCompare(String(b.displaySite||b.site),'es');
+  });
+}
+function savingsSearchOptions(){return savingsRowsCache.map((r,index)=>({...r,index,key:r.key||siteKey(r.site,r.address)}));}
+function closeSavingsSuggestions(){const list=$('savingsSiteSuggestions'),input=$('savingsSiteSearch');if(list)list.hidden=true;if(input)input.setAttribute('aria-expanded','false');savingsAutocompleteIndex=-1;}
+function savingsMatches(query){
+  const tokens=loose(query).split(/\s+/).filter(Boolean),opts=savingsSearchOptions(); if(!tokens.length)return opts.slice(0,20);
+  return opts.map(o=>{const hay=loose(`${o.displaySite||o.site} ${o.site} ${o.address}`);if(!tokens.every(t=>hay.includes(t)))return null;let score=0;const site=loose(`${o.displaySite||''} ${o.site||''}`),address=loose(o.address);tokens.forEach(t=>{if(site.startsWith(t))score+=8;else if(site.includes(t))score+=5;if(address.includes(t))score+=2;});return {...o,score};}).filter(Boolean).sort((a,b)=>b.score-a.score||a.index-b.index).slice(0,20);
+}
+function renderSavingsSuggestions(query=''){
+  const list=$('savingsSiteSuggestions'),input=$('savingsSiteSearch');if(!list||!input)return;const matches=savingsMatches(query);savingsAutocompleteIndex=-1;
+  list.innerHTML=matches.length?matches.map(o=>`<button type="button" class="autocomplete-option" role="option" data-savings-key="${escapeHtml(o.key)}" data-savings-index="${o.index}"><span><strong>${highlightRankingMatch(o.displaySite||o.site,query)}</strong><small>${highlightRankingMatch(o.address||'Sin dirección',query)} · ${savingsPeriod?`${fmt(o.savingsKwh)} kWh ahorrados`:`${o.decreaseCount}/${o.comparisons.length} comparaciones a la baja`}</small></span><em>Puesto ${o.index+1}</em></button>`).join(''):'<div class="autocomplete-empty">No hay sedes con ahorro verificable para esta selección.</div>';
+  list.hidden=false;input.setAttribute('aria-expanded','true');
+}
+function handleSavingsSearchInput(){savingsSelectedKey='';const value=$('savingsSiteSearch').value;$('clearSavingsSearchBtn')?.classList.toggle('visible',Boolean(value));renderSavingsSuggestions(value);}
+function selectSavingsSuggestion(key,index){const row=savingsRowsCache[index]||savingsRowsCache.find(r=>r.key===key);if(!row)return;savingsSelectedKey=key;$('savingsSiteSearch').value=row.displaySite||row.site;$('clearSavingsSearchBtn')?.classList.add('visible');closeSavingsSuggestions();const actualIndex=savingsRowsCache.findIndex(r=>r.key===key);savingsPage=Math.max(0,Math.floor(actualIndex/SAVINGS_PAGE_SIZE));drawSavingsChart(savingsRowsCache);requestAnimationFrame(()=>$('savingsSiteChart')?.scrollIntoView({behavior:'smooth',block:'center'}));}
+function handleSavingsSuggestionClick(e){const btn=e.target.closest('[data-savings-key]');if(!btn)return;e.preventDefault();selectSavingsSuggestion(btn.dataset.savingsKey,Number(btn.dataset.savingsIndex));}
+function handleSavingsSearchKeydown(e){const list=$('savingsSiteSuggestions'),options=[...(list?.querySelectorAll('.autocomplete-option')||[])];if(e.key==='ArrowDown'){e.preventDefault();savingsAutocompleteIndex=Math.min(savingsAutocompleteIndex+1,options.length-1);}else if(e.key==='ArrowUp'){e.preventDefault();savingsAutocompleteIndex=Math.max(savingsAutocompleteIndex-1,0);}else if(e.key==='Enter'&&savingsAutocompleteIndex>=0&&options[savingsAutocompleteIndex]){e.preventDefault();options[savingsAutocompleteIndex].dispatchEvent(new MouseEvent('mousedown',{bubbles:true}));return;}else if(e.key==='Escape'){closeSavingsSuggestions();return;}else return;options.forEach((o,i)=>o.classList.toggle('active',i===savingsAutocompleteIndex));options[savingsAutocompleteIndex]?.scrollIntoView({block:'nearest'});}
+function clearSavingsSearch(){savingsSelectedKey='';savingsAutocompleteIndex=-1;if($('savingsSiteSearch'))$('savingsSiteSearch').value='';$('clearSavingsSearchBtn')?.classList.remove('visible');closeSavingsSuggestions();savingsPage=0;drawSavingsChart(savingsRowsCache);}
+function refreshSavingsRanking(){savingsPeriod='';savingsSelectedKey='';savingsPage=0;renderSavingsPeriodOptions();if($('savingsPeriodFilter'))$('savingsPeriodFilter').value='';if($('savingsSiteSearch'))$('savingsSiteSearch').value='';$('clearSavingsSearchBtn')?.classList.remove('visible');closeSavingsSuggestions();renderSavingsRanking();log('Ranking de ahorro actualizado: se recalcularon las reducciones eléctricas mes a mes.');}
+function setSavingsPage(page){const pages=Math.max(1,Math.ceil(savingsRowsCache.length/SAVINGS_PAGE_SIZE));savingsPage=Math.max(0,Math.min(Number(page)||0,pages-1));drawSavingsChart(savingsRowsCache);}
+function renderSavingsRanking(){
+  if(!$('savingsSiteChart')) return;
+  renderSavingsPeriodOptions();savingsRowsCache=buildSavingsRows();
+  if(savingsSelectedKey&&!savingsRowsCache.some(r=>r.key===savingsSelectedKey)){savingsSelectedKey='';if($('savingsSiteSearch'))$('savingsSiteSearch').value='';$('clearSavingsSearchBtn')?.classList.remove('visible');}
+  const pages=Math.max(1,Math.ceil(savingsRowsCache.length/SAVINGS_PAGE_SIZE));if(savingsPage>=pages)savingsPage=pages-1;drawSavingsChart(savingsRowsCache);
+}
+function drawSavingsChart(rows){
+  const c=$('savingsSiteChart');if(!c)return;const ctx=c.getContext('2d');ctx.clearRect(0,0,c.width,c.height);ctx.fillStyle='#13312d';ctx.font='bold 17px Arial';ctx.textAlign='left';ctx.fillText('Ranking de sedes por ahorro de energía eléctrica (kWh)',24,34);ctx.font='12px Arial';ctx.fillStyle='#637772';ctx.fillText(savingsPeriod?`${groupLabel(savingsPeriod,'month')} frente a ${groupLabel(monthBefore(savingsPeriod),'month')} · mayor ahorro mensual a menor.`:'Tendencia general · mayor ahorro neto a menor · solo compara meses calendario consecutivos con lectura válida.',24,54);
+  const total=rows.length,pages=Math.max(1,Math.ceil(total/SAVINGS_PAGE_SIZE));savingsPage=Math.max(0,Math.min(savingsPage,pages-1));const start=savingsPage*SAVINGS_PAGE_SIZE,visible=rows.slice(start,start+SAVINGS_PAGE_SIZE),end=Math.min(start+visible.length,total);
+  if($('savingsPageInfo'))$('savingsPageInfo').textContent=total?`${start+1}–${end} de ${total} sedes con ahorro · Página ${savingsPage+1} de ${pages}`:'Sin sedes con ahorro verificable';['savingsFirstBtn','savingsPrevBtn'].forEach(id=>{if($(id))$(id).disabled=savingsPage===0||!total;});['savingsNextBtn','savingsLastBtn'].forEach(id=>{if($(id))$(id).disabled=savingsPage>=pages-1||!total;});
+  const maxSaved=rows.reduce((m,r)=>Math.max(m,Number(r.rankingValue)||0),0),best=rows[0],bestRate=[...rows].sort((a,b)=>savingsPeriod?((b.savingsPercent||0)-(a.savingsPercent||0))||(b.rankingValue-a.rankingValue):(b.decreaseCount-a.decreaseCount)||(b.decreaseRate-a.decreaseRate)||(b.comparisons.length-a.comparisons.length)||(b.rankingValue-a.rankingValue))[0];
+  if($('savingsRankingExtremes'))$('savingsRankingExtremes').innerHTML=total?`<article><span>Mayor ahorro</span><strong>${escapeHtml(best.displaySite||best.site)}</strong><small>${fmt(best.rankingValue)} kWh${savingsPeriod&&Number.isFinite(best.savingsPercent)?` · ${fmt(best.savingsPercent,1)}% menos`:''}</small></article><article><span>${savingsPeriod?'Mejor reducción':'Mayor constancia'}</span><strong>${escapeHtml(bestRate.displaySite||bestRate.site)}</strong><small>${savingsPeriod?`${fmt(bestRate.savingsPercent,1)}% menos`:`${bestRate.decreaseCount}/${bestRate.comparisons.length} comparaciones a la baja · ${fmt(bestRate.decreaseRate,1)}%`}</small></article><article><span>Cobertura</span><strong>${total} sedes con ahorro verificable</strong><small>${savingsPeriod?`Comparación ${escapeHtml(groupLabel(monthBefore(savingsPeriod),'month'))} → ${escapeHtml(groupLabel(savingsPeriod,'month'))}`:'No se comparan meses faltantes ni lecturas ausentes'}</small></article>`:'<p>No hay reducciones de energía verificables para la selección actual.</p>';
+  if(!visible.length){ctx.fillStyle='#13312d';ctx.font='13px Arial';ctx.fillText('No hay ahorro mensual verificable para graficar en esta selección.',24,94);return;}
+  const padL=255,padR=28,valueX=Math.max(735,c.width-330),top=82,rowH=36,barH=20,max=Math.max(maxSaved,1),maxBarW=Math.max(180,valueX-padL-18);ctx.font='12px Arial';
+  visible.forEach((r,i)=>{const y=top+i*rowH,position=start+i+1,rawLabel=`${position}. ${r.displaySite||r.site||''}`,label=rawLabel.length>36?rawLabel.slice(0,36)+'…':rawLabel,isSelected=savingsSelectedKey&&r.key===savingsSelectedKey;if(isSelected){ctx.fillStyle='#fff3bf';roundRect(ctx,12,y-7,c.width-24,rowH-1,10);ctx.fill();}ctx.fillStyle=isSelected?'#075846':'#315650';ctx.font=isSelected?'bold 12px Arial':'12px Arial';ctx.textAlign='right';ctx.fillText(label,padL-12,y+15);const bw=Math.max(5,(r.rankingValue/max)*maxBarW),grad=ctx.createLinearGradient(padL,0,padL+bw,0);grad.addColorStop(0,'#0b9878');grad.addColorStop(1,'#0fc39a');ctx.fillStyle=grad;roundRect(ctx,padL,y,bw,barH,8);ctx.fill();const available=c.width-valueX-padR;let fullLabel;if(savingsPeriod){fullLabel=`↓ ${fmt(r.savingsKwh)} kWh · ${fmt(r.savingsPercent,1)}% · ${fmt(r.previousKwh)} → ${fmt(r.currentKwh)} kWh`;}else{fullLabel=`${r.decreaseCount}/${r.comparisons.length} meses ↓ (${fmt(r.decreaseRate,1)}%) · ahorro neto ${fmt(r.netSavingsKwh)} kWh`;}ctx.fillStyle='#13312d';ctx.textAlign='left';ctx.font='bold 11.5px Arial';ctx.fillText(fitCanvasText(ctx,fullLabel,available),valueX,y+15);});ctx.textAlign='left';
 }
 
 function fitCanvasText(ctx, text, maxWidth){

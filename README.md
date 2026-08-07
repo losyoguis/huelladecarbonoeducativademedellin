@@ -1,3 +1,7 @@
+## Actualización v66 — Ranking de ahorro eléctrico
+
+Se incorpora un segundo ranking debajo del ranking de consumo. Este nuevo módulo reconoce las sedes que disminuyen su energía mes a mes, permite seleccionar un periodo y compara únicamente contra el mes calendario anterior cuando ambos poseen una lectura válida. La tendencia general resume el ahorro neto y la constancia de las disminuciones sin inventar comparaciones a través de meses faltantes.
+
 ## Actualización v60
 
 La versión v60 incorpora agrupación institucional por sedes. El primer caso verificado integra las dos cuentas de Fe y Alegría Santo Domingo Savio sin modificar la trazabilidad de los registros originales.
