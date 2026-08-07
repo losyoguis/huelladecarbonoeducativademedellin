@@ -1,0 +1,34 @@
+CONTROL DE CALIDAD SiMeCO₂ v74
+Fecha: 2026-08-07
+
+OBJETIVO
+Optimización responsive específica para Google Sites (iframe) en escritorio, tablet y móvil.
+
+VALIDACIONES DE EXPERIENCIA
+- Detección automática de iframe: APROBADA.
+- Clases dinámicas por ancho real del contenedor: APROBADAS.
+- Navegación sticky escritorio/tablet: IMPLEMENTADA.
+- Navegación inferior tipo app en móvil: IMPLEMENTADA.
+- Safe-area móvil: IMPLEMENTADA.
+- Hero compacto en modo embebido: IMPLEMENTADO.
+- Grids fluidos: IMPLEMENTADOS.
+- Canvas responsivos y redibujado al resize: IMPLEMENTADO.
+- Dashboard y registros en tarjetas móviles: IMPLEMENTADO.
+- Tablas anchas con scroll táctil: IMPLEMENTADO.
+- Inputs móviles 16px y controles táctiles ≥44px: IMPLEMENTADO.
+- Autocompletados limitados al viewport: IMPLEMENTADO.
+- Informe por sede y acciones PDF/HTML adaptados: IMPLEMENTADO.
+- Asistente reposicionado en móvil: IMPLEMENTADO.
+- Cache-busting v74 para app.js/styles.css: IMPLEMENTADO.
+
+INTEGRIDAD FUNCIONAL
+- npm run check: APROBADO.
+- npm test: APROBADO, incluida google-sites-responsive.test.js.
+- validar_sistema.py: APROBADO.
+- validar_historicos.py: APROBADO.
+- 9.147 registros.
+- 567 instituciones/sedes.
+- 17 períodos oficiales.
+- Ranking, ahorro, Google Maps e Informe por sede conservados.
+
+RESULTADO: APROBADO.

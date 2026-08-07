@@ -1606,3 +1606,394 @@ img{content-visibility:auto}
   opacity:.72;
   pointer-events:none;
 }
+
+
+/* =========================================================
+   v74 · Responsive optimizado para incrustación en Google Sites
+   ========================================================= */
+:root{
+  --simeco-safe-gap:clamp(10px,2vw,24px);
+}
+html,body{
+  max-width:100%;
+  overflow-x:hidden;
+}
+body.is-embedded{
+  background:#f7fbf9;
+}
+body.is-embedded main{
+  width:min(100%,1600px);
+  max-width:100%;
+  margin-inline:auto;
+  padding-inline:clamp(8px,1.6vw,22px);
+}
+body.is-embedded .panel,
+body.is-embedded .cards,
+body.is-embedded .chart-card,
+body.is-embedded .table-wrap{
+  min-width:0;
+  max-width:100%;
+}
+body.is-embedded img,
+body.is-embedded svg,
+body.is-embedded video{
+  max-width:100%;
+  height:auto;
+}
+body.is-embedded canvas{
+  display:block;
+  width:100% !important;
+  max-width:100%;
+  height:auto !important;
+}
+
+/* Navegación compacta dentro del iframe */
+body.is-embedded .section-switcher{
+  position:sticky;
+  top:0;
+  z-index:90;
+  width:100%;
+  max-width:100%;
+  margin:0;
+  padding:8px max(8px,env(safe-area-inset-left));
+  gap:8px;
+  overflow-x:auto;
+  overscroll-behavior-x:contain;
+  scrollbar-width:none;
+  background:rgba(248,252,250,.96);
+  backdrop-filter:blur(14px);
+  -webkit-backdrop-filter:blur(14px);
+  border-bottom:1px solid rgba(16,112,91,.12);
+}
+body.is-embedded .section-switcher::-webkit-scrollbar{display:none}
+body.is-embedded .section-tab{
+  flex:0 0 min(220px,38vw);
+  min-width:150px;
+}
+
+/* Componentes con grids fluidos */
+body.viewport-compact .grid-2,
+body.viewport-compact .section-head,
+body.viewport-compact .ranking-filter-bar,
+body.viewport-compact .dashboard-grid,
+body.viewport-compact .dashboard-services-grid,
+body.viewport-compact .feature-grid,
+body.viewport-compact .plan-meta-grid,
+body.viewport-compact .plan-kpi-grid,
+body.viewport-compact .actions-grid{
+  min-width:0;
+}
+body.viewport-tablet .grid-2,
+body.viewport-tablet .ranking-filter-bar{
+  grid-template-columns:1fr !important;
+}
+body.viewport-tablet .feature-grid,
+body.viewport-tablet .dashboard-grid,
+body.viewport-tablet .dashboard-services-grid,
+body.viewport-tablet .plan-kpi-grid{
+  grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+}
+body.viewport-tablet .section-head{
+  align-items:flex-start;
+  gap:14px;
+}
+
+/* Tablas: nunca fuerzan el ancho del iframe */
+body.is-embedded .table-wrap{
+  overflow-x:auto;
+  -webkit-overflow-scrolling:touch;
+  overscroll-behavior-x:contain;
+  border-radius:14px;
+}
+body.is-embedded table{
+  max-width:none;
+}
+body.is-embedded .dashboard-data-table,
+body.is-embedded .records-data-table,
+body.is-embedded .quality-data-table,
+body.is-embedded .plan-table{
+  min-width:760px;
+}
+
+/* Formularios táctiles */
+body.is-embedded input,
+body.is-embedded select,
+body.is-embedded textarea,
+body.is-embedded button{
+  max-width:100%;
+}
+body.viewport-phone input,
+body.viewport-phone select,
+body.viewport-phone textarea{
+  font-size:16px !important; /* evita zoom automático en móviles */
+}
+body.viewport-phone button,
+body.viewport-phone .primary,
+body.viewport-phone .secondary{
+  min-height:44px;
+}
+body.is-embedded .autocomplete-list,
+body.is-embedded .institution-suggestions,
+body.is-embedded .searchable-select-list{
+  max-width:calc(100vw - 28px);
+  max-height:min(48vh,420px);
+}
+
+/* Hero más compacto al estar embebido */
+body.is-embedded .hero{
+  min-height:auto !important;
+  padding:clamp(14px,2vw,30px) clamp(10px,2vw,24px) !important;
+}
+body.is-embedded .hero-showcase-card{
+  width:min(100%,1200px);
+  gap:clamp(12px,2vw,26px);
+}
+body.viewport-tablet .hero-showcase-card,
+body.viewport-phone .hero-showcase-card{
+  grid-template-columns:1fr !important;
+  text-align:center;
+}
+body.viewport-tablet .hero-logo-frame,
+body.viewport-phone .hero-logo-frame{
+  width:min(150px,34vw);
+  margin-inline:auto;
+}
+body.viewport-phone .hero-top-links{
+  flex-direction:column;
+  align-items:stretch;
+  gap:7px;
+}
+body.viewport-phone .hero-top-link{
+  width:100%;
+  text-align:center;
+}
+
+/* Rankings legibles en contenedores estrechos */
+body.is-embedded .environmental-ranking-chart,
+body.is-embedded .savings-ranking-chart{
+  overflow:hidden;
+}
+body.viewport-tablet .ranking-extremes{
+  grid-template-columns:1fr !important;
+}
+body.viewport-phone .ranking-filter-bar,
+body.viewport-phone .savings-filter-bar{
+  grid-template-columns:1fr !important;
+  gap:12px;
+}
+body.viewport-phone .ranking-pagination{
+  display:grid !important;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:8px;
+}
+body.viewport-phone .ranking-pagination strong{
+  grid-column:1/-1;
+  grid-row:1;
+  text-align:center;
+}
+body.viewport-phone .ranking-pagination button{
+  width:100%;
+}
+body.viewport-phone .savings-top3-grid{
+  grid-template-columns:1fr !important;
+}
+
+/* Dashboard e informe por sede en formato app */
+body.viewport-phone .dashboard-grid,
+body.viewport-phone .dashboard-services-grid,
+body.viewport-phone .feature-grid,
+body.viewport-phone .plan-kpi-grid,
+body.viewport-phone .plan-meta-grid,
+body.viewport-phone .actions-grid,
+body.viewport-phone .cards{
+  grid-template-columns:1fr !important;
+}
+body.viewport-phone .dashboard-site-search,
+body.viewport-phone .search-filter{
+  width:100%;
+}
+body.viewport-phone .dashboard-generate-report{
+  width:100%;
+}
+body.viewport-phone .plan-actions{
+  width:100%;
+  display:grid;
+  grid-template-columns:1fr;
+  gap:8px;
+}
+body.viewport-phone .plan-actions button{
+  width:100%;
+}
+
+/* Convierte las tablas operativas principales en tarjetas en móvil */
+@media (max-width:620px){
+  body.is-embedded .dashboard-table-wrap,
+  body.is-embedded .records-table-wrap{
+    overflow:visible;
+  }
+  body.is-embedded .dashboard-data-table,
+  body.is-embedded .records-data-table{
+    min-width:0 !important;
+    width:100%;
+  }
+  body.is-embedded .dashboard-data-table thead,
+  body.is-embedded .records-data-table thead{
+    display:none;
+  }
+  body.is-embedded .dashboard-data-table tbody,
+  body.is-embedded .records-data-table tbody{
+    display:grid;
+    gap:12px;
+  }
+  body.is-embedded .dashboard-data-table tr:not(.total-row),
+  body.is-embedded .records-data-table tr{
+    display:block;
+    border:1px solid rgba(16,112,91,.14);
+    border-radius:16px;
+    padding:10px 12px;
+    background:#fff;
+    box-shadow:0 6px 18px rgba(16,70,58,.045);
+  }
+  body.is-embedded .dashboard-data-table td,
+  body.is-embedded .records-data-table td{
+    display:grid;
+    grid-template-columns:minmax(112px,38%) 1fr;
+    align-items:start;
+    gap:10px;
+    width:100%;
+    min-width:0;
+    padding:8px 0 !important;
+    border:0 !important;
+    border-bottom:1px solid rgba(16,112,91,.08) !important;
+    overflow-wrap:anywhere;
+  }
+  body.is-embedded .dashboard-data-table td:last-child,
+  body.is-embedded .records-data-table td:last-child{
+    border-bottom:0 !important;
+  }
+  body.is-embedded .dashboard-data-table td::before,
+  body.is-embedded .records-data-table td::before{
+    content:attr(data-label);
+    font-weight:800;
+    color:#49665f;
+  }
+  body.is-embedded .dashboard-data-table .total-row{
+    display:none;
+  }
+  body.is-embedded .plan-cell,
+  body.is-embedded .plan-cell .plan-btn{
+    width:100%;
+  }
+}
+
+/* Informe: gráficas y tablas cómodas */
+body.is-embedded .plan-chart-wrap{
+  overflow-x:auto;
+  -webkit-overflow-scrolling:touch;
+}
+body.viewport-phone .plan-chart-svg{
+  min-width:680px;
+}
+body.viewport-phone .plan-document{
+  padding:12px !important;
+}
+body.viewport-phone .plan-cover{
+  display:flex !important;
+  flex-direction:column;
+  align-items:flex-start;
+  gap:12px;
+}
+body.viewport-phone .plan-badge{
+  align-self:flex-start;
+}
+
+/* Carga inicial */
+body.viewport-phone .invoice-loading-card{
+  width:calc(100vw - 20px);
+  max-height:calc(100vh - 20px);
+  overflow:auto;
+  padding:16px !important;
+}
+body.viewport-phone .invoice-loading-metrics{
+  grid-template-columns:1fr !important;
+}
+body.viewport-phone .invoice-loading-stages{
+  grid-template-columns:repeat(2,1fr) !important;
+}
+
+/* Asistente: no tapa navegación ni controles */
+body.viewport-phone .assistant-launcher{
+  right:12px !important;
+  bottom:76px !important;
+}
+body.viewport-phone .assistant-panel{
+  position:fixed !important;
+  left:8px !important;
+  right:8px !important;
+  bottom:70px !important;
+  width:auto !important;
+  max-width:none !important;
+  max-height:min(72vh,620px) !important;
+}
+
+/* Navegación inferior tipo app en móvil cuando está embebido */
+@media (max-width:620px){
+  body.is-embedded{
+    padding-bottom:72px;
+  }
+  body.is-embedded .section-switcher{
+    position:fixed;
+    top:auto;
+    bottom:0;
+    left:0;
+    right:0;
+    z-index:120;
+    display:grid !important;
+    grid-template-columns:repeat(5,minmax(0,1fr));
+    gap:3px;
+    padding:6px max(6px,env(safe-area-inset-right)) calc(6px + env(safe-area-inset-bottom)) max(6px,env(safe-area-inset-left));
+    overflow:visible;
+    border-top:1px solid rgba(16,112,91,.16);
+    border-bottom:0;
+    box-shadow:0 -8px 24px rgba(18,71,60,.09);
+  }
+  body.is-embedded .section-tab{
+    min-width:0 !important;
+    width:100%;
+    flex:none;
+    padding:7px 3px !important;
+    border-radius:10px !important;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    gap:2px;
+  }
+  body.is-embedded .section-tab > span{
+    width:24px;
+    height:24px;
+    margin:0 auto;
+  }
+  body.is-embedded .section-tab strong{
+    font-size:10px !important;
+    line-height:1.1;
+    white-space:normal;
+  }
+  body.is-embedded .section-tab small{
+    display:none !important;
+  }
+}
+
+/* Muy angosto: priorizar legibilidad */
+@media (max-width:390px){
+  body.is-embedded main{padding-inline:6px}
+  body.is-embedded .panel{padding:12px !important;border-radius:14px !important}
+  body.is-embedded .section-tab strong{font-size:9px !important}
+  body.is-embedded .mjb-title-card h1{font-size:clamp(1.35rem,7vw,1.8rem) !important}
+}
+
+@media (max-width:620px){
+  body.is-embedded .data-panel .table-wrap:has(.records-data-table),
+  body.is-embedded .dashboard-panel .table-wrap:has(.dashboard-data-table){
+    overflow:visible !important;
+  }
+}

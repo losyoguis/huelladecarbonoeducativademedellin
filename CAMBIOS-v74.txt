@@ -1,0 +1,22 @@
+SiMeCO₂ v74 — Responsive optimizado para Google Sites
+
+OBJETIVO
+Mejorar la experiencia cuando la plataforma está incrustada mediante iframe en Google Sites, tanto en computador como tablet y móvil.
+
+MEJORAS
+- Detección automática de modo embebido (iframe).
+- Clases dinámicas por ancho real del contenedor: phone, tablet y compact.
+- Navegación superior sticky en escritorio/tablet y navegación inferior tipo app en móvil.
+- Hero más compacto al estar incrustado.
+- Grids fluidos y tarjetas de una/dos columnas según espacio disponible.
+- Canvas de históricos y rankings adaptados al ancho del iframe y redibujados al cambiar tamaño.
+- Tablas protegidas contra desbordamiento; Dashboard y registros se convierten en tarjetas en móvil.
+- Formularios táctiles con objetivos mínimos de 44 px y fuente de 16 px en entradas móviles.
+- Autocompletados limitados al viewport del iframe.
+- Ranking y paginación reorganizados para pantallas pequeñas.
+- Informe por sede, planes, gráficas y botones optimizados para móvil.
+- Asistente Ambiental reposicionado para no tapar navegación ni controles.
+- Pantalla inicial de carga adaptada a pantallas pequeñas.
+- Soporte de safe-area para dispositivos móviles.
+- Cache-busting de styles.css y app.js actualizado a v74 para evitar que Google Sites/GitHub Pages conserve recursos antiguos.
+- Se mantienen íntegros los datos, históricos, rankings, Google Maps e Informe por sede.

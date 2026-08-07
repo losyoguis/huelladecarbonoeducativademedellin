@@ -4,7 +4,7 @@ let TREE_CO2_KG_YEAR = 22; // kg CO2e capturados por árbol al año. Ajustable d
 const FACTOR_KEY = 'simeco2_factores_ambientales_v8';
 const STORE_KEY = 'simeco2_servicios_v16';
 const CONFIG_KEY = 'simeco2_repo_config_v7';
-const DATA_VERSION = 'v73-informe-por-sede-corregido-20260807';
+const DATA_VERSION = 'v74-google-sites-responsive-20260807';
 
 const $ = (id)=>document.getElementById(id);
 const state = loadStore();
@@ -188,7 +188,53 @@ function bindTerritoryFilters(){
   });
 }
 
+
+function initGoogleSitesResponsiveMode(){
+  const embedded=window.self!==window.top;
+  document.documentElement.classList.toggle('is-embedded',embedded);
+  document.body.classList.toggle('is-embedded',embedded);
+
+  const applyViewportClass=()=>{
+    const width=Math.round(document.documentElement.clientWidth||window.innerWidth||0);
+    document.body.classList.toggle('viewport-phone',width<=620);
+    document.body.classList.toggle('viewport-tablet',width>620&&width<=980);
+    document.body.classList.toggle('viewport-compact',width<=1180);
+    document.documentElement.style.setProperty('--simeco-viewport-width',`${width}px`);
+  };
+  applyViewportClass();
+
+  let resizeTimer=0;
+  const onResize=()=>{
+    clearTimeout(resizeTimer);
+    resizeTimer=setTimeout(()=>{
+      applyViewportClass();
+      // Los canvas se redibujan solo después de estabilizar el ancho.
+      if($('siteChart')&&rankingRowsCache.length) drawSiteChart(rankingRowsCache);
+      if($('savingsSiteChart')&&savingsRowsCache.length) drawSavingsChart(savingsRowsCache);
+      if($('chart')) drawChart(comparisonGroups($('compareMode')?.value||'month'));
+    },120);
+  };
+  window.addEventListener('resize',onResize,{passive:true});
+
+  if(window.ResizeObserver){
+    const observer=new ResizeObserver(entries=>{
+      const width=Math.round(entries[0]?.contentRect?.width||0);
+      if(width) onResize();
+    });
+    observer.observe(document.documentElement);
+  }
+
+  // Mejora el uso táctil dentro del iframe de Google Sites.
+  document.addEventListener('focusin',e=>{
+    if(!document.body.classList.contains('viewport-phone')) return;
+    if(e.target.matches('input,select,textarea')){
+      setTimeout(()=>e.target.scrollIntoView({block:'center',behavior:'smooth'}),120);
+    }
+  });
+}
+
 window.addEventListener('DOMContentLoaded', () => {
+  initGoogleSitesResponsiveMode();
   initPdfJs();
   initConfig();
   initFactors();
