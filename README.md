@@ -1,3 +1,7 @@
+## Actualización v60
+
+La versión v60 incorpora agrupación institucional por sedes. El primer caso verificado integra las dos cuentas de Fe y Alegría Santo Domingo Savio sin modificar la trazabilidad de los registros originales.
+
 # SiMeCO₂ v58 — Calidad de datos, histórico multivariable y trazabilidad por sede
 
 Plataforma web de la **Huella de Carbono Educativa de Medellín** para consultar facturas de servicios públicos, comparar periodos, priorizar sedes, generar informes y construir planes de gestión ambiental escolar.

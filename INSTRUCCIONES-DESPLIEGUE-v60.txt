@@ -1,0 +1,11 @@
+SiMeCO₂ v60 — Instrucciones de despliegue
+
+1. Sustituir todos los archivos de la versión anterior por el contenido completo de este paquete.
+2. Publicar conservando la carpeta data/ y los nombres de los PDF.
+3. En GitHub Pages, esperar la propagación de la publicación y hacer una recarga completa del navegador.
+4. La caché local cambió a simeco2_servicios_v13; la aplicación migrará a los datos canónicos de v60.
+5. Verificar la búsqueda "Fe y Alegría Santo Domingo Savio": debe aparecer una sola institución con 2 sedes, 17 periodos y 73.924 kWh acumulados.
+6. Verificar "Segunda Agrupación", "Cr 29 Cl 110 A -83" y "Cr 30 Cl 110 B -24": las tres búsquedas deben llevar al mismo grupo institucional.
+7. Verificar INEM José Félix de Restrepo: debe conservar el estado de energía en contrato separado.
+
+La agrupación institucional no modifica los registros originales de factura; solo cambia cómo se buscan, agregan y presentan las sedes relacionadas.

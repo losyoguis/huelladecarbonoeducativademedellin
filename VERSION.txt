@@ -1,1 +1,3 @@
-SiMeCO₂ v59 · Investigación de cuentas y contratos separados · 2026-08-07
+SiMeCO₂ v60 · Agrupación institucional por sedes
+Fecha: 2026-08-07
+Base: v59

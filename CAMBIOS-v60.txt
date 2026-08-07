@@ -1,0 +1,19 @@
+SiMeCO₂ v60 — Agrupación institucional por sedes
+
+Cambios principales
+- Se vinculó la cuenta "Municipio De Medellin" (Cr 29 Cl 110 A -83) con la sede principal de la I.E. Fe y Alegría Santo Domingo Savio (MED-914-004).
+- Se vinculó "Esc.sto Domingo Savio 2" (Cr 30 Cl 110 B -24) con la Sección Escuela Fe y Alegría Segunda Agrupación (MED-914-019).
+- Ambas cuentas comparten el grupo institucional MED-914-004 para búsquedas, histórico, dashboard, ranking e informes institucionales.
+- La agrupación NO altera los registros originales ni mezcla páginas de evidencia: conserva nombre, dirección, periodo, fuente y página por cada sede.
+- El buscador reconoce nombre oficial, alias de factura, Segunda Agrupación y ambas direcciones.
+- La ficha integral muestra que existen dos sedes y conserva los nombres usados en las facturas.
+- Se actualizó la caché local a simeco2_servicios_v13.
+
+Validación de referencia
+- 34 registros asociados (2 sedes x 17 periodos).
+- 17 periodos únicos.
+- Energía acumulada: 73.924 kWh.
+- Agua acumulada: 14.600 m³.
+- Alcantarillado acumulado: 14.600 m³.
+- Residuos registrados: 49,48171 t.
+- Julio 2026: 4.577 kWh y 576 m³ de agua.

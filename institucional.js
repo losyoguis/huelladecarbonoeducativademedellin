@@ -12,8 +12,11 @@ const monthLabel = period => {
   return new Intl.DateTimeFormat('es-CO', {month:'long', year:'numeric'}).format(new Date(year, month - 1, 1));
 };
 const safeName = value => norm(value).replace(/\s+/g, '-').slice(0, 80) || 'cuenta-servicios-publicos';
-const keyOf = record => `${norm(record.site)}|${norm(record.address || '')}`;
+const syncNorm = value => String(value ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9$.,%#/-]+/g, ' ').replace(/\s+/g,' ').trim();
+const rawKeyOf = record => `${syncNorm(record.site)}|${syncNorm(record.address || '')}`;
 const sync = window.SIMECO_TERRITORIAL_SYNC || {};
+const metaOf = record => sync[rawKeyOf(record)] || {};
+const keyOf = record => { const meta=metaOf(record); return meta.institutionGroupId ? `institution:${norm(meta.institutionGroupId)}` : rawKeyOf(record); };
 const serviceExceptions = Array.isArray(window.SIMECO_SERVICE_EXCEPTIONS?.exceptions) ? window.SIMECO_SERVICE_EXCEPTIONS.exceptions : [];
 const serviceExceptionFor = item => serviceExceptions.find(ex => ex.service === 'energyKwh' && norm(ex.key||'') === norm(`${item.site}|${item.address}`)) || null;
 const records = (Array.isArray(window.SIMECO_REGISTROS) ? window.SIMECO_REGISTROS : [])
@@ -24,9 +27,16 @@ const records = (Array.isArray(window.SIMECO_REGISTROS) ? window.SIMECO_REGISTRO
   });
 const institutions = new Map();
 for (const record of records) {
-  const key = keyOf(record);
-  if (!institutions.has(key)) { const meta=sync[key]||{}; institutions.set(key, {key, site:record.site, displaySite:meta.displayName||record.site, address:record.address || '', meta, records:[]}); }
-  institutions.get(key).records.push(record);
+  const key = keyOf(record), recordMeta=metaOf(record);
+  if (!institutions.has(key)) institutions.set(key, {key, site:record.site, displaySite:recordMeta.institutionDisplayName||recordMeta.displayName||record.site, address:record.address || '', meta:recordMeta, records:[], addresses:new Set(), invoiceSites:new Set(), roles:new Set()});
+  const item=institutions.get(key);
+  item.records.push(record);
+  if(record.address) item.addresses.add(record.address);
+  if(record.site) item.invoiceSites.add(record.site);
+  if(recordMeta.institutionRole) item.roles.add(recordMeta.institutionRole);
+}
+for(const item of institutions.values()){
+  if(item.addresses.size>1) item.address=`${item.addresses.size} sedes: ${[...item.addresses].join(' · ')}`;
 }
 const institutionList = [...institutions.values()].sort((a,b) => (a.displaySite||a.site).localeCompare(b.displaySite||b.site, 'es', {numeric:true}));
 let selectedKey = '';
@@ -54,9 +64,10 @@ function showSuggestions(query) {
   if (!q) { box.hidden = true; box.innerHTML = ''; return; }
   const matches = institutionList.filter(item => {
     const meta=item.meta||{};
-    return norm(`${item.displaySite||''} ${item.site} ${item.address} ${meta.matchedName||''} ${meta.aliases||''}`).includes(q);
+    const memberText=item.records.map(r=>{const m=metaOf(r);return `${r.site} ${r.address||''} ${m.displayName||''} ${m.matchedName||''} ${m.aliases||''} ${m.institutionRole||''}`;}).join(' ');
+    return norm(`${item.displaySite||''} ${item.site} ${item.address} ${meta.institutionDisplayName||''} ${meta.matchedName||''} ${meta.aliases||''} ${memberText}`).includes(q);
   }).slice(0, 15);
-  box.innerHTML = matches.map((item, index) => `<button type="button" role="option" data-key="${esc(item.key)}" data-index="${index}"><strong>${esc(item.displaySite||item.site)}</strong><span>${item.displaySite!==item.site?`En factura: ${esc(item.site)} · `:''}${esc(item.address || 'Sin dirección registrada')}</span></button>`).join('');
+  box.innerHTML = matches.map((item, index) => `<button type="button" role="option" data-key="${esc(item.key)}" data-index="${index}"><strong>${esc(item.displaySite||item.site)}</strong><span>${item.invoiceSites?.size>1?`En factura: ${esc([...item.invoiceSites].join(' / '))} · `:(item.displaySite!==item.site?`En factura: ${esc(item.site)} · `:'')}${esc(item.address || 'Sin dirección registrada')}</span></button>`).join('');
   box.hidden = !matches.length;
   suggestionIndex = -1;
 }
@@ -104,13 +115,13 @@ function renderReport() {
   if (!item) { $('institutionReport').hidden = true; $('institutionEmpty').hidden = false; return; }
   const filtered = filteredInstitutionRecords(item);
   const rows = monthlySummary(filtered);
-  const meta = sync[item.key] || {};
+  const meta = item.meta || {};
   $('institutionEmpty').hidden = true;
   $('institutionReport').hidden = false;
   $('institutionName').textContent = item.displaySite || item.site;
   $('institutionAddress').textContent = item.address || 'Sin dirección registrada en la factura';
   $('institutionMeta').innerHTML = [meta.zone, meta.commune, meta.nucleus ? `Núcleo ${meta.nucleus}` : ''].filter(v => v && v !== 'Sin clasificar').map(v => `<span>${esc(v)}</span>`).join('') || '<span>Información territorial pendiente de clasificación</span>';
-  if(item.displaySite!==item.site) $('institutionMeta').innerHTML += `<span>En factura: ${esc(item.site)}</span>`;
+  if(item.invoiceSites?.size>1) $('institutionMeta').innerHTML += `<span>${item.invoiceSites.size} sedes integradas</span><span>En factura: ${esc([...item.invoiceSites].join(' / '))}</span>`; else if(item.displaySite!==item.site) $('institutionMeta').innerHTML += `<span>En factura: ${esc(item.site)}</span>`;
   const hasEnergy=filtered.some(r=>r.energyKwh!==null), hasWater=filtered.some(r=>r.waterM3!==null), hasGas=filtered.some(r=>r.gasM3!==null), energyException=serviceExceptionFor(item);
   const energy = filtered.reduce((a,r) => a + (r.energyKwh??0), 0), co2 = filtered.reduce((a,r) => a + (r.co2kg??0), 0), water = filtered.reduce((a,r) => a + (r.waterM3??0), 0), gas = filtered.reduce((a,r) => a + (r.gasM3??0), 0);
   $('kpiMonths').textContent = fmt(rows.length, 0);
