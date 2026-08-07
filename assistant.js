@@ -1,4 +1,4 @@
-/* Asistente Ambiental SiMeCO2 v61 — OpenAI API con fallback local seguro */
+/* Asistente Ambiental SiMeCO2 v62 — IA grounded + fallback local explícito */
 (() => {
   'use strict';
 
@@ -209,7 +209,7 @@
   }
 
   function assistantSessionId(){
-    const key='simeco2_assistant_session_v61';
+    const key='simeco2_assistant_session_v62';
     let id=localStorage.getItem(key);
     if(!id){ id=(window.crypto?.randomUUID?.() || `simeco-${Date.now()}-${Math.random().toString(36).slice(2)}`); localStorage.setItem(key,id); }
     return id;
@@ -284,10 +284,14 @@
     ui.messages.scrollTop = ui.messages.scrollHeight;
     try{
       let responseText=null;
+      const apiUrl=resolvedApiUrl();
       try{ responseText=await apiAnswer(question); }
       catch(error){
-        console.warn('Asistente IA no disponible; se usa respuesta local.',error);
+        console.warn('Asistente IA no disponible.',error);
         setAssistantStatus('error',error?.message||'API no disponible');
+        if(config.preferAI && apiUrl){
+          responseText='La IA está configurada, pero la consulta al servidor falló. No voy a sustituirla silenciosamente por una respuesta local que pueda mezclar datos. Revisa el estado de la API, la facturación/crédito de OpenAI o los logs de Vercel y vuelve a intentar.';
+        }
       }
       if(!responseText) responseText=answer(question);
       typing.remove();

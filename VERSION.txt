@@ -1,3 +1,1 @@
-SiMeCO₂ v61
-API propia + Asistente Ambiental IA
-07/08/2026
+SiMeCO2 v62 · Asistente grounded y diagnóstico API · 2026-08-07

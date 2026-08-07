@@ -1,0 +1,13 @@
+SiMeCO₂ v62 — Corrección del Asistente Ambiental
+
+- Preconsulta determinista de datos antes de redactar con IA.
+- Fe y Alegría Santo Domingo Savio: 73.924 kWh, 14.600 m³ de agua, 17 periodos.
+- Nueva función obtener_posicion_institucion para explicar inclusión/exclusión del ranking.
+- INEM: contrato separado / energía no integrada; nunca 0 kWh.
+- Ya no se ocultan fallas de OpenAI con un fallback silencioso potencialmente confuso.
+- Errores seguros para cuota, autenticación, acceso y configuración.
+- Ranking local filtra datos nulos y ceros no útiles para un top de consumo.
+- Nueva caché v15 y cache-busting del asistente.
+
+- Diagnóstico opcional /api/health?probe=1 para verificar que la clave y el modelo realmente sean accesibles desde OpenAI, no solo que exista la variable.
+- CO₂e mensual queda null cuando no existe energía identificada (evita mostrar 0 t CO₂e en casos como INEM).
