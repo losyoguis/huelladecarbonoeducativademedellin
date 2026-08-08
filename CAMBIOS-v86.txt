@@ -1,0 +1,21 @@
+SiMeCO₂ v86 — Corrección de carga inicial
+
+PROBLEMA CORREGIDO
+- La pantalla inicial podía quedar bloqueada en 0% / “Preparando archivos…” cuando una vista secundaria lanzaba una excepción durante renderAll().
+- Los 9.147 registros compactos podían estar correctamente precargados, pero el cierre del overlay dependía de que todos los módulos terminaran sin error.
+
+SOLUCIÓN
+- El arranque ahora ejecuta cada paso crítico de forma aislada y segura.
+- renderAll() protege individualmente indicadores, Dashboard, Histórico, Estado de información, Facturas y Rankings.
+- El cierre de la pantalla de carga se ejecuta en un bloque finally cuando existen registros precargados.
+- Se agregó un cierre de seguridad a los 3,5 segundos para Google Sites si los datos ya están presentes y no existe una actualización real en progreso.
+- El progreso inicial pasa directamente a 100% con los registros precargados.
+- Si no existen registros compactos, el sistema cierra el loader inicial y lanza después la recuperación automática de facturas.
+- Se eliminan cálculos residuales de servicios no eléctricos en el Dashboard.
+- Se corrige el número de columnas del estado vacío de la tabla eléctrica.
+
+SE CONSERVA
+- Sistema exclusivamente eléctrico.
+- Ranking con CO₂e.
+- Descarga PDF desde Fuente en el Plan.
+- Histórico, Google Maps, prioridad, ahorro e Informe interactivo.

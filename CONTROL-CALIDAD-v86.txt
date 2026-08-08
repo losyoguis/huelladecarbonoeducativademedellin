@@ -1,0 +1,27 @@
+CONTROL DE CALIDAD SiMeCO₂ v86
+Fecha: 2026-08-08
+
+PROBLEMA
+La pantalla inicial podía quedar bloqueada en 0% / Preparando archivos aunque los registros compactos estuvieran precargados.
+
+CORRECCIÓN
+- Arranque protegido paso a paso.
+- renderAll() aislado por módulos.
+- El cierre del loader se ejecuta siempre cuando existen registros precargados.
+- Progreso inicial actualizado a 100%.
+- Protección adicional a los 3,5 segundos para Google Sites.
+- La recuperación automática de PDF solo se inicia si realmente no existen registros precargados.
+- Se eliminan cálculos residuales no eléctricos del Dashboard.
+- Se mantiene sistema exclusivamente eléctrico.
+
+VALIDACIONES
+- 9.147 registros precargados.
+- 567 instituciones/sedes.
+- 17 periodos oficiales.
+- npm run check: APROBADO.
+- npm test: APROBADO.
+- startup-loader-safety.test.js: APROBADO.
+- validar_sistema.py: APROBADO.
+- validar_historicos.py: APROBADO.
+
+RESULTADO: APROBADO.

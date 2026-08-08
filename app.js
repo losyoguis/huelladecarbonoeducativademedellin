@@ -4,7 +4,7 @@ let TREE_CO2_KG_YEAR = 22; // kg CO2e capturados por árbol al año. Ajustable d
 const FACTOR_KEY = 'simeco2_factores_ambientales_v8';
 const STORE_KEY = 'simeco2_servicios_v16';
 const CONFIG_KEY = 'simeco2_repo_config_v7';
-const DATA_VERSION = 'v85-electricidad-ranking-co2-pdf-20260808';
+const DATA_VERSION = 'v86-carga-inicial-corregida-20260808';
 
 const $ = (id)=>document.getElementById(id);
 const state = loadStore();
@@ -230,24 +230,58 @@ function initGoogleSitesResponsiveMode(){
 }
 
 window.addEventListener('DOMContentLoaded', () => {
-  initGoogleSitesResponsiveMode();
-  initPdfJs();
-  initConfig();
-  initFactors();
-  bindEvents();
-  bindTerritoryFilters();
+  const bootErrors=[];
+  const safeBootStep=(name,fn)=>{
+    try{ fn(); return true; }
+    catch(err){ bootErrors.push({name,err}); console.error(`[SiMeCO₂] Error en ${name}:`,err); return false; }
+  };
+
+  safeBootStep('responsive Google Sites',initGoogleSitesResponsiveMode);
+  safeBootStep('PDF.js',initPdfJs);
+  safeBootStep('configuración',initConfig);
+  safeBootStep('factores ambientales',initFactors);
+  safeBootStep('eventos',bindEvents);
+  safeBootStep('filtros territoriales',bindTerritoryFilters);
+
   requestAnimationFrame(() => {
-    renderAll();
-    initSearchableSelects();
-    refreshAllTerritoryFilters();
-    if(state.records.length){
-      log(`Datos listos: ${state.records.length} registros precargados. La verificación de PDF queda bajo demanda para acelerar el inicio.`);
-      setInvoiceLoading(false, 'Datos listos para consultar.');
-    }else{
-      log('No se encontraron registros precargados. Iniciando recuperación de facturas...');
-      setTimeout(() => scanDataFolder({automatic:true}), 180);
+    try{
+      safeBootStep('render principal',renderAll);
+      safeBootStep('selectores de búsqueda',initSearchableSelects);
+      safeBootStep('filtros territoriales iniciales',refreshAllTerritoryFilters);
+    }finally{
+      // El loader inicial nunca debe quedar bloqueado por un fallo de una vista.
+      if(state.records.length){
+        updateInvoiceProgress({
+          percent:100,
+          processedFiles:Object.keys(state.files||{}).length,
+          totalFiles:Object.keys(state.files||{}).length,
+          records:state.records.length,
+          stage:'done',
+          detail:bootErrors.length
+            ? 'Datos precargados correctamente. Algunos componentes secundarios fueron recuperados de forma segura.'
+            : 'Datos precargados y listos para consultar.',
+          currentFile:'',currentPage:0,totalPages:0
+        });
+        log(`Datos listos: ${state.records.length} registros precargados. La verificación de PDF queda bajo demanda para acelerar el inicio.${bootErrors.length?` ${bootErrors.length} componente(s) secundario(s) requirieron recuperación segura.`:''}`);
+        setInvoiceLoading(false, 'Datos listos para consultar.');
+      }else{
+        log('No se encontraron registros precargados. Iniciando recuperación de facturas...');
+        setInvoiceLoading(false,'Preparando recuperación de facturas.');
+        setTimeout(() => scanDataFolder({automatic:true}), 220);
+      }
     }
   });
+
+  // Protección adicional para iframes de Google Sites: jamás dejar el overlay
+  // indefinidamente si los registros precargados ya existen.
+  setTimeout(()=>{
+    const overlay=$('invoiceLoading');
+    if(state.records.length && overlay?.classList.contains('active') && !isScanningData){
+      console.warn('[SiMeCO₂] Cierre de seguridad del loader inicial.');
+      updateInvoiceProgress({percent:100,records:state.records.length,stage:'done',detail:'Datos precargados listos para consultar.'});
+      setInvoiceLoading(false,'Datos listos para consultar.');
+    }
+  },3500);
 });
 
 
@@ -1352,9 +1386,27 @@ function renderFilterSummary(){
   }));
 }
 function renderAll(){
-  recalculateCo2();refreshAllTerritoryFilters();renderControls();renderCards();renderExecutiveSummary();renderProjectImpact();renderDashboard();renderDataQuality();renderTable();renderRanking();
-  if($('chart')) drawChart(comparisonGroups($('compareMode')?.value||'month'));
-  updateHistorySourceNote();refreshSiteAutocompleteFields();
+  const steps=[
+    ['recalcular CO₂e',recalculateCo2],
+    ['filtros territoriales',refreshAllTerritoryFilters],
+    ['controles',renderControls],
+    ['indicadores',renderCards],
+    ['resumen ejecutivo',renderExecutiveSummary],
+    ['impacto energético',renderProjectImpact],
+    ['informe por sede',renderDashboard],
+    ['estado de información',renderDataQuality],
+    ['facturas eléctricas',renderTable],
+    ['rankings',renderRanking],
+    ['fuente histórica',updateHistorySourceNote],
+    ['autocompletados',refreshSiteAutocompleteFields]
+  ];
+  for(const [name,fn] of steps){
+    try{fn();}catch(err){console.error(`[SiMeCO₂] Error al renderizar ${name}:`,err);}
+  }
+  if($('chart')){
+    try{drawChart(comparisonGroups($('compareMode')?.value||'month'));}
+    catch(err){console.error('[SiMeCO₂] Error al dibujar Histórico:',err);}
+  }
 }
 function renderControls(){
   const periods=[...new Set(state.records.map(r=>r.period))].sort();
@@ -1368,7 +1420,7 @@ function renderCards(){
   const periods=new Set([...recs.map(r=>r.period),...official.map(r=>r.period)].filter(Boolean)).size;
   const sites=new Set(recs.map(r=>siteKey(r.site,r.address))).size;
   const detailSum=field=>recs.reduce((a,r)=>a+(Number(r[field])||0),0),officialSum=field=>official.reduce((a,r)=>a+(Number(r[field])||0),0);
-  const energy=official.length?officialSum('energyKwh'):detailSum('energyKwh'),water=official.length?officialSum('waterM3'):detailSum('waterM3'),co2kg=energy*FACTOR_CO2_KG_KWH;
+  const energy=official.length?officialSum('energyKwh'):detailSum('energyKwh'),co2kg=energy*FACTOR_CO2_KG_KWH;
   const values={kPeriods:periods,kSites:sites,kKwh:fmt(energy)+' kWh',kCo2:fmt(co2kg/1000)+' t CO₂e',kTrees:fmt(Math.ceil(co2kg/TREE_CO2_KG_YEAR))};
   Object.entries(values).forEach(([id,value])=>{if($(id)) $(id).textContent=value;});
 }
@@ -1406,7 +1458,7 @@ function renderTable(){
     const meta=territoryMeta(r);
     return `<tr><td data-label="Periodo">${escapeHtml(r.period)}</td><td data-label="Sede">${escapeHtml(r.site||'Sin nombre')}</td><td data-label="Dirección">${mapAddressLink(r.address,r.address||'Sin dirección',preferredSiteName(r)||r.site)}</td>${includeTerritory?`<td data-label="Comuna/Corregimiento">${escapeHtml(meta.territory||'Sin clasificar')}</td><td data-label="Núcleo">${escapeHtml(meta.nucleus||'Sin clasificar')}</td>`:''}<td data-label="Energía kWh">${num(r.energyKwh)}</td><td data-label="CO₂e kg">${num(r.co2kg)}</td><td data-label="Fuente">${renderSourceDownload(r)}</td></tr>`;
   }).join('');
-  const cols=includeTerritory?13:11;
+  const cols=includeTerritory?8:6;
   body.innerHTML=rows||`<tr><td colspan="${cols}"><div class="empty-filter-state"><strong>No hay coincidencias</strong><span>Prueba con menos palabras, cambia el periodo o limpia los filtros.</span><button type="button" onclick="clearAllFilters()" class="secondary">Limpiar filtros</button></div></td></tr>`;
   renderRecordPagination(recs.length);
 }
@@ -2025,10 +2077,6 @@ function renderDashboard(){
   const totalKwh = energyRows.reduce((a,r)=>a+r.energyKwh,0);
   const totalCo2kg = energyRows.reduce((a,r)=>a+r.co2kg,0);
   const totalTrees = energyRows.length ? Math.ceil(totalCo2kg / TREE_CO2_KG_YEAR) : null;
-  const totalWater = rows.filter(r=>r.hasWater).reduce((a,r)=>a+r.waterM3,0);
-  const totalAlc = rows.filter(r=>r.hasAlc).reduce((a,r)=>a+r.alcM3,0);
-  const totalGas = rows.filter(r=>r.hasGas).reduce((a,r)=>a+r.gasM3,0);
-  const totalWaste = rows.filter(r=>r.hasWaste).reduce((a,r)=>a+r.wasteTon,0);
   const selectedNoEnergy=Boolean(dashboardSiteKey && rows.length===1 && !rows[0].hasEnergy);
   const selectedEnergyState=selectedNoEnergy?energyDataState(rows[0]):null;
   $('dashTotalKwh').textContent = selectedNoEnergy ? (selectedEnergyState?.code==='external'?'Contrato separado':'N.I.') : fmt(totalKwh) + ' kWh';
