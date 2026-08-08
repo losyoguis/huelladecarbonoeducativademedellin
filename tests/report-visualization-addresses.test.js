@@ -8,9 +8,9 @@ ok(app.includes('function shortPlanPeriodLabel(period)'),'Falta etiqueta corta m
 ok(app.includes('rows.length*64+120'),'La gráfica no adapta su ancho al número de periodos');
 ok(app.includes('consolidatedMonths=buildPlanMetricSeries(d.recs)'),'La tabla mensual no usa datos consolidados');
 ok(app.includes('Cada barra representa un único periodo mensual consolidado'),'Falta explicación de consolidación mensual');
-ok(app.includes('Haz clic en la dirección para abrir Google Maps.'),'Falta observación global de Google Maps');
+ok(html.includes('haz clic en cualquier dirección de la tabla para abrirla en Google Maps'),'Falta observación de Google Maps al inicio de la tabla');
 ok(!app.includes('Ver ubicación'),'Todavía aparece texto Ver ubicación en JS');
 ok(!css.includes('content:"Ver ubicación"'),'Todavía aparece etiqueta Ver ubicación en CSS');
-ok(html.includes('styles.css?v=75-informe-visual'),'Falta cache-busting CSS v75');
-ok(html.includes('app.js?v=75-informe-visual'),'Falta cache-busting JS v75');
+ok(html.includes('styles.css?v=76-informe-interactivo'),'Falta cache-busting CSS v75');
+ok(html.includes('app.js?v=76-informe-interactivo'),'Falta cache-busting JS v75');
 console.log('OK report-visualization-addresses');
