@@ -1,0 +1,58 @@
+SiMeCO₂ v93 — Módulo 8 Agua
+Fecha: 2026-08-08
+
+CREADO
+- Nueva pestaña 8 “Agua”.
+- data/registros.agua.min.js: bundle compacto de 9.147 registros con campos hídricos.
+- data/resumenes.agua.min.js: 17 resúmenes oficiales mensuales de agua.
+- water.js: lógica completa de análisis hídrico.
+- tools/validar_agua.py.
+- tests/water-module-data.test.js.
+- tests/water-rankings-plan.test.js.
+- tests/water-future-pdf-import.test.js.
+- tests/water-pdf-parser-runtime.test.js.
+- tests/water-full-render-runtime.test.js.
+
+FUNCIONALIDAD
+1. Consumo total de agua:
+   - Total oficial acumulado: 1.351.583,22 m³.
+   - Total detallado vinculado: 1.337.964,432 m³.
+   - Histórico de 17 periodos y descarga de la factura fuente.
+
+2. Ranking de mayor consumo:
+   - Ranking paginado de 10 en 10.
+   - Filtro mensual.
+   - Búsqueda por sede o dirección.
+   - Google Maps.
+   - Consumo acumulado, promedio mensual y cobertura.
+   - Botón para generar plan por cada sede.
+
+3. Ranking de ahorro:
+   - Comparación mensual contra el mes calendario anterior.
+   - Solo compara cuando ambos meses tienen lectura válida.
+   - Tendencia general con Índice de Gestión del Ahorro de Agua:
+     70% constancia + 30% magnitud del ahorro neto.
+   - Búsqueda, paginación y plan por sede.
+
+4. Plan de Acción de Ahorro de Agua:
+   - Disponible para cualquier sede.
+   - Diagnóstico personalizado.
+   - Meta propuesta según posición relativa del consumo promedio.
+   - Acciones, responsables, plazos e indicadores.
+   - Histórico hídrico de la sede.
+   - Guardar como PDF mediante el generador A4 de SiMeCO₂.
+   - Si falta agua, crea un plan para establecer línea base antes de fijar meta.
+
+5. Actualización futura:
+   - app.js recupera la lectura de agua al procesar PDF nuevos o modificados.
+   - Los PDF sin cambios continúan omitiéndose por huella SHA para mantener velocidad.
+   - El módulo Agua reemplaza automáticamente los datos de una factura reimportada.
+
+NO SE ALTERA
+- Histórico eléctrico.
+- Ranking de energía y CO₂e.
+- Ranking de ahorro eléctrico.
+- Estado de información.
+- Informe energético por sede.
+- 9.147 registros eléctricos existentes.
+- 17 PDF originales.
