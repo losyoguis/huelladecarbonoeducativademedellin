@@ -163,7 +163,7 @@ async function downloadPage(button) {
     const output = await PDFLib.PDFDocument.create();
     const [page] = await output.copyPages(sourceDoc, [pageIndex]);
     output.addPage(page);
-    output.setTitle(`Cuenta de servicios públicos - ${button.dataset.site} - ${button.dataset.period}`);
+    output.setTitle(`Factura de energía eléctrica - ${button.dataset.site} - ${button.dataset.period}`);
     const outputBytes = await output.save();
     const blob = new Blob([outputBytes], {type:'application/pdf'});
     const url = URL.createObjectURL(blob);

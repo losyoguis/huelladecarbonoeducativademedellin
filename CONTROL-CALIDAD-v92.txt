@@ -1,0 +1,76 @@
+CONTROL DE CALIDAD INTEGRAL — SiMeCO₂ v92
+Fecha: 2026-08-08
+Resultado general: APROBADO
+
+DATOS
+- Registros detallados: 9.147 — OK
+- Instituciones/sedes agrupadas por API: 567 — OK
+- Periodos oficiales: 17 — OK
+- Facturas PDF: 17/17 presentes — OK
+- Claves duplicadas: 0 — OK
+- Periodos inválidos: 0 — OK
+- Energía negativa: 0 — OK
+- Lecturas válidas de 0 kWh: 9 — preservadas correctamente
+- Registros sin energía identificada: 1.367 — no se convierten en cero
+
+HISTÓRICO
+- Energía oficial acumulada: 18.800.429,36 kWh
+- Fuente: Resumen oficial de facturación, página 1
+- Diferencia máxima detalle vs oficial: 2,5726% (umbral 3%) — OK
+- Descarga PDF desde Fuente: 17/17 — OK
+- Integridad SHA/tamaño/páginas de PDF: OK
+
+INTERFAZ Y RUNTIME
+- Arranque data-first con 9.147 registros — OK
+- Bundle activo: 445.498 bytes — OK
+- Reducción frente a legado: 89,5% — OK
+- renderAll(): 0 errores de runtime en pruebas — OK
+- 7 renderizadores principales — OK
+- IDs HTML duplicados: 0 — OK
+- Referencias locales HTML rotas: 0 — OK
+- Cache-busting de scripts/CSS activos: v92 — OK
+
+RANKING
+- Consumo eléctrico kWh — OK
+- Columna Huella de carbono t CO₂e — OK
+- Paginación — OK
+- Filtro mensual — OK
+- Búsqueda por nombre/dirección — OK
+- Google Maps — OK
+- Filtros Todas/Alta/Media/Preventiva — OK
+- Ranking de ahorro e Índice de Gestión del Ahorro — OK
+- API/Asistente incluyen CO₂e — OK
+
+INFORME / ESTADO / FACTURAS
+- Informe por sede — OK
+- Plan de Gestión Energética y Reducción de GEI — OK
+- Fuente/descarga de PDF — OK
+- Estado de información — OK
+- N.I. y No calculable diferenciados de 0 — OK
+
+API Y ASISTENTE
+- Métrica activa: energyKwh exclusivamente — OK
+- Schemas sin métricas antiguas — OK
+- Total ciudad alineado con resumen oficial — OK
+- Respuesta de total: 18.800.429,36 kWh — OK
+- Ausencia de energía no se interpreta como cero — OK
+- INEM/contrato separado preservado — OK
+
+ACTUALIZACIÓN DE DATOS
+- 17 huellas SHA canónicas disponibles — OK
+- Facturas sin cambios se omiten sin releer páginas — OK
+- Procesamiento solo para PDF nuevos/cambiados — OK
+
+TRANSPARENCIA
+- 34 registros contienen la etiqueta fuente “Sede sin nombre” en 2 direcciones.
+- Esta condición procede de la factura; se conserva sin inventar una identidad institucional.
+- No constituye error de integridad del archivo y queda documentada como advertencia de calidad de fuente.
+
+COMANDOS DE CONTROL EJECUTADOS
+- npm run check — APROBADO
+- npm test — APROBADO
+- python3 tools/validar_sistema.py — APROBADO
+- python3 tools/validar_historicos.py — APROBADO
+
+CONCLUSIÓN
+La v92 supera todos los controles automatizados, de integridad y de ejecución disponibles dentro del proyecto y queda lista como paquete completo de despliegue.

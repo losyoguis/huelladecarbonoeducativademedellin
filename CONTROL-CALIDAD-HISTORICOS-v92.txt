@@ -12,7 +12,8 @@ Registros detallados: 9,147
 Registros de julio de 2026: 533
 Energía oficial acumulada: 18.800.429,36 kWh
 Claves duplicadas: 0
-Sedes sin nombre: 0
+Nombres de sede vacíos: 0
+Registros con etiqueta fuente 'Sede sin nombre': 34 (2 direcciones)
 
 CONCILIACIÓN DE ENERGÍA
 Periodo | Detalle por sede (kWh) | Total oficial (kWh) | Diferencia | Registros
@@ -55,6 +56,9 @@ OK | 6-2026Junio.pdf
 OK | 7-2025julio.pdf
 OK | 7-2026julio.pdf
 OK | 8-2025Agosto.pdf
+
+ADVERTENCIAS
+- Hay 34 registros con la etiqueta fuente 'Sede sin nombre' en 2 dirección(es). Se conservan sin renombrar porque la factura no identifica una I.E. específica.
 
 RESULTADO
 APROBADO
