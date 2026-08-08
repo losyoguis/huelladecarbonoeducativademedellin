@@ -1,0 +1,17 @@
+SiMeCO2 v88 — Arranque inmediato corregido
+
+CAUSA REAL DEL BLOQUEO
+- app.js se detenía al ejecutar loadStore() porque rebuildSites() usaba siteKey() y esa función no estaba definida.
+- Por eso la base de 9.147 registros sí llegaba al navegador y el loader mostraba 72%, pero la aplicación no podía continuar.
+
+CORRECCION
+- Se incorpora siteKey() antes de loadStore().
+- Se valida el arranque real de app.js con los 9.147 registros, no solamente su sintaxis.
+- El bundle eléctrico se carga antes de app.js.
+- Un bootstrap mínimo cierra el overlay inmediatamente cuando los 9.147 registros están disponibles.
+- Los 17 PDF no participan en la apertura normal del sistema.
+- Los PDF quedan disponibles solo para descarga, verificación o actualización bajo demanda.
+- Se mantiene el bundle eléctrico ultracompacto de ~445 KB.
+
+RESULTADO
+- La interfaz puede mostrarse tan pronto como se carga la base consolidada, sin esperar PDF.js, los PDF, el asistente ni el resto de módulos secundarios.

@@ -1,1 +1,1 @@
-v87 - Datos eléctricos ultrarrápidos y carga data-first corregida
+v88 - Arranque inmediato corregido y PDF bajo demanda

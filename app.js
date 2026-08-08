@@ -4,9 +4,13 @@ let TREE_CO2_KG_YEAR = 22; // kg CO2e capturados por árbol al año. Ajustable d
 const FACTOR_KEY = 'simeco2_factores_ambientales_v8';
 const STORE_KEY = 'simeco2_servicios_v16';
 const CONFIG_KEY = 'simeco2_repo_config_v7';
-const DATA_VERSION = 'v87-datos-electricos-ultrarrapidos-20260808';
+const DATA_VERSION = 'v88-arranque-real-corregido-20260808';
 
 const $ = (id)=>document.getElementById(id);
+function siteKey(site,address=''){
+  const normalizeKeyPart=(value)=>String(value||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,' ').trim();
+  return `${normalizeKeyPart(site)}|${normalizeKeyPart(address)}`;
+}
 let state = loadStore();
 let chartData = [];
 let selectedSiteKey = "";

@@ -1,0 +1,26 @@
+CONTROL DE CALIDAD SiMeCO₂ v88
+Fecha: 2026-08-08
+
+CAUSA CORREGIDA
+- app.js fallaba en loadStore() porque rebuildSites() invocaba siteKey() antes de existir.
+- La base de 9.147 registros estaba cargada, pero la aplicación quedaba detenida en 72%.
+
+CORRECCIONES
+- siteKey() se define antes de loadStore().
+- Nueva prueba startup-real-runtime.test.js ejecuta app.js con el bundle real de 9.147 registros.
+- Bootstrap inmediato oculta el loader apenas la base consolidada está disponible.
+- Los 17 PDF no se cargan ni procesan durante la apertura normal.
+- PDF.js y lectura de PDF permanecen bajo demanda.
+- Bundle eléctrico: ~445 KB.
+
+VALIDACIONES
+- npm run check: APROBADO.
+- npm test: APROBADO.
+- startup-real-runtime.test.js: APROBADO, 9.147 registros.
+- fast-electric-data-load.test.js: APROBADO.
+- validar_sistema.py: APROBADO.
+- validar_historicos.py: APROBADO.
+- 567 instituciones agrupadas en API.
+- 17 periodos oficiales.
+
+RESULTADO FINAL: APROBADO.
