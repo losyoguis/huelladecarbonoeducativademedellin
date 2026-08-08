@@ -49,7 +49,7 @@ def main():
             if local and not (page.parent/local).exists(): errors.append(f'Referencia rota {page.name}: {ref}')
         if page.name in CORE:
             scripts=[urlsplit(x).path for x in parser.scripts]
-            if 'data/registros.compact.js' not in scripts: errors.append(f'{page.name} no usa registros.compact.js')
+            if 'data/registros.electricidad.min.js' not in scripts: errors.append(f'{page.name} no usa registros.electricidad.min.js')
             if 'data/registros.js' in scripts: errors.append(f'{page.name} todavía carga registros.js pesado')
             if any('pdf.min.js' in x for x in scripts): errors.append(f'{page.name} carga PDF.js al inicio')
     checks.append('HTML sin referencias rotas y carga compacta verificada')
@@ -58,29 +58,30 @@ def main():
     if 'pdf-lib.min.js' in search: errors.append('Búsqueda institucional todavía carga PDF-Lib al inicio')
     if 'ensurePdfLib' not in (ROOT/'institucional.js').read_text(encoding='utf8'): errors.append('Falta carga bajo demanda de PDF-Lib')
     app=(ROOT/'app.js').read_text(encoding='utf8')
-    for marker in ["simeco2_servicios_v16","v86-carga-inicial-corregida-20260808","function ensurePdfJs","RECORD_TABLE_PAGE_SIZE = 200","function renderRecordPagination","function renderSavingsRanking","function monthBefore","function rankingAddressText","function drawRankingIdentity","function googleMapsAddressUrl","handleRankingCanvasMapClick","handleSavingsCanvasMapClick","La verificación de PDF queda bajo demanda"]:
+    for marker in ["simeco2_servicios_v16","v87-datos-electricos-ultrarrapidos-20260808","function ensurePdfJs","RECORD_TABLE_PAGE_SIZE = 200","function renderRecordPagination","function renderSavingsRanking","function monthBefore","function rankingAddressText","function drawRankingIdentity","function googleMapsAddressUrl","handleRankingCanvasMapClick","handleSavingsCanvasMapClick","La verificación de PDF queda bajo demanda"]:
         if marker not in app: errors.append(f'Falta marcador requerido en app.js: {marker}')
     checks.append('PDF.js/PDF-Lib bajo demanda y tabla paginada')
 
-    # Bundle compacto: igualdad exacta y reducción.
+    # Bundle eléctrico ultracompacto: igualdad de campos energéticos y reducción.
     probe=r"""
 const fs=require('fs'),vm=require('vm'); const c={window:{}};vm.createContext(c);
-vm.runInContext(fs.readFileSync('data/registros.compact.js','utf8'),c);
+vm.runInContext(fs.readFileSync('data/registros.electricidad.min.js','utf8'),c);
 const compact=c.window.SIMECO_REGISTROS||[];
 const raw=JSON.parse(fs.readFileSync('data/registros.json','utf8')).records;
+const fields=['period','site','address','source','energyKwh','energyValue','page','co2kg','pages'];
 let equal=compact.length===raw.length;
 for(let i=0;equal&&i<raw.length;i++){
-  const keys=new Set([...Object.keys(raw[i]),...Object.keys(compact[i])]);
-  for(const k of keys){const a=compact[i][k]??null,b=raw[i][k]??null;if(JSON.stringify(a)!==JSON.stringify(b)){equal=false;break;}}
+  for(const k of fields){const a=compact[i][k]??null,b=raw[i][k]??null;if(JSON.stringify(a)!==JSON.stringify(b)){equal=false;break;}}
 }
-console.log(JSON.stringify({n:compact.length,equal}));
+const uniqueKeys=new Set(compact.map(r=>r.key)).size;
+console.log(JSON.stringify({n:compact.length,equal,uniqueKeys}));
 """
     ok,out=run(['node','-e',probe])
-    if not ok: errors.append('No se pudo validar registros.compact.js: '+out)
+    if not ok: errors.append('No se pudo validar registros.electricidad.min.js: '+out)
     else:
         x=json.loads(out.splitlines()[-1]);
-        if x['n']!=9147 or not x['equal']: errors.append(f'Bundle compacto no coincide: {x}')
-    old=(ROOT/'data/registros.js').stat().st_size; new=(ROOT/'data/registros.compact.js').stat().st_size
+        if x['n']!=9147 or not x['equal'] or x.get('uniqueKeys')!=9147: errors.append(f'Bundle eléctrico compacto no coincide: {x}')
+    old=(ROOT/'data/registros.js').stat().st_size; new=(ROOT/'data/registros.electricidad.min.js').stat().st_size
     reduction=(1-new/old)*100
     if reduction<50: errors.append(f'Reducción insuficiente del bundle: {reduction:.1f}%')
     logo_old=(ROOT/'assets/los-yoguis-logo.png').stat().st_size; logo_new=(ROOT/'assets/los-yoguis-logo-optimized.png').stat().st_size
@@ -98,7 +99,7 @@ console.log(JSON.stringify({n:compact.length,equal}));
     for marker in ['"records": 9147','"feEnergy": 73924','"inemStatus": "energia_contrato_separado"','"mode": "data-first"']:
         if marker not in data_test: errors.append(f'No se confirmó prueba crítica: {marker}')
 
-    print('CONTROL DE CALIDAD SiMeCO2 v86')
+    print('CONTROL DE CALIDAD SiMeCO2 v87')
     for c in checks: print('OK -',c)
     if errors:
         for e in errors: print('ERROR -',e)
