@@ -13,7 +13,7 @@ const mapsUrl = (address,schoolName='') => {
 const mapLink = (address,label,schoolName='') => {
   const raw=String(address||'').trim(), text=String(label||raw||'Sin dirección registrada'), school=String(schoolName||'').trim();
   const url=mapsUrl(raw,school);
-  return url ? `<span class="map-address-wrap"><a class="map-address school-map-link" href="${esc(url)}" target="_blank" rel="noopener noreferrer" title="Abrir ubicación del colegio en Google Maps">🏫 ${esc(text)}</a><small class="map-address-note">Haz clic en la dirección para abrir Google Maps.</small></span>` : `<span class="map-address-unavailable">${esc(text)}</span>`;
+  return url ? `<a class="map-address school-map-link" href="${esc(url)}" target="_blank" rel="noopener noreferrer" title="Abrir ubicación del colegio en Google Maps">🏫 ${esc(text)}</a>` : `<span class="map-address-unavailable">${esc(text)}</span>`;
 };
 const number = value => Number.isFinite(Number(value)) ? Number(value) : 0;
 const nullableNumber = value => (value === null || value === undefined || value === '') ? null : (Number.isFinite(Number(value)) ? Number(value) : null);
@@ -80,7 +80,7 @@ function showSuggestions(query) {
     const memberText=item.records.map(r=>{const m=metaOf(r);return `${r.site} ${r.address||''} ${m.displayName||''} ${m.matchedName||''} ${m.aliases||''} ${m.institutionRole||''}`;}).join(' ');
     return norm(`${item.displaySite||''} ${item.site} ${item.address} ${meta.institutionDisplayName||''} ${meta.matchedName||''} ${meta.aliases||''} ${memberText}`).includes(q);
   }).slice(0, 15);
-  box.innerHTML = matches.map((item, index) => `<button type="button" role="option" data-key="${esc(item.key)}" data-index="${index}"><strong>${esc(item.displaySite||item.site)}</strong><span>${item.invoiceSites?.size>1?`En factura: ${esc([...item.invoiceSites].join(' / '))} · `:(item.displaySite!==item.site?`En factura: ${esc(item.site)} · `:'')}${item.address?`<span class="map-address-action-wrap"><span class="map-address-action school-map-action" data-map-address="${esc(item.address)}" data-map-school="${esc(item.displaySite||item.site)}" title="Abrir ubicación precisa del colegio en Google Maps">🏫 ${esc(item.address)}</span><small class="map-address-note compact">Haz clic para abrir Google Maps.</small></span>`:'Sin dirección registrada'}</span></button>`).join('');
+  box.innerHTML = matches.map((item, index) => `<button type="button" role="option" data-key="${esc(item.key)}" data-index="${index}"><strong>${esc(item.displaySite||item.site)}</strong><span>${item.invoiceSites?.size>1?`En factura: ${esc([...item.invoiceSites].join(' / '))} · `:(item.displaySite!==item.site?`En factura: ${esc(item.site)} · `:'')}${item.address?`<span class="map-address-action school-map-action" data-map-address="${esc(item.address)}" data-map-school="${esc(item.displaySite||item.site)}" title="Abrir ubicación precisa del colegio en Google Maps">🏫 ${esc(item.address)}</span>`:'Sin dirección registrada'}</span></button>`).join('');
   box.hidden = !matches.length;
   suggestionIndex = -1;
 }

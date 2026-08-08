@@ -1,0 +1,20 @@
+SiMeCO₂ v76 — Informe dinámico e interactivo
+
+CAMBIOS DE DIRECCIONES
+- Se eliminó la observación repetida debajo de cada dirección.
+- La dirección queda limpia y clicable con icono 🏫.
+- La indicación “haz clic en cualquier dirección de la tabla para abrirla en Google Maps” aparece una sola vez al inicio de las tablas que contienen direcciones.
+- Se aplicó en Dashboard, Calidad de datos, Facturas por I.E. y vistas territoriales/dashboard independientes.
+
+INFORME POR SEDE
+- Se agregó una barra de navegación interna con accesos a Diagnóstico, Gráficas, Metas, Acciones, Indicadores y Registros.
+- Botón para mostrar/ocultar gráficas.
+- Botón para mostrar/ocultar tablas.
+- Botón de Vista compacta.
+- Navegación con desplazamiento suave entre secciones.
+- Los controles interactivos no aparecen al imprimir/guardar PDF.
+- El HTML descargado conserva la interactividad mediante un script autocontenido.
+- Se mantienen las gráficas mensuales consolidadas y responsivas de v75.
+
+INTEGRIDAD
+- Sin cambios en datos, históricos, consumos, rankings ni cálculos de ahorro.

@@ -13,7 +13,7 @@
   <meta name="description" content="Sistema interactivo para medir, interpretar y gestionar la huella de carbono educativa a partir del consumo de servicios públicos." />
   <link rel="icon" type="image/png" href="assets/los-yoguis-logo-optimized.png" />
   <link rel="apple-touch-icon" href="assets/los-yoguis-logo-optimized.png" />
-  <link rel="stylesheet" href="styles.css?v=75-informe-visual" />
+  <link rel="stylesheet" href="styles.css?v=76-informe-interactivo" />
 </head>
 <body>
   <div class="invoice-loading active" id="invoiceLoading" role="status" aria-live="assertive" aria-hidden="false">
@@ -213,6 +213,7 @@
         <div class="service-exceptions-head"><div><strong>Excepciones verificadas</strong><p>Servicios que no aparecen en el consolidado educativo porque se gestionan mediante una fuente contractual separada.</p></div></div>
         <div id="serviceExceptionsBody" class="service-exceptions-grid"></div>
       </div>
+      <div class="table-map-note" role="note">🏫 <strong>Ubicación:</strong> haz clic en cualquier dirección de la tabla para abrirla en Google Maps.</div>
       <div class="table-wrap quality-table-wrap">
         <table class="quality-data-table">
           <thead><tr><th>Sede</th><th>Dirección</th><th>Estado</th><th>Energía</th><th>Agua</th><th>Alc.</th><th>Gas</th><th>Aseo</th><th>Territorio</th><th>Acción</th></tr></thead>
@@ -436,6 +437,7 @@
       </div>
       <div id="dashboardDataNotice" class="dashboard-data-notice" hidden></div>
       <section id="siteProfile" class="site-profile" hidden aria-live="polite"></section>
+      <div class="table-map-note" role="note">🏫 <strong>Ubicación:</strong> haz clic en cualquier dirección de la tabla para abrirla en Google Maps.</div>
       <div class="table-wrap dashboard-table-wrap">
         <table class="dashboard-data-table">
           <thead>
@@ -530,6 +532,7 @@
         <strong id="filterResultCount">0 registros</strong>
         <div id="activeFilters" class="active-filters"></div>
       </div>
+      <div class="table-map-note" role="note">🏫 <strong>Ubicación:</strong> haz clic en cualquier dirección de la tabla para abrirla en Google Maps.</div>
       <div class="table-wrap records-table-wrap">
         <table class="records-data-table">
           <thead>
@@ -688,7 +691,7 @@
   <script defer src="data/sincronizacion-territorial.js?v=60-territorios"></script>
   <script defer src="data/excepciones-servicios.js?v=60-instituciones"></script>
   
-  <script defer src="app.js?v=75-informe-visual"></script>
+  <script defer src="app.js?v=76-informe-interactivo"></script>
   <script defer src="assistant-config.js?v=65-rendimiento"></script>
   <script defer src="assistant.js?v=65-rendimiento"></script>
 </body>

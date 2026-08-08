@@ -4,7 +4,7 @@ let TREE_CO2_KG_YEAR = 22; // kg CO2e capturados por árbol al año. Ajustable d
 const FACTOR_KEY = 'simeco2_factores_ambientales_v8';
 const STORE_KEY = 'simeco2_servicios_v16';
 const CONFIG_KEY = 'simeco2_repo_config_v7';
-const DATA_VERSION = 'v75-informe-direcciones-visualizacion-20260807';
+const DATA_VERSION = 'v76-informe-interactivo-tablas-maps-20260807';
 
 const $ = (id)=>document.getElementById(id);
 const state = loadStore();
@@ -551,6 +551,7 @@ function bindEvents(){
   bindEvent('exportJsonBtn','click',exportJson);
   bindEvent('environmentBody','click',handlePlanButtonClick);
   bindEvent('generateSelectedReportBtn','click',generateSelectedSiteReport);
+  bindEvent('planReport','click',handlePlanInteractiveClick);
   bindEvent('refreshRankingBtn','click',refreshFullRanking);
   bindEvent('rankingMetricFilter','change',()=>{rankingMetric=$('rankingMetricFilter')?.value||'energyKwh';rankingSelectedKey='';rankingPage=0;renderRanking();});
   bindEvent('rankingPeriodFilter','change',()=>{rankingPeriod=$('rankingPeriodFilter')?.value||'';rankingSelectedKey='';rankingPage=0;renderRanking();});
@@ -1944,7 +1945,7 @@ function mapAddressLink(address,label,schoolName=''){
   const url=googleMapsAddressUrl(raw,school);
   if(!url) return `<span class="map-address map-address-unavailable">${escapeHtml(text)}</span>`;
   const title=school?`Abrir la ubicación de ${school} en Google Maps`:'Abrir esta dirección en Google Maps';
-  return `<span class="map-address-wrap"><a class="map-address school-map-link" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer" title="${escapeHtml(title)}" aria-label="${escapeHtml(title)}">🏫 ${escapeHtml(text)}</a><small class="map-address-note">Haz clic en la dirección para abrir Google Maps.</small></span>`;
+  return `<a class="map-address school-map-link" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer" title="${escapeHtml(title)}" aria-label="${escapeHtml(title)}">🏫 ${escapeHtml(text)}</a>`;
 }
 function openAddressInGoogleMaps(address,schoolName=''){
   const url=googleMapsAddressUrl(address,schoolName);
@@ -1953,7 +1954,7 @@ function openAddressInGoogleMaps(address,schoolName=''){
 function mapAddressAction(address,innerHtml,schoolName=''){
   const raw=String(address||'').trim(), school=String(schoolName||'').trim();
   if(!googleMapsAddressUrl(raw,school)) return innerHtml;
-  return `<span class="map-address-action-wrap"><span class="map-address-action school-map-action" data-map-address="${escapeHtml(raw)}" data-map-school="${escapeHtml(school)}" title="Abrir ubicación precisa del colegio en Google Maps">🏫 ${innerHtml}</span><small class="map-address-note compact">Haz clic para abrir Google Maps.</small></span>`;
+  return `<span class="map-address-action school-map-action" data-map-address="${escapeHtml(raw)}" data-map-school="${escapeHtml(school)}" title="Abrir ubicación precisa del colegio en Google Maps">🏫 ${innerHtml}</span>`;
 }
 function fmt(n){ return new Intl.NumberFormat('es-CO',{maximumFractionDigits:2}).format(Number(n)||0); }
 function num(n){ return n==null||n==='' ? '—' : fmt(n); }
@@ -2751,6 +2752,45 @@ function buildPlanSummaryCards(d){
   return `<div class="plan-summary-grid">${cards.join('')}</div>`;
 }
 
+function buildPlanInteractiveToolbar(){
+  return `<nav class="plan-interactive-toolbar" aria-label="Navegación del informe">
+    <div class="plan-interactive-nav">
+      <button type="button" data-plan-jump="plan-sec-diagnostico">Diagnóstico</button>
+      <button type="button" data-plan-jump="plan-sec-graficas">Gráficas</button>
+      <button type="button" data-plan-jump="plan-sec-metas">Metas</button>
+      <button type="button" data-plan-jump="plan-sec-acciones">Acciones</button>
+      <button type="button" data-plan-jump="plan-sec-indicadores">Indicadores</button>
+      <button type="button" data-plan-jump="plan-sec-registros">Registros</button>
+    </div>
+    <div class="plan-interactive-actions">
+      <button type="button" data-plan-toggle="charts">Mostrar/ocultar gráficas</button>
+      <button type="button" data-plan-toggle="tables">Mostrar/ocultar tablas</button>
+      <button type="button" data-plan-toggle="compact">Vista compacta</button>
+    </div>
+  </nav>`;
+}
+function handlePlanInteractiveClick(ev){
+  const jump=ev.target.closest('[data-plan-jump]');
+  if(jump){
+    ev.preventDefault();
+    const target=document.getElementById(jump.dataset.planJump);
+    target?.scrollIntoView({behavior:'smooth',block:'start'});
+    return;
+  }
+  const toggle=ev.target.closest('[data-plan-toggle]');
+  if(!toggle)return;
+  ev.preventDefault();
+  const report=$('planReport');
+  if(!report)return;
+  const mode=toggle.dataset.planToggle;
+  if(mode==='charts') report.classList.toggle('plan-hide-charts');
+  else if(mode==='tables') report.classList.toggle('plan-hide-tables');
+  else if(mode==='compact'){
+    report.classList.toggle('plan-compact-view');
+    toggle.classList.toggle('active',report.classList.contains('plan-compact-view'));
+  }
+}
+
 function buildPlanHtml(d){
   const periodText = d.periods.length ? `${d.periods[0]} a ${d.periods[d.periods.length-1]} (${d.periods.length} periodo(s) importado(s))` : 'Sin periodo';
   const consolidatedMonths=buildPlanMetricSeries(d.recs);
@@ -2765,6 +2805,7 @@ function buildPlanHtml(d){
   const indicatorsRows=d.hasEnergy?`<tr><td>Consumo eléctrico mensual</td><td>kWh facturados por mes</td><td>Mensual</td><td>Disminución progresiva</td></tr><tr><td>Emisiones alcance 2</td><td>kWh × ${fmt(FACTOR_CO2_KG_KWH)} kg CO₂e/kWh</td><td>Mensual</td><td>Reducir 15% en un año</td></tr><tr><td>Árboles equivalentes</td><td>kg CO₂e ÷ ${fmt(TREE_CO2_KG_YEAR)} kg/árbol/año</td><td>Semestral</td><td>Disminuir necesidad de compensación</td></tr>`:`<tr><td>Cobertura del dato eléctrico</td><td>Periodos con kWh asociados ÷ periodos de factura × 100</td><td>Mensual</td><td>Alcanzar 100% antes de calcular la huella de alcance 2</td></tr><tr><td>Consumo de agua</td><td>m³ facturados por mes</td><td>Mensual</td><td>Mantener seguimiento y detectar variaciones atípicas</td></tr><tr><td>Trazabilidad documental</td><td>Facturas con fuente y página identificada ÷ facturas revisadas × 100</td><td>Mensual</td><td>100%</td></tr>`;
   return `
     <article class="plan-document">
+      ${buildPlanInteractiveToolbar()}
       <div class="plan-cover">
         <div>
           <p class="plan-code">Código: GEI-R-001 · Plan de Reducciones 2025</p>
@@ -2782,7 +2823,7 @@ function buildPlanHtml(d){
         <div><span>Periodo analizado</span><strong>${escapeHtml(periodText)}</strong></div>
       </div>
 
-      <h3>1. Diagnóstico energético y ambiental</h3>
+      <h3 id="plan-sec-diagnostico" class="plan-section-anchor">1. Diagnóstico energético y ambiental</h3>
       <p>Este informe personalizado toma como base los registros importados desde las facturas EPM procesadas por SiMeCO₂. Conserva los servicios que sí aparecen asociados a la sede y diferencia explícitamente un dato ausente de un consumo igual a cero.</p>${energyStatusNote}
       <div class="plan-kpi-grid">
         <div><span>Energía acumulada</span><strong>${d.hasEnergy?`${fmt(d.energy)} kWh`:(d.energyException?'Contrato separado':'Sin dato')}</strong></div>
@@ -2796,7 +2837,7 @@ function buildPlanHtml(d){
         <div><span>Residuos / aseo</span><strong>${d.waste?`${fmt(d.waste)} t`:'Sin dato'}</strong></div>
       </div>
       <p class="plan-note"><strong>Lectura técnica:</strong> ${escapeHtml(d.intensity.text)}</p>
-      <h3>1.1 Panel gráfico del diagnóstico</h3>
+      <h3 id="plan-sec-graficas" class="plan-section-anchor">1.1 Panel gráfico del diagnóstico</h3>
       <p>Las siguientes gráficas presentan los principales indicadores medibles y comparables de la sede: energía, agua, CO₂e, árboles equivalentes y, cuando aplica, residuos/aseo. <strong>Cada barra representa un único periodo mensual consolidado</strong>, incluso cuando la factura contiene más de un registro asociado a la sede. Estas visualizaciones también quedan integradas en el informe generado para consulta, impresión o descarga.</p>
       ${summaryCards}
       ${monthlyCharts}
@@ -2807,11 +2848,11 @@ function buildPlanHtml(d){
       <h3>3. Objetivo general</h3>
       <p>${objectiveText}</p>
 
-      <h3>4. Metas y acciones sugeridas</h3>
+      <h3 id="plan-sec-metas" class="plan-section-anchor">4. Metas y acciones sugeridas</h3>
       ${energyGoals}
       ${reductionCharts}
 
-      <h3>5. Acciones recomendadas de gestión y eficiencia</h3>
+      <h3 id="plan-sec-acciones" class="plan-section-anchor">5. Acciones recomendadas de gestión y eficiencia</h3>
       <div class="actions-grid">
         ${d.hasEnergy?'':(d.energyException?`<div><strong>Integrar la fuente eléctrica separada</strong><p>Solicitar la facturación o medición del contrato de usuario no regulado y vincularla a la sede con trazabilidad documental.</p></div>`:`<div><strong>Asociar la cuenta eléctrica</strong><p>Verificar contrato, medidor, nombre facturado y dirección para identificar dónde aparece el consumo de energía de esta sede.</p></div>`)}
         <div><strong>Diagnóstico y línea base</strong><p>${d.hasEnergy?'Revisar facturas mensuales, validar medidores, construir tendencia kWh/mes y detectar meses atípicos.':'Conservar los servicios ya identificados y construir la tendencia eléctrica únicamente cuando existan lecturas verificadas.'}</p></div>
@@ -2844,7 +2885,7 @@ function buildPlanHtml(d){
         </tbody>
       </table>
 
-      <h3>7. Indicadores de seguimiento</h3>
+      <h3 id="plan-sec-indicadores" class="plan-section-anchor">7. Indicadores de seguimiento</h3>
       <table class="plan-table compact">
         <thead><tr><th>Indicador</th><th>Fórmula</th><th>Frecuencia</th><th>Meta</th></tr></thead>
         <tbody>
@@ -2853,7 +2894,7 @@ function buildPlanHtml(d){
         </tbody>
       </table>
 
-      <h3>8. Registros mensuales usados por el plan</h3>
+      <h3 id="plan-sec-registros" class="plan-section-anchor">8. Registros mensuales usados por el plan</h3>
       <p>La siguiente tabla resume los datos importados que soportan el diagnóstico y las comparaciones del plan de gestión. Se incluyen los principales indicadores mensuales medibles para la sede.</p>
       <table class="plan-table compact">
         <thead><tr><th>Periodo</th><th>Energía</th><th>Agua</th><th>Alc.</th><th>Gas</th><th>CO₂e</th><th>Árboles</th><th>Residuos</th><th>Fuente</th></tr></thead>
@@ -2875,7 +2916,19 @@ function collectEmbeddedStyles(){
 function downloadCurrentPlan(){
   if(!CURRENT_PLAN_HTML){alert('Primero genera el informe de una sede.');return;}
   const styles=collectEmbeddedStyles();
-  const documentHtml=`<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Plan de Gestión Ambiental - SiMeCO₂</title><style>${styles}</style></head><body><main style="max-width:1200px;margin:24px auto;padding:0 16px">${CURRENT_PLAN_HTML}</main></body></html>`;
+  const interactiveScript=`<script>
+  document.addEventListener('click',function(ev){
+    var jump=ev.target.closest('[data-plan-jump]');
+    if(jump){ev.preventDefault();var target=document.getElementById(jump.getAttribute('data-plan-jump'));if(target)target.scrollIntoView({behavior:'smooth',block:'start'});return;}
+    var toggle=ev.target.closest('[data-plan-toggle]');if(!toggle)return;
+    var report=document.querySelector('.plan-document');if(!report)return;
+    var mode=toggle.getAttribute('data-plan-toggle');
+    if(mode==='charts')report.classList.toggle('plan-hide-charts');
+    else if(mode==='tables')report.classList.toggle('plan-hide-tables');
+    else if(mode==='compact'){report.classList.toggle('plan-compact-view');toggle.classList.toggle('active',report.classList.contains('plan-compact-view'));}
+  });
+  <\/script>`;
+  const documentHtml=`<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Plan de Gestión Ambiental - SiMeCO₂</title><style>${styles}</style></head><body><main style="max-width:1200px;margin:24px auto;padding:0 16px">${CURRENT_PLAN_HTML}</main>${interactiveScript}</body></html>`;
   downloadBlob(documentHtml,CURRENT_PLAN_FILENAME,'text/html;charset=utf-8');
   log(`Informe HTML descargado: ${CURRENT_PLAN_FILENAME}.`);
 }

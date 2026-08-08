@@ -1,0 +1,30 @@
+CONTROL DE CALIDAD SiMeCO₂ v76
+Fecha: 2026-08-07
+
+CAMBIO PRINCIPAL
+Se retiró la observación repetida debajo de cada dirección y se movió al inicio de las tablas con direcciones.
+
+DIRECCIONES
+- Cada dirección conserva 🏫 y sigue siendo clicable.
+- La instrucción de Google Maps aparece una sola vez al inicio de las tablas.
+- Aplicado a Dashboard, Calidad de datos, Facturas por I.E. y vistas independientes pertinentes.
+
+INFORME POR SEDE
+- Barra de navegación interna: Diagnóstico, Gráficas, Metas, Acciones, Indicadores y Registros.
+- Mostrar/ocultar gráficas.
+- Mostrar/ocultar tablas.
+- Vista compacta.
+- Desplazamiento suave a cada sección.
+- Los controles interactivos se ocultan al imprimir/guardar PDF.
+- El HTML descargado conserva la interactividad con script autocontenido.
+- Se mantiene la consolidación mensual de v75.
+
+VALIDACIONES
+- npm run check: APROBADO.
+- npm test: APROBADO.
+- validar_sistema.py: APROBADO.
+- validar_historicos.py: APROBADO.
+- 9.147 registros.
+- 567 instituciones/sedes.
+- 17 períodos oficiales.
+RESULTADO: APROBADO.

@@ -2083,3 +2083,110 @@ body.viewport-phone .assistant-panel{
     min-width:780px !important;
   }
 }
+
+
+/* v76 · Nota única de Google Maps al inicio de las tablas */
+.table-map-note{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin:0 0 10px;
+  padding:9px 12px;
+  border:1px solid rgba(8,118,94,.16);
+  border-radius:12px;
+  background:#f1faf7;
+  color:#47655e;
+  font-size:.86rem;
+  line-height:1.35;
+}
+.table-map-note strong{color:#174f43}
+
+/* v76 · Informe dinámico e interactivo */
+.plan-interactive-toolbar{
+  position:sticky;
+  top:8px;
+  z-index:12;
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:space-between;
+  gap:10px;
+  margin:0 0 18px;
+  padding:10px;
+  border:1px solid rgba(8,118,94,.15);
+  border-radius:16px;
+  background:rgba(248,253,251,.96);
+  box-shadow:0 8px 24px rgba(18,71,60,.08);
+  backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(12px);
+}
+.plan-interactive-nav,
+.plan-interactive-actions{
+  display:flex;
+  flex-wrap:wrap;
+  gap:7px;
+}
+.plan-interactive-toolbar button{
+  min-height:36px;
+  padding:7px 11px;
+  border:1px solid rgba(8,118,94,.18);
+  border-radius:999px;
+  background:#fff;
+  color:#155d4d;
+  font-weight:750;
+  cursor:pointer;
+}
+.plan-interactive-toolbar button:hover,
+.plan-interactive-toolbar button:focus-visible,
+.plan-interactive-toolbar button.active{
+  background:#e4f7f1;
+  border-color:#0b9878;
+  outline:none;
+}
+.plan-section-anchor{
+  scroll-margin-top:88px;
+}
+.plan-hide-charts .plan-visual-grid,
+.plan-hide-charts .plan-summary-grid{
+  display:none !important;
+}
+.plan-hide-tables .plan-table{
+  display:none !important;
+}
+.plan-compact-view .plan-document > p,
+.plan-compact-view .actions-grid p,
+.plan-compact-view .plan-note{
+  line-height:1.35;
+}
+.plan-compact-view .plan-document h3{
+  margin-top:18px;
+}
+.plan-compact-view .plan-kpi-grid,
+.plan-compact-view .plan-meta-grid{
+  gap:8px;
+}
+.plan-compact-view .plan-kpi-grid > div,
+.plan-compact-view .plan-meta-grid > div{
+  padding:10px;
+}
+
+@media (max-width:700px){
+  .plan-interactive-toolbar{
+    position:static;
+  }
+  .plan-interactive-nav,
+  .plan-interactive-actions{
+    width:100%;
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+  .plan-interactive-toolbar button{
+    width:100%;
+    border-radius:12px;
+  }
+}
+@media print{
+  .plan-interactive-toolbar,
+  .table-map-note{
+    display:none !important;
+  }
+}

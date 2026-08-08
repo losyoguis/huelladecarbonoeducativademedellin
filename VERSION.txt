@@ -1,1 +1,1 @@
-v75 - Informe mensual claro y direcciones con Google Maps
+v76 - Informe dinámico e interactivo y nota Google Maps en tablas
