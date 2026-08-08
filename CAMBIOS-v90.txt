@@ -1,0 +1,20 @@
+SiMeCO₂ v90 — Ranking con columna explícita de Huella de Carbono
+
+RANKING
+- Se mantiene el gráfico de ranking por energía eléctrica.
+- Se agrega una tabla visible y accesible debajo del gráfico con columnas:
+  # | Sede | Dirección | Consumo eléctrico (kWh) | Huella de carbono (t CO₂e) | Periodos.
+- La Huella de carbono representa la cantidad de dióxido de carbono equivalente asociada al consumo eléctrico.
+- El cálculo utiliza el mismo factor de emisión eléctrica configurado en SiMeCO₂.
+- La tabla se sincroniza con la paginación de 10 sedes.
+- La búsqueda, filtro mensual y selección de sede siguen afectando el mismo conjunto de datos.
+- Direcciones continúan abriendo Google Maps.
+- Sedes sin lectura eléctrica muestran N.I. y la huella como N.C.
+- Contratos separados permanecen como pendientes.
+- Título, descripción y accesibilidad se actualizaron para hablar exclusivamente de energía eléctrica y CO₂e.
+
+NO SE MODIFICAN
+- Históricos.
+- Facturas PDF.
+- Ranking de ahorro.
+- Fórmulas de consumo.

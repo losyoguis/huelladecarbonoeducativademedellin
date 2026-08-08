@@ -1,0 +1,32 @@
+CONTROL DE CALIDAD SiMeCO₂ v90
+Fecha: 2026-08-08
+
+CAMBIO PRINCIPAL
+- Ranking de sedes por energía eléctrica con columna explícita de Huella de carbono.
+- La huella se expresa en toneladas de CO₂e (dióxido de carbono equivalente).
+
+TABLA DEL RANKING
+Columnas:
+# | Sede | Dirección | Consumo eléctrico (kWh) | Huella de carbono (t CO₂e) | Periodos
+
+COMPORTAMIENTO
+- La tabla se sincroniza con la paginación de 10 sedes.
+- Conserva filtro mensual, búsqueda por sede/dirección y Google Maps.
+- El CO₂e usa el mismo factor de emisión configurado en SiMeCO₂.
+- Sedes sin lectura eléctrica: N.I.
+- Huella no calculable: N.C.
+- Contratos separados: Pendiente.
+
+PRUEBAS
+- npm test: APROBADO.
+- validar_sistema.py: APROBADO.
+- validar_historicos.py: APROBADO.
+- ranking-carbon-footprint-column.test.js: APROBADO.
+- ranking-carbon-table.test.js: APROBADO.
+- full-render-runtime.test.js: 0 errores JavaScript.
+
+INTEGRIDAD
+- 9.147 registros.
+- 567 sedes/instituciones.
+- 17 periodos oficiales.
+RESULTADO: APROBADO.

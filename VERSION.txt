@@ -1,1 +1,1 @@
-v89 - Control de calidad integral y runtime completamente restaurado
+v90 - Ranking con columna explícita de Huella de Carbono CO₂e

@@ -3012,3 +3012,74 @@ body.viewport-phone .assistant-panel{
     text-decoration:none !important;
   }
 }
+
+
+/* =========================================================
+   v90 · Ranking con columna explícita de Huella de Carbono
+   ========================================================= */
+.ranking-carbon-table-wrap{
+  margin-top:14px;
+  overflow-x:auto;
+  -webkit-overflow-scrolling:touch;
+  border:1px solid rgba(8,118,94,.14);
+  border-radius:16px;
+  background:#fff;
+}
+.ranking-carbon-table{
+  width:100%;
+  min-width:900px;
+  border-collapse:collapse;
+  table-layout:fixed;
+}
+.ranking-carbon-table th,
+.ranking-carbon-table td{
+  padding:10px 9px;
+  border-bottom:1px solid rgba(8,118,94,.08);
+  vertical-align:middle;
+}
+.ranking-carbon-table th{
+  background:#eef9f5;
+  color:#174f43;
+  font-size:.8rem;
+  text-align:center;
+}
+.ranking-carbon-table th:nth-child(1){width:48px}
+.ranking-carbon-table th:nth-child(2){width:250px;text-align:left}
+.ranking-carbon-table th:nth-child(3){width:190px;text-align:left}
+.ranking-carbon-table th:nth-child(4){width:145px}
+.ranking-carbon-table th:nth-child(5){width:150px}
+.ranking-carbon-table th:nth-child(6){width:90px}
+.ranking-carbon-table td:nth-child(1),
+.ranking-carbon-table td:nth-child(4),
+.ranking-carbon-table td:nth-child(5),
+.ranking-carbon-table td:nth-child(6){
+  text-align:center;
+  font-variant-numeric:tabular-nums;
+}
+.ranking-carbon-table td:nth-child(2){
+  font-weight:800;
+  color:#173f37;
+}
+.ranking-carbon-table td:nth-child(5){
+  color:#176b58;
+  font-weight:900;
+}
+.ranking-carbon-note{
+  margin:0;
+  padding:9px 12px;
+  background:#f8fcfa;
+  border-top:1px solid rgba(8,118,94,.08);
+  color:#526c65;
+  font-size:.78rem;
+}
+@media (max-width:700px){
+  .ranking-carbon-table{
+    min-width:760px;
+  }
+}
+@media print{
+  .ranking-carbon-table-wrap{
+    overflow:visible;
+    border-color:#ccd8d4;
+  }
+}

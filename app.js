@@ -4,7 +4,7 @@ let TREE_CO2_KG_YEAR = 22; // kg CO2e capturados por árbol al año. Ajustable d
 const FACTOR_KEY = 'simeco2_factores_ambientales_v8';
 const STORE_KEY = 'simeco2_servicios_v16';
 const CONFIG_KEY = 'simeco2_repo_config_v7';
-const DATA_VERSION = 'v89-control-calidad-integral-20260808';
+const DATA_VERSION = 'v90-ranking-huella-carbono-columna-20260808';
 
 const $ = (id)=>document.getElementById(id);
 function siteKey(site,address=''){
@@ -2283,7 +2283,7 @@ function setRankingPage(page){const pages=Math.max(1,Math.ceil(rankingRowsCache.
 function renderRanking(){
   renderRankingPeriodOptions(); rankingMetric=$('rankingMetricFilter')?.value||rankingMetric||'energyKwh'; if(rankingMetric!=='energyKwh')rankingPriority='';updateRankingPriorityButtons();rankingRowsCache=getFullRankingRows();
   if(rankingSelectedKey&&!rankingRowsCache.some(r=>siteKey(r.site,r.address)===rankingSelectedKey)){rankingSelectedKey='';if($('rankingSiteSearch'))$('rankingSiteSearch').value='';$('clearRankingSearchBtn')?.classList.remove('visible');}
-  const metric=selectedRankingMetric(); if($('rankingTitle'))$('rankingTitle').textContent=`Ranking de sedes por ${metric.label.toLowerCase()}`; if($('rankingDescription'))$('rankingDescription').textContent=metric.field==='energyKwh'?`Ordena de mayor a menor el consumo eléctrico e incorpora una columna de Huella de carbono (t CO₂e). CO₂e significa dióxido de carbono equivalente. Las sedes sin lectura permanecen visibles al final y no se interpretan como consumo cero.`:`Ordena de mayor a menor ${metric.label.toLowerCase()}. Las sedes sin lectura para este indicador permanecen visibles al final y no se interpretan como consumo cero.`;
+  const metric=selectedRankingMetric(); if($('rankingTitle'))$('rankingTitle').textContent='Ranking de sedes por energía eléctrica y huella de carbono'; if($('rankingDescription'))$('rankingDescription').textContent='Ordena de mayor a menor el consumo eléctrico e incorpora la columna Huella de carbono (t CO₂e). CO₂e significa dióxido de carbono equivalente y representa la cantidad asociada al consumo eléctrico. Las sedes sin lectura permanecen visibles al final y no se interpretan como consumo cero.';
   const pages=Math.max(1,Math.ceil(rankingRowsCache.length/RANKING_PAGE_SIZE));if(rankingPage>=pages)rankingPage=pages-1;drawSiteChart(rankingRowsCache);
   renderSavingsRanking();
 }
@@ -2306,6 +2306,31 @@ function drawRankingIdentity(ctx,row,position,y,isSelected,layout={}){
   const zone={x:addressX,y:pillY,w:addressWidth,h:pillH,address,schoolName:row.displaySite||row.site||''};
   if(layout.hitZones) layout.hitZones.push(zone);
 }
+function renderRankingCarbonTable(visible,start=0){
+  const body=$('rankingCarbonBody');
+  if(!body) return;
+  if(!visible?.length){
+    body.innerHTML='<tr><td colspan="6">No hay sedes disponibles para esta selección.</td></tr>';
+    return;
+  }
+  body.innerHTML=visible.map((r,i)=>{
+    const position=start+i+1;
+    const name=escapeHtml(r.displaySite||r.site||'Sede sin nombre');
+    const address=mapAddressLink(rankingAddressText(r),rankingAddressText(r),r.displaySite||r.site);
+    const energy=r.rankingHasValue?`${fmt(r.rankingValue)} kWh`:(r.rankingExternal?'Contrato separado':'N.I.');
+    const carbon=r.rankingHasValue?`${fmt(r.rankingCo2eT)} t CO₂e`:(r.rankingExternal?'Pendiente':'N.C.');
+    const periods=r.rankingHasValue?`${r.rankingPeriodCount}/${r.periodCount}`:`0/${r.periodCount}`;
+    return `<tr>
+      <td data-label="#">${position}</td>
+      <td data-label="Sede"><strong>${name}</strong></td>
+      <td data-label="Dirección">${address}</td>
+      <td data-label="Consumo eléctrico">${energy}</td>
+      <td data-label="Huella de carbono"><strong>${carbon}</strong></td>
+      <td data-label="Periodos">${periods}</td>
+    </tr>`;
+  }).join('');
+}
+
 function drawSiteChart(rows){
   rankingMapHitZones=[];
   const c=$('siteChart');if(!c)return;
@@ -2329,6 +2354,7 @@ function drawSiteChart(rows){
   const total=rows.length,pages=Math.max(1,Math.ceil(total/RANKING_PAGE_SIZE));
   rankingPage=Math.max(0,Math.min(rankingPage,pages-1));
   const start=rankingPage*RANKING_PAGE_SIZE,visible=rows.slice(start,start+RANKING_PAGE_SIZE),end=Math.min(start+visible.length,total);
+  renderRankingCarbonTable(visible,start);
   if($('rankingPageInfo'))$('rankingPageInfo').textContent=total?`${start+1}–${end} de ${total} sedes · Página ${rankingPage+1} de ${pages}`:'Sin sedes disponibles';
   ['rankingFirstBtn','rankingPrevBtn'].forEach(id=>{if($(id))$(id).disabled=rankingPage===0||!total;});
   ['rankingNextBtn','rankingLastBtn'].forEach(id=>{if($(id))$(id).disabled=rankingPage>=pages-1||!total;});

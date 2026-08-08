@@ -15,7 +15,7 @@
   <link rel="apple-touch-icon" href="assets/los-yoguis-logo-optimized.png" />
   <link rel="preload" href="data/registros.electricidad.min.js?v=89-control-calidad" as="script" />
   <link rel="preload" href="data/resumenes.electricidad.min.js?v=89-control-calidad" as="script" />
-  <link rel="stylesheet" href="styles.css?v=89-control-calidad" />
+  <link rel="stylesheet" href="styles.css?v=90-ranking-co2-columna" />
 </head>
 <body>
   <div class="invoice-loading active" id="invoiceLoading" role="status" aria-live="assertive" aria-hidden="false">
@@ -401,8 +401,8 @@
       <div class="section-head">
         <div>
           <span class="section-kicker">Priorización</span>
-          <h2 id="rankingTitle">Ranking de sedes por servicio público</h2>
-          <p class="muted" id="rankingDescription">Ordena las sedes por el servicio seleccionado. En energía eléctrica también muestra la Huella de carbono (t CO₂e), donde CO₂e significa dióxido de carbono equivalente.</p>
+          <h2 id="rankingTitle">Ranking de sedes por energía eléctrica y huella de carbono</h2>
+          <p class="muted" id="rankingDescription">Ordena las sedes de mayor a menor consumo eléctrico e incluye una columna independiente de <strong>Huella de carbono (t CO₂e)</strong>, es decir, la cantidad de dióxido de carbono equivalente asociada a ese consumo.</p>
         </div>
       </div>
       <div class="ranking-filter-bar" aria-label="Filtros y búsqueda del ranking">
@@ -434,7 +434,25 @@
       </div>
       <div id="rankingExtremes" class="ranking-extremes" aria-live="polite"></div>
       <div class="chart-card environmental-ranking-chart">
-        <canvas id="siteChart" width="1100" height="500" aria-label="Ranking de sedes por servicio público. Para energía eléctrica incluye consumo, huella de carbono en toneladas de CO₂e y cobertura de periodos"></canvas>
+        <canvas id="siteChart" width="1100" height="500" aria-label="Ranking de sedes por energía eléctrica con consumo en kWh, huella de carbono en toneladas de dióxido de carbono equivalente y cobertura de periodos"></canvas>
+      </div>
+      <div class="ranking-carbon-table-wrap" aria-label="Tabla del ranking con huella de carbono">
+        <table class="ranking-carbon-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Sede</th>
+              <th>Dirección</th>
+              <th>Consumo eléctrico<br><small>kWh</small></th>
+              <th>Huella de carbono<br><small>t CO₂e</small></th>
+              <th>Periodos</th>
+            </tr>
+          </thead>
+          <tbody id="rankingCarbonBody">
+            <tr><td colspan="6">Cargando ranking…</td></tr>
+          </tbody>
+        </table>
+        <p class="ranking-carbon-note"><strong>CO₂e = dióxido de carbono equivalente.</strong> La huella se calcula con el mismo factor de emisión eléctrica configurado en SiMeCO₂.</p>
       </div>
       <div class="ranking-pagination" aria-label="Paginación del ranking">
         <button id="rankingFirstBtn" class="secondary" type="button" title="Ver las primeras 10 sedes">« Primera</button>
@@ -717,7 +735,7 @@
   <script defer src="data/sincronizacion-territorial.js?v=89-control-calidad"></script>
   <script defer src="data/excepciones-servicios.js?v=89-control-calidad"></script>
 
-  <script defer src="app.js?v=89-control-calidad"></script>
+  <script defer src="app.js?v=90-ranking-co2-columna"></script>
   <script defer src="assistant-config.js?v=65-rendimiento"></script>
   <script defer src="assistant.js?v=65-rendimiento"></script>
 </body>
