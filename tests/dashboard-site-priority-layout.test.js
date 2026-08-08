@@ -10,5 +10,5 @@ ok(css.includes('width:158px') && css.includes('min-width:158px'),'La columna Pl
 ok(html.includes('<th>Aseo t</th>'),'No se compactó encabezado Aseo');
 ok(html.includes('<th>Árboles</th>'),'No se compactó encabezado Árboles');
 ok(html.includes('<th>Prom. kWh/mes</th>'),'No se compactó Promedio');
-ok(html.includes('styles.css?v=81-ranking-seccion-plan-accion'),'Falta cache-busting CSS v79');
+ok(html.includes('styles.css?v=82-estado-prioridad'),'Falta cache-busting CSS v79');
 console.log('OK dashboard-site-priority-layout');
