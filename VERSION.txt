@@ -1,1 +1,1 @@
-v96 - Menú reorganizado y responsive para Google Sites
+v98 - Sidebar lateral legible y elegante para Google Sites

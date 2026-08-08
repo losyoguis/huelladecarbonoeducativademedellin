@@ -13,9 +13,9 @@
   <meta name="description" content="Sistema interactivo para medir, interpretar y gestionar la huella de carbono educativa a partir del consumo de energía eléctrica." />
   <link rel="icon" type="image/png" href="assets/los-yoguis-logo-optimized.png" />
   <link rel="apple-touch-icon" href="assets/los-yoguis-logo-optimized.png" />
-  <link rel="preload" href="data/registros.electricidad.min.js?v=96-menu-google-sites" as="script" />
-  <link rel="preload" href="data/resumenes.electricidad.min.js?v=96-menu-google-sites" as="script" />
-  <link rel="stylesheet" href="styles.css?v=96-menu-google-sites" />
+  <link rel="preload" href="data/registros.electricidad.min.js?v=98-sidebar-legible" as="script" />
+  <link rel="preload" href="data/resumenes.electricidad.min.js?v=98-sidebar-legible" as="script" />
+  <link rel="stylesheet" href="styles.css?v=98-sidebar-legible" />
 </head>
 <body>
   <div class="invoice-loading active" id="invoiceLoading" role="status" aria-live="assertive" aria-hidden="false">
@@ -95,17 +95,47 @@
   </header>
 
 
-  <nav class="section-switcher" aria-label="Secciones principales de SiMeCO₂">
-    <button type="button" class="section-tab electricity-section-tab active" id="scanDataBtn" data-section="seccion-1" data-action="actualizar" aria-selected="true"><span>1</span><strong>Analizar Datos</strong><small>⚡ Electricidad · Datos e indicadores</small></button>
-    <button type="button" class="section-tab electricity-section-tab" data-section="seccion-2" aria-selected="false"><span>2</span><strong>Histórico</strong><small>⚡ Electricidad · Comparación por periodos</small></button>
-    <button type="button" class="section-tab electricity-section-tab" data-section="seccion-3" aria-selected="false"><span>3</span><strong>Ranking</strong><small>⚡ Electricidad · Consumo, CO₂e y ahorro</small></button>
-    <button type="button" class="section-tab electricity-section-tab" data-section="seccion-4" aria-selected="false"><span>4</span><strong>Informe por sede</strong><small>⚡ Electricidad · Dashboard y planes</small></button>
-    <button type="button" class="section-tab electricity-section-tab" data-section="seccion-5" aria-selected="false"><span>5</span><strong>Estado de Información</strong><small>⚡ Electricidad · Calidad y trazabilidad</small></button>
-    <button type="button" class="section-tab electricity-section-tab" data-section="seccion-6" aria-selected="false"><span>6</span><strong>Aula</strong><small>⚡ Electricidad · Aprender, medir y actuar</small></button>
-    <button type="button" class="section-tab water-section-tab" data-section="seccion-7" aria-selected="false"><span>7</span><strong>Agua</strong><small>💧 Agua · Consumo, ahorro y plan</small></button>
-    <button type="button" class="section-tab gas-section-tab" data-section="seccion-8" aria-selected="false"><span>8</span><strong>Gas</strong><small>🔥 Gas · Consumo, ahorro y plan</small></button>
-    <button type="button" class="section-tab neutral-section-tab" data-section="seccion-9" aria-selected="false"><span>9</span><strong>Facturas por I.E.</strong><small>📄 Módulo transversal · Fuentes PDF</small></button>
-  </nav>
+  <div class="workspace-shell" id="simecoWorkspace">
+    <aside class="side-navigation" id="sideNavigation" aria-label="Menú lateral de SiMeCO₂">
+      <div class="side-navigation-header">
+        <div class="side-navigation-brand">
+          <img src="assets/los-yoguis-logo-optimized.png" alt="" aria-hidden="true" />
+          <div>
+            <strong>SiMeCO₂</strong>
+            <small>Navegación por módulos</small>
+          </div>
+        </div>
+        <button type="button" class="side-nav-collapse" id="sideNavCollapse" aria-label="Contraer menú lateral" aria-expanded="true" title="Contraer menú">‹</button>
+      </div>
+
+      <nav class="section-switcher side-section-switcher" aria-label="Secciones principales de SiMeCO₂">
+        <div class="side-nav-group-label"><span>⚡</span><strong>Electricidad</strong><small>Módulos 1–6</small></div>
+        <button type="button" class="section-tab electricity-section-tab active" id="scanDataBtn" data-section="seccion-1" data-action="actualizar" aria-selected="true" title="1. Analizar Datos — Electricidad"><span>1</span><span class="side-tab-copy"><strong>Analizar Datos</strong><small>Datos e indicadores</small></span></button>
+        <button type="button" class="section-tab electricity-section-tab" data-section="seccion-2" aria-selected="false" title="2. Histórico — Electricidad"><span>2</span><span class="side-tab-copy"><strong>Histórico</strong><small>Comparación por periodos</small></span></button>
+        <button type="button" class="section-tab electricity-section-tab" data-section="seccion-3" aria-selected="false" title="3. Ranking — Electricidad"><span>3</span><span class="side-tab-copy"><strong>Ranking</strong><small>Consumo, CO₂e y ahorro</small></span></button>
+        <button type="button" class="section-tab electricity-section-tab" data-section="seccion-4" aria-selected="false" title="4. Informe por sede — Electricidad"><span>4</span><span class="side-tab-copy"><strong>Informe por sede</strong><small>Dashboard y planes</small></span></button>
+        <button type="button" class="section-tab electricity-section-tab" data-section="seccion-5" aria-selected="false" title="5. Estado de Información — Electricidad"><span>5</span><span class="side-tab-copy"><strong>Estado de Información</strong><small>Calidad y trazabilidad</small></span></button>
+        <button type="button" class="section-tab electricity-section-tab" data-section="seccion-6" aria-selected="false" title="6. Aula — Electricidad"><span>6</span><span class="side-tab-copy"><strong>Aula</strong><small>Aprender, medir y actuar</small></span></button>
+
+        <div class="side-nav-group-label resource-group-label"><span>🌎</span><strong>Recursos</strong><small>Gestión ambiental</small></div>
+        <button type="button" class="section-tab water-section-tab" data-section="seccion-7" aria-selected="false" title="7. Agua — Consumo, ahorro y plan"><span>7</span><span class="side-tab-copy"><strong>Agua</strong><small>💧 Consumo, ahorro y plan</small></span></button>
+        <button type="button" class="section-tab gas-section-tab" data-section="seccion-8" aria-selected="false" title="8. Gas — Consumo, ahorro y plan"><span>8</span><span class="side-tab-copy"><strong>Gas</strong><small>🔥 Consumo, ahorro y plan</small></span></button>
+
+        <div class="side-nav-group-label source-group-label"><span>📄</span><strong>Fuentes</strong><small>Módulo transversal</small></div>
+        <button type="button" class="section-tab neutral-section-tab" data-section="seccion-9" aria-selected="false" title="9. Facturas por I.E. — Módulo transversal"><span>9</span><span class="side-tab-copy"><strong>Facturas por I.E.</strong><small>Consulta y descarga PDF</small></span></button>
+      </nav>
+
+      <div class="side-nav-footer">
+        <span class="side-nav-status-dot" aria-hidden="true"></span>
+        <span class="side-nav-footer-copy"><strong>9 módulos</strong><small>Electricidad · Agua · Gas · Facturas</small></span>
+      </div>
+    </aside>
+
+    <button type="button" class="side-nav-mobile-launcher" id="sideNavMobileLauncher" aria-controls="sideNavigation" aria-expanded="false">
+      <span aria-hidden="true">☰</span><strong>Menú</strong><small id="sideNavCurrentModule">1 · Analizar Datos</small>
+    </button>
+    <div class="side-nav-backdrop" id="sideNavBackdrop" aria-hidden="true"></div>
+
 
   <main>
     <div class="app-section active electricity-module" id="seccion-1" data-resource="electricidad" data-page-title="Electricidad · Analizar Datos">
@@ -843,18 +873,9 @@
     </section>
     </div>
   </main>
+  </div>
 
-  <nav class="mobile-bottom-nav section-mobile-nav" aria-label="Navegación móvil por módulos">
-    <button type="button" class="mobile-section-tab active" data-section="seccion-1" data-action="actualizar" aria-label="Analizar datos de electricidad"><span aria-hidden="true">⚡</span><small>Analizar</small></button>
-    <button type="button" class="mobile-section-tab" data-section="seccion-2" aria-label="Histórico de electricidad"><span aria-hidden="true">⚡</span><small>Histórico</small></button>
-    <button type="button" class="mobile-section-tab" data-section="seccion-3" aria-label="Ranking de electricidad"><span aria-hidden="true">⚡</span><small>Ranking</small></button>
-    <button type="button" class="mobile-section-tab" data-section="seccion-4" aria-label="Informe eléctrico por sede"><span aria-hidden="true">⚡</span><small>Informe</small></button>
-    <button type="button" class="mobile-section-tab" data-section="seccion-5" aria-label="Estado de información eléctrica"><span aria-hidden="true">⚡</span><small>Estado</small></button>
-    <button type="button" class="mobile-section-tab" data-section="seccion-6" aria-label="Aula de electricidad"><span aria-hidden="true">⚡</span><small>Aula</small></button>
-    <button type="button" class="mobile-section-tab water-mobile-tab" data-section="seccion-7" aria-label="Módulo de agua"><span aria-hidden="true">💧</span><small>Agua</small></button>
-    <button type="button" class="mobile-section-tab gas-mobile-tab" data-section="seccion-8" aria-label="Módulo de gas"><span aria-hidden="true">🔥</span><small>Gas</small></button>
-    <button type="button" class="mobile-section-tab neutral-mobile-tab" data-section="seccion-9" aria-label="Facturas por institución educativa"><span aria-hidden="true">📄</span><small>Facturas</small></button>
-  </nav>
+  
 
   <footer class="brand-footer" aria-label="Pie de página Los Yoguis">
     <div class="brand-footer-inner">
@@ -919,8 +940,22 @@
           if (control.classList.contains('section-tab')) control.setAttribute('aria-selected', String(active));
         });
         if (!options.keepHash) history.replaceState(null, '', '#' + sectionId);
+        const activeControl = document.querySelector(`.side-navigation [data-section="${sectionId}"]`);
+        const currentModule = document.getElementById('sideNavCurrentModule');
+        if (activeControl && currentModule) {
+          const number = activeControl.querySelector(':scope > span')?.textContent?.trim() || '';
+          const label = activeControl.querySelector('strong')?.textContent?.trim() || '';
+          currentModule.textContent = `${number} · ${label}`;
+        }
+        if (window.matchMedia('(max-width: 760px)').matches) {
+          document.getElementById('simecoWorkspace')?.classList.remove('sidebar-mobile-open');
+          document.body.classList.remove('sidebar-lock-scroll');
+          document.getElementById('sideNavMobileLauncher')?.setAttribute('aria-expanded','false');
+          document.getElementById('sideNavBackdrop')?.setAttribute('aria-hidden','true');
+          document.getElementById('sideNavigation')?.setAttribute('aria-hidden','true');
+        }
         if (options.scroll !== false) {
-          document.querySelector('.section-switcher')?.scrollIntoView({ behavior: options.instant ? 'auto' : 'smooth', block: 'start' });
+          target.scrollIntoView({ behavior: options.instant ? 'auto' : 'smooth', block: 'start' });
         }
         window.dispatchEvent(new Event('resize'));
         if (sectionId === 'seccion-2' && typeof window.simecoRefreshHistory === 'function') {
@@ -964,7 +999,7 @@
   </script>
 
   <!-- v87: datos eléctricos ultracompactos cargados antes de app.js -->
-  <script src="data/registros.electricidad.min.js?v=96-menu-google-sites"></script>
+  <script src="data/registros.electricidad.min.js?v=98-sidebar-legible"></script>
   <script>
     (() => {
       const records = Array.isArray(window.SIMECO_REGISTROS) ? window.SIMECO_REGISTROS.length : 0;
@@ -990,18 +1025,89 @@
       window.SIMECO_FAST_BOOT_DONE=true;
     })();
   </script>
-  <script src="data/resumenes.electricidad.min.js?v=96-menu-google-sites"></script>
-  <script defer src="data/sincronizacion-territorial.js?v=96-menu-google-sites"></script>
-  <script defer src="data/excepciones-servicios.js?v=96-menu-google-sites"></script>
+  <script src="data/resumenes.electricidad.min.js?v=98-sidebar-legible"></script>
+  <script defer src="data/sincronizacion-territorial.js?v=98-sidebar-legible"></script>
+  <script defer src="data/excepciones-servicios.js?v=98-sidebar-legible"></script>
 
-  <script defer src="app.js?v=96-menu-google-sites"></script>
-  <script defer src="data/registros.agua.min.js?v=96-menu-google-sites"></script>
-  <script defer src="data/resumenes.agua.min.js?v=96-menu-google-sites"></script>
-  <script defer src="water.js?v=96-menu-google-sites"></script>
-  <script defer src="data/registros.gas.min.js?v=96-menu-google-sites"></script>
-  <script defer src="data/resumenes.gas.min.js?v=96-menu-google-sites"></script>
-  <script defer src="gas.js?v=96-menu-google-sites"></script>
-  <script defer src="assistant-config.js?v=96-menu-google-sites"></script>
-  <script defer src="assistant.js?v=96-menu-google-sites"></script>
+  <script>
+    (() => {
+      const root = document.documentElement;
+      const workspace = document.getElementById('simecoWorkspace');
+      const sideNav = document.getElementById('sideNavigation');
+      const collapse = document.getElementById('sideNavCollapse');
+      const launcher = document.getElementById('sideNavMobileLauncher');
+      const backdrop = document.getElementById('sideNavBackdrop');
+      const current = document.getElementById('sideNavCurrentModule');
+      if (!workspace || !sideNav) return;
+
+      const STORAGE_KEY = 'simeco-sidebar-collapsed';
+      const isMobile = () => window.matchMedia('(max-width: 760px)').matches;
+
+      function setCollapsed(collapsed, persist = true) {
+        workspace.classList.toggle('sidebar-collapsed', collapsed);
+        collapse?.setAttribute('aria-expanded', String(!collapsed));
+        collapse?.setAttribute('aria-label', collapsed ? 'Expandir menú lateral' : 'Contraer menú lateral');
+        collapse?.setAttribute('title', collapsed ? 'Expandir menú' : 'Contraer menú');
+        if (collapse) collapse.textContent = collapsed ? '›' : '‹';
+        if (persist) {
+          try { localStorage.setItem(STORAGE_KEY, collapsed ? '1' : '0'); } catch (_err) {}
+        }
+      }
+
+      function setMobileOpen(open) {
+        workspace.classList.toggle('sidebar-mobile-open', open);
+        launcher?.setAttribute('aria-expanded', String(open));
+        sideNav.setAttribute('aria-hidden', String(!open && isMobile()));
+        backdrop?.setAttribute('aria-hidden', String(!open));
+        document.body.classList.toggle('sidebar-lock-scroll', open && isMobile());
+      }
+
+      function updateCurrent(control) {
+        if (!control || !current) return;
+        const number = control.querySelector(':scope > span')?.textContent?.trim() || '';
+        const label = control.querySelector('strong')?.textContent?.trim() || '';
+        current.textContent = `${number} · ${label}`;
+      }
+
+      collapse?.addEventListener('click', () => setCollapsed(!workspace.classList.contains('sidebar-collapsed')));
+      launcher?.addEventListener('click', () => setMobileOpen(!workspace.classList.contains('sidebar-mobile-open')));
+      backdrop?.addEventListener('click', () => setMobileOpen(false));
+
+      sideNav.addEventListener('click', event => {
+        const control = event.target.closest('[data-section]');
+        if (!control) return;
+        updateCurrent(control);
+        if (isMobile()) setMobileOpen(false);
+      });
+
+      document.addEventListener('keydown', event => {
+        if (event.key === 'Escape') setMobileOpen(false);
+      });
+
+      window.addEventListener('resize', () => {
+        if (!isMobile()) {
+          setMobileOpen(false);
+          sideNav.removeAttribute('aria-hidden');
+        } else if (!workspace.classList.contains('sidebar-mobile-open')) {
+          sideNav.setAttribute('aria-hidden', 'true');
+        }
+      });
+
+      let collapsed = false;
+      try { collapsed = localStorage.getItem(STORAGE_KEY) === '1'; } catch (_err) {}
+      setCollapsed(collapsed, false);
+      if (isMobile()) sideNav.setAttribute('aria-hidden', 'true');
+      updateCurrent(sideNav.querySelector('.section-tab.active'));
+    })();
+  </script>
+  <script defer src="app.js?v=98-sidebar-legible"></script>
+  <script defer src="data/registros.agua.min.js?v=98-sidebar-legible"></script>
+  <script defer src="data/resumenes.agua.min.js?v=98-sidebar-legible"></script>
+  <script defer src="water.js?v=98-sidebar-legible"></script>
+  <script defer src="data/registros.gas.min.js?v=98-sidebar-legible"></script>
+  <script defer src="data/resumenes.gas.min.js?v=98-sidebar-legible"></script>
+  <script defer src="gas.js?v=98-sidebar-legible"></script>
+  <script defer src="assistant-config.js?v=98-sidebar-legible"></script>
+  <script defer src="assistant.js?v=98-sidebar-legible"></script>
 </body>
 </html>

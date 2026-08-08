@@ -1,3 +1,38 @@
+# SiMeCO₂ v98 — Sidebar lateral legible
+
+La versión v98 corrige el problema visual observado en Google Sites donde los nombres de los módulos podían partirse letra por letra. El sidebar ahora usa una estructura flex estable: número a la izquierda y texto ocupando todo el ancho restante.
+
+- Escritorio: 296 px.
+- Iframe/tablet: 238 px.
+- Móvil: drawer lateral de hasta 350 px.
+- Modo contraído: muestra solo los números/iconos; no comprime los textos.
+
+---
+# SiMeCO₂ v97 — Navegación lateral
+
+La navegación principal de SiMeCO₂ ahora es un **menú lateral** diseñado para funcionar correctamente dentro de un iframe de Google Sites.
+
+### Escritorio
+El menú aparece a la izquierda del contenido, agrupado en **Electricidad**, **Recursos** y **Fuentes**. Puede contraerse para ampliar el área del dashboard.
+
+### Google Sites / tablet
+Cuando el ancho disponible disminuye, el menú se convierte automáticamente en un **rail lateral compacto** que conserva únicamente los números e identidades visuales de los módulos.
+
+### Móvil
+El menú se convierte en un **drawer lateral** que se abre mediante un botón “Menú”. No existe una segunda barra inferior, evitando duplicidad y pérdida de espacio.
+
+### Orden
+1. Analizar Datos
+2. Histórico
+3. Ranking
+4. Informe por sede
+5. Estado de Información
+6. Aula
+7. Agua
+8. Gas
+9. Facturas por I.E. — transversal
+
+---
 # SiMeCO₂ v96 — Navegación reorganizada para Google Sites
 
 El menú principal queda organizado así:
