@@ -9,7 +9,7 @@ const fe = data.institutionReport('Fe y Alegría Santo Domingo Savio');
 assert(fe.institution && /Santo Domingo Savio/i.test(fe.institution.name), 'Debe resolver Fe y Alegría');
 assert.strictEqual(fe.institution.members.length, 2, 'Fe y Alegría debe integrar dos sedes verificadas');
 assert(Math.abs(fe.totals.energyKwh - 73924) < 0.001, `Energía Fe y Alegría esperada 73924, recibida ${fe.totals.energyKwh}`);
-assert(Math.abs(fe.totals.waterM3 - 14600) < 0.001, 'Agua Fe y Alegría debe ser 14600 m3');
+assert(!Object.prototype.hasOwnProperty.call(fe.totals,'waterM3'),'La API pública debe exponer únicamente métricas eléctricas');
 
 const inem = data.institutionReport('INEM José Félix de Restrepo');
 assert(inem.institution && /INEM/i.test(inem.institution.name), 'Debe resolver INEM');
