@@ -17,8 +17,9 @@ ok(!html.includes('value="waterM3"') && !html.includes('value="gasM3"'),'El hist
 ok(html.includes('<th>Energía<br>kWh</th>') && html.includes('<th>CO₂e<br>kg</th>'),'Facturas eléctricas no mantienen sus columnas');
 ok(app.includes("const headers=['periodo','sede','direccion','energia_kwh','co2_kg','fuente']"),'CSV eléctrico fue alterado');
 ok(app.includes('Plan de Gestión Energética y Reducción de GEI'),'Plan energético fue alterado');
-ok(html.includes('id="seccion-8"') && html.includes('<strong>Agua</strong>'),'Módulo Agua no está aislado en sección 8');
-ok(html.includes('id="seccion-9"') && html.includes('<strong>Gas</strong>'),'Módulo Gas no está aislado en sección 9');
+ok(html.includes('id="seccion-7"') && html.includes('<strong>Agua</strong>'),'Módulo Agua no está aislado en sección 7');
+ok(html.includes('id="seccion-8"') && html.includes('<strong>Gas</strong>'),'Módulo Gas no está aislado en sección 8');
 ok(fs.existsSync('water.js') && fs.existsSync('gas.js'),'Faltan módulos independientes');
-ok(html.includes('app.js?v=95-identidad-graficos'),'Falta cache-busting v95');
-console.log('OK electric-core-plus-water-gas');
+ok(html.includes('app.js?v=96-menu-google-sites'),'Falta cache-busting v95');
+ok(html.includes('id="seccion-9" data-resource="transversal"'),'Facturas debe ser transversal');
+console.log('OK electric-core-plus-water-gas-neutral-invoices');

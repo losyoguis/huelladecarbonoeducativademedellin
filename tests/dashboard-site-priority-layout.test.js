@@ -10,5 +10,5 @@ ok(css.includes('width:158px') && css.includes('min-width:158px'),'La columna Pl
 ok(!html.includes('<table class="dashboard-data-table">\n') || !html.slice(html.indexOf('<table class="dashboard-data-table">'),html.indexOf('</table>',html.indexOf('<table class="dashboard-data-table">'))).includes('<th>Aseo t</th>'),'Aseo no fue retirado del Informe por sede');
 ok(html.includes('<th>Árboles</th>'),'No se compactó encabezado Árboles');
 ok(html.includes('<th>Prom. kWh/mes</th>'),'No se compactó Promedio');
-ok(html.includes('styles.css?v=95-identidad-graficos'),'Falta cache-busting CSS v79');
+ok(html.includes('styles.css?v=96-menu-google-sites'),'Falta cache-busting CSS v79');
 console.log('OK dashboard-site-priority-layout');
