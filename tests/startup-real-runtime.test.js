@@ -11,5 +11,5 @@ ok(vm.runInContext("typeof siteKey",c)==='function','siteKey no está disponible
 const html=fs.readFileSync('index.html','utf8');
 ok(html.includes('window.SIMECO_FAST_BOOT_DONE=true'),'Falta bootstrap inmediato');
 ok(html.includes("overlay.style.display='none'"),'El bootstrap no oculta el loader');
-ok(html.indexOf('data/registros.electricidad.min.js?v=98-sidebar-legible') < html.indexOf('app.js?v=98-sidebar-legible'),'Los datos no cargan antes de app.js');
+ok(html.indexOf('data/registros.electricidad.min.js?v=99-activo-visible') < html.indexOf('app.js?v=99-activo-visible'),'Los datos no cargan antes de app.js');
 console.log(JSON.stringify({ok:true,records:9147,runtime:'app-eval-real',fastBoot:true},null,2));
