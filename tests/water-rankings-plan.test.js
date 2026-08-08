@@ -1,0 +1,26 @@
+const fs=require('fs'),vm=require('vm');
+function ok(v,m){if(!v)throw new Error(m);}
+const c={console,window:{},document:{addEventListener(){},getElementById(){return null}},Intl,Number,String,Set,Map,Math,Array,Object,encodeURIComponent,requestAnimationFrame:f=>f()};
+c.window=c;c.globalThis=c;vm.createContext(c);
+for(const f of ['data/registros.agua.min.js','data/resumenes.agua.min.js','water.js']) vm.runInContext(fs.readFileSync(f,'utf8'),c,{filename:f});
+const d=c.simecoWaterDebug;
+ok(d,'No se expuso simecoWaterDebug');
+const sites=d.aggregateWaterSites();
+const withWater=sites.filter(s=>s.hasWater).sort((a,b)=>b.waterM3-a.waterM3);
+ok(sites.length===568,`Sedes/cuentas esperadas 568, hay ${sites.length}`);
+ok(withWater.length===446,`Sedes con agua esperadas 446, hay ${withWater.length}`);
+ok(withWater[0].site==='Inem J F De Rpo',`Mayor consumidor inesperado: ${withWater[0].site}`);
+ok(Math.abs(withWater[0].waterM3-75674.83)<0.01,'Consumo top inesperado');
+const savings=d.buildWaterSavingsRows();
+ok(savings.length===103,`Ranking general de ahorro inesperado: ${savings.length}`);
+ok(savings[0].site==='Liceo La Independenc',`Top ahorro inesperado: ${savings[0].site}`);
+ok(Number.isFinite(savings[0].managementScore),'Falta Índice de Gestión del Ahorro de Agua');
+const plan=d.buildWaterPlan(withWater[0]);
+ok(plan.priority==='Alta' && plan.targetPct===15,'Plan del mayor consumidor no asigna meta alta');
+const noData=sites.find(s=>!s.hasWater);
+ok(noData,'Debe existir al menos una sede sin agua identificada');
+const baselinePlan=d.buildWaterPlan(noData);
+ok(baselinePlan.priority==='Sin línea base' && baselinePlan.targetPct===null,'Plan sin datos debe priorizar línea base');
+const water=fs.readFileSync('water.js','utf8');
+ok(water.includes("openPdfPrintDocument('Plan de Acción de Ahorro de Agua'"),'El plan no genera salida PDF');
+console.log(JSON.stringify({ok:true,sites:sites.length,withWater:withWater.length,savings:savings.length,topConsumer:withWater[0].site,topSaver:savings[0].site}));

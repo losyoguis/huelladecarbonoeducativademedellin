@@ -3,7 +3,7 @@ function ok(v,m){if(!v)throw new Error(m);}
 const app=fs.readFileSync('app.js','utf8');
 const assistant=fs.readFileSync('assistant.js','utf8');
 
-ok(app.includes("function hasAnyMeasure(r){ return r?.energyKwh!==null"),'hasAnyMeasure no distingue dato ausente');
+ok(app.includes("function hasAnyMeasure(r){ return recordHasEnergyReading(r) ||"),'hasAnyMeasure no distingue dato ausente ni soporta agua');
 ok(app.includes("Number.isFinite(Number(r.energyKwh))"),'0 kWh no se conserva como lectura válida');
 ok(app.includes("if(service==='energia') return recordHasEnergyReading(r)"),'Filtro energético excluye 0 kWh');
 ok(app.includes("r.co2kg = recordHasEnergyReading(r) ?"),'CO₂e convierte datos ausentes en cero');
