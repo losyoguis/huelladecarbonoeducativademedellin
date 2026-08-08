@@ -1,4 +1,4 @@
-/* Asistente Ambiental SiMeCO2 v65 — consultas ligeras: API de datos primero, IA solo cuando aporta valor */
+/* Asistente Ambiental SiMeCO₂ v92 — energía eléctrica, CO₂e y calidad de datos */
 (() => {
   'use strict';
 
@@ -18,7 +18,7 @@
     .toLowerCase().replace(/[^a-z0-9\s.-]/g, ' ').replace(/\s+/g, ' ').trim();
 
   const number = value => Number(value) || 0;
-  const format = value => new Intl.NumberFormat('es-CO', { maximumFractionDigits: 2 }).format(number(value));
+  const format = value => (value===null || value===undefined || value==='') ? 'Sin dato' : new Intl.NumberFormat('es-CO', { maximumFractionDigits: 2 }).format(Number(value));
   const escape = value => String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
   const records = () => (typeof state !== 'undefined' && Array.isArray(state.records)) ? state.records : [];
   const assistantMeta = record => {
@@ -60,18 +60,38 @@
       const key = siteId(record);
       if(!key) return;
       const meta=assistantMeta(record);
-      if(!map.has(key)) map.set(key, { key, site:meta.institutionDisplayName || meta.displayName || meta.matchedName || record.site || 'Sede sin nombre', address:record.address || '', searchText:'', energy:0, water:0, co2:0, waste:0, energyAvailable:false, waterAvailable:false, energyException:null, periods:new Set(), rows:0 });
+      if(!map.has(key)) map.set(key, {
+        key,
+        site:meta.institutionDisplayName || meta.displayName || meta.matchedName || record.site || 'Sede sin nombre',
+        address:record.address || '',
+        searchText:'',
+        energy:0,
+        co2:0,
+        energyAvailable:false,
+        energyException:null,
+        periods:new Set(),
+        rows:0
+      });
       const item = map.get(key);
       item.searchText += ` ${record.site||''} ${record.address||''} ${meta.displayName||''} ${meta.institutionDisplayName||''} ${meta.matchedName||''} ${meta.aliases||''}`;
-      if(record.energyKwh!==null && record.energyKwh!==undefined && record.energyKwh!==''){ item.energy += number(record.energyKwh); item.energyAvailable=true; }
-      if(record.waterM3!==null && record.waterM3!==undefined && record.waterM3!==''){ item.water += number(record.waterM3); item.waterAvailable=true; }
+      if(record.energyKwh!==null && record.energyKwh!==undefined && record.energyKwh!==''){
+        item.energy += number(record.energyKwh);
+        item.energyAvailable=true;
+      }
       if(record.co2kg!==null && record.co2kg!==undefined && record.co2kg!=='') item.co2 += number(record.co2kg);
-      item.waste += number(record.wasteTon);
       item.energyException = item.energyException || assistantEnergyException(record);
       if(record.period) item.periods.add(record.period);
       item.rows += 1;
     });
-    return [...map.values()].map(item => ({...item, energy:item.energyAvailable?item.energy:null, water:item.waterAvailable?item.water:null, co2:item.energyAvailable?item.co2:null, periodCount:item.periods.size, avg:item.energyAvailable && item.periods.size ? item.energy/item.periods.size : null})).sort((a,b)=>(b.energy??-1)-(a.energy??-1));
+    return [...map.values()]
+      .map(item => ({
+        ...item,
+        energy:item.energyAvailable?item.energy:null,
+        co2:item.energyAvailable?item.co2:null,
+        periodCount:item.periods.size,
+        avg:item.energyAvailable && item.periods.size ? item.energy/item.periods.size : null
+      }))
+      .sort((a,b)=>(b.energy??-1)-(a.energy??-1));
   }
 
   function fuzzyScore(text, query){
@@ -158,31 +178,38 @@
       return `${period ? `En ${readablePeriod(period)}` : 'En los datos disponibles'} hay ${format(sites.length)} sedes con registros.`;
     }
     if(/(mayor|mas alto|mas consume|consume mas|primer puesto|numero uno)/.test(q)){
-      const top = sites[0];
-      if(!top) return 'No encontré sedes con consumo para ese periodo.';
+      const top = sites.find(item=>item.energy!==null);
+      if(!top) return 'No encontré sedes con consumo eléctrico identificado para ese periodo.';
       return `${period ? `En ${readablePeriod(period)}, ` : ''}la sede con mayor consumo es **${top.site}**, con ${format(top.energy)} kWh, equivalentes a ${format(top.co2/1000)} t CO₂e.`;
     }
     if(/(menor|mas bajo|menos consume|consume menos|ultimo puesto)/.test(q)){
-      const low = [...sites].filter(item=>item.energy>0).sort((a,b)=>a.energy-b.energy)[0];
+      const low = [...sites].filter(item=>item.energy!==null).sort((a,b)=>a.energy-b.energy)[0];
       if(!low) return 'No encontré sedes con consumo para ese periodo.';
       return `${period ? `En ${readablePeriod(period)}, ` : ''}la sede con menor consumo registrado es **${low.site}**, con ${format(low.energy)} kWh, equivalentes a ${format(low.co2/1000)} t CO₂e.`;
     }
     if(/(ranking|top 10|diez sedes|10 sedes)/.test(q)){
-      return sites.slice(0,10).map((item,index)=>`${index+1}. ${item.site}: ${format(item.energy)} kWh`).join('\n');
+      const ranked=sites.filter(item=>item.energy!==null);
+      if(!ranked.length) return 'No hay sedes con consumo eléctrico identificado para construir el ranking en ese periodo.';
+      return ranked.slice(0,10).map((item,index)=>`${index+1}. ${item.site}: ${format(item.energy)} kWh · ${format(item.co2/1000)} t CO₂e`).join('\n');
     }
     if(site){
       const rows = scope.filter(record => siteId(record) === site.key);
       const summary = aggregate(rows)[0] || site;
-      const priority = priorityFor(summary.avg);
       if(summary.energy===null){
-        const status=summary.energyException ? `La energía está marcada como **${summary.energyException.label||'contrato separado'}**: ${summary.energyException.dataState||summary.energyException.summary||'consumo aún no integrado'}.` : 'La energía no está identificada en los datos disponibles; esto no significa 0 kWh.';
+        const status=summary.energyException
+          ? `La energía de **${summary.site}** está marcada como **${summary.energyException.label||'contrato separado'}**: ${summary.energyException.dataState||summary.energyException.summary||'consumo aún no integrado'}.`
+          : `La energía eléctrica de **${summary.site}** no está identificada en los datos disponibles; esto no significa 0 kWh.`;
+        if(/(prioridad|clasificacion|nivel)/.test(q)) return `${status} Por esa razón, la prioridad energética es **No calculable**.`;
+        if(/(emision|co2|huella)/.test(q)) return `${status} Por esa razón, la huella de carbono es **No calculable**.`;
+        return status;
       }
+      const priority = priorityFor(summary.avg);
       if(/(prioridad|clasificacion|nivel)/.test(q)) return `La clasificación de **${summary.site}** es **${priority.short || priority.level}**, con un promedio aproximado de ${format(summary.avg)} kWh por periodo.`;
       if(/(emision|co2|huella)/.test(q)) return `${period ? `En ${readablePeriod(period)}, ` : ''}**${summary.site}** registra una huella estimada de ${format(summary.co2/1000)} t CO₂e asociada al consumo eléctrico.`;
-    return `${period ? `En ${readablePeriod(period)}, ` : ''}**${summary.site}** registra ${format(summary.energy)} kWh de energía eléctrica y ${format(summary.co2/1000)} t CO₂e. Su nivel es ${priority.short || priority.level}.`;
+      return `${period ? `En ${readablePeriod(period)}, ` : ''}**${summary.site}** registra ${format(summary.energy)} kWh de energía eléctrica y ${format(summary.co2/1000)} t CO₂e. Su nivel es ${priority.short || priority.level}.`;
     }
     if(/(total|acumulado|toda medellin|medellin)/.test(q)){
-      const total = scope.reduce((acc,record)=>{acc.energy+=number(record.energyKwh);acc.co2+=number(record.co2kg);acc.water+=number(record.waterM3);return acc;},{energy:0,co2:0,water:0});
+      const total = scope.reduce((acc,record)=>{acc.energy+=number(record.energyKwh);acc.co2+=number(record.co2kg);return acc;},{energy:0,co2:0});
   return `${period ? `En ${readablePeriod(period)}` : 'En todos los periodos'}, el sistema registra ${format(total.energy)} kWh de energía eléctrica y ${format(total.co2/1000)} t CO₂e.`;
     }
     if(/(factura|descargar)/.test(q)) return 'Para consultar o descargar una factura, entra en **Facturas por I.E.**, busca la institución y usa el enlace disponible en la columna Fuente.';

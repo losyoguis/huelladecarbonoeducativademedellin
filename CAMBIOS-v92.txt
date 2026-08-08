@@ -1,0 +1,59 @@
+SiMeCO₂ v92 — Control de calidad integral 10/10
+Fecha: 2026-08-08
+
+OBJETIVO
+Consolidar una versión coherente, rápida y exclusivamente eléctrica del sistema, eliminando restos de versiones multiservicio y reforzando pruebas de ejecución, datos, históricos, Ranking, PDF, API y asistente.
+
+CORRECCIONES PRINCIPALES
+1. Alcance eléctrico depurado
+- app.js, assistant.js y la API quedan limitados a energía eléctrica, CO₂e, árboles y gestión energética.
+- Eliminadas referencias activas heredadas de agua, alcantarillado, gas, aseo/residuos y “servicios públicos”.
+- Búsqueda institucional y textos de interfaz alineados con facturas de energía eléctrica.
+
+2. Calidad de datos: 0 kWh no es dato ausente
+- Se preservan 9 registros con lectura válida de 0 kWh.
+- Se distinguen de 1.367 registros sin energía identificada.
+- Energía ausente se muestra como N.I.; CO₂e ausente como No calculable.
+- Los valores ausentes ya no se convierten silenciosamente en 0.
+
+3. Ranking
+- Conserva tabla explícita: # | Sede | Dirección | Consumo eléctrico (kWh) | Huella de carbono (t CO₂e) | Periodos.
+- Se restauran botones funcionales de prioridad: Todas, Alta, Media y Preventiva.
+- Ranking API y asistente incluyen t CO₂e.
+- Búsqueda, paginación, filtro mensual y Google Maps permanecen operativos.
+
+4. Histórico
+- Conserva 17 periodos oficiales.
+- El histórico global usa los resúmenes oficiales de la página 1 de cada factura.
+- Fuente permite descargar el PDF asociado a cada periodo.
+- Total oficial acumulado: 18.800.429,36 kWh.
+- Máxima diferencia del detalle por sede frente al resumen oficial: 2,5726%, dentro del umbral del 3%.
+
+5. API y Asistente Ambiental
+- Herramientas y schemas aceptan exclusivamente energyKwh.
+- El total de Medellín usa el resumen oficial de facturas cuando está disponible.
+- El asistente identifica expresamente la fuente del total oficial.
+- Sedes sin energía identificada no reciben prioridad ni CO₂e inventados.
+- Ranking del asistente devuelve kWh y t CO₂e.
+
+6. Carga y actualización
+- El arranque continúa usando data/registros.electricidad.min.js (~445 KB) con 9.147 registros.
+- Reducción aproximada del 89,5% frente al bundle legado de 4,23 MB.
+- Todos los scripts y CSS activos usan cache-busting ?v=92-control-calidad para evitar mezcla de versiones en Google Sites.
+- “Actualizar datos” omite inmediatamente los 17 PDF si su SHA no cambió.
+- Los PDF nuevos/cambiados se procesan con concurrencia limitada para mantener estabilidad.
+
+7. Transparencia de fuente
+- 0 nombres de sede vacíos.
+- Existen 34 registros cuya factura trae la etiqueta literal “Sede sin nombre”, distribuidos en 2 direcciones.
+- Se conservan así porque la factura no identifica una I.E. específica; no se inventó una correspondencia institucional.
+
+PRUEBAS NUEVAS / REFORZADAS
+- tests/system-qc-v92.test.js
+- tests/zero-vs-missing-energy.test.js
+- tests/update-data-fast-skip.test.js
+- tests/electricity-only-system.test.js reforzado
+- tests/assistant-performance.test.js actualizado al bundle activo y total oficial
+
+RESULTADO
+Todas las pruebas automatizadas, validadores de sistema e históricos incluidos en el proyecto terminan en APROBADO.

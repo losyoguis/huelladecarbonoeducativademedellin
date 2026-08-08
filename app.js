@@ -1,17 +1,17 @@
-/* SiMeCO₂ v89 · control de calidad integral y runtime restaurado */
+/* SiMeCO₂ v92 · control de calidad integral, runtime eléctrico y consistencia de datos */
 let FACTOR_CO2_KG_KWH = 0.126; // kg CO2e/kWh. Ajustable desde el dashboard.
 let TREE_CO2_KG_YEAR = 22; // kg CO2e capturados por árbol al año. Ajustable desde el dashboard.
 const FACTOR_KEY = 'simeco2_factores_ambientales_v8';
 const STORE_KEY = 'simeco2_servicios_v16';
 const CONFIG_KEY = 'simeco2_repo_config_v7';
-const DATA_VERSION = 'v91-historico-descarga-pdf-20260808';
+const DATA_VERSION = 'v92-control-calidad-integral-20260808';
 
 const $ = (id)=>document.getElementById(id);
 function siteKey(site,address=''){
   const normalizeKeyPart=(value)=>String(value||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,' ').trim();
   return `${normalizeKeyPart(site)}|${normalizeKeyPart(address)}`;
 }
-// v89 · helpers esenciales restaurados tras la simplificación eléctrica.
+// v92 · helpers esenciales del runtime eléctrico.
 function round(n,d=2){ return Number.isFinite(Number(n)) ? Math.round(Number(n)*Math.pow(10,d))/Math.pow(10,d) : 0; }
 function parseMeasurement(v,kind='generic'){
   if(v==null) return null;
@@ -67,8 +67,8 @@ function recordsBySiteKey(){
   if(recordsBySiteKeyCache) return recordsBySiteKeyCache;
   const map=new Map(); for(const r of state.records||[]){const key=siteKey(r.site,r.address);if(!map.has(key))map.set(key,[]);map.get(key).push(r);} recordsBySiteKeyCache=map;return map;
 }
-function serviceHasValue(r,service){ if(!service||service==='energia') return !service || Number(r.energyKwh)>0; return false; }
-function hasAnyMeasure(r){ return r?.energyKwh!==null && r?.energyKwh!==undefined && Number(r.energyKwh)!==0; }
+function serviceHasValue(r,service){ if(!service) return true; if(service==='energia') return recordHasEnergyReading(r); return false; }
+function hasAnyMeasure(r){ return r?.energyKwh!==null && r?.energyKwh!==undefined && r?.energyKwh!=='' && Number.isFinite(Number(r.energyKwh)); }
 function historyGroupHasMetric(item,field){
   if(!item) return false;
   if(item.metricCounts&&Object.prototype.hasOwnProperty.call(item.metricCounts,field)) return Number(item.metricCounts[field])>0;
@@ -749,7 +749,9 @@ function updateFactors(){
   log("Factores actualizados: " + FACTOR_CO2_KG_KWH + " kg CO₂e/kWh y " + TREE_CO2_KG_YEAR + " kg CO₂e/árbol/año.");
 }
 function recalculateCo2(){
-  state.records.forEach(r=>{ r.co2kg = round((Number(r.energyKwh)||0)*FACTOR_CO2_KG_KWH,2); });
+  state.records.forEach(r=>{
+    r.co2kg = recordHasEnergyReading(r) ? round(Number(r.energyKwh)*FACTOR_CO2_KG_KWH,2) : null;
+  });
 }
 function saveConfig(){
   const cfg = getRepoConfig();
@@ -1213,9 +1215,9 @@ async function parsePdfArrayBuffer(arrayBuffer, fileName, sourceUrl, onProgress=
   });
   const summaryRecord={
     period, source:fileName, sourceUrl,
-    waterM3:summary.waterM3, alcM3:summary.alcM3, energyKwh:summary.energyKwh, gasM3:summary.gasM3,
-    waterValue:summary.waterValue, alcValue:summary.alcValue, energyValue:summary.energyValue, gasValue:summary.gasValue,
-    otherValue:summary.wasteValue, verifiedFrom:'Resumen de facturación, página 1'
+    energyKwh:summary.energyKwh,
+    energyValue:summary.energyValue,
+    verifiedFrom:'Resumen de facturación, página 1'
   };
   // El resumen oficial se guarda por separado: nunca se mezcla como una sede ni duplica el ranking.
   return {fileName, period, records, summary:summaryRecord, numPages:pdf.numPages, sample:allText.slice(0,3000)};
@@ -1296,11 +1298,6 @@ function parseSummary(text){
   };
 }
 
-function nthNumberByLabel(text,label,n,unit){
-  const re = new RegExp(label+'\\s+([\\d.,]+)\\s*'+unit,'gi'); let m, i=0;
-  while((m=re.exec(text))){ i++; if(i===n) return parseNumber(m[1]); }
-  return null;
-}
 function parseBlock(block, period, fileName, sourceUrl, idx){
   const text = block.lines.join('\n');
   const header = extractHeader(block.lines[0], block.lines[1]||'');
@@ -1311,7 +1308,7 @@ function parseBlock(block, period, fileName, sourceUrl, idx){
     period, site:header.site, address:header.address,
     energyKwh,
     energyValue:valueAfter(text,'Total Energ'),
-    co2kg: round((energyKwh||0)*FACTOR_CO2_KG_KWH,2),
+    co2kg: energyKwh===null||energyKwh===undefined ? null : round(Number(energyKwh)*FACTOR_CO2_KG_KWH,2),
     source:fileName, sourceUrl, page:block.page, type:'sede'
   };
 }
@@ -1327,26 +1324,12 @@ function extractHeader(line, nextLine){
   const address = parts.join(' - ').trim();
   return {site, address};
 }
-function metricSegment(text,targetPattern,previousPatterns=[]){
-  const target=new RegExp(`Total\\s+${targetPattern}\\b`,'i').exec(text);
-  if(!target) return '';
-  let start=0;
-  const prefix=text.slice(0,target.index);
-  previousPatterns.forEach(pattern=>{
-    const re=new RegExp(`Total\\s+${pattern}\\b`,'gi');
-    let match;
-    while((match=re.exec(prefix))) start=Math.max(start,match.index+match[0].length);
-  });
-  return text.slice(start,target.index);
-}
 function lastMeasurementMatch(fragment,patterns,kind){
   for(const pattern of patterns){
     const matches=[...fragment.matchAll(pattern)];
     if(matches.length) return parseMeasurement(matches[matches.length-1][1],kind);
   }
   return null;
-}
-function extractServiceConsumption(text,service){  return true;
 }
 function sortRecords(records){
   const mode = $('sortFilter')?.value || 'period-desc';
@@ -1568,7 +1551,10 @@ function renderTable(){
   const visible=recs.slice(recordTablePage*RECORD_TABLE_PAGE_SIZE,(recordTablePage+1)*RECORD_TABLE_PAGE_SIZE);
   const rows=visible.map(r=>{
     const meta=territoryMeta(r);
-    return `<tr><td data-label="Periodo">${escapeHtml(r.period)}</td><td data-label="Sede">${escapeHtml(r.site||'Sin nombre')}</td><td data-label="Dirección">${mapAddressLink(r.address,r.address||'Sin dirección',preferredSiteName(r)||r.site)}</td>${includeTerritory?`<td data-label="Comuna/Corregimiento">${escapeHtml(meta.territory||'Sin clasificar')}</td><td data-label="Núcleo">${escapeHtml(meta.nucleus||'Sin clasificar')}</td>`:''}<td data-label="Energía kWh">${num(r.energyKwh)}</td><td data-label="CO₂e kg">${num(r.co2kg)}</td><td data-label="Fuente">${renderSourceDownload(r)}</td></tr>`;
+    const hasEnergy=recordHasEnergyReading(r);
+    const energyText=hasEnergy?fmt(r.energyKwh):'<span class="not-available ni-abbr" title="No identificada">N.I.</span>';
+    const co2Text=hasEnergy?fmt(Number(r.energyKwh)*FACTOR_CO2_KG_KWH):'<span class="not-available">No calculable</span>';
+    return `<tr><td data-label="Periodo">${escapeHtml(r.period)}</td><td data-label="Sede">${escapeHtml(r.site||'Sin nombre')}</td><td data-label="Dirección">${mapAddressLink(r.address,r.address||'Sin dirección',preferredSiteName(r)||r.site)}</td>${includeTerritory?`<td data-label="Comuna/Corregimiento">${escapeHtml(meta.territory||'Sin clasificar')}</td><td data-label="Núcleo">${escapeHtml(meta.nucleus||'Sin clasificar')}</td>`:''}<td data-label="Energía kWh">${energyText}</td><td data-label="CO₂e kg">${co2Text}</td><td data-label="Fuente">${renderSourceDownload(r)}</td></tr>`;
   }).join('');
   const cols=includeTerritory?8:6;
   body.innerHTML=rows||`<tr><td colspan="${cols}"><div class="empty-filter-state"><strong>No hay coincidencias</strong><span>Prueba con menos palabras, cambia el periodo o limpia los filtros.</span><button type="button" onclick="clearAllFilters()" class="secondary">Limpiar filtros</button></div></td></tr>`;
@@ -2133,21 +2119,25 @@ function aggregateBySite(records){
   for(const r of records){
     const key = siteKey(r.site, r.address);
     if(!map[key]) map[key] = {
-      key, site:r.site||'Sin nombre', displaySite:preferredSiteName(r), address:r.address||'', periods:new Set(), energyPeriods:new Set(), waterPeriods:new Set(), alcPeriods:new Set(), gasPeriods:new Set(), wastePeriods:new Set(),
-      energyKwh:0, waterM3:0, alcM3:0, gasM3:0, wasteTon:0, wasteValue:0, co2kg:0, count:0, energyRecordCount:0, waterRecordCount:0, alcRecordCount:0, gasRecordCount:0, wasteRecordCount:0
+      key,
+      site:r.site||'Sin nombre',
+      displaySite:preferredSiteName(r),
+      address:r.address||'',
+      periods:new Set(),
+      energyPeriods:new Set(),
+      energyKwh:0,
+      co2kg:0,
+      count:0,
+      energyRecordCount:0
     };
     const item=map[key];
     if(r.period) item.periods.add(r.period);
-    if(recordHasReading(r,'energyKwh')){
+    if(recordHasEnergyReading(r)){
       item.energyPeriods.add(r.period||`registro-${item.count}`);
       item.energyKwh += Number(r.energyKwh)||0;
       item.co2kg += (Number(r.energyKwh)||0)*FACTOR_CO2_KG_KWH;
       item.energyRecordCount += 1;
     }
-    if(recordHasReading(r,'waterM3')){item.waterPeriods.add(r.period||`registro-${item.count}`);item.waterM3+=Number(r.waterM3)||0;item.waterRecordCount+=1;}
-    if(recordHasReading(r,'alcM3')){item.alcPeriods.add(r.period||`registro-${item.count}`);item.alcM3+=Number(r.alcM3)||0;item.alcRecordCount+=1;}
-    if(recordHasReading(r,'gasM3')){item.gasPeriods.add(r.period||`registro-${item.count}`);item.gasM3+=Number(r.gasM3)||0;item.gasRecordCount+=1;}
-    if(recordHasReading(r,'wasteTon') || recordHasReading(r,'wasteValue')){item.wastePeriods.add(r.period||`registro-${item.count}`);item.wasteTon+=Number(r.wasteTon)||0;item.wasteValue+=Number(r.wasteValue)||0;item.wasteRecordCount+=1;}
     item.count += 1;
   }
   return Object.values(map).map(x=>{
@@ -2155,19 +2145,14 @@ function aggregateBySite(records){
     const energyPeriodCount=x.energyPeriods.size;
     return {
       ...x,
-      periodCount, energyPeriodCount,
-      waterPeriodCount:x.waterPeriods.size, alcPeriodCount:x.alcPeriods.size, gasPeriodCount:x.gasPeriods.size, wastePeriodCount:x.wastePeriods.size,
+      periodCount,
+      energyPeriodCount,
       missingEnergyPeriodCount:Math.max(0,periodCount-energyPeriodCount),
-      hasEnergy:x.energyRecordCount>0, hasWater:x.waterRecordCount>0, hasAlc:x.alcRecordCount>0, hasGas:x.gasRecordCount>0, hasWaste:x.wasteRecordCount>0,
+      hasEnergy:x.energyRecordCount>0,
       trees:x.energyRecordCount>0 ? Math.ceil((x.co2kg||0)/TREE_CO2_KG_YEAR) : null,
       avgKwhMonth:energyPeriodCount ? x.energyKwh/energyPeriodCount : null
     };
   }).sort((a,b)=>Number(b.hasEnergy)-Number(a.hasEnergy) || b.energyKwh-a.energyKwh || String(a.displaySite||a.site).localeCompare(String(b.displaySite||b.site),'es'));
-}
-function dashboardValue(row,field,unit=''){
-  if(field!=='energyKwh') return '';
-  if(!row.hasEnergy) return '<span class="not-available">Sin dato</span>';
-  return `${fmt(row.energyKwh)}${unit?` ${unit}`:''}`;
 }
 
 function updateDashboardNotice(rows){
@@ -2201,7 +2186,17 @@ function renderSiteProfile(rows){
   const quality=qualityStatusForSite(r), energyState=energyDataState(r); const periods=[...r.periods].sort(); const first=periods[0],last=periods[periods.length-1];
   const latest=[...recs].sort((a,b)=>String(b.period).localeCompare(String(a.period)))[0];
   const latestLink=latest?.sourceUrl&&latest.sourceUrl!=='local'?`<a class="secondary profile-evidence-link" href="${escapeHtml(latest.sourceUrl)}#page=${Math.max(1,Number(latest.page)||1)}" target="_blank" rel="noopener">Ver evidencia · ${escapeHtml(latest.source||'Factura')} · pág. ${Math.max(1,Number(latest.page)||1)}</a>`:'<span class="not-available">Sin enlace permanente a factura</span>';
-  const serviceCards=[['energyKwh','energyPeriodCount','hasEnergy'],['waterM3','waterPeriodCount','hasWater'],['alcM3','alcPeriodCount','hasAlc'],['gasM3','gasPeriodCount','hasGas'],['wasteTon','wastePeriodCount','hasWaste']].map(([field,pf,hf])=>{const m=serviceMetric(field);let strong=r[hf]?`${fmt(r[field])} ${m.unit}`:'N.I.',small=r[hf]?`${r[pf]}/${r.periodCount} periodos con lectura`:'Sin lectura asociada';if(field==='energyKwh'&&!r[hf]&&energyState.code==='external'){strong='Contrato separado';small='Consumo pendiente de integrar desde la fuente no regulada';}return `<article><span>${escapeHtml(m.label)}</span><strong>${strong}</strong><small>${small}</small></article>`;}).join('');
+  const serviceCards = r.hasEnergy
+    ? [
+        `<article><span>Energía eléctrica</span><strong>${fmt(r.energyKwh)} kWh</strong><small>${r.energyPeriodCount}/${r.periodCount} periodos con lectura</small></article>`,
+        `<article><span>Huella de carbono</span><strong>${fmt(r.co2kg/1000)} t CO₂e</strong><small>Dióxido de carbono equivalente asociado al consumo</small></article>`,
+        `<article><span>Promedio eléctrico</span><strong>${fmt(r.avgKwhMonth)} kWh/mes</strong><small>Promedio de periodos con lectura válida</small></article>`,
+        `<article><span>Equivalencia pedagógica</span><strong>${fmt(r.trees)} árboles</strong><small>Estimación anual; no es compensación certificada</small></article>`
+      ].join('')
+    : [
+        `<article><span>Energía eléctrica</span><strong>${energyState.code==='external'?'Contrato separado':'N.I.'}</strong><small>${energyState.code==='external'?'Consumo pendiente de integrar':'Sin lectura eléctrica asociada'}</small></article>`,
+        `<article><span>Huella de carbono</span><strong>No calculable</strong><small>Requiere consumo eléctrico identificado</small></article>`
+      ].join('');
   box.hidden=false;
   box.innerHTML=`<div class="site-profile-head"><div><span class="section-kicker">Ficha integral de sede</span><h3>${escapeHtml(r.displaySite||r.site)}</h3><p>${mapAddressLink(profileAddressText,profileAddressText,r.displaySite||r.site)}</p>${r.displaySite!==r.site||profileInvoiceSites.length>1?`<p class="invoice-alias">Nombre(s) en factura: ${escapeHtml(profileInvoiceText)}</p>`:''}</div><span class="quality-badge ${quality.code}" title="${escapeHtml(quality.detail)}">${escapeHtml(quality.label)}</span></div><div class="site-profile-meta"><span><strong>Territorio:</strong> ${escapeHtml(meta.territory||'Sin clasificar')}</span><span><strong>Núcleo:</strong> ${escapeHtml(meta.nucleus||'Sin clasificar')}</span><span><strong>Zona:</strong> ${escapeHtml(meta.zone||'Sin clasificar')}</span><span><strong>Periodo:</strong> ${escapeHtml(first||'—')} → ${escapeHtml(last||'—')}</span><span><strong>Confianza de vínculo:</strong> ${escapeHtml(sync.confidence||meta.confidence||'No definida')}${sync.matchScore?` · ${fmt(sync.matchScore)}%`:''}</span></div><div class="site-profile-services">${serviceCards}</div><div class="site-profile-quality"><strong>Lectura de calidad:</strong> ${escapeHtml(quality.detail)}${sync.note?` <span>${escapeHtml(sync.note)}</span>`:''}</div>${energyState.code==='external'?exceptionEvidenceHtml(energyState.exception):''}<div class="site-profile-evidence"><div><strong>Trazabilidad de factura consolidada</strong><p>La evidencia abre la factura y la página asociada al registro más reciente de esta sede.</p></div>${latestLink}</div>`;
 }

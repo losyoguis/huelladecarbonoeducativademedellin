@@ -1,0 +1,32 @@
+SiMeCO₂ v54 — Observación para búsquedas por dirección
+Fecha: 23 de julio de 2026
+
+MEJORA APLICADA
+Se agregó una observación visible junto a los principales buscadores de instituciones y sedes:
+“Sugerencia: si el nombre de la sede no aparece, búscala por la dirección registrada en la factura.”
+
+LUGARES ACTUALIZADOS
+1. Histórico: selector de sede.
+2. Ranking: localizador de institución o sede.
+3. Informe por sede: buscador del dashboard.
+4. Facturas por I.E.: buscador de institución o sede.
+5. Búsqueda institucional independiente.
+6. Filtros territoriales de las páginas complementarias.
+
+OTROS AJUSTES
+- Los marcadores de búsqueda ahora mencionan explícitamente la dirección.
+- Se creó un estilo responsive para que la observación sea visible sin saturar la interfaz.
+- Se actualizaron las versiones de caché de los recursos para evitar que el navegador conserve el diseño anterior.
+
+ARCHIVOS ACTUALIZADOS
+- index.html
+- dashboard.html
+- aula-climatica.html
+- busqueda-institucional.html
+- filtros-territoriales.html
+- styles.css
+- styles.min.css
+- README.md
+
+ARCHIVO CREADO
+- CAMBIOS-v54.txt
