@@ -4,7 +4,7 @@ let TREE_CO2_KG_YEAR = 22; // kg CO2e capturados por árbol al año. Ajustable d
 const FACTOR_KEY = 'simeco2_factores_ambientales_v8';
 const STORE_KEY = 'simeco2_servicios_v16';
 const CONFIG_KEY = 'simeco2_repo_config_v7';
-const DATA_VERSION = 'v82-estado-informacion-prioridad-20260808';
+const DATA_VERSION = 'v85-electricidad-ranking-co2-pdf-20260808';
 
 const $ = (id)=>document.getElementById(id);
 const state = loadStore();
@@ -42,11 +42,7 @@ const RECORD_TABLE_PAGE_SIZE = 200;
 let recordTablePage = 0;
 
 const SERVICE_METRICS = {
-  energyKwh:{field:'energyKwh',label:'Energía eléctrica',short:'Energía',unit:'kWh',hasFlag:'hasEnergy',periodField:'energyPeriodCount',colorLabel:'eléctrico'},
-  waterM3:{field:'waterM3',label:'Agua',short:'Agua',unit:'m³',hasFlag:'hasWater',periodField:'waterPeriodCount',colorLabel:'hídrico'},
-  alcM3:{field:'alcM3',label:'Alcantarillado',short:'Alcantarillado',unit:'m³',hasFlag:'hasAlc',periodField:'alcPeriodCount',colorLabel:'de alcantarillado'},
-  gasM3:{field:'gasM3',label:'Gas natural',short:'Gas',unit:'m³',hasFlag:'hasGas',periodField:'gasPeriodCount',colorLabel:'de gas'},
-  wasteTon:{field:'wasteTon',label:'Aseo / residuos',short:'Residuos',unit:'t',hasFlag:'hasWaste',periodField:'wastePeriodCount',colorLabel:'de residuos'}
+  energyKwh:{field:'energyKwh',label:'Energía eléctrica',short:'Energía',unit:'kWh',hasFlag:'hasEnergy',periodField:'energyPeriodCount',colorLabel:'energético'}
 };
 function serviceMetric(field){ return SERVICE_METRICS[field] || SERVICE_METRICS.energyKwh; }
 function selectedHistoryMetric(){ return serviceMetric($('compareMetric')?.value || 'energyKwh'); }
@@ -1149,17 +1145,11 @@ function detectPeriod(text, fileName){
 function parseSummary(text){
   const head = text.slice(0,8000);
   return {
-    waterM3: extractAfter(head, /ACTUAL\s+([\d.,]+)\s*m3[\s\S]{0,200}?Acueducto/i),
-    alcM3: nthNumberByLabel(head, 'ACTUAL', 2, 'm3'),
     energyKwh: extractAfter(head, /ACTUAL\s+([\d.,]+)\s*kwh/i),
-    gasM3: nthNumberByLabel(head, 'ACTUAL', 3, 'm3'),
-    waterValue: valueAfter(head,'Total Acueducto'),
-    alcValue: valueAfter(head,'Total Alcantarillado'),
-    energyValue: valueAfter(head,'Total Energ'),
-    gasValue: valueAfter(head,'Total Gas Natural'),
-    wasteValue: valueAfter(text.slice(0,12000),'Total Otras Entidades')
+    energyValue: valueAfter(head,'Total Energ')
   };
 }
+
 function nthNumberByLabel(text,label,n,unit){
   const re = new RegExp(label+'\\s+([\\d.,]+)\\s*'+unit,'gi'); let m, i=0;
   while((m=re.exec(text))){ i++; if(i===n) return parseNumber(m[1]); }
@@ -1170,21 +1160,16 @@ function parseBlock(block, period, fileName, sourceUrl, idx){
   const header = extractHeader(block.lines[0], block.lines[1]||'');
   if(!header.site) return null;
   const energyKwh = extractEnergyKwh(text);
-  const waterM3 = extractServiceConsumption(text, 'agua') ?? extractBeforeTotal(text,'Total Agua','m3');
-  const alcM3 = extractServiceConsumption(text, 'alcantarillado') ?? extractBeforeTotal(text,'Total Alcantarillado','m3');
-  const gasM3 = extractServiceConsumption(text, 'gas') ?? extractBeforeTotal(text,'Total Gas','m3');
-  const wasteTon = extractWasteTon(text);
-  const rec = {
+  return {
     key:`${period}|${siteKey(header.site,header.address)}|${block.page}|${idx}|${fileName}`,
     period, site:header.site, address:header.address,
-    waterM3, alcM3, energyKwh, gasM3,
-    waterValue:valueAfter(text,'Total Agua'), alcValue:valueAfter(text,'Total Alcantarillado'), energyValue:valueAfter(text,'Total Energ'), gasValue:valueAfter(text,'Total Gas'),
-    wasteValue:valueAfter(text,'Total Aseo'), wasteTon,
+    energyKwh,
+    energyValue:valueAfter(text,'Total Energ'),
     co2kg: round((energyKwh||0)*FACTOR_CO2_KG_KWH,2),
     source:fileName, sourceUrl, page:block.page, type:'sede'
   };
-  return rec;
 }
+
 function extractHeader(line, nextLine){
   let raw = line;
   if(!/servicio\s*:/i.test(raw) && nextLine) raw += ' ' + nextLine;
@@ -1215,130 +1200,7 @@ function lastMeasurementMatch(fragment,patterns,kind){
   }
   return null;
 }
-function extractServiceConsumption(text,service){
-  if(service==='agua'){
-    const segment=metricSegment(text,'(?:Agua|Acueducto)');
-    return lastMeasurementMatch(segment,[/Consumo\s+[A-Za-z]{3,4}-\d{2}\s+([\d.,]+)\s*x/gi,/([\d.,]+)\s*(?:m3|mt\s*3|m³)[\s\S]{0,80}?=\s*Consumo/gi],'water');
-  }
-  if(service==='alcantarillado'){
-    const segment=metricSegment(text,'Alcantarillado',['(?:Agua|Acueducto)']);
-    return lastMeasurementMatch(segment,[/Consumo\s+[A-Za-z]{3,4}-\d{2}\s+([\d.,]+)\s*x/gi,/([\d.,]+)\s*(?:m3|mt\s*3|m³)[\s\S]{0,80}?=\s*Consumo/gi],'water');
-  }
-  if(service==='gas'){
-    const segment=metricSegment(text,'Gas',['Energ[ií]a','Alcantarillado','(?:Agua|Acueducto)']);
-    return lastMeasurementMatch(segment,[/Consumo\s+[A-Za-z]{3,4}-\d{2}\s+([\d.,]+)\s*x/gi,/([\d.,]+)\s*(?:m3|mt\s*3|m³)[\s\S]{0,80}?=\s*Consumo/gi],'gas');
-  }
-  return null;
-}
-function extractBeforeTotal(text,totalLabel,unit){
-  const label=loose(totalLabel);
-  if(label.includes('alcantarillado')) return extractServiceConsumption(text,'alcantarillado');
-  if(label.includes('gas')) return extractServiceConsumption(text,'gas');
-  return extractServiceConsumption(text,'agua');
-}
-function extractEnergyKwh(text){
-  const segment=metricSegment(text,'Energ[ií]a',['Alcantarillado','(?:Agua|Acueducto)']);
-  return lastMeasurementMatch(segment,[/Energ[ií]a(?:\s+activa)?\s+[A-Za-z]{3,4}-\d{2}\s+([\d.,]+)\s*x/gi,/Consumo\s+[A-Za-z]{3,4}-\d{2}\s+([\d.,]+)\s*x/gi,/([\d.,]+)\s*kWh[\s\S]{0,100}?=\s*Consumo/gi],'energy');
-}
-function extractWasteTon(text){
-  const values=[];
-  [/No\s+Aprov(?:echables)?-?Ordinarios\s+([\d.,]+)/i,/Barrido\s+y\s+limpieza\s+([\d.,]+)/i,/Limpieza\s+urbana\s+([\d.,]+)/i,/Rechazados\s+([\d.,]+)/i].forEach(re=>{
-    const match=text.match(re);const value=match?parseMeasurement(match[1],'ton'):null;
-    if(value!==null) values.push(value);
-  });
-  return values.length?round(values.reduce((a,b)=>a+b,0),5):null;
-}
-function valueAfter(text,label){
-  const re=new RegExp(`${String(label).replace(/[.*+?^${}()|[\\]\\]/g,'\\$&')}[\\s\\S]{0,220}?\\$\\s*-?\\s*([\\d.,]+)`,'i');
-  const match=text.match(re);
-  return match?parseMoney(match[1]):null;
-}
-function extractAfter(text,re){ const m=text.match(re); return m?parseNumber(m[1]):null; }
-function parseMeasurement(v,kind='generic'){
-  if(v==null) return null;
-  let s=String(v).trim().replace(/\s/g,'').replace(/[^0-9,.-]/g,'');
-  if(!s) return null;
-  const negative=s.startsWith('-');s=s.replace(/-/g,'');
-  if(kind==='water'){
-    if(s.includes(',')) s=s.replace(/\./g,'').replace(',','.');
-    else if(s.includes('.')){const parts=s.split('.');if(parts.slice(1).every(part=>part.length===3)) s=parts.join('');}
-  }else if(kind==='gas'||kind==='ton'){
-    if(s.includes(',')) s=s.replace(/\./g,'').replace(',','.');
-    else if((s.match(/\./g)||[]).length>1){const parts=s.split('.');s=parts.slice(0,-1).join('')+'.'+parts.at(-1);}
-  }else if(kind==='energy'){
-    if(s.includes(',')&&s.includes('.')) s=s.replace(/\./g,'').replace(',','.');
-    else if(s.includes(',')) s=s.replace(',','.');
-    else if(s.includes('.')){const parts=s.split('.');if(parts.slice(1).every(part=>part.length===3)) s=parts.join('');}
-  }else{
-    const commas=(s.match(/,/g)||[]).length,dots=(s.match(/\./g)||[]).length;
-    if(commas&&dots){if(s.lastIndexOf(',')>s.lastIndexOf('.')) s=s.replace(/\./g,'').replace(',','.');else s=s.replace(/,/g,'');}
-    else if(dots){const parts=s.split('.');if(parts.length>2||(parts.length===2&&parts[1].length===3&&parts[0]!=='0')) s=parts.join('');}
-    else if(commas){const parts=s.split(',');s=(parts.length>2)?parts.join(''):parts.join('.');}
-  }
-  const n=parseFloat((negative?'-':'')+s);return Number.isFinite(n)?n:null;
-}
-function parseNumber(v){ return parseMeasurement(v,'generic'); }
-function parseMoney(v){ return parseNumber(v); }
-function round(n,d=2){ return Number.isFinite(n) ? Math.round(n*Math.pow(10,d))/Math.pow(10,d) : 0; }
-function hasAnyMeasure(r){ return [r.waterM3,r.alcM3,r.energyKwh,r.gasM3,r.wasteValue,r.wasteTon].some(v=>v!==null && v!==undefined && v!==0); }
-function rawSiteKey(site,address=''){ return `${loose(site)}|${loose(address)}`; }
-function siteKey(site,address=''){
-  const raw=rawSiteKey(site,address);
-  const meta=window.SIMECO_TERRITORIAL_SYNC?.[raw];
-  return meta?.institutionGroupId ? `institution:${loose(meta.institutionGroupId)}` : raw;
-}
-function preferredSiteName(record){
-  const meta=getTerritorySyncMeta(record);
-  return meta?.institutionDisplayName || meta?.displayName || record?.site || 'Sin nombre';
-}
-function siteSearchHaystack(record){
-  if(record && recordSearchTextCache.has(record)) return recordSearchTextCache.get(record);
-  const meta=getTerritorySyncMeta(record) || {};
-  const text=loose(`${record?.site||''} ${record?.address||''} ${meta.institutionDisplayName||''} ${meta.displayName||''} ${meta.matchedName||''} ${meta.aliases||''} ${meta.institutionRole||''}`);
-  if(record && typeof record==='object') recordSearchTextCache.set(record,text);
-  return text;
-}
-function invalidateSearchCaches(){
-  siteSearchDataRevision++;
-  siteSearchOptionsCache.clear();
-  recordsBySiteKeyCache=null;
-  filteredRecordsCache={key:'',rows:null};
-}
-function recordsBySiteKey(){
-  if(recordsBySiteKeyCache) return recordsBySiteKeyCache;
-  const map=new Map();
-  for(const r of state.records||[]){
-    const key=siteKey(r.site,r.address);
-    if(!map.has(key)) map.set(key,[]);
-    map.get(key).push(r);
-  }
-  recordsBySiteKeyCache=map;
-  return map;
-}
-function searchScopeSignature(scope){
-  if(scope==='compare'||scope==='dashboard'||scope==='table'){
-    const f=territoryFilterValues(scope);
-    return `${scope}|${f.type||''}|${f.territory||''}|${f.nucleus||''}|${state.records.length}|${siteSearchDataRevision}`;
-  }
-  return `all|${state.records.length}|${siteSearchDataRevision}`;
-}
-
-function searchTokens(value){ return loose(value).split(/\s+/).filter(Boolean); }
-function recordMatchesSearch(r, query){
-  if(selectedSiteKey) return siteKey(r.site,r.address)===selectedSiteKey;
-  const tokens = searchTokens(query);
-  if(!tokens.length) return true;
-  const haystack = siteSearchHaystack(r);
-  return tokens.every(token=>haystack.includes(token));
-}
-function serviceHasValue(r, service){
-  if(!service) return true;
-  if(service==='energia') return Number(r.energyKwh)>0;
-  if(service==='agua') return Number(r.waterM3)>0;
-  if(service==='alcantarillado') return Number(r.alcM3)>0;
-  if(service==='gas') return Number(r.gasM3)>0;
-  if(service==='aseo') return Number(r.wasteValue)>0 || Number(r.wasteTon)>0;
-  return true;
+function extractServiceConsumption(text,service){  return true;
 }
 function sortRecords(records){
   const mode = $('sortFilter')?.value || 'period-desc';
@@ -1507,7 +1369,7 @@ function renderCards(){
   const sites=new Set(recs.map(r=>siteKey(r.site,r.address))).size;
   const detailSum=field=>recs.reduce((a,r)=>a+(Number(r[field])||0),0),officialSum=field=>official.reduce((a,r)=>a+(Number(r[field])||0),0);
   const energy=official.length?officialSum('energyKwh'):detailSum('energyKwh'),water=official.length?officialSum('waterM3'):detailSum('waterM3'),co2kg=energy*FACTOR_CO2_KG_KWH;
-  const values={kPeriods:periods,kSites:sites,kKwh:fmt(energy)+' kWh',kCo2:fmt(co2kg/1000)+' t CO₂e',kTrees:fmt(Math.ceil(co2kg/TREE_CO2_KG_YEAR)),kWater:fmt(water)+' m³',kWaste:fmt(detailSum('wasteTon'))+' t'};
+  const values={kPeriods:periods,kSites:sites,kKwh:fmt(energy)+' kWh',kCo2:fmt(co2kg/1000)+' t CO₂e',kTrees:fmt(Math.ceil(co2kg/TREE_CO2_KG_YEAR))};
   Object.entries(values).forEach(([id,value])=>{if($(id)) $(id).textContent=value;});
 }
 function renderSourceDownload(record){
@@ -1542,7 +1404,7 @@ function renderTable(){
   const visible=recs.slice(recordTablePage*RECORD_TABLE_PAGE_SIZE,(recordTablePage+1)*RECORD_TABLE_PAGE_SIZE);
   const rows=visible.map(r=>{
     const meta=territoryMeta(r);
-    return `<tr><td data-label="Periodo">${escapeHtml(r.period)}</td><td data-label="Sede">${escapeHtml(r.site||'Sin nombre')}</td><td data-label="Dirección">${mapAddressLink(r.address,r.address||'Sin dirección',preferredSiteName(r)||r.site)}</td>${includeTerritory?`<td data-label="Comuna/Corregimiento">${escapeHtml(meta.territory||'Sin clasificar')}</td><td data-label="Núcleo">${escapeHtml(meta.nucleus||'Sin clasificar')}</td>`:''}<td data-label="Agua m³">${num(r.waterM3)}</td><td data-label="Alc. m³">${num(r.alcM3)}</td><td data-label="Energía kWh">${num(r.energyKwh)}</td><td data-label="Gas m³">${num(r.gasM3)}</td><td data-label="Aseo $">${money(r.wasteValue)}</td><td data-label="Residuos t">${num(r.wasteTon)}</td><td data-label="CO₂ kg">${num(r.co2kg)}</td><td data-label="Fuente">${renderSourceDownload(r)}</td></tr>`;
+    return `<tr><td data-label="Periodo">${escapeHtml(r.period)}</td><td data-label="Sede">${escapeHtml(r.site||'Sin nombre')}</td><td data-label="Dirección">${mapAddressLink(r.address,r.address||'Sin dirección',preferredSiteName(r)||r.site)}</td>${includeTerritory?`<td data-label="Comuna/Corregimiento">${escapeHtml(meta.territory||'Sin clasificar')}</td><td data-label="Núcleo">${escapeHtml(meta.nucleus||'Sin clasificar')}</td>`:''}<td data-label="Energía kWh">${num(r.energyKwh)}</td><td data-label="CO₂e kg">${num(r.co2kg)}</td><td data-label="Fuente">${renderSourceDownload(r)}</td></tr>`;
   }).join('');
   const cols=includeTerritory?13:11;
   body.innerHTML=rows||`<tr><td colspan="${cols}"><div class="empty-filter-state"><strong>No hay coincidencias</strong><span>Prueba con menos palabras, cambia el periodo o limpia los filtros.</span><button type="button" onclick="clearAllFilters()" class="secondary">Limpiar filtros</button></div></td></tr>`;
@@ -1550,13 +1412,17 @@ function renderTable(){
 }
 
 function aggregateByPeriod(records){
-  const map = {};
+  const map={};
   for(const r of records){
-    map[r.period] ||= {period:r.period, energyKwh:0, waterM3:0, alcM3:0, gasM3:0, wasteTon:0, co2kg:0};
-    ['energyKwh','waterM3','alcM3','gasM3','wasteTon','co2kg'].forEach(k=>map[r.period][k]+=Number(r[k])||0);
+    map[r.period] ||= {period:r.period,energyKwh:0,co2kg:0};
+    if(recordHasEnergyReading(r)){
+      map[r.period].energyKwh+=Number(r.energyKwh)||0;
+      map[r.period].co2kg+=(Number(r.energyKwh)||0)*FACTOR_CO2_KG_KWH;
+    }
   }
   return Object.values(map).sort((a,b)=>a.period.localeCompare(b.period));
 }
+
 function officialSummaries(){
   return (Array.isArray(state.summaries)?state.summaries:[])
     .filter(r=>r?.period && Number.isFinite(Number(r.energyKwh)))
@@ -1573,43 +1439,30 @@ function aggregateSummariesByComparison(mode){
   for(const r of officialSummaries()){
     const key=groupKeyForPeriod(r.period,mode);
     if(!key) continue;
-    map[key] ||= {key,period:groupLabel(key,mode),energyKwh:0,waterM3:0,alcM3:0,gasM3:0,wasteTon:0,co2kg:0,records:0,official:true,sources:[],metricCounts:{energyKwh:0,waterM3:0,alcM3:0,gasM3:0,wasteTon:0}};
-    ['energyKwh','waterM3','alcM3','gasM3'].forEach(k=>{
-      if(r[k]!==null && r[k]!==undefined && r[k]!=='' && Number.isFinite(Number(r[k]))){map[key][k]+=Number(r[k]);map[key].metricCounts[k]+=1;}
-    });
+    map[key] ||= {key,period:groupLabel(key,mode),energyKwh:0,co2kg:0,records:0,official:true,sources:[],metricCounts:{energyKwh:0}};
+    if(r.energyKwh!==null && r.energyKwh!==undefined && r.energyKwh!=='' && Number.isFinite(Number(r.energyKwh))){
+      map[key].energyKwh+=Number(r.energyKwh);
+      map[key].metricCounts.energyKwh+=1;
+    }
     map[key].co2kg=map[key].energyKwh*FACTOR_CO2_KG_KWH;
     map[key].records+=1;
     if(r.source) map[key].sources.push(r.source);
   }
   return Object.values(map).sort((a,b)=>a.key.localeCompare(b.key));
 }
+
 function comparisonGroups(mode){
-  const metric=selectedHistoryMetric();
-  // Los resúmenes oficiales contienen energía, agua, alcantarillado y gas. Para
-  // residuos se usa el detalle por sede porque ese indicador no está en la portada.
-  if(isGlobalCompareScope() && officialSummaries().length && metric.field!=='wasteTon') return aggregateSummariesByComparison(mode);
-  return aggregateByComparison(recordsForCompareScope(),mode);
-}
-function historyGroupHasMetric(item,field){
-  if(!item) return false;
-  if(item.metricCounts && Object.prototype.hasOwnProperty.call(item.metricCounts,field)) return Number(item.metricCounts[field])>0;
-  return item[field]!==null && item[field]!==undefined && item[field]!=='' && Number.isFinite(Number(item[field]));
+  return isGlobalCompareScope() ? aggregateSummariesByComparison(mode) : aggregateByComparison(recordsForCompareScope(),mode);
 }
 function updateHistorySourceNote(){
-  const el=$('historyDataSourceNote');if(!el) return;
-  const summaries=officialSummaries();
-  const metric=selectedHistoryMetric();
-  if(isGlobalCompareScope()&&summaries.length&&metric.field!=='wasteTon'){
-    const differences=summaries.map(r=>Math.abs(Number(r.reconciliation?.energyDifferencePct))).filter(Number.isFinite);
-    const maxDifference=differences.length?Math.max(...differences):null;
-    const last=summaries.at(-1)?.period||'';
-    el.innerHTML=`<strong>Histórico oficial estable · ${escapeHtml(metric.label)}:</strong> ${summaries.length} periodos verificados directamente en el “Resumen de facturación” de la página 1 de cada PDF${last?`, hasta ${escapeHtml(groupLabel(last,'month'))}`:''}. ${metric.field==='energyKwh'&&maxDifference!==null?`La conciliación del detalle por sede presenta una diferencia máxima de ${fmt(maxDifference)}% frente al total oficial.`:'La gráfica general utiliza el total oficial disponible para este servicio y no suma sedes parciales.'}`;
-  }else if(isGlobalCompareScope() && metric.field==='wasteTon'){
-    el.innerHTML='<strong>Histórico de residuos / aseo:</strong> este indicador no está consolidado como volumen en la portada de la factura. La gráfica se construye con los registros detallados de las sedes donde el dato de residuos está disponible.';
+  const el=$('historyDataSourceNote'); if(!el) return;
+  if(isGlobalCompareScope()){
+    el.innerHTML='<strong>Fuente histórica eléctrica:</strong> resumen consolidado oficial de energía de la primera página de cada factura PDF. CO₂e se calcula con el factor eléctrico configurado en SiMeCO₂.';
   }else{
-    el.innerHTML=`<strong>Detalle por sede · ${escapeHtml(metric.label)}:</strong> la comparación usa exclusivamente lecturas asociadas a la institución o dirección seleccionada. Los periodos sin lectura del indicador no se convierten en cero.`;
+    el.innerHTML='<strong>Detalle eléctrico por sede:</strong> la comparación usa exclusivamente lecturas de energía asociadas a la institución o dirección seleccionada. Los periodos sin lectura eléctrica no se convierten en cero.';
   }
 }
+
 function getSiteOptions(){
   return Object.values(state.sites).sort((a,b)=>String(a.site).localeCompare(String(b.site)));
 }
@@ -1666,19 +1519,21 @@ function recordsForCompareScope(){
   return state.records.filter(r=>recordMatchesTerritory(r,territoryFilterValues('compare')) && (!site || siteKey(r.site,r.address) === site));
 }
 function aggregateByComparison(records, mode){
-  const map = {};
+  const map={};
   for(const r of records){
-    const key = groupKeyForPeriod(r.period, mode);
+    const key=groupKeyForPeriod(r.period,mode);
     if(!key) continue;
-    map[key] ||= {key, period:groupLabel(key, mode), energyKwh:0, waterM3:0, alcM3:0, gasM3:0, wasteTon:0, co2kg:0, records:0, metricCounts:{energyKwh:0,waterM3:0,alcM3:0,gasM3:0,wasteTon:0}};
-    ['energyKwh','waterM3','alcM3','gasM3','wasteTon'].forEach(k=>{
-      if(recordHasReading(r,k)){map[key][k]+=Number(r[k])||0;map[key].metricCounts[k]+=1;}
-    });
+    map[key] ||= {key,period:groupLabel(key,mode),energyKwh:0,co2kg:0,records:0,metricCounts:{energyKwh:0}};
+    if(recordHasEnergyReading(r)){
+      map[key].energyKwh+=Number(r.energyKwh)||0;
+      map[key].metricCounts.energyKwh+=1;
+    }
     map[key].co2kg=map[key].energyKwh*FACTOR_CO2_KG_KWH;
-    map[key].records += 1;
+    map[key].records+=1;
   }
   return Object.values(map).sort((a,b)=>a.key.localeCompare(b.key));
 }
+
 function renderCompareControls(opts={}){
   if(!$('compareA') || !$('compareB')) return;
   const currentSite = opts.keepSite && $('compareSite') ? $('compareSite').value : ($('compareSite') ? $('compareSite').value : '');
@@ -1869,11 +1724,12 @@ function activeTerritoryText(prefix){
 function downloadFilteredPdfReport(){
   const recs=filteredRecords();
   if(!recs.length){alert('No hay registros para generar el informe PDF.');return;}
-  const energy=recs.reduce((a,r)=>a+(Number(r.energyKwh)||0),0), co2=recs.reduce((a,r)=>a+(Number(r.co2kg)||0),0), water=recs.reduce((a,r)=>a+(Number(r.waterM3)||0),0);
-  const rows=recs.map(r=>`<tr><td>${escapeHtml(r.period||'')}</td><td>${escapeHtml(r.site||'')}</td><td>${mapAddressLink(r.address,r.address||'Sin dirección',preferredSiteName(r)||r.site)}</td><td>${fmt(r.energyKwh)} kWh</td><td>${fmt(r.waterM3)} m³</td><td>${fmt(r.co2kg)} kg</td><td>${escapeHtml(r.source||'PDF')}</td></tr>`).join('');
-  const filters=[activeTerritoryText('table'),$('periodFilter')?.value&&`Periodo: ${$('periodFilter').value}`,$('serviceFilter')?.value&&`Servicio: ${$('serviceFilter').value}`,$('siteSearch')?.value&&`Sede: ${$('siteSearch').value}`].filter(Boolean).join(' · ');
-  openPdfPrintDocument('Informe de facturas por institución educativa',filters,`<div class="report-grid"><div class="metric"><span>Registros</span><strong>${recs.length}</strong></div><div class="metric"><span>Energía acumulada</span><strong>${fmt(energy)} kWh</strong></div><div class="metric"><span>Emisiones</span><strong>${fmt(co2/1000)} t CO₂e</strong></div></div><div class="report-card"><h2>Resumen de la consulta</h2><p>Agua acumulada: <strong>${fmt(water)} m³</strong></p></div><table><thead><tr><th>Periodo</th><th>Institución / sede</th><th>Dirección</th><th>Energía</th><th>Agua</th><th>CO₂e</th><th>Fuente</th></tr></thead><tbody>${rows}</tbody></table>`);
+  const energy=recs.reduce((a,r)=>a+(Number(r.energyKwh)||0),0), co2=recs.reduce((a,r)=>a+(Number(r.co2kg)||0),0);
+  const rows=recs.map(r=>`<tr><td>${escapeHtml(r.period||'')}</td><td>${escapeHtml(r.site||'')}</td><td>${mapAddressLink(r.address,r.address||'Sin dirección',preferredSiteName(r)||r.site)}</td><td>${fmt(r.energyKwh)} kWh</td><td>${fmt(r.co2kg)} kg CO₂e</td><td>${escapeHtml(r.source||'PDF')}</td></tr>`).join('');
+  const filters=[activeTerritoryText('table'),$('periodFilter')?.value&&`Periodo: ${$('periodFilter').value}`,$('siteSearch')?.value&&`Sede: ${$('siteSearch').value}`].filter(Boolean).join(' · ');
+  openPdfPrintDocument('Informe de facturas eléctricas por institución educativa',filters,`<div class="report-grid"><div class="metric"><span>Registros</span><strong>${recs.length}</strong></div><div class="metric"><span>Energía acumulada</span><strong>${fmt(energy)} kWh</strong></div><div class="metric"><span>Emisiones</span><strong>${fmt(co2/1000)} t CO₂e</strong></div></div><table><thead><tr><th>Periodo</th><th>Institución / sede</th><th>Dirección</th><th>Energía</th><th>CO₂e</th><th>Fuente</th></tr></thead><tbody>${rows}</tbody></table>`);
 }
+
 function downloadHistoryPdfReport(){
   const mode=$('compareMode')?.value||'month'; const metric=selectedHistoryMetric();
   const groups=comparisonGroups(mode).filter(g=>historyGroupHasMetric(g,metric.field));
@@ -1882,7 +1738,7 @@ function downloadHistoryPdfReport(){
   if($('compareA')) $('compareA').value=first.key; if($('compareB')) $('compareB').value=last.key; comparePeriods();
   const rows=[first,last].map(r=>`<tr><td>${escapeHtml(r.period)}</td><td>${isGlobalCompareScope()&&r.official?'Total Medellín · Resumen oficial PDF':'Alcance seleccionado'}</td><td>${fmt(r[metric.field])} ${metric.unit}</td></tr>`).join('');
   const narrative=$('compareNarrative')?.textContent||`Comparación entre ${first.period} y ${last.period}.`;
-  const sourceText=isGlobalCompareScope()&&metric.field!=='wasteTon'?'Fuente: resumen consolidado oficial de la primera página de cada factura PDF.':'Fuente: registros detallados de las sedes incluidas en el filtro.';
+  const sourceText=isGlobalCompareScope()&&true?'Fuente: resumen consolidado oficial de la primera página de cada factura PDF.':'Fuente: registros detallados de las sedes incluidas en el filtro.';
   const diff=Number(last[metric.field])-Number(first[metric.field]);
   openPdfPrintDocument(`Informe histórico · ${metric.label}`,`${first.period} vs ${last.period}`,`<div class="filters-line">${escapeHtml(sourceText)}</div><div class="report-card"><h2>Comparación seleccionada</h2><p>${escapeHtml(narrative)}</p></div><div class="report-grid"><div class="metric"><span>Periodo inicial</span><strong>${escapeHtml(first.period)}</strong></div><div class="metric"><span>Periodo final</span><strong>${escapeHtml(last.period)}</strong></div><div class="metric"><span>Variación de ${escapeHtml(metric.short.toLowerCase())}</span><strong>${diff>=0?'+':''}${fmt(diff)} ${metric.unit}</strong></div></div><table><thead><tr><th>Periodo</th><th>Alcance</th><th>${escapeHtml(metric.label)}</th></tr></thead><tbody>${rows}</tbody></table>`);
 }
@@ -1898,11 +1754,11 @@ function downloadDashboardPdfReport(){
 
 function exportCsv(){
   const recs=filteredRecords();
-  const headers=['periodo','sede','direccion','agua_m3','alcantarillado_m3','energia_kwh','gas_m3','aseo_valor','residuos_t','co2_kg','fuente'];
-  const rows=recs.map(r=>[r.period,r.site,r.address,r.waterM3,r.alcM3,r.energyKwh,r.gasM3,r.wasteValue,r.wasteTon,r.co2kg,r.source]);
-  downloadBlob([headers,...rows].map(row=>row.map(csvCell).join(',')).join('\n'),'simeco2_servicios.csv','text/csv;charset=utf-8');
+  const headers=['periodo','sede','direccion','energia_kwh','co2_kg','fuente'];
+  const rows=recs.map(r=>[r.period,r.site,r.address,r.energyKwh,r.co2kg,r.source]);
+  downloadBlob([headers,...rows].map(row=>row.map(csvCell).join(',')).join('\\n'),'simeco2_electricidad.csv','text/csv;charset=utf-8');
 }
-function exportJson(){ downloadBlob(JSON.stringify(state,null,2),'simeco2_servicios.json','application/json'); }
+function exportJson(){ downloadBlob(JSON.stringify(state,null,2),'simeco2_electricidad.json','application/json'); }
 function downloadBlob(content,name,type){ const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([content],{type})); a.download=name; a.click(); URL.revokeObjectURL(a.href); }
 function csvCell(v){ const s=(v??'').toString(); return '"'+s.replace(/"/g,'""')+'"'; }
 
@@ -1913,19 +1769,17 @@ function getGlobalStats(){
   const sites=aggregateBySite(recs.filter(r=>Number(r.energyKwh)>0));
   const detailSum=(field)=>recs.reduce((a,r)=>a+(Number(r[field])||0),0);
   const energy=periodSeries.reduce((a,r)=>a+(Number(r.energyKwh)||0),0);
-  const water=periodSeries.reduce((a,r)=>a+(Number(r.waterM3)||0),0);
   const co2kg=energy*FACTOR_CO2_KG_KWH;
-  const waste=detailSum('wasteTon');
   const trees=Math.ceil(co2kg/TREE_CO2_KG_YEAR);
   const topSite=sites[0]||null;
-  return {recs,periods,periodSeries,sites,energy,co2kg,water,waste,trees,topSite};
+  return {recs,periods,periodSeries,sites,energy,co2kg,trees,topSite};
 }
 
 function renderExecutiveSummary(){
   if(!$('executiveText')) return;
   const s = getGlobalStats();
   if(!s.recs.length){
-    $('executiveText').textContent = 'SiMeCO₂ convierte información de servicios públicos en indicadores comprensibles para la gestión ambiental escolar. Actualiza el sistema para generar diagnóstico, priorización e informes institucionales.';
+    $('executiveText').textContent = 'SiMeCO₂ convierte el consumo de energía eléctrica en indicadores comprensibles para la gestión ambiental escolar. Actualiza el sistema para generar diagnóstico, priorización e informes institucionales.';
     return;
   }
   const periodText = s.periods.length ? `${groupLabel(s.periods[0], 'month')} a ${groupLabel(s.periods[s.periods.length-1], 'month')}` : 'periodo no definido';
@@ -1969,21 +1823,16 @@ function buildSmartAlerts(s){
 }
 
 function buildComparisonNarrative(A, B, mode, siteText, metricField='energyKwh'){
-  const metric=serviceMetric(metricField);
-  const av=Number(A?.[metric.field])||0, bv=Number(B?.[metric.field])||0;
+  const av=Number(A?.energyKwh)||0, bv=Number(B?.energyKwh)||0;
   const diff=bv-av, pct=av?diff/av*100:null;
   const scope=escapeHtml(siteText||'Todas las sedes');
   const direction=diff>0?'aumentó':diff<0?'disminuyó':'se mantuvo estable';
   const amount=fmt(Math.abs(diff));
   const pctText=pct===null?'':` (${fmt(Math.abs(pct))}%)`;
-  if(metric.field==='energyKwh'){
-    const co2Diff=Math.abs(diff)*FACTOR_CO2_KG_KWH/1000;
-    if(diff>0) return `<strong>Interpretación automática:</strong> En ${scope}, la energía ${direction} <strong>${amount} kWh</strong>${pctText}. El cambio equivale aproximadamente a <strong>${fmt(co2Diff)} t CO₂e adicionales</strong>. Se recomienda revisar jornadas, iluminación, climatización y equipos de mayor demanda.`;
-    if(diff<0) return `<strong>Interpretación automática:</strong> En ${scope}, la energía ${direction} <strong>${amount} kWh</strong>${pctText}. La reducción evita aproximadamente <strong>${fmt(co2Diff)} t CO₂e</strong>. Conviene documentar las prácticas que explican la disminución.`;
-    return `<strong>Interpretación automática:</strong> En ${scope}, la energía se mantuvo estable. Se recomienda sostener el monitoreo mensual y definir una meta gradual de eficiencia.`;
-  }
-  const advice={waterM3:'revisar fugas, sanitarios, puntos de lavado, riego y hábitos de uso eficiente del agua',alcM3:'contrastar el comportamiento con el consumo de agua y revisar cambios operativos o posibles inconsistencias de lectura',gasM3:'revisar cocinas, laboratorios, calentadores, horarios de operación y posibles fugas',wasteTon:'revisar separación en la fuente, aprovechamiento, frecuencia de recolección y generación de residuos'}[metric.field]||'revisar las causas del cambio y documentar acciones de mejora';
-  return `<strong>Interpretación automática:</strong> En ${scope}, ${escapeHtml(metric.label.toLowerCase())} ${direction}${diff===0?'':` en <strong>${amount} ${metric.unit}</strong>${pctText}`}. Se recomienda ${advice}.`;
+  const co2Diff=Math.abs(diff)*FACTOR_CO2_KG_KWH/1000;
+  if(diff>0) return `<strong>Interpretación automática:</strong> En ${scope}, la energía ${direction} <strong>${amount} kWh</strong>${pctText}. El cambio equivale aproximadamente a <strong>${fmt(co2Diff)} t CO₂e adicionales</strong>. Se recomienda revisar jornadas, iluminación, climatización y equipos de mayor demanda.`;
+  if(diff<0) return `<strong>Interpretación automática:</strong> En ${scope}, la energía ${direction} <strong>${amount} kWh</strong>${pctText}. La reducción evita aproximadamente <strong>${fmt(co2Diff)} t CO₂e</strong>. Conviene documentar las prácticas que explican la disminución.`;
+  return `<strong>Interpretación automática:</strong> En ${scope}, la energía se mantuvo estable. Se recomienda sostener el monitoreo mensual y definir una meta gradual de eficiencia.`;
 }
 
 function escapeHtml(s){ return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
@@ -2028,9 +1877,9 @@ function qualityStatusForSite(row){
     const issues=[];
     if(row.energyPeriodCount<row.periodCount) issues.push(`energía en ${row.energyPeriodCount}/${row.periodCount} periodos`);
     if(!territorialOk) issues.push('clasificación territorial pendiente');
-    return {code:'partial',label:'Datos parciales',detail:issues.join(' · ')};
+    return {code:'partial',label:'Cobertura eléctrica parcial',detail:issues.join(' · ')};
   }
-  return {code:'complete',label:'Datos completos',detail:`Energía identificada en ${row.energyPeriodCount}/${row.periodCount} periodos y sede territorialmente vinculada.`};
+  return {code:'complete',label:'Energía identificada',detail:`Energía identificada en ${row.energyPeriodCount}/${row.periodCount} periodos y sede territorialmente vinculada.`};
 }
 function qualityCoverageText(row,periodField,hasFlag){ return row[hasFlag]?`${row[periodField]}/${row.periodCount}`:'Sin dato'; }
 function renderDataQuality(){
@@ -2049,7 +1898,7 @@ function renderDataQuality(){
   if($('qualityTerritoryCoverage')) $('qualityTerritoryCoverage').textContent=`${fmt(pct(territorial,total))}%`;
   if($('qualityTerritoryCoverageDetail')) $('qualityTerritoryCoverageDetail').textContent=`${territorial} de ${total} sedes clasificadas`;
   const statusCounts={complete:0,partial:0,pending:0,external:0,review:0}; rows.forEach(r=>statusCounts[qualityStatusForSite(r).code]++);
-  if($('qualitySummary')) $('qualitySummary').innerHTML=`<strong>${total} sedes evaluadas.</strong> ${statusCounts.complete} completas · ${statusCounts.partial} parciales · ${statusCounts.external} con energía en contrato separado · ${statusCounts.pending} con energía no identificada · ${statusCounts.review} en revisión. <span>Los estados describen cobertura y procedencia del dato, no desempeño ambiental.</span>`;
+  if($('qualitySummary')) $('qualitySummary').innerHTML=`<strong>${total} sedes evaluadas.</strong> ${statusCounts.complete} con energía identificada · ${statusCounts.partial} con cobertura eléctrica parcial · ${statusCounts.external} con energía en contrato separado · ${statusCounts.pending} con energía no identificada · ${statusCounts.review} en revisión. <span>Los estados describen exclusivamente la cobertura y trazabilidad del dato eléctrico.</span>`;
   renderServiceExceptions();
   const prioritized=[...rows].sort((a,b)=>{
     const order={pending:0,external:1,review:2,partial:3,complete:4}; const qa=qualityStatusForSite(a),qb=qualityStatusForSite(b);
@@ -2058,8 +1907,9 @@ function renderDataQuality(){
   body.innerHTML=prioritized.map(r=>{
     const q=qualityStatusForSite(r), meta=territoryMeta({site:r.site,address:r.address}), energyState=energyDataState(r);
     const energyCoverage=r.hasEnergy?qualityCoverageText(r,'energyPeriodCount','hasEnergy'):(energyState.code==='external'?'<span class="quality-badge external">Contrato separado</span>':'Sin dato');
-    return `<tr><td><strong>${escapeHtml(r.displaySite||r.site)}</strong>${r.displaySite!==r.site?`<small class="invoice-alias">En factura: ${escapeHtml(r.site)}</small>`:''}</td><td>${mapAddressLink(r.address,r.address||'Sin dirección',preferredSiteName(r)||r.site)}</td><td><span class="quality-badge ${q.code}" title="${escapeHtml(q.detail)}">${escapeHtml(q.label)}</span><small class="quality-detail">${escapeHtml(q.detail)}</small></td><td>${energyCoverage}</td><td>${qualityCoverageText(r,'waterPeriodCount','hasWater')}</td><td>${qualityCoverageText(r,'alcPeriodCount','hasAlc')}</td><td>${qualityCoverageText(r,'gasPeriodCount','hasGas')}</td><td>${qualityCoverageText(r,'wastePeriodCount','hasWaste')}</td><td>${meta.territory!=='Sin clasificar'?`${escapeHtml(meta.territory)}${meta.nucleus&&meta.nucleus!=='Sin clasificar'?` · N. ${escapeHtml(meta.nucleus)}`:''}`:'<span class="not-available">Pendiente</span>'}</td><td><button type="button" class="secondary quality-open-site" data-quality-site-key="${escapeHtml(r.key)}">Ver ficha</button></td></tr>`;
-  }).join('') || '<tr><td colspan="10">No hay registros para evaluar.</td></tr>';
+    const co2=r.hasEnergy?`${fmt(r.co2kg/1000)} t CO₂e`:'No calculable';
+    return `<tr><td><strong>${escapeHtml(r.displaySite||r.site)}</strong>${r.displaySite!==r.site?`<small class="invoice-alias">En factura: ${escapeHtml(r.site)}</small>`:''}</td><td>${mapAddressLink(r.address,r.address||'Sin dirección',preferredSiteName(r)||r.site)}</td><td><span class="quality-badge ${q.code}" title="${escapeHtml(q.detail)}">${escapeHtml(q.label)}</span><small class="quality-detail">${escapeHtml(q.detail)}</small></td><td>${energyCoverage}</td><td>${co2}</td><td>${meta.territory!=='Sin clasificar'?`${escapeHtml(meta.territory)}${meta.nucleus&&meta.nucleus!=='Sin clasificar'?` · N. ${escapeHtml(meta.nucleus)}`:''}`:'<span class="not-available">Pendiente</span>'}</td><td><button type="button" class="secondary quality-open-site" data-quality-site-key="${escapeHtml(r.key)}">Ver ficha</button></td></tr>`;
+  }).join('') || '<tr><td colspan="7">No hay registros eléctricos para evaluar.</td></tr>';
 }
 function handleQualityActionClick(e){
   const btn=e.target.closest('[data-quality-site-key]'); if(!btn) return;
@@ -2127,37 +1977,32 @@ function aggregateBySite(records){
   }).sort((a,b)=>Number(b.hasEnergy)-Number(a.hasEnergy) || b.energyKwh-a.energyKwh || String(a.displaySite||a.site).localeCompare(String(b.displaySite||b.site),'es'));
 }
 function dashboardValue(row,field,unit=''){
-  const hasFlag={energyKwh:'hasEnergy',waterM3:'hasWater',alcM3:'hasAlc',gasM3:'hasGas',wasteTon:'hasWaste'}[field];
-  if(hasFlag && !row[hasFlag]) return '<span class="not-available">Sin dato</span>';
-  return `${fmt(row[field])}${unit?` ${unit}`:''}`;
+  if(field!=='energyKwh') return '';
+  if(!row.hasEnergy) return '<span class="not-available">Sin dato</span>';
+  return `${fmt(row.energyKwh)}${unit?` ${unit}`:''}`;
 }
+
 function updateDashboardNotice(rows){
   const notice=$('dashboardDataNotice');
   if(!notice) return;
-  if(!rows.length){ notice.hidden=true; notice.innerHTML=''; return; }
+  if(!rows.length){notice.hidden=true;notice.innerHTML='';return;}
   if(dashboardSiteKey && rows.length===1){
-    const r=rows[0], available=[], energyState=energyDataState(r);
-    if(r.hasWater) available.push(`agua en ${r.waterPeriodCount} periodo(s)`);
-    if(r.hasAlc) available.push(`alcantarillado en ${r.alcPeriodCount} periodo(s)`);
-    if(r.hasGas) available.push(`gas en ${r.gasPeriodCount} periodo(s)`);
-    if(r.hasWaste) available.push(`aseo/residuos en ${r.wastePeriodCount} periodo(s)`);
+    const r=rows[0],energyState=energyDataState(r);
+    notice.hidden=false;
     if(!r.hasEnergy){
-      notice.hidden=false;
       notice.className=`dashboard-data-notice ${energyState.code==='external'?'external':'warning'}`;
-      if(energyState.code==='external'){
-        notice.innerHTML=`<strong>La sede sí fue encontrada.</strong> Hay ${fmt(r.periodCount,0)} periodo(s) en el consolidado${available.length?` con ${escapeHtml(available.join(', '))}`:''}. <strong>La energía se gestiona mediante un contrato separado de usuario no regulado</strong>, por lo que los kWh no deben inferirse desde estas facturas. CO₂e, árboles y ranking energético quedan pendientes hasta integrar esa fuente. ${exceptionEvidenceHtml(energyState.exception)}`;
-      }else{
-        notice.innerHTML=`<strong>La sede sí fue encontrada.</strong> Hay ${fmt(r.periodCount,0)} periodo(s) en las facturas${available.length?` con ${escapeHtml(available.join(', '))}`:''}. <strong>La energía no está identificada en las facturas consolidadas para este nombre/dirección</strong>; por eso CO₂e, árboles y promedio eléctrico se muestran como “No calculable” y nunca como cero.`;
-      }
+      notice.innerHTML=energyState.code==='external'
+        ?`<strong>La sede fue encontrada.</strong> Registra ${fmt(r.periodCount,0)} periodo(s), pero la energía se gestiona mediante un contrato eléctrico separado. Los kWh, CO₂e, árboles y prioridad quedan pendientes hasta integrar esa fuente. ${exceptionEvidenceHtml(energyState.exception)}`
+        :`<strong>La sede fue encontrada.</strong> Registra ${fmt(r.periodCount,0)} periodo(s), pero la energía eléctrica no está identificada para este nombre/dirección. CO₂e, árboles y promedio se muestran como “No calculable” y nunca como cero.`;
       return;
     }
-    notice.hidden=false;
     notice.className='dashboard-data-notice ok';
     notice.innerHTML=`<strong>Consulta encontrada:</strong> ${escapeHtml(r.displaySite||r.site)} tiene ${fmt(r.periodCount,0)} periodo(s) registrados y ${fmt(r.energyPeriodCount,0)} con lectura de energía eléctrica.`;
     return;
   }
-  notice.hidden=true; notice.innerHTML='';
+  notice.hidden=true;notice.innerHTML='';
 }
+
 function renderSiteProfile(rows){
   const box=$('siteProfile'); if(!box) return;
   if(!dashboardSiteKey || rows.length!==1){box.hidden=true;box.innerHTML='';return;}
@@ -2189,14 +2034,10 @@ function renderDashboard(){
   $('dashTotalKwh').textContent = selectedNoEnergy ? (selectedEnergyState?.code==='external'?'Contrato separado':'N.I.') : fmt(totalKwh) + ' kWh';
   $('dashTotalCo2').textContent = selectedNoEnergy ? (selectedEnergyState?.code==='external'?'Pendiente de integrar':'No calculable') : fmt(totalCo2kg/1000) + ' t CO₂e';
   $('dashTotalTrees').textContent = selectedNoEnergy ? (selectedEnergyState?.code==='external'?'Pendiente de integrar':'No calculable') : fmt(totalTrees||0) + ' árboles';
-  if($('dashTotalWater')) $('dashTotalWater').textContent = rows.some(r=>r.hasWater) ? fmt(totalWater)+' m³' : 'Sin dato';
-  if($('dashTotalAlc')) $('dashTotalAlc').textContent = rows.some(r=>r.hasAlc) ? fmt(totalAlc)+' m³' : 'Sin dato';
-  if($('dashTotalGas')) $('dashTotalGas').textContent = rows.some(r=>r.hasGas) ? fmt(totalGas)+' m³' : 'Sin dato';
-  if($('dashTotalWaste')) $('dashTotalWaste').textContent = rows.some(r=>r.hasWaste) ? fmt(totalWaste)+' t' : 'Sin dato';
   updateDashboardNotice(rows);
   renderSiteProfile(rows);
   if(!rows.length){
-    $('environmentBody').innerHTML = '<tr><td colspan="14">No hay registros de servicios públicos para mostrar. Revisa la búsqueda o los filtros.</td></tr>';
+    $('environmentBody').innerHTML = '<tr><td colspan="14">No hay registros de energía eléctrica para mostrar. Revisa la búsqueda o los filtros.</td></tr>';
     return;
   }
   const body = rows.map((r,i)=>{
@@ -2215,16 +2056,12 @@ function renderDashboard(){
     <td data-label="Prioridad"><span class="priority-chip ${priority.cls}" title="${escapeHtml(priority.level)} · ${r.hasEnergy?`${fmt(r.avgKwhMonth)} kWh/mes promedio`:(energyState.code==='external'?'Contrato separado':'Energía no identificada')}">${escapeHtml(priority.short || priority.level)}</span></td>
     <td data-label="Plan de acción" class="plan-cell"><button type="button" class="plan-btn primary" data-site-key="${escapeHtml(r.key)}" title="Generar, visualizar y descargar el Plan de Gestión de ${escapeHtml(r.displaySite||r.site)}">📄 Generar informe<br><small>${r.hasEnergy?'Plan de acción':'Informe con datos disponibles'}</small></button></td>
     <td data-label="Energía total kWh">${energyText}</td>
-    <td data-label="Agua m³">${dashboardValue(r,'waterM3')}</td>
-    <td data-label="Alcantarillado m³">${dashboardValue(r,'alcM3')}</td>
-    <td data-label="Gas m³">${dashboardValue(r,'gasM3')}</td>
-    <td data-label="Aseo / residuos t">${dashboardValue(r,'wasteTon')}</td>
     <td data-label="CO₂e t">${co2Text}</td>
     <td data-label="Árboles requeridos">${treesText}</td>
     <td data-label="Promedio kWh/mes">${avgText}</td>
   </tr>`;
   }).join('');
-  const totalRow = `<tr class="total-row"><td colspan="4">TOTAL / DATOS DISPONIBLES</td><td>—</td><td>—</td><td>${energyRows.length?fmt(totalKwh):'—'}</td><td>${rows.some(r=>r.hasWater)?fmt(totalWater):'—'}</td><td>${rows.some(r=>r.hasAlc)?fmt(totalAlc):'—'}</td><td>${rows.some(r=>r.hasGas)?fmt(totalGas):'—'}</td><td>${rows.some(r=>r.hasWaste)?fmt(totalWaste):'—'}</td><td>${energyRows.length?fmt(totalCo2kg/1000):'—'}</td><td>${energyRows.length?fmt(totalTrees||0):'—'}</td><td>—</td></tr>`;
+  const totalRow = `<tr class="total-row"><td colspan="4">TOTAL / DATOS DISPONIBLES</td><td>—</td><td>—</td><td>${energyRows.length?fmt(totalKwh):'—'}</td><td>${energyRows.length?fmt(totalCo2kg/1000):'—'}</td><td>${energyRows.length?fmt(totalTrees||0):'—'}</td><td>—</td></tr>`;
   $('environmentBody').innerHTML = totalRow + body;
 }
 
@@ -2315,7 +2152,7 @@ function drawSiteChart(rows){
   const ctx=c.getContext('2d'),metric=selectedRankingMetric(),isEnergy=metric.field==='energyKwh';
 
   // El ranking de energía incorpora una columna independiente de huella de carbono.
-  const minCanvasWidth=isEnergy?1320:1100;
+  const minCanvasWidth=isEnergy?1120:1100;
   const containerWidth=Math.max(320,Math.floor(c.parentElement?.clientWidth||c.clientWidth||minCanvasWidth));
   c.width=Math.max(minCanvasWidth,containerWidth);
   c.height=520;
@@ -2343,14 +2180,14 @@ function drawSiteChart(rows){
 
   if(!visible.length){ctx.fillStyle='#13312d';ctx.fillText('Sin datos históricos para graficar',24,92);return;}
 
-  const nameRight=205,addressX=218,addressWidth=205,padL=440,padR=24;
+  const nameRight=178,addressX=190,addressWidth=178,padL=382,padR=18;
   const tableRight=c.width-padR;
-  const periodColW=isEnergy?112:0,co2ColW=isEnergy?142:0,valueColW=isEnergy?140:265;
+  const periodColW=isEnergy?88:0,co2ColW=isEnergy?132:0,valueColW=isEnergy?128:265;
   const periodX=tableRight-periodColW;
   const co2X=periodX-co2ColW;
   const valueX=co2X-valueColW;
   const barRight=valueX-18;
-  const maxBarW=Math.max(150,barRight-padL);
+  const maxBarW=Math.max(130,Math.min(320,barRight-padL));
   const top=isEnergy?112:82,rowH=36,barH=20;
   const max=Math.max(...measured.map(r=>Number(r.rankingValue)||0),1);
 
@@ -2628,8 +2465,8 @@ function recordsForSiteKey(key){
 function generateManagementPlan(key){
   const recs = recordsForSiteKey(key);
   if(!recs.length){
-    log('No se encontraron registros para generar el plan de gestión.');
-    alert('No se encontraron registros para generar el plan de gestión de esta sede.');
+    log('No se encontraron registros para generar el plan de gestión energética.');
+    alert('No se encontraron registros para generar el plan de gestión energética de esta sede.');
     return false;
   }
   const site = preferredSiteName(recs[0]);
@@ -2640,10 +2477,6 @@ function generateManagementPlan(key){
   const hasEnergy=energyRecs.length>0;
   const energyPeriods=[...new Set(energyRecs.map(r=>r.period).filter(Boolean))];
   const energy = energyRecs.reduce((a,r)=>a+(Number(r.energyKwh)||0),0);
-  const water = recs.reduce((a,r)=>a+(Number(r.waterM3)||0),0);
-  const alc = recs.reduce((a,r)=>a+(Number(r.alcM3)||0),0);
-  const gas = recs.reduce((a,r)=>a+(Number(r.gasM3)||0),0);
-  const waste = recs.reduce((a,r)=>a+(Number(r.wasteTon)||0),0);
   const co2kg = hasEnergy ? energy * FACTOR_CO2_KG_KWH : null;
   const co2t = hasEnergy ? co2kg / 1000 : null;
   const trees = hasEnergy ? Math.ceil(co2kg / TREE_CO2_KG_YEAR) : null;
@@ -2656,18 +2489,19 @@ function generateManagementPlan(key){
   const co2Target40 = hasEnergy ? target40 * FACTOR_CO2_KG_KWH / 1000 : null;
   const co2Solar80 = hasEnergy ? solar80 * FACTOR_CO2_KG_KWH / 1000 : null;
   const energyException=serviceExceptionForSite(recs[0],'energyKwh');
-  const intensity = hasEnergy ? classifyEnergyIntensity(avgMonth) : (energyException?{level:'Energía en contrato separado',short:'Contrato separado',cls:'external',text:energyException.summary||energyException.dataState}:{level:'Energía no identificada',short:'N.I.',cls:'pending',text:'Las facturas cargadas contienen información de la sede, pero no una lectura de energía eléctrica individualizada para este nombre/dirección. Esto no significa consumo cero: debe investigarse si la cuenta está facturada bajo otro nombre, producto, contrato o dirección.'});
-  const latest = recs[recs.length-1];
+  const intensity = hasEnergy ? classifyEnergyIntensity(avgMonth) : (energyException
+    ?{level:'Energía en contrato separado',short:'Contrato separado',cls:'external',text:energyException.summary||energyException.dataState}
+    :{level:'Energía no identificada',short:'N.I.',cls:'pending',text:'Las facturas cargadas contienen información de la sede, pero no una lectura eléctrica individualizada para este nombre/dirección. Esto no significa consumo cero: debe investigarse la cuenta, producto, contrato o dirección asociados.'});
   const generatedAt = new Date().toLocaleDateString('es-CO', {year:'numeric', month:'long', day:'numeric'});
 
-  CURRENT_PLAN_FILENAME = `plan-gestion-${slugify(site)}.html`;
-  CURRENT_PLAN_HTML = buildPlanHtml({site,invoiceSite,address,periods,energyPeriods,hasEnergy,energyException,energy,water,alc,gas,waste,co2t,trees,avgMonth,annualProjection,target15,target40,solar80,co2Target15,co2Target40,co2Solar80,intensity,latest,generatedAt,recs});
+  CURRENT_PLAN_FILENAME = `plan-gestion-energetica-${slugify(site)}.html`;
+  CURRENT_PLAN_HTML = buildPlanHtml({site,invoiceSite,address,periods,energyPeriods,hasEnergy,energyException,energy,co2t,trees,avgMonth,annualProjection,target15,target40,solar80,co2Target15,co2Target40,co2Solar80,intensity,generatedAt,recs});
   if($('planReport')){$('planReport').className='plan-report';$('planReport').innerHTML=CURRENT_PLAN_HTML;}
   if($('printPlanBtn')) $('printPlanBtn').disabled=false;
   if($('downloadPlanBtn')) $('downloadPlanBtn').disabled=false;
   if(window.simecoOpenSection) window.simecoOpenSection('seccion-3', {scroll:false});
   requestAnimationFrame(()=>$('planPanel')?.scrollIntoView({behavior:'smooth',block:'start'}));
-  log(`Plan de Gestión generado para ${site}.`);
+  log(`Plan de Gestión Energética generado para ${site}.`);
   return Boolean(CURRENT_PLAN_HTML);
 }
 
@@ -2704,39 +2538,38 @@ function buildPlanMetricSeries(recs){
   for(const r of recs||[]){
     const period=String(r.period||'').trim();
     if(!period) continue;
-    if(!byPeriod.has(period)){
-      byPeriod.set(period,{
-        period,energy:0,water:0,alc:0,gas:0,waste:0,
-        energyCount:0,waterCount:0,alcCount:0,gasCount:0,wasteCount:0,
-        sources:new Set()
-      });
-    }
+    if(!byPeriod.has(period)) byPeriod.set(period,{period,energy:0,energyCount:0,sources:new Map()});
     const x=byPeriod.get(period);
     if(recordHasEnergyReading(r)){x.energy+=Number(r.energyKwh)||0;x.energyCount++;}
-    if(recordHasReading(r,'waterM3')){x.water+=Number(r.waterM3)||0;x.waterCount++;}
-    if(recordHasReading(r,'alcM3')){x.alc+=Number(r.alcM3)||0;x.alcCount++;}
-    if(recordHasReading(r,'gasM3')){x.gas+=Number(r.gasM3)||0;x.gasCount++;}
-    if(recordHasReading(r,'wasteTon')){x.waste+=Number(r.wasteTon)||0;x.wasteCount++;}
-    if(r.source)x.sources.add(r.source);
+    const sourceName=String(r.source||'Factura PDF').trim();
+    const sourceUrl=String(r.sourceUrl||'').trim() || (sourceName && sourceName!=='Factura PDF'?`data/${sourceName}`:'');
+    const sourceKey=`${sourceUrl}|${r.page||1}|${sourceName}`;
+    if(sourceName || sourceUrl) x.sources.set(sourceKey,{name:sourceName||'Factura PDF',url:sourceUrl,page:Math.max(1,Number(r.page)||1)});
   }
-  return [...byPeriod.values()]
-    .map(x=>{
-      const hasEnergy=x.energyCount>0;
-      return {
-        period:x.period,
-        hasEnergy,
-        energy:hasEnergy?x.energy:null,
-        water:x.waterCount?x.water:null,
-        alc:x.alcCount?x.alc:null,
-        gas:x.gasCount?x.gas:null,
-        waste:x.wasteCount?x.waste:null,
-        co2:hasEnergy?(x.energy*FACTOR_CO2_KG_KWH)/1000:null,
-        trees:hasEnergy?Math.ceil((x.energy*FACTOR_CO2_KG_KWH)/TREE_CO2_KG_YEAR):null,
-        source:[...x.sources].join(' · ')||'PDF'
-      };
-    })
-    .sort((a,b)=>a.period.localeCompare(b.period));
+  return [...byPeriod.values()].map(x=>{
+    const hasEnergy=x.energyCount>0;
+    return {
+      period:x.period,
+      hasEnergy,
+      energy:hasEnergy?x.energy:null,
+      co2:hasEnergy?(x.energy*FACTOR_CO2_KG_KWH)/1000:null,
+      trees:hasEnergy?Math.ceil((x.energy*FACTOR_CO2_KG_KWH)/TREE_CO2_KG_YEAR):null,
+      sources:[...x.sources.values()]
+    };
+  }).sort((a,b)=>a.period.localeCompare(b.period));
 }
+function renderPlanPdfSources(row){
+  const sources=Array.isArray(row?.sources)?row.sources:[];
+  if(!sources.length) return '<span class="not-available">Sin PDF asociado</span>';
+  return sources.map((src,index)=>{
+    const url=String(src.url||'').trim();
+    if(!url) return `<span class="not-available">${escapeHtml(src.name||'PDF no disponible')}</span>`;
+    const label=sources.length>1?`Descargar PDF ${index+1}`:'Descargar PDF';
+    const fileName=`factura-${slugify(row.period||'periodo')}-${index+1}.pdf`;
+    return `<a class="plan-source-download" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer" download="${escapeHtml(fileName)}" title="Descargar factura PDF del periodo ${escapeHtml(row.period||'')}">⬇ ${label}</a>`;
+  }).join('<br>');
+}
+
 function shortPlanPeriodLabel(period){
   const m=String(period||'').match(/^(20\d{2})-(0[1-9]|1[0-2])$/);
   if(!m) return String(period||'');
@@ -2847,29 +2680,25 @@ function buildPlanReductionCharts(d){
 
 function buildPlanMonthlyCharts(d){
   const rows = buildPlanMetricSeries(d.recs);
-  const cards = [];
-  if(d.hasEnergy){
-    cards.push(buildPlanBarChartSvg(rows.filter(r=>r.hasEnergy), {
+  if(!d.hasEnergy) return '<div class="plan-chart-empty">No hay lecturas eléctricas suficientes para generar gráficas de esta sede.</div>';
+  const energyRows=rows.filter(r=>r.hasEnergy);
+  const cards=[
+    buildPlanBarChartSvg(energyRows, {
       title:'Consumo de energía eléctrica por periodo',
       subtitle:`Histórico de consumo facturado en kWh para la sede ${d.site}.`,
       gradId:'planEnergyPeriods', colorA:'#19caa4', colorB:'#0a9978', getValue:(r)=>r.energy, formatValue:(v)=>fmt(v), formatLabel:(r)=>escapeHtml(shortPlanPeriodLabel(r.period))
-    }));
-  }
-  if(rows.some(r=>r.water>0)) cards.push(buildPlanBarChartSvg(rows, {
-    title:'Consumo de agua por periodo (m³)', subtitle:'Permite identificar periodos de mayor demanda hídrica y posibles oportunidades de ahorro.', gradId:'planWaterPeriods', colorA:'#8ed0ff', colorB:'#2f84d6', getValue:(r)=>r.water, formatValue:(v)=>fmt(v), formatLabel:(r)=>escapeHtml(shortPlanPeriodLabel(r.period))
-  }));
-  if(d.hasEnergy){
-    cards.push(buildPlanBarChartSvg(rows.filter(r=>r.hasEnergy), {
-      title:'Emisiones estimadas de CO₂e por periodo (t)', subtitle:`Calculadas a partir del factor ${fmt(FACTOR_CO2_KG_KWH)} kg CO₂e/kWh.`, gradId:'planCo2Periods', colorA:'#66c2ff', colorB:'#1c77d3', getValue:(r)=>r.co2, formatValue:(v)=>fmt(v), formatLabel:(r)=>escapeHtml(shortPlanPeriodLabel(r.period))
-    }));
-    cards.push(buildPlanBarChartSvg(rows.filter(r=>r.hasEnergy), {
-      title:'Árboles equivalentes requeridos por periodo', subtitle:'Estimación de árboles necesarios para compensar las emisiones asociadas al consumo del periodo.', gradId:'planTreesPeriods', colorA:'#acd95c', colorB:'#5ca61c', getValue:(r)=>r.trees, formatValue:(v)=>fmt(v), formatLabel:(r)=>escapeHtml(shortPlanPeriodLabel(r.period))
-    }));
-  }
-  if(rows.some(r => r.waste > 0)) cards.push(buildPlanBarChartSvg(rows, {
-    title:'Residuos / aseo por periodo (t)', subtitle:'Comportamiento mensual del componente de residuos identificado en la factura consolidada.', gradId:'planWastePeriods', colorA:'#ffcf70', colorB:'#d58d12', getValue:(r)=>r.waste, formatValue:(v)=>fmt(v), formatLabel:(r)=>escapeHtml(shortPlanPeriodLabel(r.period))
-  }));
-  if(!cards.length) return '<div class="plan-chart-empty">No hay indicadores cuantitativos suficientes para generar gráficas de esta sede.</div>';
+    }),
+    buildPlanBarChartSvg(energyRows, {
+      title:'Emisiones estimadas de CO₂e por periodo (t)',
+      subtitle:`Calculadas a partir del factor ${fmt(FACTOR_CO2_KG_KWH)} kg CO₂e/kWh.`,
+      gradId:'planCo2Periods', colorA:'#66c2ff', colorB:'#1c77d3', getValue:(r)=>r.co2, formatValue:(v)=>fmt(v), formatLabel:(r)=>escapeHtml(shortPlanPeriodLabel(r.period))
+    }),
+    buildPlanBarChartSvg(energyRows, {
+      title:'Árboles equivalentes requeridos por periodo',
+      subtitle:'Estimación pedagógica de árboles necesarios para compensar las emisiones asociadas al consumo eléctrico del periodo.',
+      gradId:'planTreesPeriods', colorA:'#acd95c', colorB:'#5ca61c', getValue:(r)=>r.trees, formatValue:(v)=>fmt(v), formatLabel:(r)=>escapeHtml(shortPlanPeriodLabel(r.period))
+    })
+  ];
   return `<div class="plan-visual-grid">${cards.join('')}</div>`;
 }
 
@@ -2886,11 +2715,9 @@ function buildPlanSummaryCards(d){
     cards.push(`<div><span>Promedio mensual de energía</span><strong>${fmt(avgEnergy)} kWh</strong><small>${energyRows.length} periodo(s) con dato</small></div>`);
     cards.push(`<div><span>Mayor impacto en CO₂e</span><strong>${escapeHtml(maxCo2.period)}</strong><small>${fmt(maxCo2.co2)} t CO₂e</small></div>`);
   }else{
-    cards.push(d.energyException?'<div><span>Consumo eléctrico</span><strong>Contrato separado</strong><small>Pendiente de integrar desde la fuente no regulada</small></div>':'<div><span>Consumo eléctrico</span><strong>Sin dato asociado</strong><small>No se interpreta como 0 kWh</small></div>');
-  }
-  if(rows.some(r=>r.water>0)){
-    const maxWater=rows.reduce((a,b)=>a.water>=b.water?a:b);
-    cards.push(`<div><span>Periodo de mayor consumo de agua</span><strong>${escapeHtml(maxWater.period)}</strong><small>${fmt(maxWater.water)} m³</small></div>`);
+    cards.push(d.energyException
+      ?'<div><span>Consumo eléctrico</span><strong>Contrato separado</strong><small>Pendiente de integrar desde la fuente contractual</small></div>'
+      :'<div><span>Consumo eléctrico</span><strong>Sin dato asociado</strong><small>No se interpreta como 0 kWh</small></div>');
   }
   return `<div class="plan-summary-grid">${cards.join('')}</div>`;
 }
@@ -2937,128 +2764,110 @@ function handlePlanInteractiveClick(ev){
 function buildPlanHtml(d){
   const periodText = d.periods.length ? `${d.periods[0]} a ${d.periods[d.periods.length-1]} (${d.periods.length} periodo(s) importado(s))` : 'Sin periodo';
   const consolidatedMonths=buildPlanMetricSeries(d.recs);
-  const monthlyRows = consolidatedMonths.map(r=>`<tr><td>${escapeHtml(r.period)}</td><td>${r.hasEnergy?`${fmt(r.energy)} kWh`:(d.energyException?'<span class="not-available">Contrato separado</span>':'<span class="not-available">Sin dato</span>')}</td><td>${r.water!=null?`${fmt(r.water)} m³`:'—'}</td><td>${r.alc!=null?`${fmt(r.alc)} m³`:'—'}</td><td>${r.gas!=null?`${fmt(r.gas)} m³`:'—'}</td><td>${r.hasEnergy?`${fmt(r.co2)} t CO₂e`:'No calculable'}</td><td>${r.hasEnergy?fmt(r.trees):'No calculable'}</td><td>${r.waste!=null?`${fmt(r.waste)} t`:'—'}</td><td>${escapeHtml(r.source||'PDF')}</td></tr>`).join('');
-  const summaryCards = buildPlanSummaryCards(d);
-  const monthlyCharts = buildPlanMonthlyCharts(d);
-  const reductionCharts = buildPlanReductionCharts(d);
-  const energyStatusNote=d.hasEnergy?'':(d.energyException?`<p class="plan-note plan-data-warning external-contract-note"><strong>Energía en contrato separado:</strong> ${escapeHtml(d.energyException.summary||d.energyException.dataState)} El consumo eléctrico queda pendiente de integrar desde esa fuente y no se interpreta como 0 kWh.</p>`:`<p class="plan-note plan-data-warning"><strong>Energía no identificada en la factura consolidada:</strong> la sede aparece en ${d.periods.length} periodo(s), pero ninguno incluye una lectura eléctrica individualizada para este nombre/dirección. Esto no implica consumo cero. El sistema conserva los datos de agua, alcantarillado, gas y aseo que sí existan y evita interpretar la ausencia como 0 kWh.</p>`);
-  const energyGoals=d.hasEnergy?`<table class="plan-table"><thead><tr><th>Horizonte</th><th>Meta</th><th>Reducción estimada</th><th>CO₂e evitado estimado</th></tr></thead><tbody><tr><td>Corto plazo · 1 año</td><td>Reducir 15% del consumo mediante hábitos, control operativo, sensores y LED.</td><td>${fmt(d.target15)} kWh/año</td><td>${fmt(d.co2Target15)} t CO₂e/año</td></tr><tr><td>Mediano plazo · 3 años</td><td>Reducir 40% mediante eficiencia energética integral y gestión sistemática.</td><td>${fmt(d.target40)} kWh/año</td><td>${fmt(d.co2Target40)} t CO₂e/año</td></tr><tr><td>Escenario solar</td><td>Reducir hasta 80% de compra a la red, sujeto a cubierta disponible, radiación y dimensionamiento.</td><td>${fmt(d.solar80)} kWh/año</td><td>${fmt(d.co2Solar80)} t CO₂e/año</td></tr></tbody></table>`:(d.energyException?`<table class="plan-table"><thead><tr><th>Prioridad</th><th>Acción requerida</th><th>Resultado esperado</th></tr></thead><tbody><tr><td>1 · Integración contractual</td><td>Obtener la facturación o medición mensual del contrato de energía para usuario no regulado correspondiente a la sede.</td><td>Incorporar una serie kWh verificable sin mezclarla con el consolidado educativo.</td></tr><tr><td>2 · Trazabilidad</td><td>Registrar contrato, producto/medidor, periodo y documento fuente para cada lectura.</td><td>Mantener evidencia auditable de la energía.</td></tr><tr><td>3 · Línea base</td><td>Calcular CO₂e y metas de reducción solo después de integrar lecturas eléctricas verificadas.</td><td>Evitar estimaciones basadas en ausencia de datos.</td></tr></tbody></table>`:`<table class="plan-table"><thead><tr><th>Prioridad</th><th>Acción requerida</th><th>Resultado esperado</th></tr></thead><tbody><tr><td>1 · Identificación</td><td>Localizar la cuenta, contrato o medidor de energía que corresponde a la sede y verificar si está facturado bajo otro nombre o dirección.</td><td>Vincular correctamente la fuente eléctrica.</td></tr><tr><td>2 · Asociación</td><td>Actualizar la equivalencia institucional en SiMeCO₂ sin modificar los valores originales de la factura.</td><td>Contar con una serie mensual trazable.</td></tr><tr><td>3 · Línea base</td><td>Acumular al menos tres periodos de energía antes de fijar porcentajes de reducción.</td><td>Evitar metas basadas en datos incompletos.</td></tr></tbody></table>`);
-  const commitmentText=d.hasEnergy?`La sede educativa <strong>${escapeHtml(d.site)}</strong> se compromete a promover una gestión responsable de la energía eléctrica, asignando capacidades humanas, pedagógicas y técnicas para reducir progresivamente su huella de carbono y fortalecer una cultura ambiental escolar.`:(d.energyException?`La sede educativa <strong>${escapeHtml(d.site)}</strong> se compromete a integrar con trazabilidad la información eléctrica proveniente de su contratación separada como usuario no regulado y a mantener acciones preventivas de eficiencia mientras se construye una línea base verificable.`:`La sede educativa <strong>${escapeHtml(d.site)}</strong> se compromete a fortalecer la calidad y trazabilidad de sus datos de servicios públicos, identificar la cuenta eléctrica correspondiente y mantener acciones preventivas de uso eficiente mientras se construye una línea base energética confiable.`);
-  const objectiveText=d.hasEnergy?`Reducir la huella de carbono en alcance 2 de la sede <strong>${escapeHtml(d.site)}</strong> mediante estrategias de eficiencia energética, monitoreo del consumo, educación ambiental y evaluación de soluciones solares fotovoltaicas.`:(d.energyException?`Integrar la serie mensual de consumo eléctrico de la fuente contractual separada de <strong>${escapeHtml(d.site)}</strong>, conservar el seguimiento de los demás servicios y establecer una línea base energética auditable antes de calcular emisiones de alcance 2 o metas porcentuales de reducción.`:`Completar la identificación y asociación del consumo eléctrico de la sede <strong>${escapeHtml(d.site)}</strong>, conservar el seguimiento de agua y residuos disponible y establecer una línea base energética verificable antes de calcular emisiones de alcance 2 o metas porcentuales de reducción.`);
-  const indicatorsRows=d.hasEnergy?`<tr><td>Consumo eléctrico mensual</td><td>kWh facturados por mes</td><td>Mensual</td><td>Disminución progresiva</td></tr><tr><td>Emisiones alcance 2</td><td>kWh × ${fmt(FACTOR_CO2_KG_KWH)} kg CO₂e/kWh</td><td>Mensual</td><td>Reducir 15% en un año</td></tr><tr><td>Árboles equivalentes</td><td>kg CO₂e ÷ ${fmt(TREE_CO2_KG_YEAR)} kg/árbol/año</td><td>Semestral</td><td>Disminuir necesidad de compensación</td></tr>`:`<tr><td>Cobertura del dato eléctrico</td><td>Periodos con kWh asociados ÷ periodos de factura × 100</td><td>Mensual</td><td>Alcanzar 100% antes de calcular la huella de alcance 2</td></tr><tr><td>Consumo de agua</td><td>m³ facturados por mes</td><td>Mensual</td><td>Mantener seguimiento y detectar variaciones atípicas</td></tr><tr><td>Trazabilidad documental</td><td>Facturas con fuente y página identificada ÷ facturas revisadas × 100</td><td>Mensual</td><td>100%</td></tr>`;
+  const monthlyRows=consolidatedMonths.map(r=>`<tr>
+    <td>${escapeHtml(r.period)}</td>
+    <td>${r.hasEnergy?`${fmt(r.energy)} kWh`:(d.energyException?'<span class="not-available">Contrato separado</span>':'<span class="not-available">N.I.</span>')}</td>
+    <td>${r.hasEnergy?`${fmt(r.co2)} t CO₂e`:'No calculable'}</td>
+    <td>${r.hasEnergy?fmt(r.trees):'No calculable'}</td>
+    <td>${renderPlanPdfSources(r)}</td>
+  </tr>`).join('');
+  const summaryCards=buildPlanSummaryCards(d);
+  const monthlyCharts=buildPlanMonthlyCharts(d);
+  const reductionCharts=buildPlanReductionCharts(d);
+  const energyStatusNote=d.hasEnergy?'':(d.energyException
+    ?`<p class="plan-note plan-data-warning external-contract-note"><strong>Energía en contrato separado:</strong> ${escapeHtml(d.energyException.summary||d.energyException.dataState)} El consumo eléctrico queda pendiente de integrar desde esa fuente y no se interpreta como 0 kWh.</p>`
+    :`<p class="plan-note plan-data-warning"><strong>Energía no identificada:</strong> la sede aparece en ${d.periods.length} periodo(s), pero no tiene una lectura eléctrica individualizada para este nombre/dirección. Esto no implica consumo cero. La prioridad es identificar y vincular correctamente la cuenta, contrato o medidor eléctrico.</p>`);
+  const energyGoals=d.hasEnergy
+    ?`<table class="plan-table"><thead><tr><th>Horizonte</th><th>Meta energética</th><th>Reducción estimada</th><th>CO₂e evitado estimado</th></tr></thead><tbody>
+      <tr><td>Corto plazo · 1 año</td><td>Reducir 15% mediante hábitos, control operativo, sensores y LED.</td><td>${fmt(d.target15)} kWh/año</td><td>${fmt(d.co2Target15)} t CO₂e/año</td></tr>
+      <tr><td>Mediano plazo · 3 años</td><td>Reducir 40% mediante eficiencia energética integral y gestión sistemática.</td><td>${fmt(d.target40)} kWh/año</td><td>${fmt(d.co2Target40)} t CO₂e/año</td></tr>
+      <tr><td>Escenario solar</td><td>Reducir hasta 80% de compra de electricidad a la red, sujeto a evaluación técnica.</td><td>${fmt(d.solar80)} kWh/año</td><td>${fmt(d.co2Solar80)} t CO₂e/año</td></tr>
+    </tbody></table>`
+    :`<table class="plan-table"><thead><tr><th>Prioridad</th><th>Acción requerida</th><th>Resultado esperado</th></tr></thead><tbody>
+      <tr><td>1 · Identificación</td><td>Localizar la cuenta, contrato o medidor eléctrico correspondiente a la sede.</td><td>Vincular correctamente la fuente de energía.</td></tr>
+      <tr><td>2 · Trazabilidad</td><td>Registrar periodo, medidor/contrato y documento fuente de cada lectura eléctrica.</td><td>Construir una serie mensual verificable.</td></tr>
+      <tr><td>3 · Línea base</td><td>Acumular lecturas eléctricas verificadas antes de fijar metas porcentuales.</td><td>Evitar cálculos basados en ausencia de datos.</td></tr>
+    </tbody></table>`;
+  const objectiveText=d.hasEnergy
+    ?`Reducir la huella de carbono de alcance 2 de la sede <strong>${escapeHtml(d.site)}</strong> mediante eficiencia energética, monitoreo del consumo eléctrico, educación ambiental y evaluación de generación solar fotovoltaica.`
+    :`Completar la identificación y asociación del consumo eléctrico de la sede <strong>${escapeHtml(d.site)}</strong> y establecer una línea base energética verificable antes de calcular emisiones o metas porcentuales de reducción.`;
+  const indicatorsRows=d.hasEnergy
+    ?`<tr><td>Consumo eléctrico mensual</td><td>kWh facturados por mes</td><td>Mensual</td><td>Disminución progresiva</td></tr>
+      <tr><td>Emisiones alcance 2</td><td>kWh × ${fmt(FACTOR_CO2_KG_KWH)} kg CO₂e/kWh</td><td>Mensual</td><td>Reducir 15% en un año</td></tr>
+      <tr><td>Árboles equivalentes</td><td>kg CO₂e ÷ ${fmt(TREE_CO2_KG_YEAR)} kg/árbol/año</td><td>Semestral</td><td>Disminuir necesidad de compensación</td></tr>`
+    :`<tr><td>Cobertura del dato eléctrico</td><td>Periodos con kWh asociados ÷ periodos de factura × 100</td><td>Mensual</td><td>Alcanzar 100%</td></tr>
+      <tr><td>Trazabilidad eléctrica</td><td>Lecturas con fuente verificable ÷ lecturas revisadas × 100</td><td>Mensual</td><td>100%</td></tr>`;
+
   return `
     <article class="plan-document">
       ${buildPlanInteractiveToolbar()}
       <div class="plan-cover">
         <div>
-          <p class="plan-code">Código: GEI-R-001 · Plan de Reducciones 2025</p>
-          <h2>Plan de Gestión de Reducción de GEI</h2>
+          <p class="plan-code">SiMeCO₂ · Gestión energética y huella de carbono</p>
+          <h2>Plan de Gestión Energética y Reducción de GEI</h2>
           <h3>${escapeHtml(d.site)}</h3>
-          <p>${mapAddressLink(d.address,d.address||'Sin dirección',d.site)}</p>${d.invoiceSite&&d.invoiceSite!==d.site?`<p class="plan-invoice-alias">Nombre en factura: ${escapeHtml(d.invoiceSite)}</p>`:''}
+          <p>${mapAddressLink(d.address,d.address||'Sin dirección',d.site)}</p>
+          ${d.invoiceSite&&d.invoiceSite!==d.site?`<p class="plan-invoice-alias">Nombre en factura: ${escapeHtml(d.invoiceSite)}</p>`:''}
         </div>
         <div class="plan-badge ${d.intensity.cls}">${escapeHtml(d.intensity.level)}</div>
       </div>
 
       <div class="plan-meta-grid">
-        <div><span>Elaborado por</span><strong>Juan Carlos Blandón Vargas · Los Yoguis</strong></div>
-        <div><span>Aprobación técnica sugerida</span><strong>GSV Ingeniería</strong></div>
         <div><span>Fecha de generación</span><strong>${escapeHtml(d.generatedAt)}</strong></div>
         <div><span>Periodo analizado</span><strong>${escapeHtml(periodText)}</strong></div>
+        <div><span>Factor eléctrico</span><strong>${fmt(FACTOR_CO2_KG_KWH)} kg CO₂e/kWh</strong></div>
+        <div><span>Enfoque</span><strong>Electricidad · Alcance 2</strong></div>
       </div>
 
-      <h3 id="plan-sec-diagnostico" class="plan-section-anchor">1. Diagnóstico energético y ambiental</h3>
-      <p>Este informe personalizado toma como base los registros importados desde las facturas EPM procesadas por SiMeCO₂. Conserva los servicios que sí aparecen asociados a la sede y diferencia explícitamente un dato ausente de un consumo igual a cero.</p>${energyStatusNote}
+      <h3 id="plan-sec-diagnostico" class="plan-section-anchor">1. Diagnóstico energético</h3>
+      <p>Este informe utiliza exclusivamente las lecturas de <strong>energía eléctrica</strong> asociadas a la sede para calcular consumo, emisiones de CO₂e, prioridad y oportunidades de reducción.</p>
+      ${energyStatusNote}
       <div class="plan-kpi-grid">
-        <div><span>Energía acumulada</span><strong>${d.hasEnergy?`${fmt(d.energy)} kWh`:(d.energyException?'Contrato separado':'Sin dato')}</strong></div>
+        <div><span>Energía acumulada</span><strong>${d.hasEnergy?`${fmt(d.energy)} kWh`:(d.energyException?'Contrato separado':'N.I.')}</strong></div>
         <div><span>Promedio mensual</span><strong>${d.hasEnergy?`${fmt(d.avgMonth)} kWh/mes`:'No calculable'}</strong></div>
         <div><span>Proyección anual</span><strong>${d.hasEnergy?`${fmt(d.annualProjection)} kWh/año`:'No calculable'}</strong></div>
         <div><span>CO₂e estimado</span><strong>${d.hasEnergy?`${fmt(d.co2t)} t CO₂e`:'No calculable'}</strong></div>
         <div><span>Árboles equivalentes</span><strong>${d.hasEnergy?`${fmt(d.trees)} árboles/año`:'No calculable'}</strong></div>
-        <div><span>Agua registrada</span><strong>${fmt(d.water)} m³</strong></div>
-        <div><span>Alcantarillado</span><strong>${fmt(d.alc)} m³</strong></div>
-        <div><span>Gas registrado</span><strong>${d.gas?`${fmt(d.gas)} m³`:'Sin dato'}</strong></div>
-        <div><span>Residuos / aseo</span><strong>${d.waste?`${fmt(d.waste)} t`:'Sin dato'}</strong></div>
+        <div><span>Prioridad</span><strong>${escapeHtml(d.intensity.short||d.intensity.level)}</strong></div>
       </div>
       <p class="plan-note"><strong>Lectura técnica:</strong> ${escapeHtml(d.intensity.text)}</p>
-      <h3 id="plan-sec-graficas" class="plan-section-anchor">1.1 Panel gráfico del diagnóstico</h3>
-      <p>Las siguientes gráficas presentan los principales indicadores medibles y comparables de la sede: energía, agua, CO₂e, árboles equivalentes y, cuando aplica, residuos/aseo. <strong>Cada barra representa un único periodo mensual consolidado</strong>, incluso cuando la factura contiene más de un registro asociado a la sede. Estas visualizaciones también quedan integradas en el informe generado para consulta, impresión o descarga.</p>
+
+      <h3 id="plan-sec-graficas" class="plan-section-anchor">2. Gráficas energéticas</h3>
+      <p>Cada barra representa un único periodo mensual consolidado. Las visualizaciones muestran únicamente energía eléctrica, CO₂e y árboles equivalentes.</p>
       ${summaryCards}
       ${monthlyCharts}
 
-      <h3>2. Declaración de compromiso institucional</h3>
-      <p>${commitmentText}</p>
-
-      <h3>3. Objetivo general</h3>
+      <h3>3. Objetivo de gestión</h3>
       <p>${objectiveText}</p>
 
-      <h3 id="plan-sec-metas" class="plan-section-anchor">4. Metas y acciones sugeridas</h3>
+      <h3 id="plan-sec-metas" class="plan-section-anchor">4. Metas de reducción</h3>
       ${energyGoals}
-      ${reductionCharts}
+      ${d.hasEnergy?reductionCharts:''}
 
-      <h3 id="plan-sec-acciones" class="plan-section-anchor">5. Acciones recomendadas de gestión y eficiencia</h3>
+      <h3 id="plan-sec-acciones" class="plan-section-anchor">5. Plan de acción energético</h3>
       <div class="actions-grid">
-        ${d.hasEnergy?'':(d.energyException?`<div><strong>Integrar la fuente eléctrica separada</strong><p>Solicitar la facturación o medición del contrato de usuario no regulado y vincularla a la sede con trazabilidad documental.</p></div>`:`<div><strong>Asociar la cuenta eléctrica</strong><p>Verificar contrato, medidor, nombre facturado y dirección para identificar dónde aparece el consumo de energía de esta sede.</p></div>`)}
-        <div><strong>Diagnóstico y línea base</strong><p>${d.hasEnergy?'Revisar facturas mensuales, validar medidores, construir tendencia kWh/mes y detectar meses atípicos.':'Conservar los servicios ya identificados y construir la tendencia eléctrica únicamente cuando existan lecturas verificadas.'}</p></div>
-        <div><strong>Iluminación eficiente</strong><p>Sustituir luminarias fluorescentes o incandescentes por LED y priorizar zonas de mayor permanencia.</p></div>
-        <div><strong>Sensores y control horario</strong><p>Instalar sensores de movimiento en baños, corredores, oficinas y espacios de uso intermitente.</p></div>
-        <div><strong>Gestión de computadores</strong><p>Activar suspensión automática, apagar equipos al finalizar jornada y renovar gradualmente equipos ineficientes.</p></div>
-        <div><strong>Monitoreo energético</strong><p>Implementar lectura mensual y, si es posible, medidores inteligentes para seguimiento por bloques o circuitos.</p></div>
-        <div><strong>Energía solar fotovoltaica</strong><p>Realizar prefactibilidad técnica para autoconsumo solar, estimando potencia requerida y retorno ambiental.</p></div>
+        <article><strong>Iluminación eficiente</strong><p>Inventariar luminarias, sustituir tecnologías ineficientes por LED y controlar el encendido según ocupación e iluminación natural.</p></article>
+        <article><strong>Equipos y cargas</strong><p>Identificar equipos de mayor demanda, eliminar consumos en espera y establecer horarios de apagado verificables.</p></article>
+        <article><strong>Monitoreo mensual</strong><p>Comparar kWh mes a mes, documentar cambios y activar acciones cuando el consumo aumente de forma significativa.</p></article>
+        <article><strong>Cultura energética</strong><p>Asignar responsables estudiantiles y docentes para campañas de ahorro, verificación de apagado y socialización de resultados.</p></article>
+        <article><strong>Gestión técnica</strong><p>Revisar circuitos, cargas críticas, temporizadores, sensores y oportunidades de automatización.</p></article>
+        <article><strong>Energía solar</strong><p>Evaluar cubierta, radiación, perfil de carga y dimensionamiento fotovoltaico antes de una intervención de inversión.</p></article>
       </div>
 
-      <h3>5.1 Matriz operativa de intervención</h3>
-      <table class="plan-table compact">
-        <thead><tr><th>Acción</th><th>Responsable sugerido</th><th>Tiempo</th><th>Indicador</th><th>Evidencia</th></tr></thead>
-        <tbody>
-          <tr><td>Inventario de luminarias y equipos</td><td>Comité ambiental escolar / servicios generales</td><td>Primer mes</td><td>% de espacios caracterizados</td><td>Formato de inventario y fotografías</td></tr>
-          <tr><td>Campaña de apagado y uso eficiente</td><td>Docentes líderes y Guardianes Climáticos</td><td>Mensual</td><td>Número de grupos participantes</td><td>Actas, piezas gráficas y registro fotográfico</td></tr>
-          <tr><td>Sustitución progresiva a tecnología LED</td><td>Rectoría / infraestructura / aliado técnico</td><td>3 a 6 meses</td><td>kWh reducidos frente a línea base</td><td>Cotizaciones, facturas e informe de instalación</td></tr>
-          <tr><td>Evaluación de sistema solar FV</td><td>Aliado técnico especializado</td><td>6 meses</td><td>Potencia estimada y % de cobertura</td><td>Informe de prefactibilidad</td></tr>
-        </tbody>
-      </table>
-
-      <h3>6. Cronograma operativo sugerido</h3>
-      <table class="plan-table compact">
-        <thead><tr><th>Fase</th><th>Actividad</th><th>Meses sugeridos</th><th>Evidencia</th></tr></thead>
-        <tbody>
-          <tr><td>Fase 1</td><td>Diagnóstico y línea base de consumo eléctrico.</td><td>Enero · Febrero · Marzo</td><td>Facturas, matriz kWh, reporte SiMeCO₂.</td></tr>
-          <tr><td>Fase 2</td><td>Diseño de estrategias LED, sensores, control de equipos y cultura energética.</td><td>Marzo · Abril · Mayo · Junio</td><td>Plan de intervención, cotizaciones, actas.</td></tr>
-          <tr><td>Fase 3</td><td>Implementación de acciones de eficiencia y capacitación.</td><td>Julio · Agosto · Septiembre</td><td>Fotos, asistencia, registros de instalación.</td></tr>
-          <tr><td>Fase 4</td><td>Seguimiento, comparación de consumos y ajuste de estrategias.</td><td>Octubre · Noviembre · Diciembre</td><td>Informe final, dashboard, indicadores.</td></tr>
-        </tbody>
-      </table>
+      <h3>6. Compromiso institucional</h3>
+      <p>La sede <strong>${escapeHtml(d.site)}</strong> orientará su seguimiento ambiental al uso eficiente de la electricidad, la reducción de emisiones de alcance 2 y la toma de decisiones basada en datos verificables.</p>
 
       <h3 id="plan-sec-indicadores" class="plan-section-anchor">7. Indicadores de seguimiento</h3>
-      <table class="plan-table compact">
-        <thead><tr><th>Indicador</th><th>Fórmula</th><th>Frecuencia</th><th>Meta</th></tr></thead>
-        <tbody>
-          ${indicatorsRows}
-          <tr><td>Cultura ambiental y energética</td><td>Personas capacitadas ÷ población objetivo × 100</td><td>Semestral</td><td>Capacitar mínimo 80%</td></tr>
-        </tbody>
-      </table>
+      <table class="plan-table"><thead><tr><th>Indicador</th><th>Fórmula / dato</th><th>Frecuencia</th><th>Meta</th></tr></thead><tbody>${indicatorsRows}</tbody></table>
 
-      <h3 id="plan-sec-registros" class="plan-section-anchor">8. Registros mensuales usados por el plan</h3>
-      <p>La siguiente tabla resume los datos importados que soportan el diagnóstico y las comparaciones del plan de gestión. Se incluyen los principales indicadores mensuales medibles para la sede.</p>
-      <table class="plan-table compact">
-        <thead><tr><th>Periodo</th><th>Energía</th><th>Agua</th><th>Alc.</th><th>Gas</th><th>CO₂e</th><th>Árboles</th><th>Residuos</th><th>Fuente</th></tr></thead>
-        <tbody>${monthlyRows}</tbody>
-      </table>
-
-      <h3>9. Responsable y seguimiento</h3>
-      <p><strong>Responsable sugerido:</strong> líder ambiental de la sede, comité escolar ambiental, directivos docentes y equipo de apoyo técnico. <strong>Frecuencia:</strong> mensual para carga de facturas, semestral para revisión del plan y anual para informe de resultados.</p>
+      <h3 id="plan-sec-registros" class="plan-section-anchor">8. Registros eléctricos usados por el plan</h3>
+      <table class="plan-table"><thead><tr><th>Periodo</th><th>Energía</th><th>CO₂e</th><th>Árboles</th><th>Fuente</th></tr></thead><tbody>${monthlyRows}</tbody></table>
     </article>`;
 }
 
-function collectEmbeddedStyles(){
-  const chunks=[];
-  [...document.styleSheets].forEach(sheet=>{
-    try{ chunks.push([...sheet.cssRules].map(rule=>rule.cssText).join('\n')); }catch(_err){}
-  });
-  return chunks.join('\n');
-}
 function downloadCurrentPlan(){
-  if(!CURRENT_PLAN_HTML){alert('Primero genera el informe de una sede.');return;}
-  const styles=collectEmbeddedStyles();
+  if(!CURRENT_PLAN_HTML){ alert('Primero genera el informe de una sede.'); return; }
+  const styles=[...document.querySelectorAll('style')].map(x=>x.textContent||'').join('\n');
   const interactiveScript=`<script>
   document.addEventListener('click',function(ev){
     var jump=ev.target.closest('[data-plan-jump]');
@@ -3071,9 +2880,8 @@ function downloadCurrentPlan(){
     else if(mode==='compact'){report.classList.toggle('plan-compact-view');toggle.classList.toggle('active',report.classList.contains('plan-compact-view'));}
   });
   <\/script>`;
-  const documentHtml=`<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Plan de Gestión Ambiental - SiMeCO₂</title><style>${styles}</style></head><body><main style="max-width:1200px;margin:24px auto;padding:0 16px">${CURRENT_PLAN_HTML}</main>${interactiveScript}</body></html>`;
+  const documentHtml=`<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Plan de Gestión Energética - SiMeCO₂</title><style>${styles}</style></head><body><main style="max-width:1200px;margin:24px auto;padding:0 16px">${CURRENT_PLAN_HTML}</main>${interactiveScript}</body></html>`;
   downloadBlob(documentHtml,CURRENT_PLAN_FILENAME,'text/html;charset=utf-8');
-  log(`Informe HTML descargado: ${CURRENT_PLAN_FILENAME}.`);
 }
 
 function printCurrentPlan(){
@@ -3082,7 +2890,7 @@ function printCurrentPlan(){
   if(btn){ btn.disabled=true; btn.textContent='Preparando informe…'; }
   setTimeout(()=>{
     try{
-      openPdfPrintDocument('Plan de Gestión Ambiental por sede','Informe institucional de eficiencia energética y reducción de emisiones',CURRENT_PLAN_HTML);
+      openPdfPrintDocument('Plan de Gestión Energética por sede','Informe institucional de electricidad, huella de carbono y reducción de emisiones',CURRENT_PLAN_HTML);
     }catch(err){
       console.error(err);
       alert('No fue posible preparar el informe. Recarga la página e inténtalo nuevamente.');

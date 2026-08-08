@@ -1,0 +1,32 @@
+CONTROL DE CALIDAD SiMeCO₂ v83
+Fecha: 2026-08-08
+
+CAMBIO PRINCIPAL
+Informe por sede simplificado para concentrarse en energía eléctrica, prioridad y acción.
+
+TABLA
+- Se retiraron: Agua, Alcantarillado, Gas y Aseo.
+- Estructura final:
+  # | Sede | Dirección | Periodos | Prioridad | Plan de acción | Energía total kWh | CO₂e t | Árboles | Prom. kWh/mes
+- La fila TOTAL fue reajustada a 10 columnas.
+- Se amplió espacio para Sede y Dirección.
+
+NOTA DE PRIORIDAD
+Ubicada al inicio de la tabla:
+- Alta: ≥ 5.000 kWh/mes
+- Media: 2.000–4.999 kWh/mes
+- Preventiva: < 2.000 kWh/mes
+
+INTEGRIDAD
+- Se conservan Estado información, Histórico, Ranking, Aula, Informe interactivo y Google Maps.
+- 9.147 registros.
+- 567 instituciones/sedes.
+- 17 períodos oficiales.
+- No se modifican datos ni cálculos.
+
+PRUEBAS
+- npm run check: APROBADO.
+- npm test: APROBADO.
+- validar_sistema.py: APROBADO.
+- validar_historicos.py: APROBADO.
+RESULTADO: APROBADO.

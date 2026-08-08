@@ -1,0 +1,21 @@
+SiMeCO₂ v85
+
+ENFOQUE EXCLUSIVO EN ELECTRICIDAD
+- La aplicación visible, informes, histórico, ranking, búsqueda institucional, estado de información, exportaciones, asistente y API trabajan únicamente con energía eléctrica.
+- Se muestran consumo kWh, huella de carbono CO₂e, árboles equivalentes, prioridad, ahorro y planes de acción energética.
+
+RANKING
+- Columna independiente: Consumo eléctrico.
+- Columna independiente: Huella de carbono (t CO₂e).
+- Columna independiente: Periodos.
+- Barra de progreso reducida a un máximo de 320 px para aprovechar mejor el ancho disponible.
+- Canvas mínimo reducido a 1120 px para una mejor experiencia dentro de Google Sites.
+
+PLAN DE GESTIÓN ENERGÉTICA
+- En “8. Registros eléctricos usados por el plan”, la columna Fuente ahora contiene “Descargar PDF”.
+- Cada periodo conserva la fuente PDF real y la página de procedencia.
+- Si un periodo tiene más de una fuente, se muestran enlaces independientes.
+- El enlace utiliza download y también puede abrirse en una pestaña nueva cuando el navegador no permita descarga directa cross-origin.
+
+CALIDAD
+- Se conservan 9.147 registros, 567 sedes/instituciones y 17 periodos oficiales.

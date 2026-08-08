@@ -1,0 +1,13 @@
+SiMeCO₂ v83 — Informe por sede enfocado en energía y prioridad
+
+CAMBIO PRINCIPAL
+- Se eliminan del Informe por sede las columnas Agua, Alcantarillado, Gas y Aseo.
+- La tabla queda enfocada en: Sede, Dirección, Periodos, Prioridad, Plan de acción, Energía, CO₂e, Árboles y Promedio kWh/mes.
+- La nota de prioridad aparece al inicio de la tabla, antes de cualquier otra observación:
+  Alta: ≥ 5.000 kWh/mes
+  Media: 2.000–4.999 kWh/mes
+  Preventiva: < 2.000 kWh/mes
+- La fila TOTAL fue reajustada a la nueva estructura de 10 columnas.
+- Se redistribuyó el ancho para dar más espacio a Sede y Dirección.
+- Se mantienen Informe interactivo, Google Maps, Ranking, Histórico, Estado de la información y Aula.
+- No se modifican datos ni cálculos de consumo.

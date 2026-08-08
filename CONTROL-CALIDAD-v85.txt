@@ -1,0 +1,35 @@
+CONTROL DE CALIDAD SiMeCO₂ v85
+Fecha: 2026-08-08
+
+ALCANCE
+- Sistema visible y operativo enfocado exclusivamente en electricidad.
+- Sin referencias activas a otros servicios en interfaz, informes, asistente, búsqueda institucional o API.
+
+RANKING
+- Consumo eléctrico (kWh).
+- Huella de carbono (t CO₂e).
+- Periodos.
+- Barra de progreso limitada a 320 px.
+- Canvas mínimo reducido a 1120 px para mejorar ajuste en Google Sites.
+
+PLAN DE GESTIÓN ENERGÉTICA
+- Sección 8: Registros eléctricos usados por el plan.
+- Columna Fuente con botón/enlace “Descargar PDF”.
+- Cada periodo conserva su fuente PDF y página de procedencia.
+- Soporte para múltiples fuentes por periodo.
+
+INTEGRIDAD
+- 9.147 registros.
+- 567 sedes/instituciones.
+- 17 periodos oficiales.
+- Energía oficial acumulada: 18.800.429,36 kWh.
+- Histórico, ranking de ahorro, Google Maps, prioridad e informes interactivos conservados.
+
+PRUEBAS
+- npm run check: APROBADO.
+- npm test: APROBADO.
+- validar_sistema.py: APROBADO.
+- validar_historicos.py: APROBADO.
+- electricity-only-system.test.js: APROBADO.
+- ranking-co2-plan-pdf.test.js: APROBADO.
+RESULTADO FINAL: APROBADO.

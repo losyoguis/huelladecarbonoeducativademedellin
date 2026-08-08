@@ -97,7 +97,7 @@
     if(exact) return exact;
 
     const q = fullQuestion
-      .replace(/\b(cual|cuanto|cuanta|consumo|consumio|energia|emision|emisiones|co2|agua|sede|institucion|ie|i e|colegio|escuela|periodo|mes|ano|del|de|la|el|en|para|por|total|huella|carbono|prioridad)\b/g,' ')
+      .replace(/\b(cual|cuanto|cuanta|consumo|consumio|energia|emision|emisiones|co2|sede|institucion|ie|i e|colegio|escuela|periodo|mes|ano|del|de|la|el|en|para|por|total|huella|carbono|prioridad)\b/g,' ')
       .replace(/\b(enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|setiembre|octubre|noviembre|diciembre)\b/g,' ')
       .replace(/\b20\d{2}\b/g,' ')
       .split(/\s+/).filter(token=>token.length>=3).join(' ').trim();
@@ -176,17 +176,14 @@
       const priority = priorityFor(summary.avg);
       if(summary.energy===null){
         const status=summary.energyException ? `La energía está marcada como **${summary.energyException.label||'contrato separado'}**: ${summary.energyException.dataState||summary.energyException.summary||'consumo aún no integrado'}.` : 'La energía no está identificada en los datos disponibles; esto no significa 0 kWh.';
-        if(/(agua|acueducto)/.test(q)) return `${period ? `En ${readablePeriod(period)}, ` : ''}**${summary.site}** registra ${format(summary.water)} m³ de agua. ${status}`;
-        return `Para **${summary.site}**, ${status} ${summary.water!==null?`El sistema sí registra ${format(summary.water)} m³ de agua en el alcance consultado.`:''}`;
       }
       if(/(prioridad|clasificacion|nivel)/.test(q)) return `La clasificación de **${summary.site}** es **${priority.short || priority.level}**, con un promedio aproximado de ${format(summary.avg)} kWh por periodo.`;
-      if(/(agua|acueducto)/.test(q)) return `${period ? `En ${readablePeriod(period)}, ` : ''}**${summary.site}** registra ${format(summary.water)} m³ de agua en los datos disponibles.`;
       if(/(emision|co2|huella)/.test(q)) return `${period ? `En ${readablePeriod(period)}, ` : ''}**${summary.site}** registra una huella estimada de ${format(summary.co2/1000)} t CO₂e asociada al consumo eléctrico.`;
-      return `${period ? `En ${readablePeriod(period)}, ` : ''}**${summary.site}** registra ${format(summary.energy)} kWh de energía, ${format(summary.co2/1000)} t CO₂e y ${format(summary.water)} m³ de agua. Su nivel es ${priority.short || priority.level}.`;
+    return `${period ? `En ${readablePeriod(period)}, ` : ''}**${summary.site}** registra ${format(summary.energy)} kWh de energía eléctrica y ${format(summary.co2/1000)} t CO₂e. Su nivel es ${priority.short || priority.level}.`;
     }
     if(/(total|acumulado|toda medellin|medellin)/.test(q)){
       const total = scope.reduce((acc,record)=>{acc.energy+=number(record.energyKwh);acc.co2+=number(record.co2kg);acc.water+=number(record.waterM3);return acc;},{energy:0,co2:0,water:0});
-      return `${period ? `En ${readablePeriod(period)}` : 'En todos los periodos'}, el sistema registra ${format(total.energy)} kWh, ${format(total.co2/1000)} t CO₂e y ${format(total.water)} m³ de agua.`;
+  return `${period ? `En ${readablePeriod(period)}` : 'En todos los periodos'}, el sistema registra ${format(total.energy)} kWh de energía eléctrica y ${format(total.co2/1000)} t CO₂e.`;
     }
     if(/(factura|descargar)/.test(q)) return 'Para consultar o descargar una factura, entra en **Facturas por I.E.**, busca la institución y usa el enlace disponible en la columna Fuente.';
     if(/(recomendacion|acciones|que hacer|reducir)/.test(q)) return 'Las acciones prioritarias son: revisar consumos atípicos, controlar horarios de equipos, sustituir iluminación por LED, promover hábitos de apagado, medir por circuitos y evaluar energía solar cuando sea técnicamente viable.';

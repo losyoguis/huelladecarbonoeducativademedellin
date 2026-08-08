@@ -35,7 +35,7 @@ const records = (Array.isArray(window.SIMECO_REGISTROS) ? window.SIMECO_REGISTRO
   .filter(r => r && r.site && r.period)
   .map(r => {
     const energyKwh=nullableNumber(r.energyKwh);
-    return {...r, energyKwh, co2kg:energyKwh===null?null:(nullableNumber(r.co2kg) ?? energyKwh * 0.126), waterM3:nullableNumber(r.waterM3), alcM3:nullableNumber(r.alcM3), gasM3:nullableNumber(r.gasM3), wasteTon:nullableNumber(r.wasteTon), page:Math.max(1, Number(r.page) || 1)};
+    return {...r, energyKwh, co2kg:energyKwh===null?null:(nullableNumber(r.co2kg) ?? energyKwh * 0.126), page:Math.max(1, Number(r.page) || 1)};
   });
 const institutions = new Map();
 for (const record of records) {
@@ -101,11 +101,10 @@ function filteredInstitutionRecords(item) {
 function monthlySummary(recordsForInstitution) {
   const map = new Map();
   for (const r of recordsForInstitution) {
-    if (!map.has(r.period)) map.set(r.period, {period:r.period, energy:0, co2:0, water:0, alc:0, gas:0, waste:0, counts:{energy:0,co2:0,water:0,alc:0,gas:0,waste:0}, sources:new Map()});
+    if (!map.has(r.period)) map.set(r.period, {period:r.period, energy:0, co2:0, counts:{energy:0,co2:0}, sources:new Map()});
     const row = map.get(r.period);
-    [['energyKwh','energy'],['co2kg','co2'],['waterM3','water'],['alcM3','alc'],['gasM3','gas'],['wasteTon','waste']].forEach(([field,key])=>{
-      if(r[field]!==null && r[field]!==undefined && Number.isFinite(Number(r[field]))){row[key]+=Number(r[field]);row.counts[key]+=1;}
-    });
+    if(r.energyKwh!==null && r.energyKwh!==undefined && Number.isFinite(Number(r.energyKwh))){row.energy+=Number(r.energyKwh);row.counts.energy+=1;}
+    if(r.co2kg!==null && r.co2kg!==undefined && Number.isFinite(Number(r.co2kg))){row.co2+=Number(r.co2kg);row.counts.co2+=1;}
     const sourceKey = `${r.sourceUrl || `data/${r.source}`}|${r.page}`;
     if (!row.sources.has(sourceKey)) row.sources.set(sourceKey, {url:r.sourceUrl || `data/${r.source}`, source:r.source || (r.sourceUrl || '').split('/').pop(), page:r.page});
   }
@@ -135,36 +134,19 @@ function renderReport() {
   $('institutionAddress').innerHTML = mapLink(item.address,item.address || 'Sin dirección registrada en la factura',item.displaySite||item.site);
   $('institutionMeta').innerHTML = [meta.zone, meta.commune, meta.nucleus ? `Núcleo ${meta.nucleus}` : ''].filter(v => v && v !== 'Sin clasificar').map(v => `<span>${esc(v)}</span>`).join('') || '<span>Información territorial pendiente de clasificación</span>';
   if(item.invoiceSites?.size>1) $('institutionMeta').innerHTML += `<span>${item.invoiceSites.size} sedes integradas</span><span>En factura: ${esc([...item.invoiceSites].join(' / '))}</span>`; else if(item.displaySite!==item.site) $('institutionMeta').innerHTML += `<span>En factura: ${esc(item.site)}</span>`;
-  const hasEnergy=filtered.some(r=>r.energyKwh!==null), hasWater=filtered.some(r=>r.waterM3!==null), hasGas=filtered.some(r=>r.gasM3!==null), energyException=serviceExceptionFor(item);
-  const energy = filtered.reduce((a,r) => a + (r.energyKwh??0), 0), co2 = filtered.reduce((a,r) => a + (r.co2kg??0), 0), water = filtered.reduce((a,r) => a + (r.waterM3??0), 0), gas = filtered.reduce((a,r) => a + (r.gasM3??0), 0);
-  $('kpiMonths').textContent = fmt(rows.length, 0);
-  $('kpiEnergy').textContent = hasEnergy ? `${fmt(energy)} kWh` : (energyException?'Contrato separado':'No identificada');
-  $('kpiCo2').textContent = hasEnergy ? `${fmt(co2 / 1000)} t CO₂e` : (energyException?'Pendiente de integrar':'No calculable');
-  $('kpiWater').textContent = hasWater ? `${fmt(water)} m³` : 'Sin dato';
-  $('kpiGas').textContent = hasGas ? `${fmt(gas)} m³` : 'Sin dato';
-  $('institutionBillsBody').innerHTML = rows.map(row => `<tr>
+  const hasEnergy=filtered.some(r=>r.energyKwh!==null), energyException=serviceExceptionFor(item);
+  const energy=filtered.reduce((a,r)=>a+(r.energyKwh??0),0), co2=filtered.reduce((a,r)=>a+(r.co2kg??0),0);
+  $('kpiMonths').textContent=fmt(rows.length,0);
+  $('kpiEnergy').textContent=hasEnergy?`${fmt(energy)} kWh`:(energyException?'Contrato separado':'No identificada');
+  $('kpiCo2').textContent=hasEnergy?`${fmt(co2/1000)} t CO₂e`:(energyException?'Pendiente de integrar':'No calculable');
+  $('institutionBillsBody').innerHTML=rows.map(row=>`<tr>
     <td><strong>${esc(monthLabel(row.period))}</strong><small>${esc(row.period)}</small></td>
-    <td>${serviceValue(row.energy, 'kWh', row.counts.energy>0, energyException?'Contrato separado':'No identificada')}</td><td>${serviceValue(row.co2 / 1000, 't', row.counts.energy>0, energyException?'Pendiente de integrar':'No calculable')}</td><td>${serviceValue(row.water, 'm³', row.counts.water>0)}</td><td>${serviceValue(row.alc, 'm³', row.counts.alc>0)}</td><td>${serviceValue(row.gas, 'm³', row.counts.gas>0)}</td><td>${serviceValue(row.waste, 't', row.counts.waste>0)}</td>
-    <td>${sourceButtons(row, item)}</td>
-  </tr>`).join('') || '<tr><td colspan="8">No hay facturas para el año o periodo seleccionado.</td></tr>';
-  const energyStatus=hasEnergy?'con energía identificada':(energyException?'con energía gestionada mediante contrato separado':'con energía no identificada en esta factura consolidada');
-  const evidence=energyException?` <span class="institution-external-note"><strong>Importante:</strong> ${esc(energyException.summary||energyException.dataState||'')} ${(energyException.evidence||[]).map(ev=>`<a href="${esc(ev.url)}" target="_blank" rel="noopener">${esc(ev.title||'Evidencia')}</a>`).join(' · ')}</span>`:'';
-  $('institutionSearchStatus').innerHTML = `Mostrando <strong>${fmt(rows.length,0)} mes(es)</strong> y <strong>${fmt(filtered.length,0)} registro(s)</strong> de ${esc(item.displaySite||item.site)} · ${esc(energyStatus)}.${evidence}`;
-}
-
-let pdfLibPromise=null;
-function ensurePdfLib(){
-  if(window.PDFLib?.PDFDocument) return Promise.resolve(window.PDFLib);
-  if(pdfLibPromise) return pdfLibPromise;
-  pdfLibPromise=new Promise((resolve,reject)=>{
-    const script=document.createElement('script');
-    script.src='https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js';
-    script.async=true;
-    script.onload=()=>resolve(window.PDFLib);
-    script.onerror=()=>{pdfLibPromise=null;reject(new Error('No fue posible cargar la herramienta PDF.'));};
-    document.head.appendChild(script);
-  });
-  return pdfLibPromise;
+    <td>${serviceValue(row.energy,'kWh',row.counts.energy>0,energyException?'Contrato separado':'No identificada')}</td>
+    <td>${serviceValue(row.co2/1000,'t CO₂e',row.counts.energy>0,energyException?'Pendiente de integrar':'No calculable')}</td>
+    <td>${sourceButtons(row,item)}</td>
+  </tr>`).join('') || '<tr><td colspan="4">No hay facturas eléctricas para el año o periodo seleccionado.</td></tr>';
+  const energyStatus=hasEnergy?'con energía identificada':(energyException?'con energía gestionada mediante contrato separado':'con energía no identificada');
+  if($('institutionEvidence')) $('institutionEvidence').innerHTML=`<strong>Lectura energética:</strong> ${esc(item.displaySite||item.site)} está ${energyStatus}. La consulta utiliza exclusivamente energía eléctrica y su huella de carbono asociada.`;
 }
 async function downloadPage(button) {
   const originalText = button.textContent;

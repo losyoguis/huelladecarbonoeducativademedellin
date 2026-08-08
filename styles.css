@@ -2775,7 +2775,7 @@ body.viewport-phone .assistant-panel{
 
 /* Orden definitivo:
    1 # | 2 Sede | 3 Dirección | 4 Periodos | 5 Prioridad | 6 Plan | 7 Energía
-   | 8 Agua | 9 Alc | 10 Gas | 11 Aseo | 12 CO₂e | 13 Árboles | 14 Promedio */
+   | 8 CO₂e | 9 Árboles | 10 Promedio */
 .dashboard-table-wrap .dashboard-data-table th:nth-child(5),
 .dashboard-table-wrap .dashboard-data-table td:nth-child(5),
 .dashboard-table-wrap > table th:nth-child(5),
@@ -2877,5 +2877,138 @@ body.viewport-phone .assistant-panel{
   .dashboard-priority-note{
     align-items:flex-start;
     flex-direction:column;
+  }
+}
+
+
+/* =========================================================
+   v83 · Informe por sede centrado en energía y prioridad
+   ========================================================= */
+.dashboard-table-wrap .dashboard-data-table,
+.dashboard-table-wrap > table{
+  min-width:1120px !important;
+  table-layout:fixed;
+}
+.dashboard-table-wrap .dashboard-data-table th:nth-child(1),
+.dashboard-table-wrap .dashboard-data-table td:nth-child(1),
+.dashboard-table-wrap > table th:nth-child(1),
+.dashboard-table-wrap > table td:nth-child(1){width:42px !important;}
+
+.dashboard-table-wrap .dashboard-data-table th:nth-child(2),
+.dashboard-table-wrap .dashboard-data-table td:nth-child(2),
+.dashboard-table-wrap > table th:nth-child(2),
+.dashboard-table-wrap > table td:nth-child(2){width:300px !important;min-width:300px !important;}
+
+.dashboard-table-wrap .dashboard-data-table th:nth-child(3),
+.dashboard-table-wrap .dashboard-data-table td:nth-child(3),
+.dashboard-table-wrap > table th:nth-child(3),
+.dashboard-table-wrap > table td:nth-child(3){width:170px !important;}
+
+.dashboard-table-wrap .dashboard-data-table th:nth-child(4),
+.dashboard-table-wrap .dashboard-data-table td:nth-child(4),
+.dashboard-table-wrap > table th:nth-child(4),
+.dashboard-table-wrap > table td:nth-child(4){width:72px !important;text-align:center;}
+
+.dashboard-table-wrap .dashboard-data-table th:nth-child(5),
+.dashboard-table-wrap .dashboard-data-table td:nth-child(5),
+.dashboard-table-wrap > table th:nth-child(5),
+.dashboard-table-wrap > table td:nth-child(5){width:118px !important;min-width:118px !important;text-align:center !important;}
+
+.dashboard-table-wrap .dashboard-data-table th:nth-child(6),
+.dashboard-table-wrap .dashboard-data-table td:nth-child(6),
+.dashboard-table-wrap > table th:nth-child(6),
+.dashboard-table-wrap > table td:nth-child(6){width:165px !important;min-width:165px !important;text-align:center !important;}
+
+.dashboard-table-wrap .dashboard-data-table th:nth-child(7),
+.dashboard-table-wrap .dashboard-data-table td:nth-child(7),
+.dashboard-table-wrap > table th:nth-child(7),
+.dashboard-table-wrap > table td:nth-child(7){width:125px !important;text-align:center;}
+
+.dashboard-table-wrap .dashboard-data-table th:nth-child(8),
+.dashboard-table-wrap .dashboard-data-table td:nth-child(8),
+.dashboard-table-wrap > table th:nth-child(8),
+.dashboard-table-wrap > table td:nth-child(8){width:95px !important;text-align:center;}
+
+.dashboard-table-wrap .dashboard-data-table th:nth-child(9),
+.dashboard-table-wrap .dashboard-data-table td:nth-child(9),
+.dashboard-table-wrap > table th:nth-child(9),
+.dashboard-table-wrap > table td:nth-child(9){width:95px !important;text-align:center;}
+
+.dashboard-table-wrap .dashboard-data-table th:nth-child(10),
+.dashboard-table-wrap .dashboard-data-table td:nth-child(10),
+.dashboard-table-wrap > table th:nth-child(10),
+.dashboard-table-wrap > table td:nth-child(10){width:115px !important;min-width:115px !important;text-align:center !important;}
+
+.dashboard-table-wrap .dashboard-data-table td:nth-child(n+7):nth-child(-n+10),
+.dashboard-table-wrap > table td:nth-child(n+7):nth-child(-n+10){
+  font-variant-numeric:tabular-nums;
+  text-align:center;
+  overflow-wrap:normal;
+  word-break:normal;
+  hyphens:none;
+}
+.dashboard-table-wrap th:nth-child(n+11),
+.dashboard-table-wrap td:nth-child(n+11){
+  display:none !important;
+}
+
+/* La leyenda solicitada aparece antes de cualquier otra nota de la tabla. */
+.dashboard-priority-note{
+  margin-top:0;
+  margin-bottom:10px;
+}
+.dashboard-priority-note .priority-chip strong{
+  color:inherit;
+}
+@media (max-width:620px){
+  .dashboard-table-wrap .dashboard-data-table,
+  .dashboard-table-wrap > table{
+    min-width:0 !important;
+  }
+}
+
+
+/* =========================================================
+   v85 · Ranking eléctrico compacto + descarga de PDF en plan
+   ========================================================= */
+.environmental-ranking-chart{
+  overflow-x:auto;
+  overflow-y:hidden;
+}
+.environmental-ranking-chart #siteChart{
+  min-width:1120px;
+}
+
+/* Fuente descargable en registros mensuales del plan */
+.plan-source-download{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  min-height:34px;
+  padding:7px 10px;
+  border:1px solid rgba(8,118,94,.18);
+  border-radius:10px;
+  background:#eef9f5;
+  color:#08765e;
+  font-size:.78rem;
+  font-weight:850;
+  line-height:1.1;
+  text-decoration:none;
+  white-space:nowrap;
+}
+.plan-source-download:hover,
+.plan-source-download:focus-visible{
+  background:#dff4ec;
+  border-color:rgba(8,118,94,.35);
+  outline:none;
+}
+@media print{
+  .plan-source-download{
+    color:#183c35 !important;
+    background:transparent !important;
+    border:0 !important;
+    padding:0 !important;
+    text-decoration:none !important;
   }
 }

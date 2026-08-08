@@ -1,0 +1,22 @@
+SiMeCO₂ v84 — Plataforma 100% enfocada en electricidad
+
+ALCANCE
+- Se eliminó de todas las vistas, informes y respuestas del sistema cualquier componente de agua, alcantarillado, gas y aseo/residuos.
+- SiMeCO₂ queda enfocado exclusivamente en energía eléctrica, huella de carbono de alcance 2, CO₂e, árboles equivalentes, prioridad, ahorro y planes de acción energética.
+
+CAMBIOS
+- Histórico: solo energía eléctrica.
+- Ranking: solo energía eléctrica, CO₂e y ahorro.
+- Informe por sede: solo electricidad, CO₂e, árboles, prioridad y plan de acción.
+- Facturas por I.E.: solo energía eléctrica, CO₂e y fuente.
+- Estado de la información: cobertura eléctrica, CO₂e, trazabilidad, territorio y acción.
+- Búsqueda institucional: energía eléctrica y CO₂e exclusivamente.
+- Filtros territoriales: solo filtro energético.
+- CSV/PDF/HTML generados: solo información eléctrica.
+- Asistente local y API: respuestas y métricas exclusivamente eléctricas.
+- Parser de nuevas facturas: conserva únicamente campos eléctricos para la aplicación.
+- Se mantienen los archivos fuente originales sin alterar como evidencia documental.
+
+DATOS
+- Los archivos históricos originales no fueron modificados.
+- Se conserva la integridad de 9.147 registros fuente, 567 sedes/instituciones y 17 periodos oficiales.

@@ -4,10 +4,10 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Guardianes Climáticos: aprender, medir y actuar · SiMeCO₂</title>
-  <meta name="description" content="Sistema interactivo para medir, interpretar y gestionar la huella de carbono educativa a partir del consumo de servicios públicos." />
+  <meta name="description" content="Sistema interactivo para medir, interpretar y gestionar la huella de carbono educativa a partir del consumo de energía eléctrica." />
   <link rel="icon" type="image/png" href="assets/los-yoguis-logo-optimized.png" />
   <link rel="apple-touch-icon" href="assets/los-yoguis-logo-optimized.png" />
-  <link rel="stylesheet" href="styles.css?v=82-estado-prioridad" />
+  <link rel="stylesheet" href="styles.css?v=85-electricidad-ranking-co2-pdf" />
 </head>
 <body class="standalone-page aula-page app-ready" data-page="aula">
   <header class="module-page-header" id="module-top">
@@ -42,7 +42,7 @@
         </div>
         <p class="lead">Plataforma educativa e institucional para medir consumos, estimar emisiones de CO₂e, priorizar sedes y generar planes de gestión ambiental escolar.</p>
         <div class="hero-purpose-box">
-          <strong>Propósito:</strong> convertir los datos de servicios públicos en decisiones pedagógicas, ambientales e institucionales para reducir la huella de carbono educativa de Medellín.
+          <strong>Propósito:</strong> convertir los datos de energía eléctrica en decisiones pedagógicas, ambientales e institucionales para reducir la huella de carbono educativa de Medellín.
         </div>
         <div class="hero-actions">
           <a class="hero-cta" href="#resumen-ejecutivo">Ver resumen ejecutivo</a>
@@ -79,7 +79,7 @@
         </div>
       </div>
       <div class="feature-grid">
-        <article><span>Medición</span><strong>Servicios públicos</strong><p>Consolida energía, agua, gas, alcantarillado y aseo para seguimiento institucional.</p></article>
+        <article><span>Medición</span><strong>Energía eléctrica</strong><p>Consolida consumo eléctrico, huella de carbono y gestión energética.</p></article>
         <article><span>Huella</span><strong>CO₂ equivalente</strong><p>Transforma kWh en emisiones estimadas y árboles equivalentes para compensación pedagógica.</p></article>
         <article><span>Gestión</span><strong>Planes por sede</strong><p>Genera acciones, metas, indicadores, cronograma y evidencias de seguimiento.</p></article>
       </div>
@@ -98,15 +98,13 @@
       <article><span>Sedes</span><strong id="kSites">0</strong></article>
       <article><span>Energía acumulada</span><strong id="kKwh">0 kWh</strong></article>
       <article><span>Árboles requeridos</span><strong id="kTrees">0</strong></article>
-      <article><span>Agua</span><strong id="kWater">0 m³</strong></article>
-      <article><span>Aseo/Residuos</span><strong id="kWaste">0 t</strong></article>
     </section>
 
     <section class="panel grid-2 import-panel update-spotlight" id="importacion">
       <div class="update-copy">
         <span class="section-kicker">Actualizando los datos</span>
-        <h2>Carga las facturas de servicios públicos</h2>
-        <p class="update-lead">Actualiza la plataforma cargando las facturas de servicios públicos de todas las Instituciones Educativas de la ciudad de Medellín desde el año 2025.</p>
+        <h2>Carga las facturas de energía eléctrica</h2>
+        <p class="update-lead">Actualiza la plataforma cargando las facturas de energía eléctrica de todas las Instituciones Educativas de la ciudad de Medellín desde el año 2025.</p>
         <div class="update-badges" aria-label="Alcance de actualización">
           <span>Medellín</span>
           <span>Instituciones Educativas</span>
@@ -262,10 +260,7 @@
           <select id="globalPeriodFilter"><option value="">Todos</option></select>
         </label>
         <label>Servicio disponible
-          <select id="globalServiceFilter">
-            <option value="">Todos</option><option value="energia">Energía</option><option value="agua">Agua</option>
-            <option value="alcantarillado">Alcantarillado</option><option value="gas">Gas</option><option value="aseo">Aseo</option>
-          </select>
+          <select id="globalServiceFilter"><option value="">Todos los registros</option><option value="energia">Con energía identificada</option></select>
         </label>
         <label>Prioridad energética
           <select id="priorityFilter">
@@ -408,14 +403,7 @@
         </div>
         <div>
           <label>Servicio</label>
-          <select id="serviceFilter">
-            <option value="">Todos</option>
-            <option value="energia">Energía</option>
-            <option value="agua">Agua</option>
-            <option value="alcantarillado">Alcantarillado</option>
-            <option value="gas">Gas</option>
-            <option value="aseo">Aseo</option>
-          </select>
+          <select id="serviceFilter"><option value="">Todos los registros</option><option value="energia">Con energía identificada</option></select>
         </div>
         <div class="toolbar-buttons">
           <button id="exportCsvBtn" class="secondary">Exportar CSV</button>
@@ -427,7 +415,7 @@
         <table>
           <thead>
             <tr>
-              <th>Periodo</th><th>Sede</th><th>Dirección</th><th>Comuna</th><th>Núcleo</th><th>Agua m³</th><th>Alc. m³</th><th>Energía kWh</th><th>Gas m³</th><th>Aseo $</th><th>Residuos t</th><th>CO₂ kg</th><th>Fuente</th>
+              <th>Periodo</th><th>Sede</th><th>Dirección</th><th>Comuna</th><th>Núcleo</th><th>Energía kWh</th><th>CO₂e kg</th><th>Fuente</th>
             </tr>
           </thead>
           <tbody id="recordsBody"></tbody>
@@ -457,6 +445,6 @@
   <script defer src="data/sincronizacion-territorial.js?v=60-territorios"></script>
   <script defer src="data/excepciones-servicios.js?v=60-instituciones"></script>
   
-  <script defer src="app.js?v=65-rendimiento"></script>
+  <script defer src="app.js?v=85-electricidad-ranking-co2-pdf"></script>
 </body>
 </html>

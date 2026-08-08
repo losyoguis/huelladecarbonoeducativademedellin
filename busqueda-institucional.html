@@ -6,7 +6,7 @@
 <title>Búsqueda institucional · Facturas de servicios públicos · SiMeCO₂</title>
 <meta name="description" content="Consulta por institución educativa el resumen mensual de sus facturas de servicios públicos.">
 <link rel="icon" href="assets/los-yoguis-logo-optimized.png" type="image/png">
-<link rel="stylesheet" href="styles.css?v=82-estado-prioridad">
+<link rel="stylesheet" href="styles.css?v=85-electricidad-ranking-co2-pdf">
 </head>
 <body class="standalone-page institutional-page app-ready" data-page="institutional">
 <header class="module-page-header" id="module-top">
@@ -14,7 +14,7 @@
   <div>
     <span class="section-kicker">Búsqueda institucional</span>
     <h1>Facturas de servicios públicos por I.E.</h1>
-    <p>Selecciona una institución educativa para consultar, mes a mes, sus consumos de energía, agua, alcantarillado, gas y aseo, y acceder a la cuenta asociada a cada sede.</p>
+    <p>Selecciona una institución educativa para consultar, mes a mes, su consumo de energía eléctrica, la huella de carbono asociada y acceder a la cuenta correspondiente.</p>
   </div>
   <div class="module-page-links">
     <a href="dashboard.html">Dashboard</a>
@@ -69,8 +69,6 @@
       <article><span>Meses con factura</span><strong id="kpiMonths">0</strong></article>
       <article><span>Energía acumulada</span><strong id="kpiEnergy">0 kWh</strong></article>
       <article><span>Huella de carbono</span><strong id="kpiCo2">0 t CO₂e</strong></article>
-      <article><span>Agua acumulada</span><strong id="kpiWater">0 m³</strong></article>
-      <article><span>Gas acumulado</span><strong id="kpiGas">0 m³</strong></article>
     </section>
 
     <section class="panel monthly-bills-panel">
@@ -84,7 +82,7 @@
       <div class="table-wrap institutional-table-wrap">
         <table class="institutional-bills-table">
           <thead><tr>
-            <th>Periodo</th><th>Energía</th><th>CO₂e</th><th>Agua</th><th>Alcantarillado</th><th>Gas</th><th>Aseo</th><th>Cuenta de servicios públicos</th>
+            <th>Periodo</th><th>Energía eléctrica</th><th>CO₂e</th><th>Cuenta eléctrica</th>
           </tr></thead>
           <tbody id="institutionBillsBody"></tbody>
         </table>

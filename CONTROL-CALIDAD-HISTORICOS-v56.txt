@@ -1,4 +1,4 @@
-CONTROL DE CALIDAD DE HISTÓRICOS — SiMeCO₂ v56
+CONTROL DE CALIDAD DE HISTÓRICOS — SiMeCO₂ v85
 Fecha: 2026-08-08
 
 CRITERIO DE FUENTE
@@ -36,9 +36,6 @@ Periodo | Detalle por sede (kWh) | Total oficial (kWh) | Diferencia | Registros
 
 DIFERENCIA MÁXIMA ABSOLUTA DEL DETALLE FRENTE AL TOTAL OFICIAL
 Energía: 2.5726% (umbral 3.0%)
-Agua: 4.1617% (umbral 5.0%)
-Alcantarillado: 4.0162% (umbral 5.0%)
-Gas: 2.2744% (umbral 3.0%)
 
 INTEGRIDAD DE LOS PDF
 OK | 1-2025Enero.pdf
