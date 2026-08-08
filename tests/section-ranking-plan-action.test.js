@@ -25,5 +25,5 @@ ok(table.indexOf('<th>Plan de acción</th>') < table.indexOf('<th>Energía total
 ok(app.includes('data-label="Plan de acción" class="plan-cell"'),'Fila del dashboard no mueve Plan de acción');
 ok(app.includes('<td colspan="4">TOTAL / DATOS DISPONIBLES</td><td>—</td><td>—</td><td>${energyRows.length'),'Fila total no respeta nuevas columnas');
 ok(css.includes('grid-template-columns:repeat(7,minmax(0,1fr))'),'Navegación móvil no admite 6 secciones');
-ok(html.includes('app.js?v=87-datos-rapidos'),'Falta cache-busting JS v82');
+ok(html.includes('app.js?v=88-arranque-inmediato'),'Falta cache-busting JS v82');
 console.log('OK section-ranking-plan-action');
