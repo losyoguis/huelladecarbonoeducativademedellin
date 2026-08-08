@@ -12,5 +12,5 @@ ok(app.includes('renderRankingCarbonTable(visible,start);'),'La tabla no se sinc
 ok(app.includes('rankingCo2eT'),'Falta cálculo de CO₂e');
 ok(app.includes("data-label=\"Huella de carbono\""),'Falta celda de huella');
 ok(css.includes('.ranking-carbon-table'),'Faltan estilos de la tabla');
-ok(html.includes('app.js?v=99-activo-visible'),'Falta cache-busting v95');
+ok(html.includes('app.js?v=100-ux-organizada'),'Falta cache-busting v95');
 console.log('OK ranking-carbon-table');

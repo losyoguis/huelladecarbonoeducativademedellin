@@ -12,5 +12,5 @@ ok(app.includes("['rankings',renderRanking]"),'renderAll no aísla Ranking');
 ok(app.includes("['informe por sede',renderDashboard]"),'renderAll no aísla Informe por sede');
 ok(app.includes("const cols=includeTerritory?8:6;"),'Tabla eléctrica conserva colspan antiguo');
 ok(compact.includes("window.SIMECO_REGISTROS") || compact.includes("SIMECO_REGISTROS"),'Bundle compacto no expone registros');
-ok(html.includes('app.js?v=99-activo-visible'),'Falta cache-busting v87');
+ok(html.includes('app.js?v=100-ux-organizada'),'Falta cache-busting v87');
 console.log('OK startup-loader-safety');
