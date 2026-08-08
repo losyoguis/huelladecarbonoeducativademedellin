@@ -1,0 +1,27 @@
+const fs=require('fs'),vm=require('vm');
+function ok(v,m){if(!v)throw new Error(m);}
+const c={console,window:{},document:{addEventListener(){},getElementById(){return null}},Intl,Number,String,Set,Map,Math,Array,Object,encodeURIComponent,requestAnimationFrame:f=>f()};
+c.window=c;c.globalThis=c;vm.createContext(c);
+for(const f of ['data/registros.gas.min.js','data/resumenes.gas.min.js','gas.js']) vm.runInContext(fs.readFileSync(f,'utf8'),c,{filename:f});
+const d=c.simecoGasDebug;
+ok(d,'No se expuso simecoGasDebug');
+const sites=d.aggregateGasSites();
+const withGas=sites.filter(s=>s.hasGas).sort((a,b)=>b.gasM3-a.gasM3);
+ok(sites.length===568,`Sedes/cuentas esperadas 568, hay ${sites.length}`);
+ok(withGas.length===28,`Sedes con lectura de gas esperadas 28, hay ${withGas.length}`);
+ok(withGas.filter(s=>s.gasM3>0).length===11,'Sedes con consumo positivo esperado 11');
+ok(withGas[0].site==='Municipio De Medellin',`Mayor consumidor inesperado ${withGas[0].site}`);
+ok(Math.abs(withGas[0].gasM3-229.921)<0.001,'Consumo top inesperado');
+const savings=d.buildGasSavingsRows();
+ok(savings.length===2,`Ranking general de ahorro inesperado ${savings.length}`);
+ok(savings[0].site.includes('Distrito Especial'),'Top ahorro general inesperado');
+ok(Number.isFinite(savings[0].managementScore),'Falta Índice de Gestión del Ahorro de Gas');
+const plan=d.buildGasPlan(withGas[0]);
+ok(plan.priority==='Alta'&&plan.targetPct===15,'Plan top no asigna meta alta');
+const noData=sites.find(s=>!s.hasGas);
+const noDataPlan=d.buildGasPlan(noData);
+ok(noDataPlan.priority==='Sin línea base'&&noDataPlan.targetPct===null,'Plan sin gas debe construir línea base');
+const text=fs.readFileSync('gas.js','utf8');
+ok(text.includes("openPdfPrintDocument('Plan de Acción de Ahorro de Gas'"),'Plan Gas no genera salida PDF');
+ok(text.includes('Nunca buscar ni reparar fugas con métodos caseros'),'Plan no protege contra reparaciones caseras');
+console.log(JSON.stringify({ok:true,sites:sites.length,withGas:withGas.length,savings:savings.length,topConsumer:withGas[0].site,topSaver:savings[0].site}));
