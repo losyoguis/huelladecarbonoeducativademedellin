@@ -12,6 +12,6 @@ ok(css.includes('position:fixed') && css.includes('grid-template-columns:repeat(
 ok(css.includes('.dashboard-data-table thead') && css.includes('display:none'),'Dashboard no se transforma a tarjetas en móvil');
 ok(css.includes('font-size:16px !important'),'Falta prevención de zoom móvil');
 ok(css.includes('safe-area-inset-bottom'),'Falta soporte safe-area');
-ok(html.includes('styles.css?v=88-arranque-inmediato'),'No se actualizó cache-busting CSS');
-ok(html.includes('app.js?v=88-arranque-inmediato'),'No se actualizó cache-busting JS');
+ok(html.includes('styles.css?v=89-control-calidad'),'No se actualizó cache-busting CSS');
+ok(html.includes('app.js?v=89-control-calidad'),'No se actualizó cache-busting JS');
 console.log('OK google-sites-responsive');
