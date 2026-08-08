@@ -211,7 +211,7 @@ def main() -> int:
         errors.extend(f"{name}: {message}" for message in item_errors)
 
     lines = [
-        "CONTROL DE CALIDAD DE HISTÓRICOS — SiMeCO₂ v94",
+        "CONTROL DE CALIDAD DE HISTÓRICOS — SiMeCO₂ v95",
         f"Fecha: {date.today().isoformat()}",
         "",
         "CRITERIO DE FUENTE",
