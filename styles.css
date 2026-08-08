@@ -3161,3 +3161,102 @@ body.viewport-phone .assistant-panel{
 @media(max-width:700px){
   .ranking-priority-help{width:100%}
 }
+
+
+/* ==========================================================
+   SiMeCO₂ v93 · Módulo 8 Agua
+   ========================================================== */
+.section-switcher{grid-template-columns:repeat(4,minmax(0,1fr))}
+.water-section-tab>span{background:#e2f6fc;color:#08799d}
+.water-section-tab.active{background:linear-gradient(135deg,#087fa7,#16a9d1);border-color:#16a9d1}
+.water-module{--water:#087fa7;--water2:#1aaed4;--water-soft:#eefaff;--water-line:#c5e7f1}
+.water-hero-panel{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:24px;align-items:center;background:radial-gradient(circle at 90% 10%,rgba(29,168,212,.22),transparent 34%),linear-gradient(135deg,#f9feff,#eaf9fd);border-color:var(--water-line)}
+.water-hero-panel h2{color:#0a536b;font-size:clamp(1.6rem,3vw,2.5rem);margin:.25rem 0 .65rem}
+.water-hero-panel p{max-width:900px;color:#446b75;font-size:1rem;line-height:1.55}
+.water-drop-mark{width:92px;height:92px;border-radius:28px;display:grid;place-items:center;font-size:3.5rem;background:linear-gradient(145deg,#fff,#dff6fc);box-shadow:0 14px 28px rgba(8,127,167,.18);border:1px solid var(--water-line)}
+.water-source-note{margin-top:13px;padding:11px 14px;border-radius:12px;background:#fff;border:1px solid var(--water-line);color:#3f6874;font-size:.86rem}
+.water-kpi-cards{grid-template-columns:repeat(4,minmax(0,1fr))}
+.water-kpi-cards article{border-color:var(--water-line);background:linear-gradient(145deg,#fff,#f1fbfe)}
+.water-kpi-cards article span{color:#567780}
+.water-kpi-cards article strong{color:#0a6786}
+.water-kpi-cards .water-kpi-primary{background:linear-gradient(135deg,#0a7296,#19a9d1);color:#fff;border-color:transparent}
+.water-kpi-cards .water-kpi-primary span,.water-kpi-cards .water-kpi-primary strong,.water-kpi-cards .water-kpi-primary small{color:#fff}
+.water-analysis-grid{display:grid;grid-template-columns:minmax(0,2fr) minmax(260px,.8fr);gap:16px;align-items:stretch}
+.water-chart-card{overflow-x:auto;border:1px solid var(--water-line);border-radius:18px;background:#fff;padding:10px}
+.water-analysis-highlights{display:grid;gap:10px}
+.water-analysis-highlights article{padding:15px;border:1px solid var(--water-line);border-radius:15px;background:linear-gradient(145deg,#fff,#eefaff)}
+.water-analysis-highlights span{display:block;color:#62818a;font-size:.74rem;font-weight:900;text-transform:uppercase;letter-spacing:.05em}
+.water-analysis-highlights strong{display:block;margin-top:5px;color:#0a6786;font-size:1.25rem}
+.water-analysis-highlights small{display:block;margin-top:4px;color:#5b777f}
+.water-monthly-wrap{margin-top:16px}
+.water-table{width:100%;border-collapse:collapse;background:#fff}
+.water-table th{padding:10px 9px;background:#eaf8fc;color:#134e61;border-bottom:1px solid var(--water-line);font-size:.79rem;text-align:left}
+.water-table td{padding:10px 9px;border-bottom:1px solid #e1edf0;vertical-align:middle}
+.water-table tbody tr:hover{background:#f7fdff}
+.water-change{display:inline-flex;padding:5px 9px;border-radius:999px;font-size:.78rem;font-weight:900}
+.water-change.down{background:#e5f8ed;color:#146439}
+.water-change.up{background:#fff0ef;color:#9b3b32}
+.water-pdf-link{margin-left:7px}
+.water-filter-bar{display:grid;grid-template-columns:minmax(170px,.55fr) minmax(280px,1.35fr) auto;gap:12px;align-items:end;margin:12px 0 14px;padding:14px;border:1px solid var(--water-line);border-radius:16px;background:linear-gradient(135deg,#f8fdff,#edfaff)}
+.water-filter-bar label{display:grid;gap:6px;color:#3d646e;font-weight:850;font-size:.8rem}
+.water-filter-bar select,.water-filter-bar input{min-height:44px;width:100%;border:1px solid #b9dce6;border-radius:11px;padding:9px 11px;background:#fff;color:#173f49;font:inherit}
+.water-ranking-summary{margin:8px 0 12px;padding:11px 13px;border-left:4px solid var(--water2);border-radius:9px;background:#eefaff;color:#355e69}
+.water-ranking-table th:nth-child(1),.water-savings-table th:nth-child(1){width:48px}
+.water-ranking-table td:nth-child(1),.water-savings-table td:nth-child(1){text-align:center;font-weight:900;color:#0b789b}
+.water-plan-row-btn{border:0;border-radius:9px;padding:7px 10px;background:#e5f7fc;color:#08799d;font-weight:900;cursor:pointer}
+.water-plan-row-btn:hover{background:#0c8db7;color:#fff}
+.water-map-link{color:#087b9e;text-decoration:none;font-weight:750}
+.water-map-link:hover{text-decoration:underline}
+.water-pagination{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:14px}
+.water-pagination strong{min-width:200px;text-align:center;color:#46666f}
+.water-plan-controls{display:grid;grid-template-columns:minmax(320px,1fr) auto auto;gap:12px;align-items:end}
+.water-plan-controls label{display:grid;gap:6px;font-weight:850;color:#3f656e}
+.water-plan-controls input{min-height:46px;border:1px solid #afd9e5;border-radius:12px;padding:10px 12px;font:inherit}
+.water-plan-status{margin:14px 0;padding:11px 13px;background:#f1fbfe;border:1px solid var(--water-line);border-radius:12px;color:#426a74}
+.water-plan-preview{margin-top:15px}
+.water-plan-document{border:1px solid var(--water-line);border-radius:20px;background:#fff;padding:20px;box-shadow:0 12px 30px rgba(8,107,139,.08)}
+.water-plan-header{display:flex;justify-content:space-between;gap:20px;padding:18px;border-radius:16px;background:linear-gradient(135deg,#0a7195,#19a9d1);color:#fff}
+.water-plan-header span{font-size:.75rem;font-weight:900;text-transform:uppercase;letter-spacing:.06em}
+.water-plan-header h3{margin:4px 0;color:#fff;font-size:1.5rem}
+.water-plan-header .water-map-link{color:#eafcff}
+.water-plan-priority{min-width:140px;align-self:flex-start;padding:10px 12px;border:1px solid rgba(255,255,255,.35);border-radius:12px;text-align:center}
+.water-plan-priority strong{display:block;font-size:1.25rem}
+.water-plan-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:14px 0}
+.water-plan-metrics article{padding:12px;border:1px solid var(--water-line);border-radius:13px;background:#f5fcfe}
+.water-plan-metrics span{display:block;color:#63818a;font-size:.74rem;font-weight:850}
+.water-plan-metrics strong{display:block;margin-top:4px;color:#0a647f;font-size:1rem}
+.water-plan-goal,.water-plan-followup{padding:13px 15px;border-radius:13px;background:#eaf9fd;border-left:5px solid var(--water2);color:#345e69;margin:14px 0}
+.water-plan-document h4{margin:20px 0 8px;color:#0a6886;font-size:1.05rem}
+
+@media(max-width:1000px){
+  .water-kpi-cards{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .water-analysis-grid{grid-template-columns:1fr}
+  .water-filter-bar{grid-template-columns:1fr 1fr}
+  .water-filter-bar button{grid-column:1/-1}
+  .water-plan-controls{grid-template-columns:1fr 1fr}
+  .water-plan-controls label{grid-column:1/-1}
+}
+@media(max-width:700px){
+  .section-switcher{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .water-hero-panel{grid-template-columns:1fr}
+  .water-drop-mark{display:none}
+  .water-kpi-cards{grid-template-columns:1fr}
+  .water-filter-bar,.water-plan-controls{grid-template-columns:1fr}
+  .water-filter-bar button,.water-plan-controls label{grid-column:auto}
+  .water-plan-controls button{width:100%}
+  .water-plan-header{flex-direction:column}
+  .water-plan-metrics{grid-template-columns:1fr 1fr}
+  .water-table{min-width:760px}
+  .water-pagination{display:grid;grid-template-columns:1fr 1fr}
+  .water-pagination strong{grid-column:1/-1;grid-row:1;min-width:0}
+  .section-mobile-nav{display:flex!important;overflow-x:auto;justify-content:flex-start;gap:4px;scrollbar-width:none}
+  .section-mobile-nav::-webkit-scrollbar{display:none}
+  .section-mobile-nav button{flex:0 0 64px}
+}
+@media(max-width:430px){
+  .water-plan-metrics{grid-template-columns:1fr}
+}
+@media print{
+  .water-plan-document{box-shadow:none;border:0;padding:0}
+  .water-plan-header{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}

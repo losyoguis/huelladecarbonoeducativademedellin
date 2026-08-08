@@ -1,3 +1,36 @@
+# SiMeCO₂ v93 — Módulo 8 Agua
+
+La versión v93 conserva los módulos eléctricos de SiMeCO₂ e incorpora una nueva **sección 8: Agua**, diseñada para gestión hídrica escolar.
+
+## Funciones del módulo Agua
+
+- Consumo oficial acumulado de agua basado en el resumen de la página 1 de cada factura PDF.
+- Histórico mensual de los 17 periodos oficiales con acceso a la factura fuente.
+- Ranking de sedes que más consumen agua, con filtro mensual, búsqueda, Google Maps y paginación.
+- Ranking de sedes que más ahorran agua:
+  - por mes: compara únicamente meses calendario consecutivos con lectura válida;
+  - tendencia general: Índice de Gestión del Ahorro de Agua = 70% constancia + 30% magnitud del ahorro neto.
+- Plan de Acción de Ahorro de Agua para cualquier sede.
+- El plan incluye diagnóstico, cobertura, consumo acumulado, promedio mensual, tendencia, prioridad relativa, meta recomendada, acciones, responsables, plazos e indicadores.
+- El plan puede abrirse como informe A4 y guardarse en **PDF**.
+- Las sedes sin lectura de agua también reciben un plan, orientado primero a construir una línea base confiable.
+- La carga futura de PDF extrae energía y agua; los nuevos datos se integran al módulo 8 sin procesar de nuevo las facturas canónicas que no cambiaron.
+
+## Control de calidad de agua
+
+- 9.147 registros base.
+- 7.317 registros con lectura de agua.
+- 256 lecturas reales de 0 m³, conservadas como datos válidos.
+- 17 periodos oficiales.
+- Consumo oficial acumulado: **1.351.583,22 m³**.
+- Consumo detallado vinculado: **1.337.964,432 m³**.
+- Diferencia acumulada detalle/oficial: **1,008%**.
+- Diferencia máxima por periodo: **4,162%**, dentro del umbral de control del 5%.
+- 446 sedes/cuentas con al menos una lectura de agua.
+- 103 sedes con ahorro neto verificable en la tendencia general.
+
+---
+
 ## Actualización v67 — Identificación por dirección en rankings
 
 - El ranking de consumo muestra cada I.E./sede junto a su dirección.

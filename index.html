@@ -13,9 +13,9 @@
   <meta name="description" content="Sistema interactivo para medir, interpretar y gestionar la huella de carbono educativa a partir del consumo de energía eléctrica." />
   <link rel="icon" type="image/png" href="assets/los-yoguis-logo-optimized.png" />
   <link rel="apple-touch-icon" href="assets/los-yoguis-logo-optimized.png" />
-  <link rel="preload" href="data/registros.electricidad.min.js?v=92-control-calidad" as="script" />
-  <link rel="preload" href="data/resumenes.electricidad.min.js?v=92-control-calidad" as="script" />
-  <link rel="stylesheet" href="styles.css?v=92-control-calidad" />
+  <link rel="preload" href="data/registros.electricidad.min.js?v=93-agua" as="script" />
+  <link rel="preload" href="data/resumenes.electricidad.min.js?v=93-agua" as="script" />
+  <link rel="stylesheet" href="styles.css?v=93-agua" />
 </head>
 <body>
   <div class="invoice-loading active" id="invoiceLoading" role="status" aria-live="assertive" aria-hidden="false">
@@ -81,14 +81,14 @@
         <img src="assets/los-yoguis-logo-optimized.png" alt="" class="hero-yoguis-logo" />
       </div>
       <div class="hero-title-block hero-yoguis-content">
-        <p class="mjb-chip">Ciencia escolar · energía · clima · territorio</p>
+        <p class="mjb-chip">Ciencia escolar · energía · agua · clima · territorio</p>
         <div class="mjb-title-card hero-main-title-card">
           <h1>Sistema de medición de la huella de carbono educativa de Medellín</h1>
           <h2>SiMeCO₂ · Los Yoguis · Guardianes Climáticos</h2>
         </div>
-        <p class="lead">Plataforma educativa e institucional para medir consumos, estimar emisiones de CO₂e, priorizar sedes y generar planes de gestión ambiental escolar.</p>
+        <p class="lead">Plataforma educativa e institucional para analizar energía eléctrica y agua, estimar emisiones de CO₂e, priorizar sedes y generar planes de gestión ambiental escolar.</p>
         <div class="hero-purpose-box">
-          <strong>Propósito:</strong> convertir los datos de energía eléctrica en decisiones pedagógicas, ambientales e institucionales para reducir la huella de carbono educativa de Medellín.
+          <strong>Propósito:</strong> convertir los datos de energía eléctrica y agua en decisiones pedagógicas, ambientales e institucionales para reducir impactos y fortalecer la gestión ambiental educativa de Medellín.
         </div>
       </div>
     </div>
@@ -103,6 +103,7 @@
     <button type="button" class="section-tab" data-section="seccion-5" aria-selected="false"><span>5</span><strong>Ranking</strong><small>Consumo, CO₂e y ahorro</small></button>
     <button type="button" class="section-tab" data-section="seccion-6" aria-selected="false"><span>6</span><strong>Estado información</strong><small>Calidad y trazabilidad</small></button>
     <button type="button" class="section-tab" data-section="seccion-7" aria-selected="false"><span>7</span><strong>Aula</strong><small>Aprender, medir y actuar</small></button>
+    <button type="button" class="section-tab water-section-tab" data-section="seccion-8" aria-selected="false"><span>8</span><strong>Agua</strong><small>Consumo, ahorro y plan</small></button>
   </nav>
 
   <main>
@@ -579,6 +580,130 @@
     </section>
 
     </div>
+
+    <div class="app-section water-module" id="seccion-8" data-page-title="Agua">
+      <section class="panel water-hero-panel" id="agua">
+        <div class="water-hero-copy">
+          <span class="section-kicker">Módulo 8 · Gestión hídrica escolar</span>
+          <h2>Agua: consumo, ahorro y planes de acción por sede</h2>
+          <p>Analiza las lecturas de agua registradas en las facturas, identifica las sedes con mayor consumo, reconoce las que más reducen su uso y genera un plan personalizado de ahorro de agua.</p>
+          <div class="water-source-note"><strong>Fuente del total:</strong> resumen oficial de la primera página de cada factura. <strong>Fuente de rankings:</strong> registros detallados vinculados a cada sede.</div>
+        </div>
+        <div class="water-drop-mark" aria-hidden="true">💧</div>
+      </section>
+
+      <section class="cards water-kpi-cards" aria-label="Indicadores generales de agua">
+        <article class="water-kpi-primary"><span>Consumo oficial acumulado</span><strong id="waterTotalOfficial">—</strong><small>m³ de agua · 17 facturas oficiales</small></article>
+        <article><span>Consumo detallado vinculado</span><strong id="waterTotalDetail">—</strong><small id="waterReconciliation">Comparación con el total oficial</small></article>
+        <article><span>Sedes con lectura de agua</span><strong id="waterSitesWithData">—</strong><small id="waterCoverageText">Cobertura de la base</small></article>
+        <article><span>Promedio oficial mensual</span><strong id="waterMonthlyAverage">—</strong><small>Promedio de los periodos disponibles</small></article>
+      </section>
+
+      <section class="panel water-analysis-panel">
+        <div class="section-head">
+          <div>
+            <span class="section-kicker">Análisis total</span>
+            <h2>Evolución del consumo de agua de Medellín</h2>
+            <p class="muted" id="waterAnalysisNarrative">Preparando el análisis de los 17 periodos oficiales…</p>
+          </div>
+        </div>
+        <div class="water-analysis-grid">
+          <div class="water-chart-card">
+            <canvas id="waterHistoryChart" width="1100" height="430" aria-label="Histórico mensual del consumo oficial de agua"></canvas>
+          </div>
+          <div class="water-analysis-highlights" id="waterAnalysisHighlights"></div>
+        </div>
+        <div class="table-wrap water-monthly-wrap">
+          <table class="water-table water-monthly-table">
+            <thead><tr><th>Periodo</th><th>Consumo oficial</th><th>Variación</th><th>Fuente</th></tr></thead>
+            <tbody id="waterMonthlyBody"><tr><td colspan="4">Cargando datos de agua…</td></tr></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel water-ranking-panel" id="ranking-consumo-agua">
+        <div class="section-head">
+          <div>
+            <span class="section-kicker">Ranking de consumo</span>
+            <h2>Sedes que más consumen agua</h2>
+            <p class="muted">Ordena las sedes de mayor a menor consumo de agua. Los registros sin lectura no se convierten en cero.</p>
+          </div>
+        </div>
+        <div class="water-filter-bar">
+          <label>Periodo
+            <select id="waterConsumptionPeriod"><option value="">Todos los periodos</option></select>
+          </label>
+          <label>Buscar sede o dirección
+            <input id="waterConsumptionSearch" type="search" autocomplete="off" placeholder="Ej.: Manuel J. Betancur o dirección">
+          </label>
+          <button id="waterConsumptionRefresh" type="button" class="secondary">↻ Mostrar ranking completo</button>
+        </div>
+        <div class="water-ranking-summary" id="waterConsumptionSummary"></div>
+        <div class="table-map-note" role="note">🏫 <strong>Ubicación:</strong> haz clic en cualquier dirección para abrirla en Google Maps.</div>
+        <div class="table-wrap">
+          <table class="water-table water-ranking-table">
+            <thead><tr><th>#</th><th>Sede</th><th>Dirección</th><th>Consumo de agua</th><th>Prom. m³/mes</th><th>Periodos</th><th>Plan</th></tr></thead>
+            <tbody id="waterConsumptionBody"><tr><td colspan="7">Cargando ranking…</td></tr></tbody>
+          </table>
+        </div>
+        <div class="water-pagination">
+          <button id="waterConsumptionPrev" type="button" class="secondary">← Anterior</button>
+          <strong id="waterConsumptionPageInfo">Página 1</strong>
+          <button id="waterConsumptionNext" type="button" class="secondary">Siguiente →</button>
+        </div>
+      </section>
+
+      <section class="panel water-savings-panel" id="ranking-ahorro-agua">
+        <div class="section-head">
+          <div>
+            <span class="section-kicker">Ranking de ahorro</span>
+            <h2>Sedes que más ahorran agua</h2>
+            <p class="muted">La tendencia general combina 70% constancia de reducciones y 30% magnitud del ahorro neto. El filtro mensual compara únicamente meses calendario consecutivos con lectura válida.</p>
+          </div>
+        </div>
+        <div class="water-filter-bar">
+          <label>Comparación
+            <select id="waterSavingsPeriod"><option value="">Tendencia general</option></select>
+          </label>
+          <label>Buscar sede o dirección
+            <input id="waterSavingsSearch" type="search" autocomplete="off" placeholder="Buscar dentro del ranking de ahorro">
+          </label>
+          <button id="waterSavingsRefresh" type="button" class="secondary">↻ Mostrar ranking completo</button>
+        </div>
+        <div class="water-ranking-summary" id="waterSavingsSummary"></div>
+        <div class="table-wrap">
+          <table class="water-table water-savings-table">
+            <thead><tr><th>#</th><th>Sede</th><th>Dirección</th><th id="waterSavingsMetricHead">Índice de gestión</th><th>Ahorro de agua</th><th>Detalle</th><th>Plan</th></tr></thead>
+            <tbody id="waterSavingsBody"><tr><td colspan="7">Calculando ahorros…</td></tr></tbody>
+          </table>
+        </div>
+        <div class="water-pagination">
+          <button id="waterSavingsPrev" type="button" class="secondary">← Anterior</button>
+          <strong id="waterSavingsPageInfo">Página 1</strong>
+          <button id="waterSavingsNext" type="button" class="secondary">Siguiente →</button>
+        </div>
+      </section>
+
+      <section class="panel water-plan-panel" id="plan-ahorro-agua">
+        <div class="section-head">
+          <div>
+            <span class="section-kicker">Plan por sede</span>
+            <h2>Plan de Acción de Ahorro de Agua</h2>
+            <p class="muted">Genera un diagnóstico y un plan personalizado para cualquier sede, incluso cuando todavía no tenga una lectura de agua identificada.</p>
+          </div>
+        </div>
+        <div class="water-plan-controls">
+          <label>Institución educativa o sede
+            <input id="waterPlanSearch" type="search" list="waterPlanSites" autocomplete="off" placeholder="Escribe el nombre o la dirección">
+            <datalist id="waterPlanSites"></datalist>
+          </label>
+          <button id="waterGeneratePlan" type="button" class="primary">💧 Generar plan de ahorro</button>
+          <button id="waterDownloadPlanPdf" type="button" class="secondary" disabled>⬇ Descargar plan PDF</button>
+        </div>
+        <div id="waterPlanStatus" class="water-plan-status" role="status" aria-live="polite">Selecciona una sede para generar su plan.</div>
+        <div id="waterPlanPreview" class="water-plan-preview" hidden></div>
+      </section>
+    </div>
   </main>
 
   <nav class="mobile-bottom-nav section-mobile-nav" aria-label="Navegación móvil por secciones">
@@ -602,6 +727,9 @@
     </button>
     <button type="button" class="mobile-section-tab" data-section="seccion-7" aria-label="Abrir aula ambiental">
       <span aria-hidden="true">✦</span><small>Aula</small>
+    </button>
+    <button type="button" class="mobile-section-tab water-mobile-tab" data-section="seccion-8" aria-label="Abrir módulo de agua">
+      <span aria-hidden="true">💧</span><small>Agua</small>
     </button>
   </nav>
 
@@ -651,7 +779,7 @@
         inicio: 'seccion-1', importacion: 'seccion-1', 'resumen-ejecutivo': 'seccion-1', cards: 'seccion-1', 'calidad-datos': 'seccion-6',
         'comparar-periodos': 'seccion-2', 'ranking-sedes': 'seccion-5', 'ranking-ahorro-energia': 'seccion-5',
         'dashboard-ambiental': 'seccion-3', planPanel: 'seccion-3',
-        registros: 'seccion-4', 'aula-climatica': 'seccion-7'
+        registros: 'seccion-4', 'aula-climatica': 'seccion-7', agua: 'seccion-8', 'ranking-consumo-agua': 'seccion-8', 'ranking-ahorro-agua': 'seccion-8', 'plan-ahorro-agua': 'seccion-8'
       };
 
       function openSection(sectionId, options = {}) {
@@ -674,6 +802,9 @@
         window.dispatchEvent(new Event('resize'));
         if (sectionId === 'seccion-2' && typeof window.simecoRefreshHistory === 'function') {
           requestAnimationFrame(() => window.simecoRefreshHistory({ preserveSelection: true }));
+        }
+        if (sectionId === 'seccion-8' && typeof window.simecoRefreshWater === 'function') {
+          requestAnimationFrame(() => window.simecoRefreshWater());
         }
       }
 
@@ -707,7 +838,7 @@
   </script>
 
   <!-- v87: datos eléctricos ultracompactos cargados antes de app.js -->
-  <script src="data/registros.electricidad.min.js?v=92-control-calidad"></script>
+  <script src="data/registros.electricidad.min.js?v=93-agua"></script>
   <script>
     (() => {
       const records = Array.isArray(window.SIMECO_REGISTROS) ? window.SIMECO_REGISTROS.length : 0;
@@ -733,12 +864,15 @@
       window.SIMECO_FAST_BOOT_DONE=true;
     })();
   </script>
-  <script src="data/resumenes.electricidad.min.js?v=92-control-calidad"></script>
-  <script defer src="data/sincronizacion-territorial.js?v=92-control-calidad"></script>
-  <script defer src="data/excepciones-servicios.js?v=92-control-calidad"></script>
+  <script src="data/resumenes.electricidad.min.js?v=93-agua"></script>
+  <script defer src="data/sincronizacion-territorial.js?v=93-agua"></script>
+  <script defer src="data/excepciones-servicios.js?v=93-agua"></script>
 
-  <script defer src="app.js?v=92-control-calidad"></script>
-  <script defer src="assistant-config.js?v=92-control-calidad"></script>
-  <script defer src="assistant.js?v=92-control-calidad"></script>
+  <script defer src="app.js?v=93-agua"></script>
+  <script defer src="data/registros.agua.min.js?v=93-agua"></script>
+  <script defer src="data/resumenes.agua.min.js?v=93-agua"></script>
+  <script defer src="water.js?v=93-agua"></script>
+  <script defer src="assistant-config.js?v=93-agua"></script>
+  <script defer src="assistant.js?v=93-agua"></script>
 </body>
 </html>

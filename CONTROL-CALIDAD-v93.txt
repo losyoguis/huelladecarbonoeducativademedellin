@@ -1,0 +1,44 @@
+CONTROL DE CALIDAD SiMeCO₂ v93
+Fecha: 2026-08-08
+
+RESULTADOS GENERALES
+- npm run check: APROBADO.
+- npm test: APROBADO.
+- validar_sistema.py: APROBADO.
+- validar_historicos.py: APROBADO.
+- validar_agua.py: APROBADO.
+- Render runtime del módulo Agua: 0 errores.
+- Integridad de referencias HTML: APROBADA.
+- Secciones principales: 8/8.
+
+DATOS ELÉCTRICOS
+- 9.147 registros preservados.
+- Histórico oficial de energía preservado.
+- Ranking eléctrico + CO₂e preservado.
+- Ahorro eléctrico preservado.
+
+DATOS DE AGUA
+- Registros base: 9.147.
+- Lecturas de agua: 7.317.
+- Lecturas válidas de 0 m³: 256.
+- Sedes/cuentas con agua: 446.
+- Periodos oficiales: 17.
+- Total oficial: 1.351.583,22 m³.
+- Total detalle: 1.337.964,432 m³.
+- Diferencia acumulada: 1,008%.
+- Diferencia máxima mensual: 4,162% (< 5%).
+- Ranking general de ahorro: 103 sedes con ahorro neto verificable.
+
+PLANES
+- Plan generado para sedes con agua: APROBADO.
+- Plan de línea base para sedes sin agua: APROBADO.
+- Generador A4 / Guardar como PDF: APROBADO.
+
+ACTUALIZACIÓN DE PDF
+- Parser de energía: APROBADO.
+- Parser de agua: APROBADO.
+- Resumen oficial de agua: APROBADO.
+- Integración de fuentes nuevas/reimportadas: APROBADA.
+- Omisión rápida de 17 PDF canónicos sin cambios: APROBADA.
+
+RESULTADO FINAL: APROBADO.
