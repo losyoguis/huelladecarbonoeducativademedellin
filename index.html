@@ -13,9 +13,9 @@
   <meta name="description" content="Sistema interactivo para medir, interpretar y gestionar la huella de carbono educativa a partir del consumo de energía eléctrica." />
   <link rel="icon" type="image/png" href="assets/los-yoguis-logo-optimized.png" />
   <link rel="apple-touch-icon" href="assets/los-yoguis-logo-optimized.png" />
-  <link rel="preload" href="data/registros.electricidad.min.js?v=99-activo-visible" as="script" />
-  <link rel="preload" href="data/resumenes.electricidad.min.js?v=99-activo-visible" as="script" />
-  <link rel="stylesheet" href="styles.css?v=99-activo-visible" />
+  <link rel="preload" href="data/registros.electricidad.min.js?v=100-ux-organizada" as="script" />
+  <link rel="preload" href="data/resumenes.electricidad.min.js?v=100-ux-organizada" as="script" />
+  <link rel="stylesheet" href="styles.css?v=100-ux-organizada" />
 </head>
 <body>
   <div class="invoice-loading active" id="invoiceLoading" role="status" aria-live="assertive" aria-hidden="false">
@@ -95,7 +95,7 @@
   </header>
 
 
-  <div class="workspace-shell" id="simecoWorkspace">
+  <div class="workspace-shell" id="simecoWorkspace" data-ux-version="100">
     <aside class="side-navigation" id="sideNavigation" aria-label="Menú lateral de SiMeCO₂">
       <div class="side-navigation-header">
         <div class="side-navigation-brand">
@@ -1003,7 +1003,7 @@
   </script>
 
   <!-- v87: datos eléctricos ultracompactos cargados antes de app.js -->
-  <script src="data/registros.electricidad.min.js?v=99-activo-visible"></script>
+  <script src="data/registros.electricidad.min.js?v=100-ux-organizada"></script>
   <script>
     (() => {
       const records = Array.isArray(window.SIMECO_REGISTROS) ? window.SIMECO_REGISTROS.length : 0;
@@ -1029,9 +1029,9 @@
       window.SIMECO_FAST_BOOT_DONE=true;
     })();
   </script>
-  <script src="data/resumenes.electricidad.min.js?v=99-activo-visible"></script>
-  <script defer src="data/sincronizacion-territorial.js?v=99-activo-visible"></script>
-  <script defer src="data/excepciones-servicios.js?v=99-activo-visible"></script>
+  <script src="data/resumenes.electricidad.min.js?v=100-ux-organizada"></script>
+  <script defer src="data/sincronizacion-territorial.js?v=100-ux-organizada"></script>
+  <script defer src="data/excepciones-servicios.js?v=100-ux-organizada"></script>
 
   <script>
     (() => {
@@ -1113,14 +1113,14 @@
       updateCurrent(sideNav.querySelector('.section-tab.active'));
     })();
   </script>
-  <script defer src="app.js?v=99-activo-visible"></script>
-  <script defer src="data/registros.agua.min.js?v=99-activo-visible"></script>
-  <script defer src="data/resumenes.agua.min.js?v=99-activo-visible"></script>
-  <script defer src="water.js?v=99-activo-visible"></script>
-  <script defer src="data/registros.gas.min.js?v=99-activo-visible"></script>
-  <script defer src="data/resumenes.gas.min.js?v=99-activo-visible"></script>
-  <script defer src="gas.js?v=99-activo-visible"></script>
-  <script defer src="assistant-config.js?v=99-activo-visible"></script>
-  <script defer src="assistant.js?v=99-activo-visible"></script>
+  <script defer src="app.js?v=100-ux-organizada"></script>
+  <script defer src="data/registros.agua.min.js?v=100-ux-organizada"></script>
+  <script defer src="data/resumenes.agua.min.js?v=100-ux-organizada"></script>
+  <script defer src="water.js?v=100-ux-organizada"></script>
+  <script defer src="data/registros.gas.min.js?v=100-ux-organizada"></script>
+  <script defer src="data/resumenes.gas.min.js?v=100-ux-organizada"></script>
+  <script defer src="gas.js?v=100-ux-organizada"></script>
+  <script defer src="assistant-config.js?v=100-ux-organizada"></script>
+  <script defer src="assistant.js?v=100-ux-organizada"></script>
 </body>
 </html>

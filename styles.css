@@ -4575,3 +4575,969 @@ body.is-embedded .workspace-shell.sidebar-collapsed .side-navigation .section-ta
     background:linear-gradient(180deg,#f7fffb 0%,#effaf5 100%)!important;
   }
 }
+
+
+/* ==========================================================
+   SiMeCO₂ v100 · Control integral UX/UI
+   Capa final de maquetación para las 9 secciones
+   ========================================================== */
+
+:root{
+  --ux-gap:16px;
+  --ux-panel-radius:20px;
+  --ux-control-radius:12px;
+  --ux-control-height:46px;
+  --ux-shadow:0 10px 28px rgba(17,61,52,.075);
+  --ux-shadow-hover:0 14px 32px rgba(17,61,52,.11);
+  --ux-surface:#ffffff;
+  --ux-soft:#f6faf8;
+  --ux-line:#dce9e4;
+  --ux-ink:#173e35;
+  --ux-muted:#647d76;
+}
+
+/* ---------- Estructura general ---------- */
+.workspace-shell>main{
+  min-width:0!important;
+  overflow:visible!important;
+}
+.workspace-shell main .app-section{
+  min-width:0!important;
+  width:100%!important;
+  max-width:100%!important;
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr)!important;
+  gap:var(--ux-gap)!important;
+  align-content:start!important;
+  padding:0!important;
+}
+.workspace-shell main .app-section[hidden]{
+  display:none!important;
+}
+.workspace-shell main .app-section>.resource-module-identity{
+  margin:0!important;
+  justify-self:start!important;
+}
+.workspace-shell main .app-section>.panel,
+.workspace-shell main .app-section>.cards{
+  min-width:0!important;
+  width:100%!important;
+  max-width:100%!important;
+  margin:0!important;
+  box-sizing:border-box!important;
+}
+.workspace-shell main .panel{
+  padding:clamp(18px,2.2vw,26px)!important;
+  border:1px solid var(--ux-line)!important;
+  border-radius:var(--ux-panel-radius)!important;
+  background:rgba(255,255,255,.97)!important;
+  box-shadow:var(--ux-shadow)!important;
+  overflow:visible!important;
+}
+.workspace-shell main .panel+.panel{
+  margin-top:0!important;
+}
+
+/* ---------- Jerarquía tipográfica ---------- */
+.workspace-shell main .section-head{
+  min-width:0!important;
+  display:flex!important;
+  align-items:flex-start!important;
+  justify-content:space-between!important;
+  gap:18px!important;
+  margin:0 0 18px!important;
+}
+.workspace-shell main .section-head>div:first-child{
+  min-width:0!important;
+  flex:1 1 560px!important;
+  max-width:850px!important;
+}
+.workspace-shell main .section-kicker{
+  display:inline-flex!important;
+  align-items:center!important;
+  min-height:25px!important;
+  margin:0 0 5px!important;
+  color:#15715a!important;
+  font-size:.7rem!important;
+  line-height:1!important;
+  font-weight:950!important;
+  letter-spacing:.085em!important;
+  text-transform:uppercase!important;
+}
+.workspace-shell main h2{
+  margin:.12rem 0 .5rem!important;
+  color:var(--ux-ink)!important;
+  font-size:clamp(1.35rem,2.3vw,2rem)!important;
+  line-height:1.12!important;
+  letter-spacing:-.025em!important;
+}
+.workspace-shell main .muted,
+.workspace-shell main .section-head p{
+  max-width:78ch!important;
+  margin:.25rem 0 0!important;
+  color:var(--ux-muted)!important;
+  line-height:1.52!important;
+}
+
+/* ---------- Formularios y controles ---------- */
+.workspace-shell main label{
+  min-width:0!important;
+  color:#405f57!important;
+  font-size:.78rem!important;
+  line-height:1.25!important;
+  font-weight:850!important;
+}
+.workspace-shell main input:not([type="checkbox"]):not([type="radio"]),
+.workspace-shell main select,
+.workspace-shell main textarea{
+  width:100%!important;
+  min-width:0!important;
+  min-height:var(--ux-control-height)!important;
+  box-sizing:border-box!important;
+  border:1px solid #c9ddd6!important;
+  border-radius:var(--ux-control-radius)!important;
+  background:#fff!important;
+  color:#173e35!important;
+  padding:10px 12px!important;
+  font:inherit!important;
+  box-shadow:0 1px 0 rgba(255,255,255,.8) inset!important;
+}
+.workspace-shell main input:focus,
+.workspace-shell main select:focus,
+.workspace-shell main textarea:focus{
+  outline:3px solid rgba(13,154,119,.12)!important;
+  border-color:#35aa8b!important;
+}
+.workspace-shell main button,
+.workspace-shell main .primary,
+.workspace-shell main .secondary,
+.workspace-shell main .file-label{
+  min-height:44px!important;
+  border-radius:12px!important;
+  padding:10px 14px!important;
+  line-height:1.2!important;
+  font-weight:850!important;
+}
+.workspace-shell main .primary{
+  box-shadow:0 7px 16px rgba(8,127,99,.16)!important;
+}
+.workspace-shell main button:disabled{
+  opacity:.52!important;
+  cursor:not-allowed!important;
+  box-shadow:none!important;
+}
+
+/* ---------- Sección 1: Analizar Datos ---------- */
+#seccion-1 .update-spotlight{
+  grid-template-columns:minmax(0,1.35fr) minmax(290px,.65fr)!important;
+  gap:22px!important;
+  align-items:stretch!important;
+  border-left:6px solid var(--brand)!important;
+  background:
+    radial-gradient(circle at 7% 10%,rgba(18,174,136,.13),transparent 32%),
+    linear-gradient(135deg,#fff 0%,#f5fcf9 100%)!important;
+}
+#seccion-1 .update-copy h2{
+  max-width:760px!important;
+  font-size:clamp(1.7rem,3vw,2.65rem)!important;
+  line-height:1.04!important;
+  letter-spacing:-.035em!important;
+}
+#seccion-1 .update-lead{
+  max-width:72ch!important;
+  font-size:1rem!important;
+  line-height:1.55!important;
+}
+#seccion-1 .update-actions{
+  display:flex!important;
+  flex-wrap:wrap!important;
+  gap:10px!important;
+}
+#seccion-1 .update-actions>*{
+  flex:1 1 220px!important;
+}
+#seccion-1 .update-status-card{
+  min-width:0!important;
+  height:100%!important;
+  padding:18px!important;
+  border-radius:18px!important;
+}
+#seccion-1 .update-status-card .log{
+  width:100%!important;
+  max-width:100%!important;
+  height:180px!important;
+  overflow:auto!important;
+}
+#seccion-1 .intro-panel .section-head{
+  display:grid!important;
+  grid-template-columns:minmax(0,1.4fr) minmax(280px,.6fr)!important;
+}
+#seccion-1 .method-card{
+  width:100%!important;
+  max-width:none!important;
+  box-sizing:border-box!important;
+}
+#seccion-1 .feature-grid{
+  grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  gap:12px!important;
+}
+#seccion-1 .kpi-cards{
+  display:grid!important;
+  grid-template-columns:repeat(auto-fit,minmax(190px,1fr))!important;
+  gap:12px!important;
+}
+#seccion-1 .kpi-cards article{
+  min-width:0!important;
+  min-height:145px!important;
+  margin:0!important;
+  padding:18px!important;
+  border-radius:18px!important;
+  box-shadow:var(--ux-shadow)!important;
+}
+
+/* ---------- Sección 2: Histórico ---------- */
+#seccion-2 .compare-controls-advanced{
+  display:grid!important;
+  grid-template-columns:repeat(12,minmax(0,1fr))!important;
+  gap:12px!important;
+  align-items:end!important;
+  margin:0 0 15px!important;
+  padding:15px!important;
+  border:1px solid var(--ux-line)!important;
+  border-radius:16px!important;
+  background:#f8fbfa!important;
+}
+#seccion-2 .compare-controls-advanced>label:nth-child(1),
+#seccion-2 .compare-controls-advanced>label:nth-child(2){
+  grid-column:span 3!important;
+}
+#seccion-2 .compare-controls-advanced>.compare-site-field{
+  grid-column:span 6!important;
+}
+#seccion-2 .compare-controls-advanced>label:nth-child(4),
+#seccion-2 .compare-controls-advanced>label:nth-child(5){
+  grid-column:span 3!important;
+}
+#seccion-2 .compare-controls-advanced>button{
+  grid-column:span 3!important;
+}
+#seccion-2 .history-source-note,
+#seccion-2 .interpretation-box{
+  margin:12px 0!important;
+  border-radius:14px!important;
+}
+#seccion-2 .compare-result{
+  grid-template-columns:repeat(auto-fit,minmax(180px,1fr))!important;
+  gap:11px!important;
+}
+#seccion-2 .history-chart-scroll{
+  width:100%!important;
+  min-width:0!important;
+  overflow-x:auto!important;
+  padding:8px!important;
+  border:1px solid var(--ux-line)!important;
+  border-radius:16px!important;
+  background:#fff!important;
+}
+#seccion-2 .history-chart-scroll canvas{
+  display:block!important;
+  width:100%!important;
+  min-width:720px!important;
+  max-width:none!important;
+}
+
+/* ---------- Sección 3: Ranking ---------- */
+#seccion-3 .ranking-section-intro{
+  padding-block:18px!important;
+  background:linear-gradient(135deg,#f9fffc,#f2faf7)!important;
+}
+#seccion-3 .ranking-filter-bar{
+  display:grid!important;
+  grid-template-columns:repeat(12,minmax(0,1fr))!important;
+  gap:12px!important;
+  align-items:end!important;
+  margin:0 0 14px!important;
+  padding:15px!important;
+  border:1px solid var(--ux-line)!important;
+  border-radius:16px!important;
+  background:#f8fbfa!important;
+}
+#seccion-3 #ranking-sedes .ranking-filter-bar>label:nth-child(1),
+#seccion-3 #ranking-sedes .ranking-filter-bar>label:nth-child(2){
+  grid-column:span 2!important;
+}
+#seccion-3 #ranking-sedes .ranking-filter-bar>label:nth-child(3){
+  grid-column:span 5!important;
+}
+#seccion-3 #ranking-sedes .ranking-refresh-btn{
+  grid-column:span 3!important;
+}
+#seccion-3 .savings-filter-bar>label:nth-child(1){
+  grid-column:span 3!important;
+}
+#seccion-3 .savings-filter-bar>label:nth-child(2){
+  grid-column:span 6!important;
+}
+#seccion-3 .savings-filter-bar>.ranking-refresh-btn{
+  grid-column:span 3!important;
+}
+#seccion-3 .ranking-toolbar,
+#seccion-3 .savings-legend{
+  margin:10px 0 14px!important;
+  padding:12px!important;
+  border:1px solid var(--ux-line)!important;
+  border-radius:14px!important;
+  background:#fbfdfc!important;
+}
+#seccion-3 .priority-filter-buttons{
+  display:flex!important;
+  flex-wrap:wrap!important;
+  gap:7px!important;
+}
+#seccion-3 .chart-card,
+#seccion-3 .environmental-ranking-chart{
+  width:100%!important;
+  min-width:0!important;
+  overflow-x:auto!important;
+  padding:10px!important;
+  border:1px solid var(--ux-line)!important;
+  border-radius:16px!important;
+  background:#fff!important;
+}
+#seccion-3 .chart-card canvas,
+#seccion-3 .environmental-ranking-chart canvas{
+  display:block!important;
+  min-width:760px!important;
+  max-width:none!important;
+}
+#seccion-3 .ranking-pagination,
+#seccion-3 .savings-pagination{
+  display:flex!important;
+  flex-wrap:wrap!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:8px!important;
+  margin-top:14px!important;
+}
+#seccion-3 .ranking-pagination strong,
+#seccion-3 .savings-pagination strong{
+  min-width:150px!important;
+  text-align:center!important;
+}
+
+/* ---------- Sección 4: Informe por sede ---------- */
+#seccion-4 .dashboard-panel>.section-head{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) minmax(340px,.72fr)!important;
+}
+#seccion-4 .factor-box{
+  width:100%!important;
+  max-width:none!important;
+  display:grid!important;
+  grid-template-columns:1fr 1fr!important;
+  gap:9px!important;
+  padding:13px!important;
+  border:1px solid var(--ux-line)!important;
+  border-radius:15px!important;
+  background:#f8fbfa!important;
+}
+#seccion-4 .factor-box button{
+  grid-column:1/-1!important;
+}
+#seccion-4 .dashboard-site-search{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) auto!important;
+  gap:8px 12px!important;
+  align-items:end!important;
+  margin:0 0 15px!important;
+  padding:15px!important;
+  border:1px solid var(--ux-line)!important;
+  border-radius:16px!important;
+  background:#f8fbfa!important;
+}
+#seccion-4 .dashboard-site-search>label{
+  grid-column:1/-1!important;
+}
+#seccion-4 .dashboard-site-search>.site-autocomplete{
+  grid-column:1!important;
+}
+#seccion-4 .dashboard-site-search>.dashboard-generate-report{
+  grid-column:2!important;
+  grid-row:2!important;
+  min-width:220px!important;
+}
+#seccion-4 .dashboard-site-search>small{
+  grid-column:1/-1!important;
+}
+#seccion-4 .dashboard-grid{
+  display:grid!important;
+  grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  gap:12px!important;
+  margin:0 0 14px!important;
+}
+#seccion-4 .dashboard-grid article{
+  min-width:0!important;
+  margin:0!important;
+  padding:17px!important;
+  border-radius:17px!important;
+}
+#seccion-4 .dashboard-priority-note{
+  margin:10px 0!important;
+}
+#seccion-4 .plan-panel .section-head{
+  align-items:center!important;
+}
+#seccion-4 .plan-actions{
+  display:flex!important;
+  flex-wrap:wrap!important;
+  gap:8px!important;
+  justify-content:flex-end!important;
+}
+#seccion-4 #planReport{
+  min-width:0!important;
+  max-width:100%!important;
+}
+
+/* ---------- Sección 5: Calidad de información ---------- */
+#seccion-5 .quality-panel>.section-head{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) minmax(300px,.85fr)!important;
+}
+#seccion-5 .quality-legend{
+  display:flex!important;
+  flex-wrap:wrap!important;
+  justify-content:flex-end!important;
+  align-content:flex-start!important;
+  gap:7px!important;
+  padding:10px!important;
+  border:1px solid var(--ux-line)!important;
+  border-radius:14px!important;
+  background:#f8fbfa!important;
+}
+#seccion-5 .quality-kpis{
+  display:grid!important;
+  grid-template-columns:repeat(auto-fit,minmax(180px,1fr))!important;
+  gap:11px!important;
+  margin:0 0 14px!important;
+}
+#seccion-5 .quality-kpis article{
+  min-width:0!important;
+  min-height:118px!important;
+  margin:0!important;
+  padding:15px!important;
+  border-radius:16px!important;
+}
+#seccion-5 .quality-summary{
+  margin:10px 0!important;
+}
+
+/* ---------- Sección 6: Aula ---------- */
+#seccion-6 .learning-grid,
+#seccion-6 .mission-grid{
+  display:grid!important;
+  grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  gap:12px!important;
+}
+#seccion-6 .learning-grid article,
+#seccion-6 .mission-grid article{
+  min-width:0!important;
+  height:100%!important;
+  margin:0!important;
+  padding:18px!important;
+  border-radius:17px!important;
+  box-shadow:none!important;
+}
+#seccion-6 .mission-grid{
+  margin-top:14px!important;
+}
+
+/* ---------- Agua y Gas ---------- */
+#seccion-7 .water-hero-panel,
+#seccion-8 .gas-hero-panel{
+  grid-template-columns:minmax(0,1fr) auto!important;
+  gap:20px!important;
+  align-items:center!important;
+  padding:22px!important;
+}
+#seccion-7 .water-hero-panel h2,
+#seccion-8 .gas-hero-panel h2{
+  font-size:clamp(1.45rem,2.4vw,2.15rem)!important;
+}
+#seccion-7 .water-kpi-cards,
+#seccion-8 .gas-kpi-cards{
+  display:grid!important;
+  grid-template-columns:repeat(4,minmax(0,1fr))!important;
+  gap:11px!important;
+}
+#seccion-7 .water-kpi-cards article,
+#seccion-8 .gas-kpi-cards article{
+  min-width:0!important;
+  min-height:128px!important;
+  margin:0!important;
+  padding:16px!important;
+  border-radius:17px!important;
+}
+#seccion-7 .water-analysis-grid,
+#seccion-8 .gas-analysis-grid{
+  grid-template-columns:minmax(0,1.8fr) minmax(240px,.65fr)!important;
+  gap:14px!important;
+}
+#seccion-7 .water-chart-card,
+#seccion-8 .gas-chart-card{
+  min-width:0!important;
+  width:100%!important;
+}
+#seccion-7 .water-filter-bar,
+#seccion-8 .gas-filter-bar{
+  display:grid!important;
+  grid-template-columns:minmax(180px,.55fr) minmax(280px,1.25fr) auto!important;
+  gap:11px!important;
+  align-items:end!important;
+  margin:0 0 14px!important;
+  padding:14px!important;
+}
+#seccion-7 .water-plan-controls,
+#seccion-8 .gas-plan-controls{
+  display:grid!important;
+  grid-template-columns:minmax(320px,1fr) auto auto!important;
+  gap:10px!important;
+  align-items:end!important;
+}
+#seccion-7 .water-plan-controls label,
+#seccion-8 .gas-plan-controls label{
+  min-width:0!important;
+}
+#seccion-7 .water-pagination,
+#seccion-8 .gas-pagination{
+  display:flex!important;
+  flex-wrap:wrap!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:8px!important;
+}
+
+/* ---------- Sección 9: Facturas ---------- */
+#seccion-9 .transversal-module-note{
+  margin:0 0 15px!important;
+}
+#seccion-9 .filter-toolbar{
+  display:grid!important;
+  grid-template-columns:repeat(12,minmax(0,1fr))!important;
+  gap:12px!important;
+  align-items:end!important;
+  padding:15px!important;
+  border:1px solid var(--ux-line)!important;
+  border-radius:16px!important;
+  background:#f8f9fa!important;
+}
+#seccion-9 .filter-toolbar>.search-filter{
+  grid-column:span 5!important;
+}
+#seccion-9 .filter-toolbar>div:nth-child(2),
+#seccion-9 .filter-toolbar>div:nth-child(3){
+  grid-column:span 2!important;
+}
+#seccion-9 .filter-toolbar>div:nth-child(4){
+  grid-column:span 3!important;
+}
+#seccion-9 .filter-toolbar>.toolbar-buttons{
+  grid-column:1/-1!important;
+  display:flex!important;
+  flex-wrap:wrap!important;
+  justify-content:flex-end!important;
+  gap:8px!important;
+}
+#seccion-9 .filter-summary{
+  margin:12px 0!important;
+  padding:11px 13px!important;
+  border:1px solid var(--ux-line)!important;
+  border-radius:14px!important;
+  background:#fafbfc!important;
+}
+
+/* ---------- Tablas unificadas ---------- */
+.workspace-shell main .table-wrap,
+.workspace-shell main .ranking-carbon-table-wrap{
+  width:100%!important;
+  min-width:0!important;
+  max-width:100%!important;
+  margin:12px 0 0!important;
+  overflow-x:auto!important;
+  -webkit-overflow-scrolling:touch!important;
+  overscroll-behavior-x:contain!important;
+  border:1px solid var(--ux-line)!important;
+  border-radius:16px!important;
+  background:#fff!important;
+  box-shadow:none!important;
+}
+.workspace-shell main table{
+  width:100%!important;
+  max-width:none!important;
+  border-collapse:separate!important;
+  border-spacing:0!important;
+}
+.workspace-shell main th{
+  background:#edf7f3!important;
+  color:#31564d!important;
+  font-size:.76rem!important;
+  line-height:1.2!important;
+  font-weight:900!important;
+  white-space:nowrap!important;
+}
+.workspace-shell main td{
+  color:#294a42!important;
+  line-height:1.35!important;
+}
+.workspace-shell main th,
+.workspace-shell main td{
+  padding:11px 10px!important;
+  border-bottom:1px solid #e6efec!important;
+}
+.workspace-shell main tbody tr:last-child td{
+  border-bottom:0!important;
+}
+.workspace-shell main tbody tr:hover{
+  background:#f8fbfa!important;
+}
+.workspace-shell main .table-map-note,
+.workspace-shell main .table-ni-note{
+  margin:8px 0!important;
+  padding:9px 11px!important;
+  border-radius:11px!important;
+  line-height:1.35!important;
+}
+
+/* ---------- Gráficos ---------- */
+.workspace-shell main canvas{
+  max-width:none!important;
+}
+.workspace-shell main .chart-card,
+.workspace-shell main .water-chart-card,
+.workspace-shell main .gas-chart-card{
+  box-sizing:border-box!important;
+}
+.workspace-shell main .plan-history-chart{
+  margin:10px 0 14px!important;
+}
+
+/* ---------- Desktop reducido / Google Sites ---------- */
+@media(max-width:1180px){
+  #seccion-1 .update-spotlight{
+    grid-template-columns:1fr!important;
+  }
+  #seccion-1 .intro-panel .section-head,
+  #seccion-4 .dashboard-panel>.section-head,
+  #seccion-5 .quality-panel>.section-head{
+    grid-template-columns:1fr!important;
+  }
+  #seccion-4 .factor-box{
+    max-width:620px!important;
+  }
+  #seccion-5 .quality-legend{
+    justify-content:flex-start!important;
+  }
+  #seccion-7 .water-kpi-cards,
+  #seccion-8 .gas-kpi-cards{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  }
+}
+
+/* ---------- Tablet ---------- */
+@media(max-width:900px){
+  .workspace-shell main .app-section{
+    gap:12px!important;
+  }
+  .workspace-shell main .panel{
+    padding:18px!important;
+    border-radius:18px!important;
+  }
+  .workspace-shell main .section-head{
+    display:grid!important;
+    grid-template-columns:1fr!important;
+    gap:11px!important;
+    margin-bottom:14px!important;
+  }
+
+  #seccion-1 .feature-grid,
+  #seccion-6 .learning-grid,
+  #seccion-6 .mission-grid{
+    grid-template-columns:1fr 1fr!important;
+  }
+
+  #seccion-2 .compare-controls-advanced>label:nth-child(1),
+  #seccion-2 .compare-controls-advanced>label:nth-child(2),
+  #seccion-2 .compare-controls-advanced>label:nth-child(4),
+  #seccion-2 .compare-controls-advanced>label:nth-child(5),
+  #seccion-2 .compare-controls-advanced>button{
+    grid-column:span 6!important;
+  }
+  #seccion-2 .compare-controls-advanced>.compare-site-field{
+    grid-column:1/-1!important;
+  }
+
+  #seccion-3 #ranking-sedes .ranking-filter-bar>label:nth-child(1),
+  #seccion-3 #ranking-sedes .ranking-filter-bar>label:nth-child(2){
+    grid-column:span 4!important;
+  }
+  #seccion-3 #ranking-sedes .ranking-filter-bar>label:nth-child(3){
+    grid-column:span 8!important;
+  }
+  #seccion-3 #ranking-sedes .ranking-refresh-btn{
+    grid-column:span 4!important;
+  }
+  #seccion-3 .savings-filter-bar>label:nth-child(1){
+    grid-column:span 4!important;
+  }
+  #seccion-3 .savings-filter-bar>label:nth-child(2){
+    grid-column:span 8!important;
+  }
+  #seccion-3 .savings-filter-bar>.ranking-refresh-btn{
+    grid-column:1/-1!important;
+  }
+
+  #seccion-4 .dashboard-grid{
+    grid-template-columns:1fr 1fr!important;
+  }
+
+  #seccion-7 .water-analysis-grid,
+  #seccion-8 .gas-analysis-grid{
+    grid-template-columns:1fr!important;
+  }
+
+  #seccion-7 .water-plan-controls,
+  #seccion-8 .gas-plan-controls{
+    grid-template-columns:1fr 1fr!important;
+  }
+  #seccion-7 .water-plan-controls label,
+  #seccion-8 .gas-plan-controls label{
+    grid-column:1/-1!important;
+  }
+
+  #seccion-9 .filter-toolbar>.search-filter{
+    grid-column:1/-1!important;
+  }
+  #seccion-9 .filter-toolbar>div:nth-child(2),
+  #seccion-9 .filter-toolbar>div:nth-child(3),
+  #seccion-9 .filter-toolbar>div:nth-child(4){
+    grid-column:span 4!important;
+  }
+}
+
+/* ---------- Móvil tipo app ---------- */
+@media(max-width:760px){
+  .workspace-shell main .app-section{
+    gap:10px!important;
+  }
+  .workspace-shell main .app-section>.resource-module-identity{
+    position:relative!important;
+    margin:0 2px!important;
+    padding:7px 10px!important;
+    font-size:.72rem!important;
+  }
+  .workspace-shell main .panel{
+    padding:14px!important;
+    border-radius:16px!important;
+    box-shadow:0 7px 20px rgba(17,61,52,.065)!important;
+  }
+  .workspace-shell main h2{
+    font-size:1.35rem!important;
+  }
+  .workspace-shell main .section-head{
+    margin-bottom:12px!important;
+  }
+  .workspace-shell main .section-head p,
+  .workspace-shell main .muted{
+    font-size:.9rem!important;
+  }
+
+  #seccion-1 .update-spotlight{
+    padding:15px!important;
+    border-left:0!important;
+    border-top:5px solid var(--brand)!important;
+  }
+  #seccion-1 .update-copy h2{
+    font-size:1.55rem!important;
+  }
+  #seccion-1 .update-badges{
+    display:flex!important;
+    flex-wrap:nowrap!important;
+    overflow-x:auto!important;
+    gap:7px!important;
+    padding-bottom:4px!important;
+  }
+  #seccion-1 .update-badges span{
+    flex:0 0 auto!important;
+    padding:7px 9px!important;
+    font-size:.68rem!important;
+  }
+  #seccion-1 .update-actions{
+    display:grid!important;
+    grid-template-columns:1fr!important;
+  }
+  #seccion-1 .feature-grid{
+    grid-template-columns:1fr!important;
+  }
+  #seccion-1 .kpi-cards{
+    grid-template-columns:1fr 1fr!important;
+  }
+  #seccion-1 .kpi-cards article{
+    min-height:125px!important;
+    padding:14px!important;
+  }
+  #seccion-1 .hero-huella-card{
+    grid-column:1/-1!important;
+  }
+
+  #seccion-2 .compare-controls-advanced,
+  #seccion-3 .ranking-filter-bar,
+  #seccion-9 .filter-toolbar{
+    grid-template-columns:1fr!important;
+    padding:12px!important;
+  }
+  #seccion-2 .compare-controls-advanced>*,
+  #seccion-3 .ranking-filter-bar>*,
+  #seccion-9 .filter-toolbar>*{
+    grid-column:1!important;
+  }
+
+  #seccion-3 .ranking-pagination button,
+  #seccion-3 .savings-pagination button{
+    flex:1 1 44%!important;
+  }
+  #seccion-3 .ranking-pagination strong,
+  #seccion-3 .savings-pagination strong{
+    order:-1!important;
+    flex:1 1 100%!important;
+  }
+
+  #seccion-4 .factor-box{
+    grid-template-columns:1fr!important;
+  }
+  #seccion-4 .factor-box button{
+    grid-column:1!important;
+  }
+  #seccion-4 .dashboard-site-search{
+    grid-template-columns:1fr!important;
+    padding:12px!important;
+  }
+  #seccion-4 .dashboard-site-search>*{
+    grid-column:1!important;
+    grid-row:auto!important;
+  }
+  #seccion-4 .dashboard-site-search>.dashboard-generate-report{
+    min-width:0!important;
+    width:100%!important;
+  }
+  #seccion-4 .dashboard-grid{
+    grid-template-columns:1fr!important;
+  }
+  #seccion-4 .plan-actions{
+    display:grid!important;
+    grid-template-columns:1fr!important;
+    width:100%!important;
+  }
+
+  #seccion-5 .quality-kpis{
+    grid-template-columns:1fr 1fr!important;
+  }
+  #seccion-5 .quality-legend{
+    justify-content:flex-start!important;
+  }
+
+  #seccion-6 .learning-grid,
+  #seccion-6 .mission-grid{
+    grid-template-columns:1fr!important;
+  }
+
+  #seccion-7 .water-hero-panel,
+  #seccion-8 .gas-hero-panel{
+    grid-template-columns:1fr!important;
+    padding:15px!important;
+  }
+  #seccion-7 .water-drop-mark,
+  #seccion-8 .gas-flame-mark{
+    display:none!important;
+  }
+  #seccion-7 .water-kpi-cards,
+  #seccion-8 .gas-kpi-cards{
+    grid-template-columns:1fr 1fr!important;
+  }
+  #seccion-7 .water-kpi-cards article,
+  #seccion-8 .gas-kpi-cards article{
+    min-height:116px!important;
+    padding:13px!important;
+  }
+  #seccion-7 .water-filter-bar,
+  #seccion-8 .gas-filter-bar,
+  #seccion-7 .water-plan-controls,
+  #seccion-8 .gas-plan-controls{
+    grid-template-columns:1fr!important;
+    padding:12px!important;
+  }
+  #seccion-7 .water-filter-bar>*,
+  #seccion-8 .gas-filter-bar>*,
+  #seccion-7 .water-plan-controls>*,
+  #seccion-8 .gas-plan-controls>*{
+    grid-column:1!important;
+  }
+  #seccion-7 .water-filter-bar button,
+  #seccion-8 .gas-filter-bar button,
+  #seccion-7 .water-plan-controls button,
+  #seccion-8 .gas-plan-controls button{
+    width:100%!important;
+  }
+
+  #seccion-9 .filter-toolbar>.toolbar-buttons{
+    display:grid!important;
+    grid-template-columns:1fr!important;
+  }
+  #seccion-9 .filter-toolbar>.toolbar-buttons button{
+    width:100%!important;
+  }
+
+  /* Tablas no convertidas a tarjetas: scroll horizontal claro y estable */
+  .workspace-shell main .ranking-carbon-table,
+  .workspace-shell main .quality-data-table,
+  .workspace-shell main .water-table,
+  .workspace-shell main .gas-table{
+    min-width:720px!important;
+  }
+  .workspace-shell main .table-wrap,
+  .workspace-shell main .ranking-carbon-table-wrap{
+    scrollbar-width:thin!important;
+    scrollbar-color:#9fc9bc #edf5f2!important;
+  }
+}
+
+/* ---------- Teléfono estrecho ---------- */
+@media(max-width:460px){
+  #seccion-1 .kpi-cards,
+  #seccion-5 .quality-kpis,
+  #seccion-7 .water-kpi-cards,
+  #seccion-8 .gas-kpi-cards{
+    grid-template-columns:1fr!important;
+  }
+  #seccion-1 .kpi-cards article,
+  #seccion-5 .quality-kpis article,
+  #seccion-7 .water-kpi-cards article,
+  #seccion-8 .gas-kpi-cards article{
+    min-height:auto!important;
+  }
+  .workspace-shell main button,
+  .workspace-shell main .primary,
+  .workspace-shell main .secondary,
+  .workspace-shell main .file-label{
+    min-height:46px!important;
+  }
+}
+
+/* ---------- Impresión ---------- */
+@media print{
+  .workspace-shell main .app-section{
+    display:block!important;
+  }
+  .workspace-shell main .panel{
+    box-shadow:none!important;
+    border-color:#d9e3df!important;
+  }
+}

@@ -1,3 +1,14 @@
+# SiMeCO₂ v100 — Control integral de experiencia de usuario
+
+La v100 aplica una capa final de UX/UI sobre las 9 secciones. La lógica y los datos se conservan, pero filtros, tarjetas, paneles, tablas, gráficos y acciones utilizan ahora un sistema visual coherente y responsive.
+
+La interfaz fue optimizada específicamente para:
+- escritorio;
+- iframe de Google Sites;
+- tablet;
+- móvil tipo app.
+
+---
 # SiMeCO₂ v99 — Selección lateral visible
 
 La v99 corrige el estado activo del menú lateral dentro de Google Sites. La opción seleccionada conserva siempre un fondo sólido de alto contraste, incluso cuando `body.is-embedded` está activo. En móvil, el menú funciona como drawer tipo app y centra automáticamente el módulo activo.

@@ -1,1 +1,1 @@
-v99 - Selección lateral visible y experiencia móvil tipo app
+v100 - Control integral UX/UI y maquetación responsive
