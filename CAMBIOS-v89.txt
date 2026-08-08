@@ -1,0 +1,23 @@
+SiMeCO₂ v89 — Control de calidad integral
+
+PROBLEMAS REALES ENCONTRADOS
+- La simplificación a electricidad había eliminado helpers aún usados por varias vistas.
+- El sistema podía cargar 9.147 registros y aun así fallar al renderizar Histórico, Ranking, Informe por sede, Estado de información o búsquedas.
+- Las pruebas anteriores comprobaban sintaxis y funciones puntuales, pero no ejecutaban renderAll() completo.
+
+CORRECCIONES
+- Restaurada función round() para cálculos de CO₂e y factores.
+- Restaurados preferredSiteName(), searchTokens(), siteSearchHaystack() y recordMatchesSearch().
+- Restaurados searchScopeSignature(), invalidateSearchCaches() y recordsBySiteKey().
+- Restaurado historyGroupHasMetric() para Histórico.
+- Restaurados parseMeasurement(), parseNumber(), parseMoney(), extractAfter(), valueAfter() y extractEnergyKwh() para actualización manual de facturas PDF.
+- serviceHasValue() y hasAnyMeasure() quedaron limitadas exclusivamente a electricidad.
+- La extracción PDF queda exclusivamente orientada a energía eléctrica.
+- Se mantiene el arranque data-first con 9.147 registros y PDF bajo demanda.
+
+CONTROL DE CALIDAD NUEVO
+- Prueba de runtime completo de app.js con 9.147 registros.
+- Ejecución real de renderAll() con DOM simulado y canvas.
+- 0 errores JavaScript durante el render principal.
+- Prueba de parser energético para actualización manual de PDF.
+- Se mantienen pruebas de API, búsqueda, Histórico, rankings, ahorro, Google Maps, informes, descarga PDF y responsive.

@@ -1,16 +1,80 @@
-/* SiMeCO₂ v87 · plataforma eléctrica data-first optimizada para Google Sites */
+/* SiMeCO₂ v89 · control de calidad integral y runtime restaurado */
 let FACTOR_CO2_KG_KWH = 0.126; // kg CO2e/kWh. Ajustable desde el dashboard.
 let TREE_CO2_KG_YEAR = 22; // kg CO2e capturados por árbol al año. Ajustable desde el dashboard.
 const FACTOR_KEY = 'simeco2_factores_ambientales_v8';
 const STORE_KEY = 'simeco2_servicios_v16';
 const CONFIG_KEY = 'simeco2_repo_config_v7';
-const DATA_VERSION = 'v88-arranque-real-corregido-20260808';
+const DATA_VERSION = 'v89-control-calidad-integral-20260808';
 
 const $ = (id)=>document.getElementById(id);
 function siteKey(site,address=''){
   const normalizeKeyPart=(value)=>String(value||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,' ').trim();
   return `${normalizeKeyPart(site)}|${normalizeKeyPart(address)}`;
 }
+// v89 · helpers esenciales restaurados tras la simplificación eléctrica.
+function round(n,d=2){ return Number.isFinite(Number(n)) ? Math.round(Number(n)*Math.pow(10,d))/Math.pow(10,d) : 0; }
+function parseMeasurement(v,kind='generic'){
+  if(v==null) return null;
+  let s=String(v).trim().replace(/\s/g,'').replace(/[^0-9,.-]/g,'');
+  if(!s) return null;
+  const negative=s.startsWith('-'); s=s.replace(/-/g,'');
+  if(kind==='energy'){
+    if(s.includes(',')&&s.includes('.')) s=s.replace(/\./g,'').replace(',','.');
+    else if(s.includes(',')) s=s.replace(',','.');
+    else if(s.includes('.')){const parts=s.split('.');if(parts.slice(1).every(part=>part.length===3)) s=parts.join('');}
+  }else{
+    const commas=(s.match(/,/g)||[]).length,dots=(s.match(/\./g)||[]).length;
+    if(commas&&dots){if(s.lastIndexOf(',')>s.lastIndexOf('.')) s=s.replace(/\./g,'').replace(',','.');else s=s.replace(/,/g,'');}
+    else if(dots){const parts=s.split('.');if(parts.length>2||(parts.length===2&&parts[1].length===3&&parts[0]!=='0')) s=parts.join('');}
+    else if(commas){const parts=s.split(',');s=(parts.length>2)?parts.join(''):parts.join('.');}
+  }
+  const n=parseFloat((negative?'-':'')+s); return Number.isFinite(n)?n:null;
+}
+function parseNumber(v){ return parseMeasurement(v,'generic'); }
+function parseMoney(v){ return parseNumber(v); }
+function extractAfter(text,re){ const m=String(text||'').match(re); return m?parseNumber(m[1]):null; }
+function valueAfter(text,label){
+  const safe=String(label).replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+  const re=new RegExp(`${safe}[\\s\\S]{0,220}?\\$\\s*-?\\s*([\\d.,]+)`,'i');
+  const match=String(text||'').match(re); return match?parseMoney(match[1]):null;
+}
+function extractEnergyKwh(text){
+  return lastMeasurementMatch(String(text||''),[/Energ[ií]a(?:\s+activa)?\s+[A-Za-z]{3,4}-\d{2}\s+([\d.,]+)\s*x/gi,/Consumo\s+[A-Za-z]{3,4}-\d{2}\s+([\d.,]+)\s*x/gi,/([\d.,]+)\s*kWh[\s\S]{0,100}?=\s*Consumo/gi],'energy');
+}
+function preferredSiteName(record){
+  const meta=getTerritorySyncMeta(record); return meta?.institutionDisplayName || meta?.displayName || record?.site || 'Sin nombre';
+}
+function searchTokens(value){ return loose(value).split(/\s+/).filter(Boolean); }
+function siteSearchHaystack(record){
+  if(record && recordSearchTextCache.has(record)) return recordSearchTextCache.get(record);
+  const meta=getTerritorySyncMeta(record)||{};
+  const text=loose(`${record?.site||''} ${record?.address||''} ${meta.institutionDisplayName||''} ${meta.displayName||''} ${meta.matchedName||''} ${meta.aliases||''} ${meta.institutionRole||''}`);
+  if(record&&typeof record==='object') recordSearchTextCache.set(record,text); return text;
+}
+function recordMatchesSearch(r,query){
+  if(selectedSiteKey) return siteKey(r.site,r.address)===selectedSiteKey;
+  const tokens=searchTokens(query); if(!tokens.length) return true;
+  const haystack=siteSearchHaystack(r); return tokens.every(token=>haystack.includes(token));
+}
+function searchScopeSignature(scope){
+  if(scope==='compare'||scope==='dashboard'||scope==='table'){
+    const f=territoryFilterValues(scope); return `${scope}|${f.type||''}|${f.territory||''}|${f.nucleus||''}|${state.records.length}|${siteSearchDataRevision}`;
+  }
+  return `all|${state.records.length}|${siteSearchDataRevision}`;
+}
+function invalidateSearchCaches(){ siteSearchDataRevision++;siteSearchOptionsCache.clear();recordsBySiteKeyCache=null;filteredRecordsCache={key:'',rows:null}; }
+function recordsBySiteKey(){
+  if(recordsBySiteKeyCache) return recordsBySiteKeyCache;
+  const map=new Map(); for(const r of state.records||[]){const key=siteKey(r.site,r.address);if(!map.has(key))map.set(key,[]);map.get(key).push(r);} recordsBySiteKeyCache=map;return map;
+}
+function serviceHasValue(r,service){ if(!service||service==='energia') return !service || Number(r.energyKwh)>0; return false; }
+function hasAnyMeasure(r){ return r?.energyKwh!==null && r?.energyKwh!==undefined && Number(r.energyKwh)!==0; }
+function historyGroupHasMetric(item,field){
+  if(!item) return false;
+  if(item.metricCounts&&Object.prototype.hasOwnProperty.call(item.metricCounts,field)) return Number(item.metricCounts[field])>0;
+  return item[field]!==null&&item[field]!==undefined&&item[field]!==''&&Number.isFinite(Number(item[field]));
+}
+
 let state = loadStore();
 let chartData = [];
 let selectedSiteKey = "";

@@ -13,9 +13,9 @@
   <meta name="description" content="Sistema interactivo para medir, interpretar y gestionar la huella de carbono educativa a partir del consumo de energía eléctrica." />
   <link rel="icon" type="image/png" href="assets/los-yoguis-logo-optimized.png" />
   <link rel="apple-touch-icon" href="assets/los-yoguis-logo-optimized.png" />
-  <link rel="preload" href="data/registros.electricidad.min.js?v=88-arranque-inmediato" as="script" />
-  <link rel="preload" href="data/resumenes.electricidad.min.js?v=88-arranque-inmediato" as="script" />
-  <link rel="stylesheet" href="styles.css?v=88-arranque-inmediato" />
+  <link rel="preload" href="data/registros.electricidad.min.js?v=89-control-calidad" as="script" />
+  <link rel="preload" href="data/resumenes.electricidad.min.js?v=89-control-calidad" as="script" />
+  <link rel="stylesheet" href="styles.css?v=89-control-calidad" />
 </head>
 <body>
   <div class="invoice-loading active" id="invoiceLoading" role="status" aria-live="assertive" aria-hidden="false">
@@ -687,7 +687,7 @@
   </script>
 
   <!-- v87: datos eléctricos ultracompactos cargados antes de app.js -->
-  <script src="data/registros.electricidad.min.js?v=88-arranque-inmediato"></script>
+  <script src="data/registros.electricidad.min.js?v=89-control-calidad"></script>
   <script>
     (() => {
       const records = Array.isArray(window.SIMECO_REGISTROS) ? window.SIMECO_REGISTROS.length : 0;
@@ -713,11 +713,11 @@
       window.SIMECO_FAST_BOOT_DONE=true;
     })();
   </script>
-  <script src="data/resumenes.electricidad.min.js?v=88-arranque-inmediato"></script>
-  <script defer src="data/sincronizacion-territorial.js?v=88-arranque-inmediato"></script>
-  <script defer src="data/excepciones-servicios.js?v=88-arranque-inmediato"></script>
+  <script src="data/resumenes.electricidad.min.js?v=89-control-calidad"></script>
+  <script defer src="data/sincronizacion-territorial.js?v=89-control-calidad"></script>
+  <script defer src="data/excepciones-servicios.js?v=89-control-calidad"></script>
 
-  <script defer src="app.js?v=88-arranque-inmediato"></script>
+  <script defer src="app.js?v=89-control-calidad"></script>
   <script defer src="assistant-config.js?v=65-rendimiento"></script>
   <script defer src="assistant.js?v=65-rendimiento"></script>
 </body>

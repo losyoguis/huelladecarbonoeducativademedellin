@@ -1,1 +1,1 @@
-v88 - Arranque inmediato corregido y PDF bajo demanda
+v89 - Control de calidad integral y runtime completamente restaurado

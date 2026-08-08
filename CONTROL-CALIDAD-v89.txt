@@ -1,0 +1,49 @@
+CONTROL DE CALIDAD INTEGRAL — SiMeCO₂ v89
+Fecha: 2026-08-08
+
+HALLAZGO PRINCIPAL
+La aplicación v88 cargaba correctamente la base de 9.147 registros, pero durante la conversión a un sistema exclusivamente eléctrico se habían eliminado funciones auxiliares todavía utilizadas por el runtime. Esto permitía que las pruebas de sintaxis pasaran, mientras vistas reales podían fallar silenciosamente.
+
+FUNCIONES RESTAURADAS Y CORREGIDAS
+- round(): cálculos CO₂e, factores y métricas.
+- preferredSiteName(): nombres institucionales en Dashboard, ranking, calidad e informes.
+- searchTokens(), siteSearchHaystack(), recordMatchesSearch(): búsquedas.
+- searchScopeSignature(), invalidateSearchCaches(), recordsBySiteKey(): rendimiento y cachés.
+- historyGroupHasMetric(): Histórico.
+- parseMeasurement(), parseNumber(), parseMoney(), extractAfter(), valueAfter(), extractEnergyKwh(): actualización manual de facturas PDF.
+- serviceHasValue() y hasAnyMeasure(): versión exclusivamente eléctrica.
+
+PRUEBAS DE RUNTIME
+- app.js evaluado con los 9.147 registros reales: APROBADO.
+- DOMContentLoaded completo: APROBADO.
+- renderAll() completo: 0 errores.
+- Dashboard / Informe por sede: APROBADO.
+- Estado de información: APROBADO.
+- Facturas eléctricas: APROBADO.
+- Ranking de consumo + CO₂e: APROBADO.
+- Ranking de ahorro: APROBADO.
+- Histórico: APROBADO.
+- Búsqueda institucional: 0 errores de runtime.
+- Filtros territoriales: 0 errores de runtime.
+- Parser de energía para PDF: APROBADO.
+- Google Maps y descargas PDF: pruebas aprobadas.
+- Responsive Google Sites: pruebas aprobadas.
+- API y asistente data-first: pruebas aprobadas.
+
+DATOS
+- 9.147 registros detallados.
+- 567 sedes/instituciones.
+- 17 periodos oficiales.
+- 17 PDF originales íntegros.
+- 0 claves duplicadas.
+- 0 sedes sin nombre.
+- Energía oficial acumulada: 18.800.429,36 kWh.
+- Diferencia máxima detalle vs. total oficial: 2,5726%, dentro del umbral del 3%.
+
+RENDIMIENTO
+- Bundle eléctrico de navegador: 445.498 bytes.
+- Datos precargados antes de app.js.
+- PDF.js y lectura de PDF: bajo demanda, no durante el arranque normal.
+
+RESULTADO FINAL
+APROBADO — runtime integral sin errores detectados en la batería automatizada.
