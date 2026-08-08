@@ -1,0 +1,33 @@
+CONTROL DE CALIDAD SiMeCO₂ v78
+Fecha: 2026-08-08
+
+CAMBIO PRINCIPAL
+Se reorganizó el Dashboard para dar prioridad visual al nombre de la sede y aprovechar mejor el ancho disponible.
+
+DISEÑO DE TABLA
+- Columna Sede ampliada a 285 px y hasta 330 px en pantallas muy anchas.
+- Nombre con mayor tamaño, peso y contraste.
+- Se desactivaron guiones automáticos/cortes de palabra en nombres de sede.
+- Dirección conserva visibilidad y enlace a Google Maps con jerarquía secundaria.
+- Columnas numéricas compactadas y centradas.
+- Encabezados abreviados: Aseo t, Árboles, Prom. kWh/mes.
+- Columna de Plan de Gestión reducida a 158 px.
+- Botón Generar informe más compacto.
+- En iframe angosto se usa scroll horizontal en vez de comprimir el nombre.
+
+INTEGRIDAD FUNCIONAL
+- Histórico v77 conservado.
+- N.I. conservado.
+- Informe interactivo conservado.
+- Google Maps conservado.
+- Rankings y ahorro conservados.
+- 9.147 registros.
+- 567 instituciones/sedes.
+- 17 períodos oficiales.
+
+PRUEBAS
+- npm run check: APROBADO.
+- npm test: APROBADO, incluida dashboard-site-priority-layout.test.js.
+- validar_sistema.py: APROBADO.
+- validar_historicos.py: APROBADO.
+RESULTADO: APROBADO.

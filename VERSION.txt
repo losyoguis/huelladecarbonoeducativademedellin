@@ -1,1 +1,1 @@
-v77 - Histórico corregido y abreviatura N.I.
+v78 - Dashboard con prioridad visual al nombre de la sede

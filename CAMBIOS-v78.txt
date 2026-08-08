@@ -1,0 +1,14 @@
+SiMeCO₂ v78 — Prioridad visual al nombre de la sede
+
+CAMBIO PRINCIPAL
+- Se redistribuyó el ancho de la tabla del Dashboard para aprovechar mejor el espacio disponible.
+- La columna “Sede” pasa a ser la columna principal y recibe considerablemente más ancho.
+- Los nombres ya no se dividen con guiones automáticos ni se cortan letra por letra.
+- El nombre usa mayor tamaño, peso y contraste visual.
+- La dirección se mantiene visible y clicable, pero con jerarquía secundaria.
+- Las columnas numéricas son más compactas y usan números tabulares.
+- Se acortaron encabezados: “Aseo t”, “Árboles” y “Prom. kWh/mes”.
+- La columna de Plan de Gestión y su botón ocupan menos espacio.
+- En pantallas muy amplias la sede recibe todavía más ancho.
+- En iframes angostos se conserva desplazamiento horizontal en vez de comprimir el nombre.
+- No se modifican datos, históricos, rankings, informes ni cálculos.
