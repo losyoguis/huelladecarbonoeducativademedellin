@@ -23,7 +23,7 @@ by_period={}
 for r in valid:
     by_period[r['period']]=by_period.get(r['period'],0)+r['waterM3']
 
-print('CONTROL DE CALIDAD DE AGUA — SiMeCO₂ v100')
+print('CONTROL DE CALIDAD DE AGUA — SiMeCO₂ v101')
 print('Fecha: 2026-08-08\n')
 print(f'Registros base: {len(records):,}')
 print(f'Registros con lectura de agua: {len(valid):,}')
