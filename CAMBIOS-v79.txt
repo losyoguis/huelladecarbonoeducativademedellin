@@ -1,0 +1,11 @@
+SiMeCO₂ v79 — Desplegable del Histórico corregido
+
+CAMBIO PRINCIPAL
+- Se reemplazó el <details>/<summary> nativo por un componente interactivo propio.
+- El botón “Ver valores exactos de la gráfica” ahora abre y cierra de forma confiable dentro de Google Sites.
+- Usa aria-expanded y aria-controls para accesibilidad.
+- El icono ▶ gira al abrirse.
+- La tabla mantiene scroll horizontal en pantallas angostas.
+- El estado abierto se conserva cuando la gráfica se vuelve a renderizar.
+- Se mantiene la tabla completa de valores exactos y la fuente de cada periodo.
+- No se modifican datos, históricos oficiales, rankings ni cálculos.

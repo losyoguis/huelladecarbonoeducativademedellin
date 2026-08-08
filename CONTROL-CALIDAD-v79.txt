@@ -1,0 +1,29 @@
+CONTROL DE CALIDAD SiMeCO₂ v79
+Fecha: 2026-08-08
+
+CORRECCIÓN PRINCIPAL
+Se reemplazó el desplegable nativo de “Ver valores exactos de la gráfica” por un componente interactivo propio compatible con Google Sites.
+
+FUNCIONAMIENTO
+- Botón clicable con aria-expanded/aria-controls.
+- Abre/cierra la tabla de valores exactos.
+- Indicador ▶ rota al abrirse.
+- Estado abierto preservado cuando el histórico se vuelve a dibujar.
+- Tabla con scroll horizontal en pantallas pequeñas.
+- Compatible con teclado y lectores de pantalla.
+
+INTEGRIDAD
+- Histórico v77 conservado.
+- N.I. conservado.
+- Dashboard v78 conservado.
+- Informe interactivo, rankings, Google Maps y cálculos conservados.
+- 9.147 registros.
+- 567 instituciones/sedes.
+- 17 períodos oficiales.
+
+PRUEBAS
+- npm run check: APROBADO.
+- npm test: APROBADO, incluida history-values-disclosure.test.js.
+- validar_sistema.py: APROBADO.
+- validar_historicos.py: APROBADO.
+RESULTADO: APROBADO.

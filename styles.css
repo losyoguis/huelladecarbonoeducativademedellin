@@ -2459,3 +2459,81 @@ body.viewport-phone .assistant-panel{
     -webkit-overflow-scrolling:touch;
   }
 }
+
+
+/* =========================================================
+   v79 · Desplegable de valores exactos del Histórico
+   ========================================================= */
+.history-values-disclosure{
+  margin-top:14px;
+  border:1px solid rgba(8,118,94,.16);
+  border-radius:18px;
+  background:#f8fdfb;
+  overflow:hidden;
+}
+.history-values-toggle{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  width:100%;
+  min-height:58px;
+  padding:14px 18px;
+  border:0;
+  background:transparent;
+  color:#075b49;
+  font:inherit;
+  font-size:1rem;
+  font-weight:900;
+  text-align:left;
+  cursor:pointer;
+}
+.history-values-toggle:hover,
+.history-values-toggle:focus-visible{
+  background:#eef9f5;
+  outline:none;
+}
+.history-values-caret{
+  flex:0 0 auto;
+  display:inline-grid;
+  place-items:center;
+  width:22px;
+  height:22px;
+  transition:transform .18s ease;
+}
+.history-values-disclosure.is-open .history-values-caret{
+  transform:rotate(90deg);
+}
+.history-values-panel[hidden]{
+  display:none !important;
+}
+.history-values-panel{
+  border-top:1px solid rgba(8,118,94,.12);
+  background:#fff;
+}
+.history-values-panel .history-table-scroll{
+  width:100%;
+  overflow-x:auto;
+  -webkit-overflow-scrolling:touch;
+}
+.history-values-panel table{
+  width:100%;
+  min-width:620px;
+  border-collapse:collapse;
+}
+.history-values-panel th,
+.history-values-panel td{
+  padding:10px 12px;
+  text-align:left;
+  border-bottom:1px solid rgba(8,118,94,.08);
+}
+.history-values-panel th{
+  background:#eef9f5;
+  color:#174f43;
+}
+@media (max-width:620px){
+  .history-values-toggle{
+    min-height:52px;
+    padding:12px 14px;
+    font-size:.92rem;
+  }
+}

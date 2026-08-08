@@ -1,1 +1,1 @@
-v78 - Dashboard con prioridad visual al nombre de la sede
+v79 - Desplegable de valores exactos del Histórico corregido

@@ -4,7 +4,7 @@ let TREE_CO2_KG_YEAR = 22; // kg CO2e capturados por árbol al año. Ajustable d
 const FACTOR_KEY = 'simeco2_factores_ambientales_v8';
 const STORE_KEY = 'simeco2_servicios_v16';
 const CONFIG_KEY = 'simeco2_repo_config_v7';
-const DATA_VERSION = 'v78-prioridad-nombre-sede-20260808';
+const DATA_VERSION = 'v79-historico-desplegable-corregido-20260808';
 
 const $ = (id)=>document.getElementById(id);
 const state = loadStore();
@@ -537,6 +537,7 @@ function bindEvents(){
   document.addEventListener('click',e=>{ const box=$('siteAutocomplete'); if(box && !box.contains(e.target)) closeAutocomplete(); });
   bindEvent('downloadFilteredPdfBtn','click',downloadFilteredPdfReport);
   bindEvent('downloadHistoryPdfBtn','click',downloadHistoryPdfReport);
+  bindEvent('historyDataTable','click',handleHistoryValuesToggle);
   bindEvent('compareMode','change',()=>refreshHistoryModule());
   bindEvent('compareMetric','change',()=>refreshHistoryModule({preserveSelection:true}));
   bindEvent('compareSite','change',()=>refreshHistoryModule({preserveSelection:true}));
@@ -1767,7 +1768,35 @@ function renderHistoryDataTable(data){
   const box=$('historyDataTable');if(!box) return;
   if(!data.length){box.innerHTML='';return;}
   const metric=selectedHistoryMetric();
-  box.innerHTML=`<details><summary>Ver valores exactos de la gráfica (${data.length} periodos)</summary><div class="history-table-scroll"><table><thead><tr><th>Periodo</th><th>${escapeHtml(metric.label)} (${metric.unit})</th><th>Fuente</th></tr></thead><tbody>${data.map(item=>`<tr><td>${escapeHtml(item.period||groupLabel(item.key,'month'))}</td><td><strong>${historyGroupHasMetric(item,metric.field)?fmt(item[metric.field]):'Sin dato'}</strong></td><td>${item.official?'Resumen oficial de factura':'Detalle consolidado de sedes'}</td></tr>`).join('')}</tbody></table></div></details>`;
+  const wasOpen=box.querySelector('.history-values-toggle')?.getAttribute('aria-expanded')==='true';
+  box.innerHTML=`<section class="history-values-disclosure ${wasOpen?'is-open':''}">
+    <button type="button" class="history-values-toggle" aria-expanded="${wasOpen?'true':'false'}" aria-controls="historyExactValuesPanel">
+      <span class="history-values-caret" aria-hidden="true">▶</span>
+      <span>Ver valores exactos de la gráfica (${data.length} periodos)</span>
+    </button>
+    <div id="historyExactValuesPanel" class="history-values-panel" ${wasOpen?'':'hidden'}>
+      <div class="history-table-scroll">
+        <table>
+          <thead><tr><th>Periodo</th><th>${escapeHtml(metric.label)} (${metric.unit})</th><th>Fuente</th></tr></thead>
+          <tbody>${data.map(item=>`<tr><td>${escapeHtml(item.period||groupLabel(item.key,'month'))}</td><td><strong>${historyGroupHasMetric(item,metric.field)?fmt(item[metric.field]):'Sin dato'}</strong></td><td>${item.official?'Resumen oficial de factura':'Detalle consolidado de sedes'}</td></tr>`).join('')}</tbody>
+        </table>
+      </div>
+    </div>
+  </section>`;
+}
+function handleHistoryValuesToggle(event){
+  const button=event.target.closest('.history-values-toggle');
+  if(!button)return;
+  const disclosure=button.closest('.history-values-disclosure');
+  const panel=disclosure?.querySelector('.history-values-panel');
+  if(!disclosure||!panel)return;
+  const open=button.getAttribute('aria-expanded')!=='true';
+  button.setAttribute('aria-expanded',String(open));
+  disclosure.classList.toggle('is-open',open);
+  panel.hidden=!open;
+  if(open){
+    requestAnimationFrame(()=>panel.scrollIntoView({behavior:'smooth',block:'nearest'}));
+  }
 }
 function drawChart(data){
   chartData=Array.isArray(data)?data:[];
