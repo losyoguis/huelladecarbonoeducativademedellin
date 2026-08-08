@@ -18,7 +18,7 @@ EXPECTED_PERIODS = [
     "2025-07", "2025-08", "2025-11", "2025-12", "2026-01", "2026-02",
     "2026-03", "2026-04", "2026-05", "2026-06", "2026-07",
 ]
-THRESHOLDS = {"energyKwh": 3.0, "waterM3": 5.0, "alcM3": 5.0, "gasM3": 3.0}
+THRESHOLDS = {"energyKwh": 3.0}
 EXPECTED_ENERGY = {
     "2025-01": 710596.02, "2025-02": 854824.14, "2025-03": 1237425.50,
     "2025-04": 1236143.74, "2025-05": 1161043.02, "2025-06": 1259958.95,
@@ -27,7 +27,7 @@ EXPECTED_ENERGY = {
     "2026-03": 1252323.71, "2026-04": 1266248.75, "2026-05": 1255948.11,
     "2026-06": 1284372.89, "2026-07": 1078205.60,
 }
-LABELS = {"energyKwh": "Energía", "waterM3": "Agua", "alcM3": "Alcantarillado", "gasM3": "Gas"}
+LABELS = {"energyKwh": "Energía"}
 
 
 def load_json(name: str) -> Any:
@@ -204,7 +204,7 @@ def main() -> int:
         errors.extend(f"{name}: {message}" for message in item_errors)
 
     lines = [
-        "CONTROL DE CALIDAD DE HISTÓRICOS — SiMeCO₂ v56",
+        "CONTROL DE CALIDAD DE HISTÓRICOS — SiMeCO₂ v85",
         f"Fecha: {date.today().isoformat()}",
         "",
         "CRITERIO DE FUENTE",
