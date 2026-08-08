@@ -17,7 +17,7 @@ const TOOL_DEFS = [
   },
   {
     type:'function', name:'obtener_historico',
-    description:'Obtiene el histórico mensual de una institución para energía, agua, alcantarillado, gas o residuos.',
+    description:'Obtiene el histórico mensual de una institución para energía eléctrica y huella de carbono.',
     parameters:{type:'object',properties:{query:{type:'string'},metric:{type:'string',enum:['energyKwh','waterM3','alcM3','gasM3','wasteTon']},year:{type:['string','null']}},required:['query','metric','year'],additionalProperties:false},
     strict:true,
   },
@@ -95,10 +95,7 @@ function normalizeText(value) {
 
 function metricFromMessage(message) {
   const q = normalizeText(message);
-  if (/agua|acueducto/.test(q)) return 'waterM3';
-  if (/alcantarillado/.test(q)) return 'alcM3';
-  if (/gas/.test(q)) return 'gasM3';
-  if (/residuo|aseo/.test(q)) return 'wasteTon';
+  
   return 'energyKwh';
 }
 
@@ -116,7 +113,7 @@ function periodHints(message) {
 
 function institutionCandidateFromMessage(message) {
   let q = normalizeText(message);
-  q = q.replace(/\b(dame|hazme|genera|generame|un|una|el|la|los|las|informe|reporte|analisis|analiza|porque|por|que|no|aparece|esta|en|del|de|ranking|top|puesto|posicion|energia|energetico|electrica|consumo|consumio|agua|acueducto|alcantarillado|gas|residuos|aseo|co2|huella|institucion|institucional|sede|ie|i e)\b/g,' ').replace(/\s+/g,' ').trim();
+  q = q.replace(/\b(dame|hazme|genera|generame|un|una|el|la|los|las|informe|reporte|analisis|analiza|porque|por|que|no|aparece|esta|en|del|de|ranking|top|puesto|posicion|energia|energetico|electrica|consumo|consumio|co2|huella|institucion|institucional|sede|ie|i e)\b/g,' ').replace(/\s+/g,' ').trim();
   return q;
 }
 
@@ -152,7 +149,7 @@ function preconsultData(message) {
     out.quality=data.qualityReport(institution);
     return out;
   }
-  if (institution && /informe|reporte|analisis|analiza|consumo|consumio|huella|co2|agua|energia|gas|residuo|aseo|historico|evolucion|tendencia/.test(q)) {
+  if (institution && /informe|reporte|analisis|analiza|consumo|consumio|huella|co2|energia|historico|evolucion|tendencia/.test(q)) {
     out.intent='institution_report';
     out.institutionReport=data.institutionReport(institution,{period:hints.period||undefined,year:hints.year||undefined});
     return out;
@@ -167,7 +164,7 @@ function preconsultData(message) {
     out.ranking=data.ranking(metric,{period:hints.period||undefined,year:hints.year||undefined,limit:10});
     return out;
   }
-  if (/medellin|ciudad|total general|indicadores/.test(q) && /(consumo|energia|agua|gas|residuo|aseo|co2|total)/.test(q)) {
+  if (/medellin|ciudad|total general|indicadores/.test(q) && /(consumo|energia|co2|total)/.test(q)) {
     out.intent='city_indicators';
     out.city=data.cityIndicators({period:hints.period||undefined,year:hints.year||undefined});
     return out;
@@ -210,22 +207,16 @@ function reportAnswer(report,message=''){
   lines.push(`**Calidad de datos:** ${quality.label||'Datos parciales'}.`);
   const vals=[];
   if(t.energyKwh!==null) vals.push(`energía **${fmt(t.energyKwh)} kWh**`); else vals.push('energía **no identificada**');
-  if(t.waterM3!==null) vals.push(`agua **${fmt(t.waterM3)} m³**`);
-  if(t.alcM3!==null) vals.push(`alcantarillado **${fmt(t.alcM3)} m³**`);
-  if(t.gasM3!==null) vals.push(`gas **${fmt(t.gasM3)} m³**`);
-  if(t.wasteTon!==null) vals.push(`residuos/aseo **${fmt(t.wasteTon)} t**`);
   lines.push(`**Acumulado disponible:** ${vals.join(', ')}.`);
   if(t.co2kg!==null) lines.push(`**Huella eléctrica estimada:** **${fmt(Number(t.co2kg)/1000)} t CO₂e**.`);
   if(latest){
     const latestVals=[];
     if(latest.energyKwh!==null) latestVals.push(`${fmt(latest.energyKwh)} kWh`);
-    if(latest.waterM3!==null) latestVals.push(`${fmt(latest.waterM3)} m³ de agua`);
     lines.push(`**Último periodo (${periodName(latest.period)}):** ${latestVals.length?latestVals.join(' y '):'sin datos de los indicadores principales'}.`);
   }
   if(change!==null) lines.push(`**Tendencia reciente:** frente al periodo anterior, la energía ${signText(change)}.`);
   if(quality.status==='energia_contrato_separado') lines.push('**Hallazgo:** la energía se gestiona en una fuente/contrato separado y no debe interpretarse como 0 kWh ni incluirse en el ranking eléctrico hasta integrar esa fuente.');
   else if(t.energyKwh!==null) lines.push('**Acción prioritaria:** revisar los meses de mayor consumo, horarios de equipos e iluminación, y fijar una meta de reducción medible con seguimiento mensual.');
-  if(t.waterM3!==null) lines.push('En agua, conviene revisar picos mensuales, fugas, sanitarios, tanques y rutinas de limpieza para explicar variaciones.');
   return lines.join('\n\n');
 }
 
@@ -240,7 +231,7 @@ function deterministicAnswer(grounded,message=''){
     const x=grounded.quality;
     if(!x?.institution) return null;
     const c=x.quality?.coverage||{};
-    return `**${x.institution.name}** está clasificada como **${x.quality?.label||'Datos parciales'}**. Cobertura: energía ${fmt(c.energyKwh?.percent)} %, agua ${fmt(c.waterM3?.percent)} %, alcantarillado ${fmt(c.alcM3?.percent)} %, gas ${fmt(c.gasM3?.percent)} % y residuos ${fmt(c.wasteTon?.percent)} %.`;
+    return `**${x.institution.name}** está clasificada como **${x.quality?.label||'Estado energético'}**. Cobertura de energía eléctrica: ${fmt(c.energyKwh?.percent)} %.`;
   }
   if(grounded.intent==='institution_ranking_status'){
     const r=grounded.rankingStatus; if(!r?.institution) return null;
@@ -259,7 +250,7 @@ function deterministicAnswer(grounded,message=''){
   }
   if(grounded.intent==='city_indicators'){
     const c=grounded.city||{}, t=c.totals||{};
-    return `En el alcance consultado, SiMeCO₂ consolida **${fmt(c.institutionCount)} instituciones/sedes**, **${fmt(c.recordCount)} registros** y **${fmt(c.periodCount)} periodos**. Totales disponibles: energía **${fmt(t.energyKwh)} kWh**, agua **${fmt(t.waterM3)} m³**, alcantarillado **${fmt(t.alcM3)} m³** y residuos **${fmt(t.wasteTon)} t**.`;
+    return `En el alcance consultado, SiMeCO₂ consolida **${fmt(c.institutionCount)} instituciones/sedes**, **${fmt(c.recordCount)} registros** y **${fmt(c.periodCount)} periodos**. Energía eléctrica disponible: **${fmt(t.energyKwh)} kWh**.`;
   }
   return null;
 }

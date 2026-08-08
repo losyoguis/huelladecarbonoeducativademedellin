@@ -37,11 +37,7 @@ const exceptions = Array.isArray(exceptionsBundle.exceptions) ? exceptionsBundle
 const summaries = Array.isArray(summariesBundle.summaries) ? summariesBundle.summaries : [];
 
 const METRICS = {
-  energyKwh: { label: 'Energía', unit: 'kWh', valueField: 'energyValue' },
-  waterM3: { label: 'Agua', unit: 'm³', valueField: 'waterValue' },
-  alcM3: { label: 'Alcantarillado', unit: 'm³', valueField: 'alcValue' },
-  gasM3: { label: 'Gas natural', unit: 'm³', valueField: 'gasValue' },
-  wasteTon: { label: 'Aseo/Residuos', unit: 't', valueField: 'wasteValue' },
+  energyKwh: { label: 'Energía eléctrica', unit: 'kWh', valueField: 'energyValue' },
 };
 
 function norm(value) {
@@ -251,14 +247,14 @@ function qualityForInstitution(item, list = item.records) {
     const ex = candidate ? exceptionForRecord(candidate, 'energyKwh') : null;
     return ex ? [ex] : [];
   });
-  let status = 'datos_parciales';
-  let label = 'Datos parciales';
+  let status = 'cobertura_electrica_parcial';
+  let label = 'Cobertura eléctrica parcial';
   if (coverage.energyKwh.periodsWithData === 0 && energyExceptions.length) {
     status = 'energia_contrato_separado'; label = 'Energía en contrato separado';
   } else if (coverage.energyKwh.periodsWithData === 0) {
     status = 'energia_no_identificada'; label = 'Energía no identificada';
-  } else if (coverage.energyKwh.percent === 100 && coverage.waterM3.percent === 100 && coverage.alcM3.percent === 100) {
-    status = 'datos_principales_completos'; label = 'Datos principales completos';
+  } else if (coverage.energyKwh.percent === 100) {
+    status = 'energia_identificada'; label = 'Energía identificada';
   }
   return {
     status, label, periods: periods.length, coverage,
