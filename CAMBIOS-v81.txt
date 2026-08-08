@@ -1,0 +1,26 @@
+SiMeCO₂ v81 — Nueva sección Ranking y Plan de acción
+
+NAVEGACIÓN
+- La sección 2 queda exclusivamente como Histórico.
+- Se crea la sección 5: Ranking.
+- La sección 5 contiene los dos rankings:
+  1. Ranking de sedes por servicio público/energía con Huella de carbono CO₂e.
+  2. Ranking de ahorro de energía eléctrica.
+- Aula pasa a ser la sección 6.
+- Se actualizaron navegación superior, navegación móvil, anclas y rutas internas.
+- Histórico continúa refrescándose al abrir la sección 2.
+- Los rankings conservan búsqueda, paginación, CO₂e, ahorro y Google Maps.
+
+INFORME POR SEDE
+- La columna “Plan de acción” se ubica inmediatamente después de “Periodos”.
+- El botón de generación del informe/plan se movió junto con esa columna.
+- Luego aparecen Energía, Agua, Alcantarillado, Gas, Aseo, CO₂e, Árboles, Promedio y Prioridad.
+- La fila TOTAL fue reorganizada para mantener la correspondencia exacta de columnas.
+- Se preserva la prioridad visual del nombre de la sede.
+
+RESPONSIVE
+- Navegación móvil adaptada de 5 a 6 secciones.
+- Se conserva el comportamiento responsive para Google Sites.
+
+INTEGRIDAD
+- No se modifican datos, históricos, factores, rankings ni cálculos.

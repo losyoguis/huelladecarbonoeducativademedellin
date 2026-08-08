@@ -2537,3 +2537,188 @@ body.viewport-phone .assistant-panel{
     font-size:.92rem;
   }
 }
+
+
+/* v80 · Ranking energético con columna de Huella de carbono (CO₂e) */
+.environmental-ranking-chart{
+  width:100%;
+  overflow-x:auto;
+  overflow-y:hidden;
+  -webkit-overflow-scrolling:touch;
+  overscroll-behavior-x:contain;
+}
+.environmental-ranking-chart #siteChart{
+  display:block;
+  max-width:none !important;
+}
+@media (max-width:760px){
+  .environmental-ranking-chart{
+    border-radius:14px;
+  }
+}
+
+
+/* =========================================================
+   v81 · Sección 5 Ranking + Plan de acción después de Periodos
+   ========================================================= */
+
+/* Seis secciones principales en la navegación móvil de Google Sites. */
+@media (max-width:620px){
+  body.is-embedded .section-switcher{
+    grid-template-columns:repeat(6,minmax(0,1fr)) !important;
+  }
+  body.is-embedded .section-tab{
+    padding-left:2px !important;
+    padding-right:2px !important;
+  }
+  body.is-embedded .section-tab strong{
+    font-size:9px !important;
+  }
+  .section-mobile-nav{
+    grid-template-columns:repeat(6,minmax(0,1fr)) !important;
+  }
+  .section-mobile-nav .mobile-section-tab small{
+    font-size:9px;
+  }
+}
+
+/* Introducción breve de la nueva sección Ranking. */
+.ranking-section-intro{
+  margin-bottom:16px;
+  background:linear-gradient(135deg,#f8fffc,#edf9f5);
+}
+.ranking-section-intro h2{
+  margin-bottom:6px;
+}
+
+/* Nueva distribución del Dashboard:
+   # | Sede | Dirección | Periodos | Plan de acción | indicadores... */
+.dashboard-table-wrap .dashboard-data-table th:nth-child(1),
+.dashboard-table-wrap .dashboard-data-table td:nth-child(1),
+.dashboard-table-wrap > table th:nth-child(1),
+.dashboard-table-wrap > table td:nth-child(1){width:40px;text-align:center;}
+
+.dashboard-table-wrap .dashboard-data-table th:nth-child(2),
+.dashboard-table-wrap .dashboard-data-table td:nth-child(2),
+.dashboard-table-wrap > table th:nth-child(2),
+.dashboard-table-wrap > table td:nth-child(2){width:285px;min-width:285px;}
+
+.dashboard-table-wrap .dashboard-data-table th:nth-child(3),
+.dashboard-table-wrap .dashboard-data-table td:nth-child(3),
+.dashboard-table-wrap > table th:nth-child(3),
+.dashboard-table-wrap > table td:nth-child(3){width:155px;}
+
+.dashboard-table-wrap .dashboard-data-table th:nth-child(4),
+.dashboard-table-wrap .dashboard-data-table td:nth-child(4),
+.dashboard-table-wrap > table th:nth-child(4),
+.dashboard-table-wrap > table td:nth-child(4){width:62px;text-align:center;}
+
+/* Plan de acción queda inmediatamente después de Periodos. */
+.dashboard-table-wrap .dashboard-data-table th:nth-child(5),
+.dashboard-table-wrap .dashboard-data-table td:nth-child(5),
+.dashboard-table-wrap > table th:nth-child(5),
+.dashboard-table-wrap > table td:nth-child(5){
+  width:158px;
+  min-width:158px;
+  text-align:center;
+  background:#fbfffd;
+}
+.dashboard-table-wrap .total-row td:nth-child(5){
+  background:#12312d;
+  color:#fff;
+}
+
+.dashboard-table-wrap .dashboard-data-table th:nth-child(6),
+.dashboard-table-wrap .dashboard-data-table td:nth-child(6),
+.dashboard-table-wrap > table th:nth-child(6),
+.dashboard-table-wrap > table td:nth-child(6){width:112px;}
+
+.dashboard-table-wrap .dashboard-data-table th:nth-child(7),
+.dashboard-table-wrap .dashboard-data-table td:nth-child(7),
+.dashboard-table-wrap > table th:nth-child(7),
+.dashboard-table-wrap > table td:nth-child(7){width:82px;}
+
+.dashboard-table-wrap .dashboard-data-table th:nth-child(8),
+.dashboard-table-wrap .dashboard-data-table td:nth-child(8),
+.dashboard-table-wrap > table th:nth-child(8),
+.dashboard-table-wrap > table td:nth-child(8){width:78px;}
+
+.dashboard-table-wrap .dashboard-data-table th:nth-child(9),
+.dashboard-table-wrap .dashboard-data-table td:nth-child(9),
+.dashboard-table-wrap > table th:nth-child(9),
+.dashboard-table-wrap > table td:nth-child(9){width:78px;}
+
+.dashboard-table-wrap .dashboard-data-table th:nth-child(10),
+.dashboard-table-wrap .dashboard-data-table td:nth-child(10),
+.dashboard-table-wrap > table th:nth-child(10),
+.dashboard-table-wrap > table td:nth-child(10){width:92px;}
+
+.dashboard-table-wrap .dashboard-data-table th:nth-child(11),
+.dashboard-table-wrap .dashboard-data-table td:nth-child(11),
+.dashboard-table-wrap > table th:nth-child(11),
+.dashboard-table-wrap > table td:nth-child(11){width:82px;}
+
+.dashboard-table-wrap .dashboard-data-table th:nth-child(12),
+.dashboard-table-wrap .dashboard-data-table td:nth-child(12),
+.dashboard-table-wrap > table th:nth-child(12),
+.dashboard-table-wrap > table td:nth-child(12){width:90px;}
+
+.dashboard-table-wrap .dashboard-data-table th:nth-child(13),
+.dashboard-table-wrap .dashboard-data-table td:nth-child(13),
+.dashboard-table-wrap > table th:nth-child(13),
+.dashboard-table-wrap > table td:nth-child(13){width:104px;}
+
+.dashboard-table-wrap .dashboard-data-table th:nth-child(14),
+.dashboard-table-wrap .dashboard-data-table td:nth-child(14),
+.dashboard-table-wrap > table th:nth-child(14),
+.dashboard-table-wrap > table td:nth-child(14){
+  width:108px;
+  min-width:108px;
+  text-align:center;
+  background:transparent;
+}
+
+/* Anula la regla histórica que reservaba la última columna para el plan. */
+.dashboard-table-wrap th:last-child,
+.dashboard-table-wrap td:last-child{
+  min-width:108px !important;
+  background:transparent !important;
+}
+.dashboard-table-wrap .total-row td:last-child{
+  background:#12312d !important;
+  color:#fff;
+}
+
+/* El botón ahora vive en la quinta columna. */
+.dashboard-table-wrap td:nth-child(5).plan-cell{
+  padding:8px !important;
+}
+.dashboard-table-wrap td:nth-child(5) .plan-btn{
+  width:100% !important;
+  min-width:0 !important;
+  min-height:52px !important;
+  padding:8px 9px !important;
+  border-radius:14px !important;
+  font-size:.78rem !important;
+  line-height:1.12 !important;
+}
+
+/* Las columnas numéricas comienzan después del Plan de acción. */
+.dashboard-table-wrap .dashboard-data-table td:nth-child(n+6):nth-child(-n+13),
+.dashboard-table-wrap > table td:nth-child(n+6):nth-child(-n+13){
+  font-variant-numeric:tabular-nums;
+  text-align:center;
+  overflow-wrap:normal;
+  word-break:normal;
+  hyphens:none;
+}
+
+@media (min-width:1600px){
+  .dashboard-table-wrap .dashboard-data-table th:nth-child(2),
+  .dashboard-table-wrap .dashboard-data-table td:nth-child(2),
+  .dashboard-table-wrap > table th:nth-child(2),
+  .dashboard-table-wrap > table td:nth-child(2){
+    width:330px;
+    min-width:330px;
+  }
+}

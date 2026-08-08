@@ -1,0 +1,33 @@
+CONTROL DE CALIDAD SiMeCO₂ v80
+Fecha: 2026-08-08
+
+CAMBIO PRINCIPAL
+El Ranking de sedes por energía eléctrica incorpora una columna organizada de Huella de carbono (t CO₂e).
+
+RANKING
+- Consumo eléctrico separado en columna.
+- Huella de carbono separada en columna.
+- CO₂e = dióxido de carbono equivalente.
+- Periodos separados en columna.
+- Tarjetas de mayor/menor consumo incluyen también t CO₂e.
+- N.I. se mantiene para consumo no identificado.
+- N.C. se usa cuando la huella no puede calcularse.
+- Contratos separados se mantienen como pendientes.
+- Canvas ampliado y con scroll horizontal para Google Sites.
+
+CÁLCULO
+- Huella CO₂e = consumo eléctrico kWh × factor eléctrico SiMeCO₂ / 1000.
+- Se usa exactamente el mismo factor configurado por el sistema.
+
+INTEGRIDAD
+- 9.147 registros.
+- 567 instituciones/sedes.
+- 17 períodos oficiales.
+- Histórico, Informe, Google Maps y ranking de ahorro sin cambios.
+
+PRUEBAS
+- npm run check: APROBADO.
+- npm test: APROBADO, incluida ranking-carbon-footprint-column.test.js.
+- validar_sistema.py: APROBADO.
+- validar_historicos.py: APROBADO.
+RESULTADO: APROBADO.

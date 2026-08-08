@@ -13,7 +13,7 @@
   <meta name="description" content="Sistema interactivo para medir, interpretar y gestionar la huella de carbono educativa a partir del consumo de servicios públicos." />
   <link rel="icon" type="image/png" href="assets/los-yoguis-logo-optimized.png" />
   <link rel="apple-touch-icon" href="assets/los-yoguis-logo-optimized.png" />
-  <link rel="stylesheet" href="styles.css?v=79-historico-desplegable" />
+  <link rel="stylesheet" href="styles.css?v=81-ranking-seccion-plan-accion" />
 </head>
 <body>
   <div class="invoice-loading active" id="invoiceLoading" role="status" aria-live="assertive" aria-hidden="false">
@@ -95,10 +95,11 @@
 
   <nav class="section-switcher" aria-label="Secciones principales de SiMeCO₂">
     <button type="button" class="section-tab active" id="scanDataBtn" data-section="seccion-1" data-action="actualizar" aria-selected="true"><span>1</span><strong>Actualizar datos</strong><small>Carga, lectura e indicadores</small></button>
-    <button type="button" class="section-tab" data-section="seccion-2" aria-selected="false"><span>2</span><strong>Histórico</strong><small>Comparación y ranking</small></button>
+    <button type="button" class="section-tab" data-section="seccion-2" aria-selected="false"><span>2</span><strong>Histórico</strong><small>Comparación por periodos</small></button>
     <button type="button" class="section-tab" data-section="seccion-3" aria-selected="false"><span>3</span><strong>Informe por sede</strong><small>Dashboard y planes</small></button>
     <button type="button" class="section-tab" data-section="seccion-4" aria-selected="false"><span>4</span><strong>Facturas por I.E.</strong><small>Filtros, datos y descargas</small></button>
-    <button type="button" class="section-tab" data-section="seccion-5" aria-selected="false"><span>5</span><strong>Aula</strong><small>Aprender, medir y actuar</small></button>
+    <button type="button" class="section-tab" data-section="seccion-5" aria-selected="false"><span>5</span><strong>Ranking</strong><small>Consumo, CO₂e y ahorro</small></button>
+    <button type="button" class="section-tab" data-section="seccion-6" aria-selected="false"><span>6</span><strong>Aula</strong><small>Aprender, medir y actuar</small></button>
   </nav>
 
   <main>
@@ -282,111 +283,6 @@
       <div id="historyDataTable" class="history-data-table"></div>
     </section>
 
-    <section class="panel ranking-panel" id="ranking-sedes">
-      <div class="section-head">
-        <div>
-          <span class="section-kicker">Priorización</span>
-          <h2 id="rankingTitle">Ranking de sedes por servicio público</h2>
-          <p class="muted" id="rankingDescription">Ordena las sedes por el servicio seleccionado. Las sedes sin lectura para ese indicador se mantienen visibles al final como “Sin dato”.</p>
-        </div>
-      </div>
-      <div class="ranking-filter-bar" aria-label="Filtros y búsqueda del ranking">
-        <label>Servicio del ranking
-          <select id="rankingMetricFilter">
-            <option value="energyKwh">Energía eléctrica</option>
-            <option value="waterM3">Agua</option>
-            <option value="alcM3">Alcantarillado</option>
-            <option value="gasM3">Gas natural</option>
-            <option value="wasteTon">Aseo / residuos</option>
-          </select>
-        </label>
-        <label>Mes del ranking
-          <select id="rankingPeriodFilter"><option value="">Todos los meses</option></select>
-        </label>
-        <label>Localizar institución o sede
-          <div class="autocomplete site-autocomplete" id="rankingSiteAutocomplete">
-            <input id="rankingSiteSearch" type="search" autocomplete="off" spellcheck="false" placeholder="Escribe el nombre o la dirección…" aria-autocomplete="list" aria-controls="rankingSiteSuggestions" aria-expanded="false" />
-            <button id="clearRankingSearchBtn" class="clear-search" type="button" title="Borrar búsqueda" aria-label="Borrar búsqueda">×</button>
-            <div id="rankingSiteSuggestions" class="autocomplete-list" role="listbox" hidden></div>
-          </div>
-          <small class="search-address-note"><strong>Sugerencia:</strong> si el nombre de la sede no aparece, búscala por la dirección registrada en la factura.</small>
-          <small class="search-secondary-hint">Las sugerencias consultan los mismos históricos; también muestran sedes pendientes de lectura eléctrica.</small>
-        </label>
-        <button id="refreshRankingBtn" class="secondary ranking-refresh-btn" type="button">↻ Actualizar ranking</button>
-      </div>
-      <div class="ranking-toolbar" aria-label="Leyenda del ranking">
-        <div class="priority-legend" aria-label="Leyenda de prioridad">
-          <span class="priority-chip high">Alta</span>
-          <span class="priority-chip medium">Media</span>
-          <span class="priority-chip low">Preventiva</span>
-        </div>
-      </div>
-      <div id="rankingExtremes" class="ranking-extremes" aria-live="polite"></div>
-      <div class="chart-card environmental-ranking-chart">
-        <canvas id="siteChart" width="1100" height="500" aria-label="Ranking de sedes por servicio público, incluyendo sedes sin dato del indicador seleccionado"></canvas>
-      </div>
-      <div class="ranking-pagination" aria-label="Paginación del ranking">
-        <button id="rankingFirstBtn" class="secondary" type="button" title="Ver las primeras 10 sedes">« Primera</button>
-        <button id="rankingPrevBtn" class="secondary" type="button" title="Ver las 10 sedes anteriores">‹ Anteriores</button>
-        <strong id="rankingPageInfo">1–10 de 0 sedes</strong>
-        <button id="rankingNextBtn" class="secondary" type="button" title="Ver las siguientes 10 sedes">Siguientes ›</button>
-        <button id="rankingLastBtn" class="secondary" type="button" title="Ver las últimas sedes, incluidas las pendientes de dato eléctrico">Última »</button>
-      </div>
-    </section>
-
-    <section class="panel ranking-panel savings-ranking-panel" id="ranking-ahorro-energia">
-      <div class="section-head">
-        <div>
-          <span class="section-kicker">Eficiencia y ahorro</span>
-          <h2>Ranking de sedes por ahorro de energía eléctrica</h2>
-          <p class="muted">Reconoce las sedes que reducen su consumo frente al mes calendario anterior. En la tendencia general se valora la constancia de las disminuciones y el ahorro acumulado; los meses faltantes no se comparan.</p>
-        </div>
-      </div>
-      <div class="ranking-filter-bar savings-filter-bar" aria-label="Filtros y búsqueda del ranking de ahorro">
-        <label>Periodo evaluado
-          <select id="savingsPeriodFilter">
-            <option value="">Tendencia general · todos los meses</option>
-          </select>
-          <small>Al elegir un mes se compara únicamente contra el mes calendario anterior.</small>
-        </label>
-        <label>Localizar institución o sede
-          <div class="autocomplete site-autocomplete" id="savingsSiteAutocomplete">
-            <input id="savingsSiteSearch" type="search" autocomplete="off" spellcheck="false" placeholder="Escribe el nombre o la dirección…" aria-autocomplete="list" aria-controls="savingsSiteSuggestions" aria-expanded="false" />
-            <button id="clearSavingsSearchBtn" class="clear-search" type="button" title="Borrar búsqueda" aria-label="Borrar búsqueda">×</button>
-            <div id="savingsSiteSuggestions" class="autocomplete-list" role="listbox" hidden></div>
-          </div>
-          <small class="search-address-note"><strong>Sugerencia:</strong> si el nombre de la sede no aparece, búscala por la dirección registrada en la factura.</small>
-        </label>
-        <button id="refreshSavingsRankingBtn" class="secondary ranking-refresh-btn" type="button">↻ Actualizar ahorro</button>
-      </div>
-      <div class="savings-legend" aria-label="Cómo se interpreta el ranking de ahorro">
-        <span><strong>↓ Ahorro:</strong> el consumo bajó frente al mes anterior.</span>
-        <span><strong>Constancia:</strong> número y proporción de comparaciones mensuales con reducción.</span>
-        <span><strong>Integridad:</strong> solo se comparan meses consecutivos con lectura eléctrica válida.</span>
-      </div>
-      <div id="savingsRankingExtremes" class="ranking-extremes" aria-live="polite"></div>
-      <section class="savings-top3-explanation" aria-labelledby="savingsTop3Title">
-        <div class="savings-top3-head">
-          <div>
-            <span class="section-kicker">Cómo leer los resultados</span>
-            <h3 id="savingsTop3Title">Ejemplo e interpretación de los tres primeros puestos</h3>
-          </div>
-          <p id="savingsTop3Method" class="muted"></p>
-        </div>
-        <div id="savingsTop3Interpretation" class="savings-top3-grid" aria-live="polite"></div>
-      </section>
-      <div class="chart-card environmental-ranking-chart savings-ranking-chart">
-        <canvas id="savingsSiteChart" width="1100" height="500" aria-label="Ranking de sedes por ahorro mensual de energía eléctrica"></canvas>
-      </div>
-      <div class="ranking-pagination" aria-label="Paginación del ranking de ahorro">
-        <button id="savingsFirstBtn" class="secondary" type="button">« Primera</button>
-        <button id="savingsPrevBtn" class="secondary" type="button">‹ Anteriores</button>
-        <strong id="savingsPageInfo">1–10 de 0 sedes</strong>
-        <button id="savingsNextBtn" class="secondary" type="button">Siguientes ›</button>
-        <button id="savingsLastBtn" class="secondary" type="button">Última »</button>
-      </div>
-    </section>
-
     </div>
 
     <div class="app-section" id="seccion-3" data-page-title="Informe por sede">
@@ -447,6 +343,7 @@
               <th>Sede</th>
               <th>Dirección</th>
               <th>Periodos</th>
+              <th>Plan de acción</th>
               <th>Energía total kWh</th>
               <th>Agua m³</th>
               <th>Alc. m³</th>
@@ -456,7 +353,6 @@
               <th>Árboles</th>
               <th>Prom. kWh/mes</th>
               <th>Prioridad</th>
-              <th>Plan de gestión</th>
             </tr>
           </thead>
           <tbody id="environmentBody"></tbody>
@@ -547,7 +443,123 @@
     </section>
     </div>
 
-    <div class="app-section" id="seccion-5" data-page-title="Aula">
+    <div class="app-section" id="seccion-5" data-page-title="Ranking">
+      <section class="panel ranking-section-intro" aria-labelledby="rankingSectionTitle">
+        <div class="section-head">
+          <div>
+            <span class="section-kicker">Ranking</span>
+            <h2 id="rankingSectionTitle">Ranking ambiental de sedes educativas</h2>
+            <p class="muted">Consulta en un solo lugar el ranking por consumo de servicios públicos y el ranking de ahorro de energía eléctrica.</p>
+          </div>
+        </div>
+      </section>
+    <section class="panel ranking-panel" id="ranking-sedes">
+      <div class="section-head">
+        <div>
+          <span class="section-kicker">Priorización</span>
+          <h2 id="rankingTitle">Ranking de sedes por servicio público</h2>
+          <p class="muted" id="rankingDescription">Ordena las sedes por el servicio seleccionado. En energía eléctrica también muestra la Huella de carbono (t CO₂e), donde CO₂e significa dióxido de carbono equivalente.</p>
+        </div>
+      </div>
+      <div class="ranking-filter-bar" aria-label="Filtros y búsqueda del ranking">
+        <label>Servicio del ranking
+          <select id="rankingMetricFilter">
+            <option value="energyKwh">Energía eléctrica</option>
+            <option value="waterM3">Agua</option>
+            <option value="alcM3">Alcantarillado</option>
+            <option value="gasM3">Gas natural</option>
+            <option value="wasteTon">Aseo / residuos</option>
+          </select>
+        </label>
+        <label>Mes del ranking
+          <select id="rankingPeriodFilter"><option value="">Todos los meses</option></select>
+        </label>
+        <label>Localizar institución o sede
+          <div class="autocomplete site-autocomplete" id="rankingSiteAutocomplete">
+            <input id="rankingSiteSearch" type="search" autocomplete="off" spellcheck="false" placeholder="Escribe el nombre o la dirección…" aria-autocomplete="list" aria-controls="rankingSiteSuggestions" aria-expanded="false" />
+            <button id="clearRankingSearchBtn" class="clear-search" type="button" title="Borrar búsqueda" aria-label="Borrar búsqueda">×</button>
+            <div id="rankingSiteSuggestions" class="autocomplete-list" role="listbox" hidden></div>
+          </div>
+          <small class="search-address-note"><strong>Sugerencia:</strong> si el nombre de la sede no aparece, búscala por la dirección registrada en la factura.</small>
+          <small class="search-secondary-hint">Las sugerencias consultan los mismos históricos; también muestran sedes pendientes de lectura eléctrica.</small>
+        </label>
+        <button id="refreshRankingBtn" class="secondary ranking-refresh-btn" type="button">↻ Actualizar ranking</button>
+      </div>
+      <div class="ranking-toolbar" aria-label="Leyenda del ranking">
+        <div class="priority-legend" aria-label="Leyenda de prioridad">
+          <span class="priority-chip high">Alta</span>
+          <span class="priority-chip medium">Media</span>
+          <span class="priority-chip low">Preventiva</span>
+        </div>
+      </div>
+      <div id="rankingExtremes" class="ranking-extremes" aria-live="polite"></div>
+      <div class="chart-card environmental-ranking-chart">
+        <canvas id="siteChart" width="1100" height="500" aria-label="Ranking de sedes por servicio público. Para energía eléctrica incluye consumo, huella de carbono en toneladas de CO₂e y cobertura de periodos"></canvas>
+      </div>
+      <div class="ranking-pagination" aria-label="Paginación del ranking">
+        <button id="rankingFirstBtn" class="secondary" type="button" title="Ver las primeras 10 sedes">« Primera</button>
+        <button id="rankingPrevBtn" class="secondary" type="button" title="Ver las 10 sedes anteriores">‹ Anteriores</button>
+        <strong id="rankingPageInfo">1–10 de 0 sedes</strong>
+        <button id="rankingNextBtn" class="secondary" type="button" title="Ver las siguientes 10 sedes">Siguientes ›</button>
+        <button id="rankingLastBtn" class="secondary" type="button" title="Ver las últimas sedes, incluidas las pendientes de dato eléctrico">Última »</button>
+      </div>
+    </section>
+
+    <section class="panel ranking-panel savings-ranking-panel" id="ranking-ahorro-energia">
+      <div class="section-head">
+        <div>
+          <span class="section-kicker">Eficiencia y ahorro</span>
+          <h2>Ranking de sedes por ahorro de energía eléctrica</h2>
+          <p class="muted">Reconoce las sedes que reducen su consumo frente al mes calendario anterior. En la tendencia general se valora la constancia de las disminuciones y el ahorro acumulado; los meses faltantes no se comparan.</p>
+        </div>
+      </div>
+      <div class="ranking-filter-bar savings-filter-bar" aria-label="Filtros y búsqueda del ranking de ahorro">
+        <label>Periodo evaluado
+          <select id="savingsPeriodFilter">
+            <option value="">Tendencia general · todos los meses</option>
+          </select>
+          <small>Al elegir un mes se compara únicamente contra el mes calendario anterior.</small>
+        </label>
+        <label>Localizar institución o sede
+          <div class="autocomplete site-autocomplete" id="savingsSiteAutocomplete">
+            <input id="savingsSiteSearch" type="search" autocomplete="off" spellcheck="false" placeholder="Escribe el nombre o la dirección…" aria-autocomplete="list" aria-controls="savingsSiteSuggestions" aria-expanded="false" />
+            <button id="clearSavingsSearchBtn" class="clear-search" type="button" title="Borrar búsqueda" aria-label="Borrar búsqueda">×</button>
+            <div id="savingsSiteSuggestions" class="autocomplete-list" role="listbox" hidden></div>
+          </div>
+          <small class="search-address-note"><strong>Sugerencia:</strong> si el nombre de la sede no aparece, búscala por la dirección registrada en la factura.</small>
+        </label>
+        <button id="refreshSavingsRankingBtn" class="secondary ranking-refresh-btn" type="button">↻ Actualizar ahorro</button>
+      </div>
+      <div class="savings-legend" aria-label="Cómo se interpreta el ranking de ahorro">
+        <span><strong>↓ Ahorro:</strong> el consumo bajó frente al mes anterior.</span>
+        <span><strong>Constancia:</strong> número y proporción de comparaciones mensuales con reducción.</span>
+        <span><strong>Integridad:</strong> solo se comparan meses consecutivos con lectura eléctrica válida.</span>
+      </div>
+      <div id="savingsRankingExtremes" class="ranking-extremes" aria-live="polite"></div>
+      <section class="savings-top3-explanation" aria-labelledby="savingsTop3Title">
+        <div class="savings-top3-head">
+          <div>
+            <span class="section-kicker">Cómo leer los resultados</span>
+            <h3 id="savingsTop3Title">Ejemplo e interpretación de los tres primeros puestos</h3>
+          </div>
+          <p id="savingsTop3Method" class="muted"></p>
+        </div>
+        <div id="savingsTop3Interpretation" class="savings-top3-grid" aria-live="polite"></div>
+      </section>
+      <div class="chart-card environmental-ranking-chart savings-ranking-chart">
+        <canvas id="savingsSiteChart" width="1100" height="500" aria-label="Ranking de sedes por ahorro mensual de energía eléctrica"></canvas>
+      </div>
+      <div class="ranking-pagination" aria-label="Paginación del ranking de ahorro">
+        <button id="savingsFirstBtn" class="secondary" type="button">« Primera</button>
+        <button id="savingsPrevBtn" class="secondary" type="button">‹ Anteriores</button>
+        <strong id="savingsPageInfo">1–10 de 0 sedes</strong>
+        <button id="savingsNextBtn" class="secondary" type="button">Siguientes ›</button>
+        <button id="savingsLastBtn" class="secondary" type="button">Última »</button>
+      </div>
+    </section>
+    </div>
+
+    <div class="app-section" id="seccion-6" data-page-title="Aula">
     <section class="panel aula-panel" id="aula-climatica">
       <div class="section-head">
         <div>
@@ -584,7 +596,10 @@
     <button type="button" class="mobile-section-tab" data-section="seccion-4" aria-label="Consultar facturas">
       <span aria-hidden="true">▤</span><small>Facturas</small>
     </button>
-    <button type="button" class="mobile-section-tab" data-section="seccion-5" aria-label="Abrir aula ambiental">
+    <button type="button" class="mobile-section-tab" data-section="seccion-5" aria-label="Consultar rankings">
+      <span aria-hidden="true">↕</span><small>Ranking</small>
+    </button>
+    <button type="button" class="mobile-section-tab" data-section="seccion-6" aria-label="Abrir aula ambiental">
       <span aria-hidden="true">✦</span><small>Aula</small>
     </button>
   </nav>
@@ -633,9 +648,9 @@
     (() => {
       const sectionForTarget = {
         inicio: 'seccion-1', importacion: 'seccion-1', 'resumen-ejecutivo': 'seccion-1', cards: 'seccion-1', 'calidad-datos': 'seccion-1',
-        'comparar-periodos': 'seccion-2', 'ranking-sedes': 'seccion-2', 'ranking-ahorro-energia': 'seccion-2',
+        'comparar-periodos': 'seccion-2', 'ranking-sedes': 'seccion-5', 'ranking-ahorro-energia': 'seccion-5',
         'dashboard-ambiental': 'seccion-3', planPanel: 'seccion-3',
-        registros: 'seccion-4', 'aula-climatica': 'seccion-5'
+        registros: 'seccion-4', 'aula-climatica': 'seccion-6'
       };
 
       function openSection(sectionId, options = {}) {
@@ -695,7 +710,7 @@
   <script defer src="data/sincronizacion-territorial.js?v=60-territorios"></script>
   <script defer src="data/excepciones-servicios.js?v=60-instituciones"></script>
   
-  <script defer src="app.js?v=79-historico-desplegable"></script>
+  <script defer src="app.js?v=81-ranking-seccion-plan-accion"></script>
   <script defer src="assistant-config.js?v=65-rendimiento"></script>
   <script defer src="assistant.js?v=65-rendimiento"></script>
 </body>

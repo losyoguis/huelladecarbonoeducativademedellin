@@ -1,0 +1,13 @@
+SiMeCO₂ v80 — Ranking energético con Huella de carbono
+
+CAMBIO PRINCIPAL
+- El Ranking de sedes por energía eléctrica incorpora una columna independiente de Huella de carbono (t CO₂e).
+- CO₂e se presenta como dióxido de carbono equivalente.
+- La huella se calcula con el mismo factor de emisión eléctrica configurado en SiMeCO₂.
+- El ranking conserva consumo eléctrico, dirección, periodos, búsqueda, paginación y prioridad.
+- Las sedes sin lectura eléctrica muestran N.I. en consumo y N.C. (No calculable) en CO₂e.
+- Las sedes con contrato separado conservan su estado pendiente.
+- Las tarjetas de mayor/menor consumo incluyen también la huella de carbono.
+- El canvas del ranking energético se amplía y permite scroll horizontal en Google Sites cuando el iframe es angosto.
+- Los rankings de agua, alcantarillado, gas y residuos mantienen su diseño anterior.
+- No se modifican datos históricos ni cálculos originales.

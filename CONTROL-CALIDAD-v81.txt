@@ -1,0 +1,38 @@
+CONTROL DE CALIDAD SiMeCO₂ v81
+Fecha: 2026-08-08
+
+CAMBIO PRINCIPAL
+- Se crea la sección 5: Ranking.
+- Aula pasa a ser la sección 6.
+- Los dos rankings quedan agrupados en la nueva sección Ranking.
+- En Informe por sede, “Plan de acción” se ubica inmediatamente después de “Periodos”.
+
+NAVEGACIÓN
+- Sección 1: Actualizar datos.
+- Sección 2: Histórico.
+- Sección 3: Informe por sede.
+- Sección 4: Facturas por I.E.
+- Sección 5: Ranking.
+- Sección 6: Aula.
+- Navegación superior y móvil actualizadas.
+- Anclas internas de rankings apuntan a sección 5.
+- Aula apunta a sección 6.
+
+INFORME POR SEDE
+- Orden: #, Sede, Dirección, Periodos, Plan de acción, Energía, Agua, Alc., Gas, Aseo, CO₂e, Árboles, Promedio, Prioridad.
+- La fila TOTAL conserva correspondencia exacta con las 14 columnas.
+- El botón de informe/plan se mueve con Plan de acción.
+- Se mantiene prioridad visual al nombre de la sede.
+
+INTEGRIDAD
+- 9.147 registros.
+- 567 instituciones/sedes.
+- 17 períodos oficiales.
+- Histórico, N.I., informe interactivo, Google Maps, ranking CO₂e y ranking de ahorro conservados.
+
+PRUEBAS
+- npm run check: APROBADO.
+- npm test: APROBADO, incluida section-ranking-plan-action.test.js.
+- validar_sistema.py: APROBADO.
+- validar_historicos.py: APROBADO.
+RESULTADO: APROBADO.

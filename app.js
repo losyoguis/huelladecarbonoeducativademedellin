@@ -4,7 +4,7 @@ let TREE_CO2_KG_YEAR = 22; // kg CO2e capturados por árbol al año. Ajustable d
 const FACTOR_KEY = 'simeco2_factores_ambientales_v8';
 const STORE_KEY = 'simeco2_servicios_v16';
 const CONFIG_KEY = 'simeco2_repo_config_v7';
-const DATA_VERSION = 'v79-historico-desplegable-corregido-20260808';
+const DATA_VERSION = 'v81-ranking-seccion-plan-accion-20260808';
 
 const $ = (id)=>document.getElementById(id);
 const state = loadStore();
@@ -2212,6 +2212,7 @@ function renderDashboard(){
     <td data-label="Sede"><strong>${escapeHtml(r.displaySite||r.site)}</strong>${invoiceAlias}</td>
     <td data-label="Dirección">${mapAddressLink(r.address,r.address||'Sin dirección',preferredSiteName(r)||r.site)}</td>
     <td data-label="Periodos">${fmt(r.periodCount)}</td>
+    <td data-label="Plan de acción" class="plan-cell"><button type="button" class="plan-btn primary" data-site-key="${escapeHtml(r.key)}" title="Generar, visualizar y descargar el Plan de Gestión de ${escapeHtml(r.displaySite||r.site)}">📄 Generar informe<br><small>${r.hasEnergy?'Plan de acción':'Informe con datos disponibles'}</small></button></td>
     <td data-label="Energía total kWh">${energyText}</td>
     <td data-label="Agua m³">${dashboardValue(r,'waterM3')}</td>
     <td data-label="Alcantarillado m³">${dashboardValue(r,'alcM3')}</td>
@@ -2221,10 +2222,9 @@ function renderDashboard(){
     <td data-label="Árboles requeridos">${treesText}</td>
     <td data-label="Promedio kWh/mes">${avgText}</td>
     <td data-label="Prioridad"><span class="priority-chip ${priority.cls}" title="${escapeHtml(priority.level)}">${escapeHtml(priority.short || priority.level)}</span></td>
-    <td data-label="Plan" class="plan-cell"><button type="button" class="plan-btn primary" data-site-key="${escapeHtml(r.key)}" title="Generar, visualizar y descargar el Plan de Gestión de ${escapeHtml(r.displaySite||r.site)}">📄 Generar informe<br><small>${r.hasEnergy?'Plan de Gestión':'Informe con datos disponibles'}</small></button></td>
   </tr>`;
   }).join('');
-  const totalRow = `<tr class="total-row"><td colspan="4">TOTAL / DATOS DISPONIBLES</td><td>${energyRows.length?fmt(totalKwh):'—'}</td><td>${rows.some(r=>r.hasWater)?fmt(totalWater):'—'}</td><td>${rows.some(r=>r.hasAlc)?fmt(totalAlc):'—'}</td><td>${rows.some(r=>r.hasGas)?fmt(totalGas):'—'}</td><td>${rows.some(r=>r.hasWaste)?fmt(totalWaste):'—'}</td><td>${energyRows.length?fmt(totalCo2kg/1000):'—'}</td><td>${energyRows.length?fmt(totalTrees||0):'—'}</td><td>—</td><td>—</td><td>—</td></tr>`;
+  const totalRow = `<tr class="total-row"><td colspan="4">TOTAL / DATOS DISPONIBLES</td><td>—</td><td>${energyRows.length?fmt(totalKwh):'—'}</td><td>${rows.some(r=>r.hasWater)?fmt(totalWater):'—'}</td><td>${rows.some(r=>r.hasAlc)?fmt(totalAlc):'—'}</td><td>${rows.some(r=>r.hasGas)?fmt(totalGas):'—'}</td><td>${rows.some(r=>r.hasWaste)?fmt(totalWaste):'—'}</td><td>${energyRows.length?fmt(totalCo2kg/1000):'—'}</td><td>${energyRows.length?fmt(totalTrees||0):'—'}</td><td>—</td><td>—</td></tr>`;
   $('environmentBody').innerHTML = totalRow + body;
 }
 
@@ -2246,7 +2246,8 @@ function getFullRankingRows(){
   return aggregateBySite(records).map(row=>{
     const has=Boolean(row[metric.hasFlag]); const value=has?Number(row[metric.field])||0:null; const periodCount=Number(row[metric.periodField])||0;
     const rankingExternal=metric.field==='energyKwh' && !has && energyDataState(row).code==='external';
-    return {...row,rankingHasValue:has,rankingValue:value,rankingPeriodCount:periodCount,rankingExternal};
+    const rankingCo2eT=metric.field==='energyKwh' && has ? ((Number(value)||0)*FACTOR_CO2_KG_KWH/1000) : null;
+    return {...row,rankingHasValue:has,rankingValue:value,rankingPeriodCount:periodCount,rankingExternal,rankingCo2eT};
   }).filter(row=>{
     if(!rankingPriority) return true;
     return metric.field==='energyKwh' && row.hasEnergy && classifyEnergyIntensity(row.avgKwhMonth).cls===rankingPriority;
@@ -2285,7 +2286,7 @@ function setRankingPage(page){const pages=Math.max(1,Math.ceil(rankingRowsCache.
 function renderRanking(){
   renderRankingPeriodOptions(); rankingMetric=$('rankingMetricFilter')?.value||rankingMetric||'energyKwh'; if(rankingMetric!=='energyKwh')rankingPriority='';updateRankingPriorityButtons();rankingRowsCache=getFullRankingRows();
   if(rankingSelectedKey&&!rankingRowsCache.some(r=>siteKey(r.site,r.address)===rankingSelectedKey)){rankingSelectedKey='';if($('rankingSiteSearch'))$('rankingSiteSearch').value='';$('clearRankingSearchBtn')?.classList.remove('visible');}
-  const metric=selectedRankingMetric(); if($('rankingTitle'))$('rankingTitle').textContent=`Ranking de sedes por ${metric.label.toLowerCase()}`; if($('rankingDescription'))$('rankingDescription').textContent=`Ordena de mayor a menor ${metric.label.toLowerCase()}. Las sedes sin lectura para este indicador permanecen visibles al final y no se interpretan como consumo cero.`;
+  const metric=selectedRankingMetric(); if($('rankingTitle'))$('rankingTitle').textContent=`Ranking de sedes por ${metric.label.toLowerCase()}`; if($('rankingDescription'))$('rankingDescription').textContent=metric.field==='energyKwh'?`Ordena de mayor a menor el consumo eléctrico e incorpora una columna de Huella de carbono (t CO₂e). CO₂e significa dióxido de carbono equivalente. Las sedes sin lectura permanecen visibles al final y no se interpretan como consumo cero.`:`Ordena de mayor a menor ${metric.label.toLowerCase()}. Las sedes sin lectura para este indicador permanecen visibles al final y no se interpretan como consumo cero.`;
   const pages=Math.max(1,Math.ceil(rankingRowsCache.length/RANKING_PAGE_SIZE));if(rankingPage>=pages)rankingPage=pages-1;drawSiteChart(rankingRowsCache);
   renderSavingsRanking();
 }
@@ -2310,16 +2311,104 @@ function drawRankingIdentity(ctx,row,position,y,isSelected,layout={}){
 }
 function drawSiteChart(rows){
   rankingMapHitZones=[];
-  const c=$('siteChart');if(!c)return;const ctx=c.getContext('2d'),metric=selectedRankingMetric();ctx.clearRect(0,0,c.width,c.height);ctx.fillStyle='#13312d';ctx.font='bold 17px Arial';ctx.textAlign='left';ctx.fillText(`Ranking de sedes por ${metric.label.toLowerCase()} (${metric.unit})`,24,34);ctx.font='12px Arial';ctx.fillStyle='#637772';ctx.fillText(`Mayor a menor · ${rankingPeriod?groupLabel(rankingPeriod,'month'):'todos los meses'} · cada sede se identifica por nombre y dirección · vista de 10 sedes.`,24,54);
-  const total=rows.length,pages=Math.max(1,Math.ceil(total/RANKING_PAGE_SIZE));rankingPage=Math.max(0,Math.min(rankingPage,pages-1));const start=rankingPage*RANKING_PAGE_SIZE,visible=rows.slice(start,start+RANKING_PAGE_SIZE),end=Math.min(start+visible.length,total);
-  if($('rankingPageInfo'))$('rankingPageInfo').textContent=total?`${start+1}–${end} de ${total} sedes · Página ${rankingPage+1} de ${pages}`:'Sin sedes disponibles';['rankingFirstBtn','rankingPrevBtn'].forEach(id=>{if($(id))$(id).disabled=rankingPage===0||!total;});['rankingNextBtn','rankingLastBtn'].forEach(id=>{if($(id))$(id).disabled=rankingPage>=pages-1||!total;});
-  const measured=rows.filter(r=>r.rankingHasValue),external=rows.filter(r=>r.rankingExternal),pending=rows.filter(r=>!r.rankingHasValue&&!r.rankingExternal),most=measured[0],least=measured[measured.length-1];
-  if($('rankingExtremes'))$('rankingExtremes').innerHTML=total?`${most?`<article><span>Mayor ${escapeHtml(metric.short.toLowerCase())}</span><strong>${escapeHtml(most.displaySite||most.site)}</strong><small>${mapAddressLink(rankingAddressText(most),rankingAddressText(most),most.displaySite||most.site)} · ${fmt(most.rankingValue)} ${metric.unit}</small></article>`:'<article><span>Mayor valor</span><strong>Sin lecturas</strong><small>No hay datos para comparar</small></article>'}${least?`<article><span>Menor valor con dato</span><strong>${escapeHtml(least.displaySite||least.site)}</strong><small>${mapAddressLink(rankingAddressText(least),rankingAddressText(least),least.displaySite||least.site)} · ${fmt(least.rankingValue)} ${metric.unit}</small></article>`:''}<article><span>Cobertura</span><strong>${measured.length} con dato · ${external.length} contrato separado · ${pending.length} pendientes</strong><small>${total} sedes históricas</small></article>`:'<p>No hay sedes históricas para construir el ranking.</p>';
-  if(!visible.length){ctx.fillStyle='#13312d';ctx.fillText('Sin datos históricos para graficar',24,92);return;}
-  const nameRight=205,addressX=218,addressWidth=205,padL=440,padR=28,valueX=Math.max(790,c.width-300),top=82,rowH=36,barH=20,max=Math.max(...measured.map(r=>Number(r.rankingValue)||0),1),maxBarW=Math.max(150,valueX-padL-18);ctx.font='12px Arial';
-  visible.forEach((r,i)=>{const y=top+i*rowH,position=start+i+1,isSelected=rankingSelectedKey&&siteKey(r.site,r.address)===rankingSelectedKey;if(isSelected){ctx.fillStyle='#fff3bf';roundRect(ctx,12,y-7,c.width-24,rowH-1,10);ctx.fill();}drawRankingIdentity(ctx,r,position,y,isSelected,{nameRight,addressX,addressWidth,hitZones:rankingMapHitZones});if(r.rankingHasValue){const bw=Math.max(5,(r.rankingValue/max)*maxBarW),grad=ctx.createLinearGradient(padL,0,padL+bw,0);grad.addColorStop(0,'#0b9878');grad.addColorStop(1,'#0fc39a');ctx.fillStyle=grad;roundRect(ctx,padL,y,bw,barH,8);ctx.fill();}else{ctx.save();ctx.setLineDash([6,5]);ctx.strokeStyle='#9cafaa';ctx.lineWidth=1.5;roundRect(ctx,padL,y,maxBarW,barH,8);ctx.stroke();ctx.restore();}const available=c.width-valueX-padR,fullLabel=r.rankingHasValue?`${fmt(r.rankingValue)} ${metric.unit} · ${r.rankingPeriodCount}/${r.periodCount} periodos`:(r.rankingExternal?'Contrato separado · consumo pendiente de integrar':`Sin dato de ${metric.short.toLowerCase()} · ${r.periodCount} periodo${r.periodCount===1?'':'s'}`);ctx.fillStyle=r.rankingHasValue?'#13312d':'#637772';ctx.textAlign='left';ctx.font=r.rankingHasValue?'bold 11.5px Arial':'italic 11.5px Arial';ctx.fillText(fitCanvasText(ctx,fullLabel,available),valueX,y+15);});ctx.textAlign='left';
-}
+  const c=$('siteChart');if(!c)return;
+  const ctx=c.getContext('2d'),metric=selectedRankingMetric(),isEnergy=metric.field==='energyKwh';
 
+  // El ranking de energía incorpora una columna independiente de huella de carbono.
+  const minCanvasWidth=isEnergy?1320:1100;
+  const containerWidth=Math.max(320,Math.floor(c.parentElement?.clientWidth||c.clientWidth||minCanvasWidth));
+  c.width=Math.max(minCanvasWidth,containerWidth);
+  c.height=520;
+  c.style.width=`${c.width}px`;
+  c.style.maxWidth='none';
+  c.style.height='520px';
+
+  ctx.clearRect(0,0,c.width,c.height);
+  ctx.fillStyle='#13312d';ctx.font='bold 17px Arial';ctx.textAlign='left';
+  ctx.fillText(`Ranking de sedes por ${metric.label.toLowerCase()} (${metric.unit})`,24,32);
+  ctx.font='12px Arial';ctx.fillStyle='#637772';
+  ctx.fillText(`Mayor a menor · ${rankingPeriod?groupLabel(rankingPeriod,'month'):'todos los meses'} · nombre y dirección · vista de 10 sedes.${isEnergy?' Incluye huella de carbono (CO₂e).':''}`,24,52);
+
+  const total=rows.length,pages=Math.max(1,Math.ceil(total/RANKING_PAGE_SIZE));
+  rankingPage=Math.max(0,Math.min(rankingPage,pages-1));
+  const start=rankingPage*RANKING_PAGE_SIZE,visible=rows.slice(start,start+RANKING_PAGE_SIZE),end=Math.min(start+visible.length,total);
+  if($('rankingPageInfo'))$('rankingPageInfo').textContent=total?`${start+1}–${end} de ${total} sedes · Página ${rankingPage+1} de ${pages}`:'Sin sedes disponibles';
+  ['rankingFirstBtn','rankingPrevBtn'].forEach(id=>{if($(id))$(id).disabled=rankingPage===0||!total;});
+  ['rankingNextBtn','rankingLastBtn'].forEach(id=>{if($(id))$(id).disabled=rankingPage>=pages-1||!total;});
+
+  const measured=rows.filter(r=>r.rankingHasValue),external=rows.filter(r=>r.rankingExternal),pending=rows.filter(r=>!r.rankingHasValue&&!r.rankingExternal),most=measured[0],least=measured[measured.length-1];
+  if($('rankingExtremes'))$('rankingExtremes').innerHTML=total
+    ?`${most?`<article><span>Mayor ${escapeHtml(metric.short.toLowerCase())}</span><strong>${escapeHtml(most.displaySite||most.site)}</strong><small>${mapAddressLink(rankingAddressText(most),rankingAddressText(most),most.displaySite||most.site)} · ${fmt(most.rankingValue)} ${metric.unit}${isEnergy?` · ${fmt(most.rankingCo2eT)} t CO₂e`:''}</small></article>`:'<article><span>Mayor valor</span><strong>Sin lecturas</strong><small>No hay datos para comparar</small></article>'}${least?`<article><span>Menor valor con dato</span><strong>${escapeHtml(least.displaySite||least.site)}</strong><small>${mapAddressLink(rankingAddressText(least),rankingAddressText(least),least.displaySite||least.site)} · ${fmt(least.rankingValue)} ${metric.unit}${isEnergy?` · ${fmt(least.rankingCo2eT)} t CO₂e`:''}</small></article>`:''}<article><span>Cobertura</span><strong>${measured.length} con dato · ${external.length} contrato separado · ${pending.length} pendientes</strong><small>${total} sedes históricas</small></article>`
+    :'<p>No hay sedes históricas para construir el ranking.</p>';
+
+  if(!visible.length){ctx.fillStyle='#13312d';ctx.fillText('Sin datos históricos para graficar',24,92);return;}
+
+  const nameRight=205,addressX=218,addressWidth=205,padL=440,padR=24;
+  const tableRight=c.width-padR;
+  const periodColW=isEnergy?112:0,co2ColW=isEnergy?142:0,valueColW=isEnergy?140:265;
+  const periodX=tableRight-periodColW;
+  const co2X=periodX-co2ColW;
+  const valueX=co2X-valueColW;
+  const barRight=valueX-18;
+  const maxBarW=Math.max(150,barRight-padL);
+  const top=isEnergy?112:82,rowH=36,barH=20;
+  const max=Math.max(...measured.map(r=>Number(r.rankingValue)||0),1);
+
+  if(isEnergy){
+    const headerY=78;
+    ctx.fillStyle='#eef8f5';
+    roundRect(ctx,padL-8,headerY-18,tableRight-(padL-8),30,9);ctx.fill();
+    ctx.strokeStyle='#d4e8e2';ctx.lineWidth=1;
+    roundRect(ctx,padL-8,headerY-18,tableRight-(padL-8),30,9);ctx.stroke();
+
+    ctx.fillStyle='#315650';ctx.font='bold 11px Arial';ctx.textAlign='center';
+    ctx.fillText('Consumo eléctrico',valueX+valueColW/2,headerY+1);
+    ctx.fillText('Huella de carbono',co2X+co2ColW/2,headerY-4);
+    ctx.font='10px Arial';
+    ctx.fillText('(t CO₂e)',co2X+co2ColW/2,headerY+8);
+    ctx.font='bold 11px Arial';
+    ctx.fillText('Periodos',periodX+periodColW/2,headerY+1);
+
+    ctx.strokeStyle='#d4e8e2';
+    [valueX,co2X,periodX].forEach(x=>{ctx.beginPath();ctx.moveTo(x,headerY-18);ctx.lineTo(x,top+RANKING_PAGE_SIZE*rowH-4);ctx.stroke();});
+  }
+
+  ctx.font='12px Arial';
+  visible.forEach((r,i)=>{
+    const y=top+i*rowH,position=start+i+1,isSelected=rankingSelectedKey&&siteKey(r.site,r.address)===rankingSelectedKey;
+    if(isSelected){ctx.fillStyle='#fff3bf';roundRect(ctx,12,y-7,c.width-24,rowH-1,10);ctx.fill();}
+    drawRankingIdentity(ctx,r,position,y,isSelected,{nameRight,addressX,addressWidth,hitZones:rankingMapHitZones});
+
+    if(r.rankingHasValue){
+      const bw=Math.max(5,(r.rankingValue/max)*maxBarW),grad=ctx.createLinearGradient(padL,0,padL+bw,0);
+      grad.addColorStop(0,'#0b9878');grad.addColorStop(1,'#0fc39a');
+      ctx.fillStyle=grad;roundRect(ctx,padL,y,bw,barH,8);ctx.fill();
+    }else{
+      ctx.save();ctx.setLineDash([6,5]);ctx.strokeStyle='#9cafaa';ctx.lineWidth=1.5;
+      roundRect(ctx,padL,y,maxBarW,barH,8);ctx.stroke();ctx.restore();
+    }
+
+    if(isEnergy){
+      ctx.textAlign='center';
+      ctx.fillStyle=r.rankingHasValue?'#13312d':'#637772';
+      ctx.font=r.rankingHasValue?'bold 11.5px Arial':'italic 11px Arial';
+      const energyLabel=r.rankingHasValue?`${fmt(r.rankingValue)} kWh`:(r.rankingExternal?'Contrato separado':'N.I.');
+      ctx.fillText(fitCanvasText(ctx,energyLabel,valueColW-12),valueX+valueColW/2,y+14);
+
+      const co2Label=r.rankingHasValue?`${fmt(r.rankingCo2eT)} t`:(r.rankingExternal?'Pendiente':'N.C.');
+      ctx.fillText(fitCanvasText(ctx,co2Label,co2ColW-12),co2X+co2ColW/2,y+14);
+
+      const periodsLabel=r.rankingHasValue?`${r.rankingPeriodCount}/${r.periodCount}`:`0/${r.periodCount}`;
+      ctx.fillText(periodsLabel,periodX+periodColW/2,y+14);
+    }else{
+      const available=c.width-valueX-padR;
+      const fullLabel=r.rankingHasValue?`${fmt(r.rankingValue)} ${metric.unit} · ${r.rankingPeriodCount}/${r.periodCount} periodos`:(r.rankingExternal?'Contrato separado · consumo pendiente de integrar':`Sin dato de ${metric.short.toLowerCase()} · ${r.periodCount} periodo${r.periodCount===1?'':'s'}`);
+      ctx.fillStyle=r.rankingHasValue?'#13312d':'#637772';ctx.textAlign='left';ctx.font=r.rankingHasValue?'bold 11.5px Arial':'italic 11.5px Arial';
+      ctx.fillText(fitCanvasText(ctx,fullLabel,available),valueX,y+15);
+    }
+  });
+  ctx.textAlign='left';
+}
 
 function monthBefore(period){
   const m=String(period||'').match(/^(\d{4})-(\d{2})$/); if(!m) return '';
