@@ -6,7 +6,7 @@ const dataPath='data/registros.electricidad.min.js';
 const bytes=fs.statSync(dataPath).size;
 ok(bytes<500000,`Bundle eléctrico demasiado grande: ${bytes} bytes`);
 const dataPos=html.indexOf('data/registros.electricidad.min.js?v=89-control-calidad');
-const appPos=html.indexOf('app.js?v=90-ranking-co2-columna');
+const appPos=html.indexOf('app.js?v=91-historico-pdf');
 ok(dataPos>=0 && appPos>dataPos,'El bundle eléctrico no carga antes de app.js');
 ok(html.includes('rel="preload" href="data/registros.electricidad.min.js?v=89-control-calidad"'),'Falta preload del bundle');
 const ctx={window:{}};ctx.window=ctx;vm.createContext(ctx);vm.runInContext(fs.readFileSync(dataPath,'utf8'),ctx);
