@@ -3260,3 +3260,97 @@ body.viewport-phone .assistant-panel{
   .water-plan-document{box-shadow:none;border:0;padding:0}
   .water-plan-header{-webkit-print-color-adjust:exact;print-color-adjust:exact}
 }
+
+
+/* ==========================================================
+   SiMeCO₂ v94 · Módulo 9 Gas
+   ========================================================== */
+.section-switcher{grid-template-columns:repeat(5,minmax(0,1fr))}
+.gas-section-tab>span{background:#fff1df;color:#a85a00}
+.gas-section-tab.active{background:linear-gradient(135deg,#b85d00,#e89422);border-color:#e89422}
+.gas-module{--gas:#a85a00;--gas2:#e89422;--gas-soft:#fff8ef;--gas-line:#f1d7b5}
+.gas-hero-panel{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:24px;align-items:center;background:radial-gradient(circle at 90% 10%,rgba(232,148,34,.20),transparent 34%),linear-gradient(135deg,#fffdfa,#fff4e6);border-color:var(--gas-line)}
+.gas-hero-panel h2{color:#793f00;font-size:clamp(1.6rem,3vw,2.5rem);margin:.25rem 0 .65rem}
+.gas-hero-panel p{max-width:900px;color:#6f5a43;font-size:1rem;line-height:1.55}
+.gas-flame-mark{width:92px;height:92px;border-radius:28px;display:grid;place-items:center;font-size:3.5rem;background:linear-gradient(145deg,#fff,#fff0da);box-shadow:0 14px 28px rgba(168,90,0,.16);border:1px solid var(--gas-line)}
+.gas-source-note{margin-top:13px;padding:11px 14px;border-radius:12px;background:#fff;border:1px solid var(--gas-line);color:#6b5944;font-size:.86rem}
+.gas-kpi-cards{grid-template-columns:repeat(4,minmax(0,1fr))}
+.gas-kpi-cards article{border-color:var(--gas-line);background:linear-gradient(145deg,#fff,#fff8ef)}
+.gas-kpi-cards article span{color:#75644f}
+.gas-kpi-cards article strong{color:#8a4900}
+.gas-kpi-cards .gas-kpi-primary{background:linear-gradient(135deg,#9f5100,#e48a18);color:#fff;border-color:transparent}
+.gas-kpi-cards .gas-kpi-primary span,.gas-kpi-cards .gas-kpi-primary strong,.gas-kpi-cards .gas-kpi-primary small{color:#fff}
+.gas-analysis-grid{display:grid;grid-template-columns:minmax(0,2fr) minmax(260px,.8fr);gap:16px;align-items:stretch}
+.gas-chart-card{overflow-x:auto;border:1px solid var(--gas-line);border-radius:18px;background:#fff;padding:10px}
+.gas-analysis-highlights{display:grid;gap:10px}
+.gas-analysis-highlights article{padding:15px;border:1px solid var(--gas-line);border-radius:15px;background:linear-gradient(145deg,#fff,#fff8ef)}
+.gas-analysis-highlights span{display:block;color:#7a6853;font-size:.74rem;font-weight:900;text-transform:uppercase;letter-spacing:.05em}
+.gas-analysis-highlights strong{display:block;margin-top:5px;color:#8a4900;font-size:1.25rem}
+.gas-analysis-highlights small{display:block;margin-top:4px;color:#71614f}
+.gas-monthly-wrap{margin-top:16px}
+.gas-table{width:100%;border-collapse:collapse;background:#fff}
+.gas-table th{padding:10px 9px;background:#fff4e6;color:#6f400c;border-bottom:1px solid var(--gas-line);font-size:.79rem;text-align:left}
+.gas-table td{padding:10px 9px;border-bottom:1px solid #f0e5d8;vertical-align:middle}
+.gas-table tbody tr:hover{background:#fffaf4}
+.gas-change{display:inline-flex;padding:5px 9px;border-radius:999px;font-size:.78rem;font-weight:900}
+.gas-change.down{background:#e8f7eb;color:#146439}
+.gas-change.up{background:#fff0ef;color:#9b3b32}
+.gas-pdf-link{margin-left:7px}
+.gas-filter-bar{display:grid;grid-template-columns:minmax(170px,.55fr) minmax(280px,1.35fr) auto;gap:12px;align-items:end;margin:12px 0 14px;padding:14px;border:1px solid var(--gas-line);border-radius:16px;background:linear-gradient(135deg,#fffdf9,#fff5e8)}
+.gas-filter-bar label{display:grid;gap:6px;color:#6a5844;font-weight:850;font-size:.8rem}
+.gas-filter-bar select,.gas-filter-bar input{min-height:44px;width:100%;border:1px solid #e4c9a7;border-radius:11px;padding:9px 11px;background:#fff;color:#4f3f2d;font:inherit}
+.gas-ranking-summary{margin:8px 0 12px;padding:11px 13px;border-left:4px solid var(--gas2);border-radius:9px;background:#fff7eb;color:#64523d}
+.gas-ranking-table th:nth-child(1),.gas-savings-table th:nth-child(1){width:48px}
+.gas-ranking-table td:nth-child(1),.gas-savings-table td:nth-child(1){text-align:center;font-weight:900;color:#9a5200}
+.gas-plan-row-btn{border:0;border-radius:9px;padding:7px 10px;background:#fff0dc;color:#9a5200;font-weight:900;cursor:pointer}
+.gas-plan-row-btn:hover{background:#aa5b00;color:#fff}
+.gas-map-link{color:#8c4b00;text-decoration:none;font-weight:750}
+.gas-map-link:hover{text-decoration:underline}
+.gas-pagination{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:14px}
+.gas-pagination strong{min-width:200px;text-align:center;color:#6e5a43}
+.gas-plan-controls{display:grid;grid-template-columns:minmax(320px,1fr) auto auto;gap:12px;align-items:end}
+.gas-plan-controls label{display:grid;gap:6px;font-weight:850;color:#695743}
+.gas-plan-controls input{min-height:46px;border:1px solid #e4c9a7;border-radius:12px;padding:10px 12px;font:inherit}
+.gas-plan-status{margin:14px 0;padding:11px 13px;background:#fff8ef;border:1px solid var(--gas-line);border-radius:12px;color:#665541}
+.gas-plan-preview{margin-top:15px}
+.gas-plan-document{border:1px solid var(--gas-line);border-radius:20px;background:#fff;padding:20px;box-shadow:0 12px 30px rgba(126,67,0,.08)}
+.gas-plan-header{display:flex;justify-content:space-between;gap:20px;padding:18px;border-radius:16px;background:linear-gradient(135deg,#985000,#e68b19);color:#fff}
+.gas-plan-header span{font-size:.75rem;font-weight:900;text-transform:uppercase;letter-spacing:.06em}
+.gas-plan-header h3{margin:4px 0;color:#fff;font-size:1.5rem}
+.gas-plan-header .gas-map-link{color:#fff6e9}
+.gas-plan-priority{min-width:140px;align-self:flex-start;padding:10px 12px;border:1px solid rgba(255,255,255,.35);border-radius:12px;text-align:center}
+.gas-plan-priority strong{display:block;font-size:1.25rem}
+.gas-plan-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:14px 0}
+.gas-plan-metrics article{padding:12px;border:1px solid var(--gas-line);border-radius:13px;background:#fff9f1}
+.gas-plan-metrics span{display:block;color:#786650;font-size:.74rem;font-weight:850}
+.gas-plan-metrics strong{display:block;margin-top:4px;color:#884800;font-size:1rem}
+.gas-plan-goal,.gas-plan-followup{padding:13px 15px;border-radius:13px;background:#fff5e7;border-left:5px solid var(--gas2);color:#62503c;margin:14px 0}
+.gas-plan-document h4{margin:20px 0 8px;color:#884800;font-size:1.05rem}
+
+@media(max-width:1000px){
+  .gas-kpi-cards{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .gas-analysis-grid{grid-template-columns:1fr}
+  .gas-filter-bar{grid-template-columns:1fr 1fr}
+  .gas-filter-bar button{grid-column:1/-1}
+  .gas-plan-controls{grid-template-columns:1fr 1fr}
+  .gas-plan-controls label{grid-column:1/-1}
+}
+@media(max-width:700px){
+  .section-switcher{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .gas-hero-panel{grid-template-columns:1fr}
+  .gas-flame-mark{display:none}
+  .gas-kpi-cards{grid-template-columns:1fr}
+  .gas-filter-bar,.gas-plan-controls{grid-template-columns:1fr}
+  .gas-filter-bar button,.gas-plan-controls label{grid-column:auto}
+  .gas-plan-controls button{width:100%}
+  .gas-plan-header{flex-direction:column}
+  .gas-plan-metrics{grid-template-columns:1fr 1fr}
+  .gas-table{min-width:760px}
+  .gas-pagination{display:grid;grid-template-columns:1fr 1fr}
+  .gas-pagination strong{grid-column:1/-1;grid-row:1;min-width:0}
+}
+@media(max-width:430px){.gas-plan-metrics{grid-template-columns:1fr}}
+@media print{
+  .gas-plan-document{box-shadow:none;border:0;padding:0}
+  .gas-plan-header{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}

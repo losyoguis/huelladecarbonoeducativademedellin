@@ -1,10 +1,10 @@
-/* SiMeCO₂ v93 · energía eléctrica + módulo de gestión hídrica */
+/* SiMeCO₂ v94 · energía eléctrica + gestión hídrica + gestión eficiente de gas */
 let FACTOR_CO2_KG_KWH = 0.126; // kg CO2e/kWh. Ajustable desde el dashboard.
 let TREE_CO2_KG_YEAR = 22; // kg CO2e capturados por árbol al año. Ajustable desde el dashboard.
 const FACTOR_KEY = 'simeco2_factores_ambientales_v8';
 const STORE_KEY = 'simeco2_servicios_v16';
 const CONFIG_KEY = 'simeco2_repo_config_v7';
-const DATA_VERSION = 'v93-agua-integrado-20260808';
+const DATA_VERSION = 'v94-gas-integrado-20260808';
 
 const $ = (id)=>document.getElementById(id);
 function siteKey(site,address=''){
@@ -21,6 +21,10 @@ function parseMeasurement(v,kind='generic'){
   if(kind==='water'){
     if(s.includes(',')) s=s.replace(/\./g,'').replace(',','.');
     else if(s.includes('.')){const parts=s.split('.');if(parts.slice(1).every(part=>part.length===3)) s=parts.join('');}
+  }else if(kind==='gas'){
+    if(s.includes(',')&&s.includes('.')) s=s.replace(/\./g,'').replace(',','.');
+    else if(s.includes(',')) s=s.replace(/\./g,'').replace(',','.');
+    else if((s.match(/\./g)||[]).length>1){const parts=s.split('.');s=parts.slice(0,-1).join('')+'.'+parts.at(-1);}
   }else if(kind==='energy'){
     if(s.includes(',')&&s.includes('.')) s=s.replace(/\./g,'').replace(',','.');
     else if(s.includes(',')) s=s.replace(',','.');
@@ -60,6 +64,22 @@ function extractWaterM3(text){
     /([\d.,]+)\s*(?:m3|mt\s*3|m³)[\s\S]{0,80}?=\s*Consumo/gi
   ],'water');
 }
+function extractGasM3(text){
+  const segment=metricSegment(String(text||''),'Gas',['Energ[ií]a','Alcantarillado','(?:Agua|Acueducto)']);
+  return lastMeasurementMatch(segment,[
+    /Consumo\s+[A-Za-z]{3,4}-\d{2}\s+([\d.,]+)\s*x/gi,
+    /([\d.,]+)\s*(?:m3|mt\s*3|m³)[\s\S]{0,80}?=\s*Consumo/gi
+  ],'gas');
+}
+function nthMeasurementByLabel(text,label,n,unit,kind='generic'){
+  const re=new RegExp(label+'\\s+([\\d.,]+)\\s*'+unit,'gi');
+  let match,index=0;
+  while((match=re.exec(text))){
+    index++;
+    if(index===n) return parseMeasurement(match[1],kind);
+  }
+  return null;
+}
 function extractEnergyKwh(text){
   return lastMeasurementMatch(String(text||''),[/Energ[ií]a(?:\s+activa)?\s+[A-Za-z]{3,4}-\d{2}\s+([\d.,]+)\s*x/gi,/Consumo\s+[A-Za-z]{3,4}-\d{2}\s+([\d.,]+)\s*x/gi,/([\d.,]+)\s*kWh[\s\S]{0,100}?=\s*Consumo/gi],'energy');
 }
@@ -90,7 +110,7 @@ function recordsBySiteKey(){
   const map=new Map(); for(const r of state.records||[]){const key=siteKey(r.site,r.address);if(!map.has(key))map.set(key,[]);map.get(key).push(r);} recordsBySiteKeyCache=map;return map;
 }
 function serviceHasValue(r,service){ if(!service) return true; if(service==='energia') return recordHasEnergyReading(r); return false; }
-function hasAnyMeasure(r){ return recordHasEnergyReading(r) || (r?.waterM3!==null && r?.waterM3!==undefined && r?.waterM3!=='' && Number.isFinite(Number(r.waterM3))); }
+function hasAnyMeasure(r){ return recordHasEnergyReading(r) || (r?.waterM3!==null && r?.waterM3!==undefined && r?.waterM3!=='' && Number.isFinite(Number(r.waterM3))) || (r?.gasM3!==null && r?.gasM3!==undefined && r?.gasM3!=='' && Number.isFinite(Number(r.gasM3))); }
 function historyGroupHasMetric(item,field){
   if(!item) return false;
   if(item.metricCounts&&Object.prototype.hasOwnProperty.call(item.metricCounts,field)) return Number(item.metricCounts[field])>0;
@@ -1239,6 +1259,8 @@ async function parsePdfArrayBuffer(arrayBuffer, fileName, sourceUrl, onProgress=
     period, source:fileName, sourceUrl,
     waterM3:summary.waterM3,
     waterValue:summary.waterValue,
+    gasM3:summary.gasM3,
+    gasValue:summary.gasValue,
     energyKwh:summary.energyKwh,
     energyValue:summary.energyValue,
     verifiedFrom:'Resumen de facturación, página 1'
@@ -1319,6 +1341,8 @@ function parseSummary(text){
   return {
     waterM3: extractAfter(head, /ACTUAL\s+([\d.,]+)\s*m3[\s\S]{0,200}?Acueducto/i),
     waterValue: valueAfter(head,'Total Acueducto'),
+    gasM3: nthMeasurementByLabel(head,'ACTUAL',3,'m3','gas'),
+    gasValue: valueAfter(head,'Total Gas Natural') ?? valueAfter(head,'Total Gas'),
     energyKwh: extractAfter(head, /ACTUAL\s+([\d.,]+)\s*kwh/i),
     energyValue: valueAfter(head,'Total Energ')
   };
@@ -1330,11 +1354,14 @@ function parseBlock(block, period, fileName, sourceUrl, idx){
   if(!header.site) return null;
   const energyKwh = extractEnergyKwh(text);
   const waterM3 = extractWaterM3(text);
+  const gasM3 = extractGasM3(text);
   return {
     key:`${period}|${siteKey(header.site,header.address)}|${block.page}|${idx}|${fileName}`,
     period, site:header.site, address:header.address,
     waterM3,
     waterValue:valueAfter(text,'Total Agua') ?? valueAfter(text,'Total Acueducto'),
+    gasM3,
+    gasValue:valueAfter(text,'Total Gas Natural') ?? valueAfter(text,'Total Gas'),
     energyKwh,
     energyValue:valueAfter(text,'Total Energ'),
     co2kg: energyKwh===null||energyKwh===undefined ? null : round(Number(energyKwh)*FACTOR_CO2_KG_KWH,2),
@@ -1910,6 +1937,7 @@ function openPdfPrintDocument(title, subtitle, content){
     .filters-line{padding:10px 13px;margin-bottom:14px;border-left:5px solid #f2b705;background:#fff8db;border-radius:8px}.footer-note{margin-top:20px;padding-top:10px;border-top:1px solid #cfe4de;color:#607b75;font-size:8pt}
     .plan-document{box-shadow:none!important;border:0!important;padding:0!important}.plan-document h2,.plan-document h3{color:#08745c}.plan-table{font-size:8pt}
     .water-plan-document{box-shadow:none!important;border:0!important;padding:0!important}.water-plan-header{display:flex;justify-content:space-between;gap:16px;padding:16px;border-radius:14px;background:#087fa7;color:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}.water-plan-header h3{margin:4px 0;color:#fff}.water-plan-header p{margin:3px 0}.water-plan-priority{padding:9px 11px;border:1px solid rgba(255,255,255,.45);border-radius:10px;text-align:center}.water-plan-priority span,.water-plan-priority strong{display:block}.water-plan-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0}.water-plan-metrics article{padding:10px;border:1px solid #c5e7f1;border-radius:10px;background:#eefaff}.water-plan-metrics span{display:block;font-size:8pt;color:#5b777f}.water-plan-metrics strong{display:block;margin-top:3px;color:#0a647f}.water-plan-goal,.water-plan-followup{padding:11px 13px;border-left:5px solid #1aaed4;background:#eaf9fd;border-radius:9px}.water-plan-document h4{color:#0a6886;margin:16px 0 7px}
+    .gas-plan-document{box-shadow:none!important;border:0!important;padding:0!important}.gas-plan-header{display:flex;justify-content:space-between;gap:16px;padding:16px;border-radius:14px;background:#a85a00;color:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}.gas-plan-header h3{margin:4px 0;color:#fff}.gas-plan-header p{margin:3px 0}.gas-plan-priority{padding:9px 11px;border:1px solid rgba(255,255,255,.45);border-radius:10px;text-align:center}.gas-plan-priority span,.gas-plan-priority strong{display:block}.gas-plan-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0}.gas-plan-metrics article{padding:10px;border:1px solid #f1d7b5;border-radius:10px;background:#fff8ef}.gas-plan-metrics span{display:block;font-size:8pt;color:#75644f}.gas-plan-metrics strong{display:block;margin-top:3px;color:#8a4900}.gas-plan-goal,.gas-plan-followup{padding:11px 13px;border-left:5px solid #e89422;background:#fff5e7;border-radius:9px}.gas-plan-document h4{color:#884800;margin:16px 0 7px}
     @media print{button{display:none!important}.pdf-report-header{-webkit-print-color-adjust:exact;print-color-adjust:exact}th,.metric,.filters-line{ -webkit-print-color-adjust:exact;print-color-adjust:exact}}
   `;
   const safeTitle = escapeHtml(title);

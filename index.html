@@ -13,9 +13,9 @@
   <meta name="description" content="Sistema interactivo para medir, interpretar y gestionar la huella de carbono educativa a partir del consumo de energía eléctrica." />
   <link rel="icon" type="image/png" href="assets/los-yoguis-logo-optimized.png" />
   <link rel="apple-touch-icon" href="assets/los-yoguis-logo-optimized.png" />
-  <link rel="preload" href="data/registros.electricidad.min.js?v=93-agua" as="script" />
-  <link rel="preload" href="data/resumenes.electricidad.min.js?v=93-agua" as="script" />
-  <link rel="stylesheet" href="styles.css?v=93-agua" />
+  <link rel="preload" href="data/registros.electricidad.min.js?v=94-gas" as="script" />
+  <link rel="preload" href="data/resumenes.electricidad.min.js?v=94-gas" as="script" />
+  <link rel="stylesheet" href="styles.css?v=94-gas" />
 </head>
 <body>
   <div class="invoice-loading active" id="invoiceLoading" role="status" aria-live="assertive" aria-hidden="false">
@@ -81,14 +81,14 @@
         <img src="assets/los-yoguis-logo-optimized.png" alt="" class="hero-yoguis-logo" />
       </div>
       <div class="hero-title-block hero-yoguis-content">
-        <p class="mjb-chip">Ciencia escolar · energía · agua · clima · territorio</p>
+        <p class="mjb-chip">Ciencia escolar · energía · agua · gas · clima · territorio</p>
         <div class="mjb-title-card hero-main-title-card">
           <h1>Sistema de medición de la huella de carbono educativa de Medellín</h1>
           <h2>SiMeCO₂ · Los Yoguis · Guardianes Climáticos</h2>
         </div>
-        <p class="lead">Plataforma educativa e institucional para analizar energía eléctrica y agua, estimar emisiones de CO₂e, priorizar sedes y generar planes de gestión ambiental escolar.</p>
+        <p class="lead">Plataforma educativa e institucional para analizar energía eléctrica, agua y gas, estimar emisiones de CO₂e, priorizar sedes y generar planes de gestión ambiental escolar.</p>
         <div class="hero-purpose-box">
-          <strong>Propósito:</strong> convertir los datos de energía eléctrica y agua en decisiones pedagógicas, ambientales e institucionales para reducir impactos y fortalecer la gestión ambiental educativa de Medellín.
+          <strong>Propósito:</strong> convertir los datos de energía eléctrica, agua y gas en decisiones pedagógicas, ambientales e institucionales para reducir impactos y fortalecer la gestión ambiental educativa de Medellín.
         </div>
       </div>
     </div>
@@ -104,6 +104,7 @@
     <button type="button" class="section-tab" data-section="seccion-6" aria-selected="false"><span>6</span><strong>Estado información</strong><small>Calidad y trazabilidad</small></button>
     <button type="button" class="section-tab" data-section="seccion-7" aria-selected="false"><span>7</span><strong>Aula</strong><small>Aprender, medir y actuar</small></button>
     <button type="button" class="section-tab water-section-tab" data-section="seccion-8" aria-selected="false"><span>8</span><strong>Agua</strong><small>Consumo, ahorro y plan</small></button>
+    <button type="button" class="section-tab gas-section-tab" data-section="seccion-9" aria-selected="false"><span>9</span><strong>Gas</strong><small>Consumo, ahorro y plan</small></button>
   </nav>
 
   <main>
@@ -704,6 +705,130 @@
         <div id="waterPlanPreview" class="water-plan-preview" hidden></div>
       </section>
     </div>
+
+    <div class="app-section gas-module" id="seccion-9" data-page-title="Gas">
+      <section class="panel gas-hero-panel" id="gas">
+        <div class="gas-hero-copy">
+          <span class="section-kicker">Módulo 9 · Gestión eficiente del gas</span>
+          <h2>Gas: consumo, ahorro y planes de acción por sede</h2>
+          <p>Analiza las lecturas de gas registradas en las facturas, identifica las sedes con mayor consumo, reconoce las que reducen su uso y genera un plan personalizado de ahorro y uso seguro del gas.</p>
+          <div class="gas-source-note"><strong>Fuente del total:</strong> resumen oficial de la primera página de cada factura. <strong>Fuente de rankings:</strong> registros detallados vinculados a cada sede. Las intervenciones sobre redes, válvulas o equipos de gas deben realizarlas personas competentes o autorizadas.</div>
+        </div>
+        <div class="gas-flame-mark" aria-hidden="true">🔥</div>
+      </section>
+
+      <section class="cards gas-kpi-cards" aria-label="Indicadores generales de gas">
+        <article class="gas-kpi-primary"><span>Consumo oficial acumulado</span><strong id="gasTotalOfficial">—</strong><small>m³ de gas · 17 facturas oficiales</small></article>
+        <article><span>Consumo detallado vinculado</span><strong id="gasTotalDetail">—</strong><small id="gasReconciliation">Comparación con el total oficial</small></article>
+        <article><span>Sedes/cuentas con lectura</span><strong id="gasSitesWithData">—</strong><small id="gasCoverageText">Cobertura de la base</small></article>
+        <article><span>Promedio oficial mensual</span><strong id="gasMonthlyAverage">—</strong><small>Promedio de los periodos disponibles</small></article>
+      </section>
+
+      <section class="panel gas-analysis-panel">
+        <div class="section-head">
+          <div>
+            <span class="section-kicker">Análisis total</span>
+            <h2>Evolución del consumo de gas de Medellín</h2>
+            <p class="muted" id="gasAnalysisNarrative">Preparando el análisis de los 17 periodos oficiales…</p>
+          </div>
+        </div>
+        <div class="gas-analysis-grid">
+          <div class="gas-chart-card">
+            <canvas id="gasHistoryChart" width="1100" height="430" aria-label="Histórico mensual del consumo oficial de gas"></canvas>
+          </div>
+          <div class="gas-analysis-highlights" id="gasAnalysisHighlights"></div>
+        </div>
+        <div class="table-wrap gas-monthly-wrap">
+          <table class="gas-table gas-monthly-table">
+            <thead><tr><th>Periodo</th><th>Consumo oficial</th><th>Variación</th><th>Fuente</th></tr></thead>
+            <tbody id="gasMonthlyBody"><tr><td colspan="4">Cargando datos de gas…</td></tr></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel gas-ranking-panel" id="ranking-consumo-gas">
+        <div class="section-head">
+          <div>
+            <span class="section-kicker">Ranking de consumo</span>
+            <h2>Sedes que más consumen gas</h2>
+            <p class="muted">Ordena las sedes de mayor a menor consumo. Las lecturas reales de 0 m³ se conservan como datos válidos y los registros sin lectura no se convierten en cero.</p>
+          </div>
+        </div>
+        <div class="gas-filter-bar">
+          <label>Periodo
+            <select id="gasConsumptionPeriod"><option value="">Todos los periodos</option></select>
+          </label>
+          <label>Buscar sede o dirección
+            <input id="gasConsumptionSearch" type="search" autocomplete="off" placeholder="Ej.: nombre de sede o dirección">
+          </label>
+          <button id="gasConsumptionRefresh" type="button" class="secondary">↻ Mostrar ranking completo</button>
+        </div>
+        <div class="gas-ranking-summary" id="gasConsumptionSummary"></div>
+        <div class="table-map-note" role="note">🏫 <strong>Ubicación:</strong> haz clic en cualquier dirección para abrirla en Google Maps.</div>
+        <div class="table-wrap">
+          <table class="gas-table gas-ranking-table">
+            <thead><tr><th>#</th><th>Sede</th><th>Dirección</th><th>Consumo de gas</th><th>Prom. m³/mes</th><th>Periodos</th><th>Plan</th></tr></thead>
+            <tbody id="gasConsumptionBody"><tr><td colspan="7">Cargando ranking…</td></tr></tbody>
+          </table>
+        </div>
+        <div class="gas-pagination">
+          <button id="gasConsumptionPrev" type="button" class="secondary">← Anterior</button>
+          <strong id="gasConsumptionPageInfo">Página 1</strong>
+          <button id="gasConsumptionNext" type="button" class="secondary">Siguiente →</button>
+        </div>
+      </section>
+
+      <section class="panel gas-savings-panel" id="ranking-ahorro-gas">
+        <div class="section-head">
+          <div>
+            <span class="section-kicker">Ranking de ahorro</span>
+            <h2>Sedes que más ahorran gas</h2>
+            <p class="muted">La tendencia general combina 70% constancia de reducciones y 30% magnitud del ahorro neto. El filtro mensual compara únicamente meses calendario consecutivos con lectura válida.</p>
+          </div>
+        </div>
+        <div class="gas-filter-bar">
+          <label>Comparación
+            <select id="gasSavingsPeriod"><option value="">Tendencia general</option></select>
+          </label>
+          <label>Buscar sede o dirección
+            <input id="gasSavingsSearch" type="search" autocomplete="off" placeholder="Buscar dentro del ranking de ahorro">
+          </label>
+          <button id="gasSavingsRefresh" type="button" class="secondary">↻ Mostrar ranking completo</button>
+        </div>
+        <div class="gas-ranking-summary" id="gasSavingsSummary"></div>
+        <div class="table-wrap">
+          <table class="gas-table gas-savings-table">
+            <thead><tr><th>#</th><th>Sede</th><th>Dirección</th><th id="gasSavingsMetricHead">Índice de gestión</th><th>Ahorro de gas</th><th>Detalle</th><th>Plan</th></tr></thead>
+            <tbody id="gasSavingsBody"><tr><td colspan="7">Calculando ahorros…</td></tr></tbody>
+          </table>
+        </div>
+        <div class="gas-pagination">
+          <button id="gasSavingsPrev" type="button" class="secondary">← Anterior</button>
+          <strong id="gasSavingsPageInfo">Página 1</strong>
+          <button id="gasSavingsNext" type="button" class="secondary">Siguiente →</button>
+        </div>
+      </section>
+
+      <section class="panel gas-plan-panel" id="plan-ahorro-gas">
+        <div class="section-head">
+          <div>
+            <span class="section-kicker">Plan por sede</span>
+            <h2>Plan de Acción de Ahorro de Gas</h2>
+            <p class="muted">Genera un diagnóstico y un plan personalizado para cualquier sede. Las acciones técnicas sobre instalaciones de gas se limitan a recomendaciones de revisión por personal competente o autorizado.</p>
+          </div>
+        </div>
+        <div class="gas-plan-controls">
+          <label>Institución educativa o sede
+            <input id="gasPlanSearch" type="search" list="gasPlanSites" autocomplete="off" placeholder="Escribe el nombre o la dirección">
+            <datalist id="gasPlanSites"></datalist>
+          </label>
+          <button id="gasGeneratePlan" type="button" class="primary">🔥 Generar plan de ahorro</button>
+          <button id="gasDownloadPlanPdf" type="button" class="secondary" disabled>⬇ Descargar plan PDF</button>
+        </div>
+        <div id="gasPlanStatus" class="gas-plan-status" role="status" aria-live="polite">Selecciona una sede para generar su plan.</div>
+        <div id="gasPlanPreview" class="gas-plan-preview" hidden></div>
+      </section>
+    </div>
   </main>
 
   <nav class="mobile-bottom-nav section-mobile-nav" aria-label="Navegación móvil por secciones">
@@ -730,6 +855,9 @@
     </button>
     <button type="button" class="mobile-section-tab water-mobile-tab" data-section="seccion-8" aria-label="Abrir módulo de agua">
       <span aria-hidden="true">💧</span><small>Agua</small>
+    </button>
+    <button type="button" class="mobile-section-tab gas-mobile-tab" data-section="seccion-9" aria-label="Abrir módulo de gas">
+      <span aria-hidden="true">🔥</span><small>Gas</small>
     </button>
   </nav>
 
@@ -779,7 +907,7 @@
         inicio: 'seccion-1', importacion: 'seccion-1', 'resumen-ejecutivo': 'seccion-1', cards: 'seccion-1', 'calidad-datos': 'seccion-6',
         'comparar-periodos': 'seccion-2', 'ranking-sedes': 'seccion-5', 'ranking-ahorro-energia': 'seccion-5',
         'dashboard-ambiental': 'seccion-3', planPanel: 'seccion-3',
-        registros: 'seccion-4', 'aula-climatica': 'seccion-7', agua: 'seccion-8', 'ranking-consumo-agua': 'seccion-8', 'ranking-ahorro-agua': 'seccion-8', 'plan-ahorro-agua': 'seccion-8'
+        registros: 'seccion-4', 'aula-climatica': 'seccion-7', agua: 'seccion-8', 'ranking-consumo-agua': 'seccion-8', 'ranking-ahorro-agua': 'seccion-8', 'plan-ahorro-agua': 'seccion-8', gas: 'seccion-9', 'ranking-consumo-gas': 'seccion-9', 'ranking-ahorro-gas': 'seccion-9', 'plan-ahorro-gas': 'seccion-9'
       };
 
       function openSection(sectionId, options = {}) {
@@ -805,6 +933,9 @@
         }
         if (sectionId === 'seccion-8' && typeof window.simecoRefreshWater === 'function') {
           requestAnimationFrame(() => window.simecoRefreshWater());
+        }
+        if (sectionId === 'seccion-9' && typeof window.simecoRefreshGas === 'function') {
+          requestAnimationFrame(() => window.simecoRefreshGas());
         }
       }
 
@@ -838,7 +969,7 @@
   </script>
 
   <!-- v87: datos eléctricos ultracompactos cargados antes de app.js -->
-  <script src="data/registros.electricidad.min.js?v=93-agua"></script>
+  <script src="data/registros.electricidad.min.js?v=94-gas"></script>
   <script>
     (() => {
       const records = Array.isArray(window.SIMECO_REGISTROS) ? window.SIMECO_REGISTROS.length : 0;
@@ -864,15 +995,18 @@
       window.SIMECO_FAST_BOOT_DONE=true;
     })();
   </script>
-  <script src="data/resumenes.electricidad.min.js?v=93-agua"></script>
-  <script defer src="data/sincronizacion-territorial.js?v=93-agua"></script>
-  <script defer src="data/excepciones-servicios.js?v=93-agua"></script>
+  <script src="data/resumenes.electricidad.min.js?v=94-gas"></script>
+  <script defer src="data/sincronizacion-territorial.js?v=94-gas"></script>
+  <script defer src="data/excepciones-servicios.js?v=94-gas"></script>
 
-  <script defer src="app.js?v=93-agua"></script>
-  <script defer src="data/registros.agua.min.js?v=93-agua"></script>
-  <script defer src="data/resumenes.agua.min.js?v=93-agua"></script>
-  <script defer src="water.js?v=93-agua"></script>
-  <script defer src="assistant-config.js?v=93-agua"></script>
-  <script defer src="assistant.js?v=93-agua"></script>
+  <script defer src="app.js?v=94-gas"></script>
+  <script defer src="data/registros.agua.min.js?v=94-gas"></script>
+  <script defer src="data/resumenes.agua.min.js?v=94-gas"></script>
+  <script defer src="water.js?v=94-gas"></script>
+  <script defer src="data/registros.gas.min.js?v=94-gas"></script>
+  <script defer src="data/resumenes.gas.min.js?v=94-gas"></script>
+  <script defer src="gas.js?v=94-gas"></script>
+  <script defer src="assistant-config.js?v=94-gas"></script>
+  <script defer src="assistant.js?v=94-gas"></script>
 </body>
 </html>

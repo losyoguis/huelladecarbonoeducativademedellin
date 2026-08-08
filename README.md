@@ -1,3 +1,38 @@
+# SiMeCO₂ v94 — Módulo 9 Gas
+
+La versión v94 conserva los módulos de **Energía** y **Agua** e incorpora una nueva **sección 9: Gas**, enfocada en análisis de consumo, ahorro y planes de acción por sede.
+
+## Funciones del módulo Gas
+
+- Consumo oficial acumulado de gas basado en el resumen de la página 1 de cada factura PDF.
+- Histórico mensual de los 17 periodos oficiales con acceso directo al PDF fuente.
+- Ranking de sedes/cuentas que más consumen gas, con filtro mensual, búsqueda, Google Maps y paginación.
+- Ranking de ahorro de gas:
+  - comparación mensual únicamente entre meses calendario consecutivos con lectura válida;
+  - tendencia general con **Índice de Gestión del Ahorro de Gas = 70% constancia + 30% magnitud del ahorro neto**.
+- Plan de Acción de Ahorro de Gas para cualquier sede.
+- El plan incluye diagnóstico, consumo acumulado, promedio, tendencia, prioridad relativa, meta propuesta, acciones, responsables, plazos e indicadores.
+- El plan se abre como informe A4 y puede guardarse como **PDF**.
+- Las sedes sin lectura de gas reciben un plan de línea base y verificación técnica, sin inventar consumos.
+- Por seguridad, el sistema no recomienda manipular instalaciones de gas: toda intervención en redes, válvulas o equipos debe realizarla personal competente o autorizado.
+- La carga futura de PDF extrae energía, agua y gas y actualiza los módulos correspondientes sin releer las 17 facturas canónicas que no hayan cambiado.
+
+## Control de calidad de gas
+
+- 9.147 registros base.
+- 381 registros con lectura de gas.
+- 304 lecturas reales de **0 m³**, conservadas como datos válidos.
+- 28 sedes/cuentas con al menos una lectura de gas.
+- 11 sedes/cuentas con consumo positivo acumulado.
+- 17 periodos oficiales.
+- Consumo oficial acumulado: **1.094,52 m³**.
+- Consumo detallado vinculado: **1.095,658 m³**.
+- Diferencia acumulada detalle/oficial: **0,104%**.
+- Diferencia máxima mensual: **2,274%**, dentro del umbral de control del 3%.
+- 2 sedes/cuentas presentan ahorro neto verificable en la tendencia general con las comparaciones consecutivas disponibles.
+
+---
+
 # SiMeCO₂ v93 — Módulo 8 Agua
 
 La versión v93 conserva los módulos eléctricos de SiMeCO₂ e incorpora una nueva **sección 8: Agua**, diseñada para gestión hídrica escolar.
