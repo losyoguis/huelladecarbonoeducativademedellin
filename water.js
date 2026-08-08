@@ -1,4 +1,4 @@
-/* SiMeCO₂ v93 · Módulo 8 Agua */
+/* SiMeCO₂ v95 · Módulo 8 Agua con gráfico histórico por sede */
 (() => {
   'use strict';
 
@@ -439,6 +439,34 @@
     ];
   }
 
+
+  function buildWaterPlanHistoryChartSvg(rows){
+    const data=Array.isArray(rows)?rows.filter(r=>r&&Number.isFinite(Number(r.value))):[];
+    if(!data.length) return `<div class="plan-history-chart-empty">Sin lecturas de agua identificadas para graficar.</div>`;
+    const width=920,height=330,padL=62,padR=22,padT=48,padB=76;
+    const chartW=width-padL-padR,chartH=height-padT-padB;
+    const max=Math.max(...data.map(r=>Number(r.value)),1);
+    const step=chartW/Math.max(data.length,1);
+    const barW=Math.max(10,Math.min(36,step*.58));
+    const grid=[0,.25,.5,.75,1].map((ratio,i)=>{
+      const y=padT+chartH*(1-ratio);
+      const val=max*ratio;
+      return `<line x1="${padL}" y1="${y.toFixed(1)}" x2="${width-padR}" y2="${y.toFixed(1)}" stroke="#dce9e7" stroke-width="1"/><text x="${padL-8}" y="${(y+4).toFixed(1)}" text-anchor="end" font-size="10" fill="#607872">${esc(fmt(val,1))}</text>`;
+    }).join('');
+    const bars=data.map((r,i)=>{
+      const value=Number(r.value);
+      const h=Math.max(1,(value/max)*chartH);
+      const x=padL+i*step+(step-barW)/2;
+      const y=padT+chartH-h;
+      const label=monthLabelWater(r.period);
+      const short=String(label).replace(/^(Ene|Feb|Mar|Abr|May|Jun|Jul|Ago|Sep|Oct|Nov|Dic)\s+(\d{4})$/,'$1 $2').replace(/(\d{2})(\d{2})$/,'$2');
+      const isLast=i===data.length-1;
+      return `<g><title>${esc(label)}: ${esc(fmt(value))} m³</title><rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${h.toFixed(1)}" rx="5" fill="${isLast?'#087fa7':'#69cce5'}"/><text x="${(x+barW/2).toFixed(1)}" y="${height-padB+17}" text-anchor="middle" font-size="9" fill="#58706b" transform="rotate(-38 ${(x+barW/2).toFixed(1)} ${height-padB+17})">${esc(short)}</text></g>`;
+    }).join('');
+    const last=data[data.length-1];
+    return `<svg class="plan-history-svg" viewBox="0 0 ${width} ${height}" width="100%" height="330" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Consumo mensual de agua por periodo"><rect width="${width}" height="${height}" rx="16" fill="#eaf9fd"/><text x="${padL}" y="26" font-size="15" font-weight="800" fill="#087fa7">Consumo mensual de agua (m³)</text>${grid}<line x1="${padL}" y1="${padT+chartH}" x2="${width-padR}" y2="${padT+chartH}" stroke="#9db6b0" stroke-width="1.2"/>${bars}<text x="${width-padR}" y="26" text-anchor="end" font-size="11" fill="#58706b">Último: ${esc(monthLabelWater(last.period))} · ${esc(fmt(last.value))} m³</text></svg>`;
+  }
+
   function renderWaterPlan(plan){
     currentWaterPlan=plan;
     const site=plan.site;
@@ -468,6 +496,7 @@
         <h4>Plan de acción</h4>
         <div class="table-wrap"><table class="water-table"><thead><tr><th>Acción</th><th>Qué hacer</th><th>Responsable</th><th>Plazo</th><th>Indicador</th></tr></thead><tbody>${actionRows}</tbody></table></div>
         <h4>Histórico de agua de la sede</h4>
+        <div class="plan-history-chart water-plan-history-chart">${buildWaterPlanHistoryChartSvg(plan.monthlyRows)}</div>
         <div class="table-wrap"><table class="water-table"><thead><tr><th>Periodo</th><th>Consumo</th><th>Observación</th></tr></thead><tbody>${monthlyRows}</tbody></table></div>
         <section class="water-plan-followup"><strong>Seguimiento recomendado</strong><p>Registrar mensualmente el consumo, comparar contra la meta, documentar fugas y reparaciones, y socializar el resultado con estudiantes y comunidad educativa. Una reducción solo se considera ahorro verificable cuando existe una lectura válida en dos meses calendario consecutivos.</p></section>
       </article>`;
@@ -555,7 +584,8 @@
     officialWaterStats,
     buildWaterSavingsRows,
     resolveWaterSite,
-    buildWaterPlan
+    buildWaterPlan,
+    buildWaterPlanHistoryChartSvg
   };
 
   document.addEventListener('DOMContentLoaded',()=>{

@@ -13,9 +13,9 @@
   <meta name="description" content="Sistema interactivo para medir, interpretar y gestionar la huella de carbono educativa a partir del consumo de energía eléctrica." />
   <link rel="icon" type="image/png" href="assets/los-yoguis-logo-optimized.png" />
   <link rel="apple-touch-icon" href="assets/los-yoguis-logo-optimized.png" />
-  <link rel="preload" href="data/registros.electricidad.min.js?v=94-gas" as="script" />
-  <link rel="preload" href="data/resumenes.electricidad.min.js?v=94-gas" as="script" />
-  <link rel="stylesheet" href="styles.css?v=94-gas" />
+  <link rel="preload" href="data/registros.electricidad.min.js?v=95-identidad-graficos" as="script" />
+  <link rel="preload" href="data/resumenes.electricidad.min.js?v=95-identidad-graficos" as="script" />
+  <link rel="stylesheet" href="styles.css?v=95-identidad-graficos" />
 </head>
 <body>
   <div class="invoice-loading active" id="invoiceLoading" role="status" aria-live="assertive" aria-hidden="false">
@@ -96,19 +96,20 @@
 
 
   <nav class="section-switcher" aria-label="Secciones principales de SiMeCO₂">
-    <button type="button" class="section-tab active" id="scanDataBtn" data-section="seccion-1" data-action="actualizar" aria-selected="true"><span>1</span><strong>Actualizar datos</strong><small>Carga, lectura e indicadores</small></button>
-    <button type="button" class="section-tab" data-section="seccion-2" aria-selected="false"><span>2</span><strong>Histórico</strong><small>Comparación por periodos</small></button>
-    <button type="button" class="section-tab" data-section="seccion-3" aria-selected="false"><span>3</span><strong>Informe por sede</strong><small>Dashboard y planes</small></button>
-    <button type="button" class="section-tab" data-section="seccion-4" aria-selected="false"><span>4</span><strong>Facturas por I.E.</strong><small>Filtros, datos y descargas</small></button>
-    <button type="button" class="section-tab" data-section="seccion-5" aria-selected="false"><span>5</span><strong>Ranking</strong><small>Consumo, CO₂e y ahorro</small></button>
-    <button type="button" class="section-tab" data-section="seccion-6" aria-selected="false"><span>6</span><strong>Estado información</strong><small>Calidad y trazabilidad</small></button>
-    <button type="button" class="section-tab" data-section="seccion-7" aria-selected="false"><span>7</span><strong>Aula</strong><small>Aprender, medir y actuar</small></button>
-    <button type="button" class="section-tab water-section-tab" data-section="seccion-8" aria-selected="false"><span>8</span><strong>Agua</strong><small>Consumo, ahorro y plan</small></button>
-    <button type="button" class="section-tab gas-section-tab" data-section="seccion-9" aria-selected="false"><span>9</span><strong>Gas</strong><small>Consumo, ahorro y plan</small></button>
+    <button type="button" class="section-tab electricity-section-tab active" id="scanDataBtn" data-section="seccion-1" data-action="actualizar" aria-selected="true"><span>1</span><strong>Actualizar datos</strong><small>⚡ Electricidad · Carga e indicadores</small></button>
+    <button type="button" class="section-tab electricity-section-tab" data-section="seccion-2" aria-selected="false"><span>2</span><strong>Histórico</strong><small>⚡ Electricidad · Comparación</small></button>
+    <button type="button" class="section-tab electricity-section-tab" data-section="seccion-3" aria-selected="false"><span>3</span><strong>Informe por sede</strong><small>⚡ Electricidad · Dashboard y planes</small></button>
+    <button type="button" class="section-tab electricity-section-tab" data-section="seccion-4" aria-selected="false"><span>4</span><strong>Facturas por I.E.</strong><small>⚡ Electricidad · Datos y PDF</small></button>
+    <button type="button" class="section-tab electricity-section-tab" data-section="seccion-5" aria-selected="false"><span>5</span><strong>Ranking</strong><small>⚡ Electricidad · Consumo y CO₂e</small></button>
+    <button type="button" class="section-tab electricity-section-tab" data-section="seccion-6" aria-selected="false"><span>6</span><strong>Estado información</strong><small>⚡ Electricidad · Calidad de datos</small></button>
+    <button type="button" class="section-tab electricity-section-tab" data-section="seccion-7" aria-selected="false"><span>7</span><strong>Aula</strong><small>⚡ Electricidad · Aprender y actuar</small></button>
+    <button type="button" class="section-tab water-section-tab" data-section="seccion-8" aria-selected="false"><span>8</span><strong>Agua</strong><small>💧 Agua · Consumo, ahorro y plan</small></button>
+    <button type="button" class="section-tab gas-section-tab" data-section="seccion-9" aria-selected="false"><span>9</span><strong>Gas</strong><small>🔥 Gas · Consumo, ahorro y plan</small></button>
   </nav>
 
   <main>
-    <div class="app-section active" id="seccion-1" data-page-title="Actualizar datos">
+    <div class="app-section active electricity-module" id="seccion-1" data-resource="electricidad" data-page-title="Electricidad · Actualizar datos">
+      <div class="resource-module-identity electricity-identity" role="note"><span>⚡</span><strong>Electricidad</strong><small>Módulo 1 de 9</small></div>
     <section class="panel grid-2 import-panel update-spotlight" id="importacion">
       <div class="update-copy">
         <span class="section-kicker">Actualizando los datos</span>
@@ -186,7 +187,8 @@
 
     </div>
 
-    <div class="app-section" id="seccion-2" data-page-title="Histórico">
+    <div class="app-section electricity-module" id="seccion-2" data-resource="electricidad" data-page-title="Electricidad · Histórico">
+      <div class="resource-module-identity electricity-identity" role="note"><span>⚡</span><strong>Electricidad</strong><small>Módulo 2 de 9</small></div>
     <section class="panel" id="comparar-periodos">
       <div class="section-head">
         <div>
@@ -241,7 +243,8 @@
 
     </div>
 
-    <div class="app-section" id="seccion-3" data-page-title="Informe por sede">
+    <div class="app-section electricity-module" id="seccion-3" data-resource="electricidad" data-page-title="Electricidad · Informe por sede">
+      <div class="resource-module-identity electricity-identity" role="note"><span>⚡</span><strong>Electricidad</strong><small>Módulo 3 de 9</small></div>
     <section class="panel dashboard-panel" id="dashboard-ambiental">
       <div class="section-head">
         <div>
@@ -330,7 +333,8 @@
 
     </div>
 
-    <div class="app-section" id="seccion-4" data-page-title="Facturas por I.E.">
+    <div class="app-section electricity-module" id="seccion-4" data-resource="electricidad" data-page-title="Electricidad · Facturas por I.E.">
+      <div class="resource-module-identity electricity-identity" role="note"><span>⚡</span><strong>Electricidad</strong><small>Módulo 4 de 9</small></div>
     <section class="panel data-panel" id="registros">
       <div class="hidden-territory-controls" aria-hidden="true">
         <select id="territoryTypeFilter" tabindex="-1"><option value="">Todo Medellín</option></select>
@@ -389,7 +393,8 @@
     </section>
     </div>
 
-    <div class="app-section" id="seccion-5" data-page-title="Ranking">
+    <div class="app-section electricity-module" id="seccion-5" data-resource="electricidad" data-page-title="Electricidad · Ranking">
+      <div class="resource-module-identity electricity-identity" role="note"><span>⚡</span><strong>Electricidad</strong><small>Módulo 5 de 9</small></div>
       <section class="panel ranking-section-intro" aria-labelledby="rankingSectionTitle">
         <div class="section-head">
           <div>
@@ -521,7 +526,8 @@
     </section>
     </div>
 
-    <div class="app-section" id="seccion-6" data-page-title="Estado de la información">
+    <div class="app-section electricity-module" id="seccion-6" data-resource="electricidad" data-page-title="Electricidad · Estado de la información">
+      <div class="resource-module-identity electricity-identity" role="note"><span>⚡</span><strong>Electricidad</strong><small>Módulo 6 de 9</small></div>
       <section class="panel quality-panel" id="calidad-datos">
       <div class="section-head">
         <div>
@@ -559,7 +565,8 @@
     </section>
     </div>
 
-    <div class="app-section" id="seccion-7" data-page-title="Aula">
+    <div class="app-section electricity-module" id="seccion-7" data-resource="electricidad" data-page-title="Electricidad · Aula">
+      <div class="resource-module-identity electricity-identity" role="note"><span>⚡</span><strong>Electricidad</strong><small>Módulo 7 de 9</small></div>
     <section class="panel aula-panel" id="aula-climatica">
       <div class="section-head">
         <div>
@@ -582,7 +589,8 @@
 
     </div>
 
-    <div class="app-section water-module" id="seccion-8" data-page-title="Agua">
+    <div class="app-section water-module" id="seccion-8" data-resource="agua" data-page-title="Agua · Gestión hídrica">
+      <div class="resource-module-identity water-identity" role="note"><span>💧</span><strong>Agua</strong><small>Módulo 8 de 9</small></div>
       <section class="panel water-hero-panel" id="agua">
         <div class="water-hero-copy">
           <span class="section-kicker">Módulo 8 · Gestión hídrica escolar</span>
@@ -706,7 +714,8 @@
       </section>
     </div>
 
-    <div class="app-section gas-module" id="seccion-9" data-page-title="Gas">
+    <div class="app-section gas-module" id="seccion-9" data-resource="gas" data-page-title="Gas · Gestión eficiente">
+      <div class="resource-module-identity gas-identity" role="note"><span>🔥</span><strong>Gas</strong><small>Módulo 9 de 9</small></div>
       <section class="panel gas-hero-panel" id="gas">
         <div class="gas-hero-copy">
           <span class="section-kicker">Módulo 9 · Gestión eficiente del gas</span>
@@ -832,27 +841,13 @@
   </main>
 
   <nav class="mobile-bottom-nav section-mobile-nav" aria-label="Navegación móvil por secciones">
-    <button type="button" class="mobile-section-tab active" data-section="seccion-1" data-action="actualizar" aria-label="Actualizar datos">
-      <span aria-hidden="true">↻</span><small>Actualizar</small>
-    </button>
-    <button type="button" class="mobile-section-tab" data-section="seccion-2" aria-label="Consultar histórico">
-      <span aria-hidden="true">▥</span><small>Histórico</small>
-    </button>
-    <button type="button" class="mobile-section-tab" data-section="seccion-3" aria-label="Consultar informes por sede">
-      <span aria-hidden="true">⌂</span><small>Informes</small>
-    </button>
-    <button type="button" class="mobile-section-tab" data-section="seccion-4" aria-label="Consultar facturas">
-      <span aria-hidden="true">▤</span><small>Facturas</small>
-    </button>
-    <button type="button" class="mobile-section-tab" data-section="seccion-5" aria-label="Consultar rankings">
-      <span aria-hidden="true">↕</span><small>Ranking</small>
-    </button>
-    <button type="button" class="mobile-section-tab" data-section="seccion-6" aria-label="Consultar estado de la información">
-      <span aria-hidden="true">✓</span><small>Estado</small>
-    </button>
-    <button type="button" class="mobile-section-tab" data-section="seccion-7" aria-label="Abrir aula ambiental">
-      <span aria-hidden="true">✦</span><small>Aula</small>
-    </button>
+    <button type="button" class="mobile-section-tab active" data-section="seccion-1" data-action="actualizar" aria-label="Actualizar datos"><span aria-hidden="true">⚡</span><small>Electricidad · Actualizar</small></button>
+    <button type="button" class="mobile-section-tab" data-section="seccion-2" aria-label="Consultar histórico"><span aria-hidden="true">⚡</span><small>Electricidad · Histórico</small></button>
+    <button type="button" class="mobile-section-tab" data-section="seccion-3" aria-label="Consultar informes por sede"><span aria-hidden="true">⚡</span><small>Electricidad · Informe</small></button>
+    <button type="button" class="mobile-section-tab" data-section="seccion-4" aria-label="Consultar facturas"><span aria-hidden="true">⚡</span><small>Electricidad · Facturas</small></button>
+    <button type="button" class="mobile-section-tab" data-section="seccion-5" aria-label="Consultar rankings"><span aria-hidden="true">⚡</span><small>Electricidad · Ranking</small></button>
+    <button type="button" class="mobile-section-tab" data-section="seccion-6" aria-label="Consultar estado de la información"><span aria-hidden="true">⚡</span><small>Electricidad · Estado</small></button>
+    <button type="button" class="mobile-section-tab" data-section="seccion-7" aria-label="Abrir aula ambiental"><span aria-hidden="true">⚡</span><small>Electricidad · Aula</small></button>
     <button type="button" class="mobile-section-tab water-mobile-tab" data-section="seccion-8" aria-label="Abrir módulo de agua">
       <span aria-hidden="true">💧</span><small>Agua</small>
     </button>
@@ -969,7 +964,7 @@
   </script>
 
   <!-- v87: datos eléctricos ultracompactos cargados antes de app.js -->
-  <script src="data/registros.electricidad.min.js?v=94-gas"></script>
+  <script src="data/registros.electricidad.min.js?v=95-identidad-graficos"></script>
   <script>
     (() => {
       const records = Array.isArray(window.SIMECO_REGISTROS) ? window.SIMECO_REGISTROS.length : 0;
@@ -995,18 +990,18 @@
       window.SIMECO_FAST_BOOT_DONE=true;
     })();
   </script>
-  <script src="data/resumenes.electricidad.min.js?v=94-gas"></script>
-  <script defer src="data/sincronizacion-territorial.js?v=94-gas"></script>
-  <script defer src="data/excepciones-servicios.js?v=94-gas"></script>
+  <script src="data/resumenes.electricidad.min.js?v=95-identidad-graficos"></script>
+  <script defer src="data/sincronizacion-territorial.js?v=95-identidad-graficos"></script>
+  <script defer src="data/excepciones-servicios.js?v=95-identidad-graficos"></script>
 
-  <script defer src="app.js?v=94-gas"></script>
-  <script defer src="data/registros.agua.min.js?v=94-gas"></script>
-  <script defer src="data/resumenes.agua.min.js?v=94-gas"></script>
-  <script defer src="water.js?v=94-gas"></script>
-  <script defer src="data/registros.gas.min.js?v=94-gas"></script>
-  <script defer src="data/resumenes.gas.min.js?v=94-gas"></script>
-  <script defer src="gas.js?v=94-gas"></script>
-  <script defer src="assistant-config.js?v=94-gas"></script>
-  <script defer src="assistant.js?v=94-gas"></script>
+  <script defer src="app.js?v=95-identidad-graficos"></script>
+  <script defer src="data/registros.agua.min.js?v=95-identidad-graficos"></script>
+  <script defer src="data/resumenes.agua.min.js?v=95-identidad-graficos"></script>
+  <script defer src="water.js?v=95-identidad-graficos"></script>
+  <script defer src="data/registros.gas.min.js?v=95-identidad-graficos"></script>
+  <script defer src="data/resumenes.gas.min.js?v=95-identidad-graficos"></script>
+  <script defer src="gas.js?v=95-identidad-graficos"></script>
+  <script defer src="assistant-config.js?v=95-identidad-graficos"></script>
+  <script defer src="assistant.js?v=95-identidad-graficos"></script>
 </body>
 </html>

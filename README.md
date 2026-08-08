@@ -1,3 +1,23 @@
+# SiMeCO₂ v95 — Identidad de módulos y gráficos históricos de Agua/Gas
+
+La versión v95 organiza visualmente SiMeCO₂ por recurso:
+
+- **Módulos 1–7: ⚡ Electricidad**
+- **Módulo 8: 💧 Agua**
+- **Módulo 9: 🔥 Gas**
+
+Cada sección muestra una insignia de recurso y las pestañas superiores indican de forma explícita a qué recurso corresponde cada módulo. En móvil, los módulos 1–7 también se presentan como “Electricidad · …”.
+
+## Gráficos en planes de acción
+
+Los planes personalizados de **Agua** y **Gas** incluyen ahora una gráfica de barras dentro de su respectivo apartado histórico:
+
+- “Histórico de agua de la sede”
+- “Histórico de gas de la sede”
+
+La gráfica se construye directamente con los registros mensuales de la sede, utiliza los mismos valores de la tabla, resalta el último periodo y está implementada como **SVG inline**. Por eso se mantiene visible dentro del documento A4 cuando el usuario selecciona **Guardar como PDF**.
+
+---
 # SiMeCO₂ v94 — Módulo 9 Gas
 
 La versión v94 conserva los módulos de **Energía** y **Agua** e incorpora una nueva **sección 9: Gas**, enfocada en análisis de consumo, ahorro y planes de acción por sede.
