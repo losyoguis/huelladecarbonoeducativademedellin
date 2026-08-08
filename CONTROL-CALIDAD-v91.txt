@@ -1,0 +1,20 @@
+CONTROL DE CALIDAD SiMeCO₂ v91
+Fecha: 2026-08-08
+
+CAMBIO
+- Histórico > Ver valores exactos de la gráfica > Fuente permite descargar la factura PDF asociada.
+- Cada periodo mensual muestra “⬇ Descargar PDF”.
+- Trimestres, semestres y años muestran los PDF que componen el periodo agrupado.
+- El histórico filtrado por sede también conserva sus fuentes PDF.
+
+VALIDACIÓN
+- 17 resúmenes oficiales verificados.
+- 17/17 PDF encontrados en data/.
+- 9.147 registros preservados.
+- Render completo: 0 errores JavaScript.
+- npm test: APROBADO.
+- validar_sistema.py: APROBADO.
+- validar_historicos.py: APROBADO.
+- Integridad histórica: APROBADA.
+
+RESULTADO: APROBADO.

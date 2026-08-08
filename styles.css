@@ -3083,3 +3083,55 @@ body.viewport-phone .assistant-panel{
     border-color:#ccd8d4;
   }
 }
+
+
+/* v91 · Descarga de factura PDF desde valores exactos del Histórico */
+.history-source-cell{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  flex-wrap:wrap;
+}
+.history-source-label{
+  color:#183f37;
+  font-weight:700;
+}
+.history-source-actions{
+  display:flex;
+  gap:6px;
+  flex-wrap:wrap;
+}
+.history-source-download{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:34px;
+  padding:7px 11px;
+  border:1px solid rgba(8,118,94,.22);
+  border-radius:10px;
+  background:#eaf8f3;
+  color:#086b56;
+  font-size:.78rem;
+  font-weight:900;
+  text-decoration:none;
+  white-space:nowrap;
+}
+.history-source-download:hover,
+.history-source-download:focus-visible{
+  background:#0b9878;
+  color:#fff;
+  outline:none;
+}
+.history-source-missing{
+  color:#738781;
+}
+@media (max-width:700px){
+  .history-source-cell{
+    align-items:flex-start;
+    flex-direction:column;
+  }
+  .history-source-download{
+    width:100%;
+  }
+}

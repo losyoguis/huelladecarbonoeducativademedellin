@@ -1,0 +1,14 @@
+SiMeCO₂ v91 — Descarga de PDF desde Histórico
+
+CAMBIO PRINCIPAL
+- En Histórico > Ver valores exactos de la gráfica, la columna Fuente ahora permite descargar la factura PDF asociada a cada periodo.
+- Se conserva el texto “Resumen oficial de factura” para el histórico global.
+- Cada periodo mensual muestra el botón “⬇ Descargar PDF”.
+- En vistas trimestrales, semestrales o anuales se muestran enlaces a todos los PDF que integran el periodo agrupado.
+- En histórico filtrado por sede también se conservan y muestran las facturas fuente correspondientes.
+- Los enlaces usan el archivo PDF real alojado en data/ y el atributo download.
+
+INTEGRIDAD
+- Los 17 PDF originales se conservan sin modificación.
+- Los 17 periodos oficiales mantienen sus valores históricos.
+- No se modifican fórmulas, consumos ni CO₂e.

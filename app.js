@@ -4,7 +4,7 @@ let TREE_CO2_KG_YEAR = 22; // kg CO2e capturados por árbol al año. Ajustable d
 const FACTOR_KEY = 'simeco2_factores_ambientales_v8';
 const STORE_KEY = 'simeco2_servicios_v16';
 const CONFIG_KEY = 'simeco2_repo_config_v7';
-const DATA_VERSION = 'v90-ranking-huella-carbono-columna-20260808';
+const DATA_VERSION = 'v91-historico-descarga-pdf-20260808';
 
 const $ = (id)=>document.getElementById(id);
 function siteKey(site,address=''){
@@ -1610,7 +1610,10 @@ function aggregateSummariesByComparison(mode){
     }
     map[key].co2kg=map[key].energyKwh*FACTOR_CO2_KG_KWH;
     map[key].records+=1;
-    if(r.source) map[key].sources.push(r.source);
+    if(r.source){
+      const source={name:String(r.source),url:String(r.sourceUrl||`data/${r.source}`),period:String(r.period||'')};
+      if(!map[key].sources.some(s=>s.name===source.name&&s.url===source.url)) map[key].sources.push(source);
+    }
   }
   return Object.values(map).sort((a,b)=>a.key.localeCompare(b.key));
 }
@@ -1687,13 +1690,17 @@ function aggregateByComparison(records, mode){
   for(const r of records){
     const key=groupKeyForPeriod(r.period,mode);
     if(!key) continue;
-    map[key] ||= {key,period:groupLabel(key,mode),energyKwh:0,co2kg:0,records:0,metricCounts:{energyKwh:0}};
+    map[key] ||= {key,period:groupLabel(key,mode),energyKwh:0,co2kg:0,records:0,official:false,sources:[],metricCounts:{energyKwh:0}};
     if(recordHasEnergyReading(r)){
       map[key].energyKwh+=Number(r.energyKwh)||0;
       map[key].metricCounts.energyKwh+=1;
     }
     map[key].co2kg=map[key].energyKwh*FACTOR_CO2_KG_KWH;
     map[key].records+=1;
+    if(r.source){
+      const source={name:String(r.source),url:String(r.sourceUrl||`data/${r.source}`),period:String(r.period||'')};
+      if(!map[key].sources.some(s=>s.name===source.name&&s.url===source.url)) map[key].sources.push(source);
+    }
   }
   return Object.values(map).sort((a,b)=>a.key.localeCompare(b.key));
 }
@@ -1783,6 +1790,23 @@ function compactAxisValue(value){
   if(Math.abs(n)>=1000) return `${fmt(n/1000)} mil`;
   return fmt(n);
 }
+function historySourceDownloadHtml(item){
+  const label=item?.official?'Resumen oficial de factura':'Detalle consolidado de sedes';
+  const sources=Array.isArray(item?.sources)?item.sources:[];
+  if(!sources.length) return `<span class="history-source-label">${escapeHtml(label)}</span><small class="history-source-missing">PDF no disponible</small>`;
+  const links=sources.map((source,index)=>{
+    const name=String(source?.name||`factura-${index+1}.pdf`);
+    const rawUrl=String(source?.url||'');
+    if(!rawUrl || rawUrl==='local') return '';
+    let url=rawUrl;
+    if(!/^https?:\/\//i.test(url) && !url.startsWith('data/')) url=`data/${encodeURIComponent(name)}`;
+    const period=source?.period?groupLabel(source.period,'month'):'';
+    const text=sources.length===1?'⬇ Descargar PDF':`⬇ ${period||`PDF ${index+1}`}`;
+    return `<a class="history-source-download" href="${escapeHtml(url)}" download="${escapeHtml(name)}" target="_blank" rel="noopener noreferrer" title="Descargar ${escapeHtml(name)}">${escapeHtml(text)}</a>`;
+  }).filter(Boolean);
+  return `<div class="history-source-cell"><span class="history-source-label">${escapeHtml(label)}</span>${links.length?`<div class="history-source-actions">${links.join('')}</div>`:'<small class="history-source-missing">PDF no disponible</small>'}</div>`;
+}
+
 function renderHistoryDataTable(data){
   const box=$('historyDataTable');if(!box) return;
   if(!data.length){box.innerHTML='';return;}
@@ -1797,7 +1821,7 @@ function renderHistoryDataTable(data){
       <div class="history-table-scroll">
         <table>
           <thead><tr><th>Periodo</th><th>${escapeHtml(metric.label)} (${metric.unit})</th><th>Fuente</th></tr></thead>
-          <tbody>${data.map(item=>`<tr><td>${escapeHtml(item.period||groupLabel(item.key,'month'))}</td><td><strong>${historyGroupHasMetric(item,metric.field)?fmt(item[metric.field]):'Sin dato'}</strong></td><td>${item.official?'Resumen oficial de factura':'Detalle consolidado de sedes'}</td></tr>`).join('')}</tbody>
+          <tbody>${data.map(item=>`<tr><td>${escapeHtml(item.period||groupLabel(item.key,'month'))}</td><td><strong>${historyGroupHasMetric(item,metric.field)?fmt(item[metric.field]):'Sin dato'}</strong></td><td>${historySourceDownloadHtml(item)}</td></tr>`).join('')}</tbody>
         </table>
       </div>
     </div>
