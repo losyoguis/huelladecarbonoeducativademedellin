@@ -1,10 +1,10 @@
-/* SiMeCO₂ v95 · identidad Electricidad/Agua/Gas + gráficos históricos en planes */
+/* SiMeCO₂ v96 · navegación reorganizada y responsive para Google Sites */
 let FACTOR_CO2_KG_KWH = 0.126; // kg CO2e/kWh. Ajustable desde el dashboard.
 let TREE_CO2_KG_YEAR = 22; // kg CO2e capturados por árbol al año. Ajustable desde el dashboard.
 const FACTOR_KEY = 'simeco2_factores_ambientales_v8';
 const STORE_KEY = 'simeco2_servicios_v16';
 const CONFIG_KEY = 'simeco2_repo_config_v7';
-const DATA_VERSION = 'v95-identidad-recursos-graficos-planes-20260808';
+const DATA_VERSION = 'v96-menu-navegacion-google-sites-20260808';
 
 const $ = (id)=>document.getElementById(id);
 function siteKey(site,address=''){
@@ -2149,7 +2149,7 @@ function handleQualityActionClick(e){
   dashboardSiteKey=key;
   const field=siteAutocompleteState.get('dashboardSiteSearch'); if(field){field.input.value=row.displaySite||row.site;field.clear.classList.add('visible');}
   if($('generateSelectedReportBtn')) $('generateSelectedReportBtn').disabled=false;
-  if(window.simecoOpenSection) window.simecoOpenSection('seccion-3',{scroll:false});
+  if(window.simecoOpenSection) window.simecoOpenSection('seccion-4',{scroll:false});
   renderDashboard(); requestAnimationFrame(()=>$('siteProfile')?.scrollIntoView({behavior:'smooth',block:'center'}));
 }
 
@@ -2762,7 +2762,7 @@ function generateManagementPlan(key){
   if($('planReport')){$('planReport').className='plan-report';$('planReport').innerHTML=CURRENT_PLAN_HTML;}
   if($('printPlanBtn')) $('printPlanBtn').disabled=false;
   if($('downloadPlanBtn')) $('downloadPlanBtn').disabled=false;
-  if(window.simecoOpenSection) window.simecoOpenSection('seccion-3', {scroll:false});
+  if(window.simecoOpenSection) window.simecoOpenSection('seccion-4', {scroll:false});
   requestAnimationFrame(()=>$('planPanel')?.scrollIntoView({behavior:'smooth',block:'start'}));
   log(`Plan de Gestión Energética generado para ${site}.`);
   return Boolean(CURRENT_PLAN_HTML);

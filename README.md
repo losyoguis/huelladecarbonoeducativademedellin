@@ -1,3 +1,22 @@
+# SiMeCO₂ v96 — Navegación reorganizada para Google Sites
+
+El menú principal queda organizado así:
+
+1. **Analizar Datos** — ⚡ Electricidad  
+2. **Histórico** — ⚡ Electricidad  
+3. **Ranking** — ⚡ Electricidad  
+4. **Informe por sede** — ⚡ Electricidad  
+5. **Estado de Información** — ⚡ Electricidad  
+6. **Aula** — ⚡ Electricidad  
+7. **Agua** — 💧 Agua  
+8. **Gas** — 🔥 Gas  
+9. **Facturas por I.E.** — 📄 Módulo transversal
+
+**Facturas por I.E. no pertenece a Electricidad, Agua ni Gas.** Su función es centralizar la consulta y descarga de las fuentes PDF utilizadas por SiMeCO₂.
+
+La navegación fue ajustada para incrustación en Google Sites: cuadrícula de tres columnas en escritorio, dos columnas en anchos de iframe/tablet y navegación táctil horizontal en móvil.
+
+---
 # SiMeCO₂ v95 — Identidad de módulos y gráficos históricos de Agua/Gas
 
 La versión v95 organiza visualmente SiMeCO₂ por recurso:

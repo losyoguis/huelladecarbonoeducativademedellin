@@ -567,7 +567,7 @@
     $w('waterGeneratePlan')?.addEventListener('click',generateWaterPlanFromSearch);
     $w('waterPlanSearch')?.addEventListener('keydown',ev=>{if(ev.key==='Enter'){ev.preventDefault();generateWaterPlanFromSearch();}});
     $w('waterDownloadPlanPdf')?.addEventListener('click',downloadWaterPlanPdf);
-    window.addEventListener('resize',()=>{if(!document.getElementById('seccion-8')?.hidden) drawWaterHistory();});
+    window.addEventListener('resize',()=>{if(!document.getElementById('seccion-7')?.hidden) drawWaterHistory();});
   }
 
   function refreshWaterModule(){

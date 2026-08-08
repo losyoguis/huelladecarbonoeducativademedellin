@@ -3413,3 +3413,122 @@ body.viewport-phone .assistant-panel{
   .plan-history-chart{page-break-inside:avoid}
   .plan-history-svg{width:100%!important;max-height:310px}
 }
+
+
+/* ==========================================================
+   SiMeCO₂ v96 · Menú de navegación reorganizado
+   1 Analizar Datos · 2 Histórico · 3 Ranking · 4 Informe
+   5 Estado · 6 Aula · 7 Agua · 8 Gas · 9 Facturas
+   Optimizado para iframe / Google Sites
+   ========================================================== */
+.section-switcher{
+  width:min(1500px,calc(100% - 28px));
+  grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  gap:12px!important;
+  align-items:stretch;
+}
+.section-tab{
+  min-width:0;
+  min-height:102px;
+  height:100%;
+  align-content:center;
+  overflow:hidden;
+}
+.section-tab strong,
+.section-tab small{
+  min-width:0;
+  overflow-wrap:anywhere;
+}
+.section-tab small{
+  line-height:1.25;
+}
+.neutral-section-tab>span{
+  background:#f0f2f5;
+  color:#4d5966;
+}
+.neutral-section-tab.active{
+  background:linear-gradient(135deg,#505b67,#788491);
+  border-color:#66727e;
+  color:#fff;
+}
+.neutral-section-tab.active>span{
+  background:rgba(255,255,255,.2);
+  color:#fff;
+}
+.neutral-module{
+  --neutral:#56616d;
+  --neutral-soft:#f5f7f8;
+  --neutral-line:#d9dfe4;
+}
+.neutral-identity{
+  background:#f2f4f6;
+  border-color:#d9dfe4;
+  color:#4c5965;
+}
+.neutral-mobile-tab.active{
+  color:#505b67!important;
+}
+.app-section[data-resource="transversal"] .resource-module-identity{
+  box-shadow:0 4px 12px rgba(60,70,80,.05);
+}
+
+/* Google Sites: evitar anchos rígidos y desbordamiento horizontal del menú */
+@media(max-width:1100px){
+  .section-switcher{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    width:min(100% - 20px,980px);
+  }
+  .section-tab{min-height:92px}
+}
+@media(max-width:680px){
+  .section-switcher{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    gap:8px!important;
+    width:calc(100% - 16px);
+    padding:7px;
+  }
+  .section-tab{
+    min-height:64px;
+    padding:9px;
+  }
+  .section-tab>span{
+    width:32px;
+    height:32px;
+    flex:0 0 32px;
+  }
+  .section-tab strong{font-size:.78rem}
+  .section-tab small{display:none}
+  .section-mobile-nav{
+    max-width:100vw;
+    overflow-x:auto;
+    overscroll-behavior-x:contain;
+    scroll-snap-type:x proximity;
+    -webkit-overflow-scrolling:touch;
+  }
+  .section-mobile-nav button{
+    flex:0 0 70px!important;
+    scroll-snap-align:start;
+  }
+  .section-mobile-nav button small{
+    font-size:.62rem;
+    white-space:normal;
+    line-height:1.05;
+  }
+}
+@media(max-width:390px){
+  .section-switcher{grid-template-columns:1fr 1fr!important}
+  .section-tab{padding:7px}
+  .section-tab strong{font-size:.72rem}
+}
+
+.transversal-module-note{
+  margin:0 0 14px;
+  padding:12px 14px;
+  border:1px solid #d9dfe4;
+  border-left:5px solid #697582;
+  border-radius:12px;
+  background:#f7f8f9;
+  color:#4f5c68;
+  line-height:1.45;
+}
+.transversal-module-note strong{color:#3f4a55}

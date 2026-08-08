@@ -1,1 +1,1 @@
-v95 - Identidad Electricidad/Agua/Gas y gráficos históricos en planes
+v96 - Menú reorganizado y responsive para Google Sites

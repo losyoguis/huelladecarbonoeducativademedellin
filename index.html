@@ -13,9 +13,9 @@
   <meta name="description" content="Sistema interactivo para medir, interpretar y gestionar la huella de carbono educativa a partir del consumo de energía eléctrica." />
   <link rel="icon" type="image/png" href="assets/los-yoguis-logo-optimized.png" />
   <link rel="apple-touch-icon" href="assets/los-yoguis-logo-optimized.png" />
-  <link rel="preload" href="data/registros.electricidad.min.js?v=95-identidad-graficos" as="script" />
-  <link rel="preload" href="data/resumenes.electricidad.min.js?v=95-identidad-graficos" as="script" />
-  <link rel="stylesheet" href="styles.css?v=95-identidad-graficos" />
+  <link rel="preload" href="data/registros.electricidad.min.js?v=96-menu-google-sites" as="script" />
+  <link rel="preload" href="data/resumenes.electricidad.min.js?v=96-menu-google-sites" as="script" />
+  <link rel="stylesheet" href="styles.css?v=96-menu-google-sites" />
 </head>
 <body>
   <div class="invoice-loading active" id="invoiceLoading" role="status" aria-live="assertive" aria-hidden="false">
@@ -96,19 +96,19 @@
 
 
   <nav class="section-switcher" aria-label="Secciones principales de SiMeCO₂">
-    <button type="button" class="section-tab electricity-section-tab active" id="scanDataBtn" data-section="seccion-1" data-action="actualizar" aria-selected="true"><span>1</span><strong>Actualizar datos</strong><small>⚡ Electricidad · Carga e indicadores</small></button>
-    <button type="button" class="section-tab electricity-section-tab" data-section="seccion-2" aria-selected="false"><span>2</span><strong>Histórico</strong><small>⚡ Electricidad · Comparación</small></button>
-    <button type="button" class="section-tab electricity-section-tab" data-section="seccion-3" aria-selected="false"><span>3</span><strong>Informe por sede</strong><small>⚡ Electricidad · Dashboard y planes</small></button>
-    <button type="button" class="section-tab electricity-section-tab" data-section="seccion-4" aria-selected="false"><span>4</span><strong>Facturas por I.E.</strong><small>⚡ Electricidad · Datos y PDF</small></button>
-    <button type="button" class="section-tab electricity-section-tab" data-section="seccion-5" aria-selected="false"><span>5</span><strong>Ranking</strong><small>⚡ Electricidad · Consumo y CO₂e</small></button>
-    <button type="button" class="section-tab electricity-section-tab" data-section="seccion-6" aria-selected="false"><span>6</span><strong>Estado información</strong><small>⚡ Electricidad · Calidad de datos</small></button>
-    <button type="button" class="section-tab electricity-section-tab" data-section="seccion-7" aria-selected="false"><span>7</span><strong>Aula</strong><small>⚡ Electricidad · Aprender y actuar</small></button>
-    <button type="button" class="section-tab water-section-tab" data-section="seccion-8" aria-selected="false"><span>8</span><strong>Agua</strong><small>💧 Agua · Consumo, ahorro y plan</small></button>
-    <button type="button" class="section-tab gas-section-tab" data-section="seccion-9" aria-selected="false"><span>9</span><strong>Gas</strong><small>🔥 Gas · Consumo, ahorro y plan</small></button>
+    <button type="button" class="section-tab electricity-section-tab active" id="scanDataBtn" data-section="seccion-1" data-action="actualizar" aria-selected="true"><span>1</span><strong>Analizar Datos</strong><small>⚡ Electricidad · Datos e indicadores</small></button>
+    <button type="button" class="section-tab electricity-section-tab" data-section="seccion-2" aria-selected="false"><span>2</span><strong>Histórico</strong><small>⚡ Electricidad · Comparación por periodos</small></button>
+    <button type="button" class="section-tab electricity-section-tab" data-section="seccion-3" aria-selected="false"><span>3</span><strong>Ranking</strong><small>⚡ Electricidad · Consumo, CO₂e y ahorro</small></button>
+    <button type="button" class="section-tab electricity-section-tab" data-section="seccion-4" aria-selected="false"><span>4</span><strong>Informe por sede</strong><small>⚡ Electricidad · Dashboard y planes</small></button>
+    <button type="button" class="section-tab electricity-section-tab" data-section="seccion-5" aria-selected="false"><span>5</span><strong>Estado de Información</strong><small>⚡ Electricidad · Calidad y trazabilidad</small></button>
+    <button type="button" class="section-tab electricity-section-tab" data-section="seccion-6" aria-selected="false"><span>6</span><strong>Aula</strong><small>⚡ Electricidad · Aprender, medir y actuar</small></button>
+    <button type="button" class="section-tab water-section-tab" data-section="seccion-7" aria-selected="false"><span>7</span><strong>Agua</strong><small>💧 Agua · Consumo, ahorro y plan</small></button>
+    <button type="button" class="section-tab gas-section-tab" data-section="seccion-8" aria-selected="false"><span>8</span><strong>Gas</strong><small>🔥 Gas · Consumo, ahorro y plan</small></button>
+    <button type="button" class="section-tab neutral-section-tab" data-section="seccion-9" aria-selected="false"><span>9</span><strong>Facturas por I.E.</strong><small>📄 Módulo transversal · Fuentes PDF</small></button>
   </nav>
 
   <main>
-    <div class="app-section active electricity-module" id="seccion-1" data-resource="electricidad" data-page-title="Electricidad · Actualizar datos">
+    <div class="app-section active electricity-module" id="seccion-1" data-resource="electricidad" data-page-title="Electricidad · Analizar Datos">
       <div class="resource-module-identity electricity-identity" role="note"><span>⚡</span><strong>Electricidad</strong><small>Módulo 1 de 9</small></div>
     <section class="panel grid-2 import-panel update-spotlight" id="importacion">
       <div class="update-copy">
@@ -187,7 +187,7 @@
 
     </div>
 
-    <div class="app-section electricity-module" id="seccion-2" data-resource="electricidad" data-page-title="Electricidad · Histórico">
+<div class="app-section electricity-module" id="seccion-2" data-resource="electricidad" data-page-title="Electricidad · Histórico">
       <div class="resource-module-identity electricity-identity" role="note"><span>⚡</span><strong>Electricidad</strong><small>Módulo 2 de 9</small></div>
     <section class="panel" id="comparar-periodos">
       <div class="section-head">
@@ -243,158 +243,8 @@
 
     </div>
 
-    <div class="app-section electricity-module" id="seccion-3" data-resource="electricidad" data-page-title="Electricidad · Informe por sede">
+<div class="app-section electricity-module" id="seccion-3" data-resource="electricidad" data-page-title="Electricidad · Ranking">
       <div class="resource-module-identity electricity-identity" role="note"><span>⚡</span><strong>Electricidad</strong><small>Módulo 3 de 9</small></div>
-    <section class="panel dashboard-panel" id="dashboard-ambiental">
-      <div class="section-head">
-        <div>
-          <span class="section-kicker">Informe por sede</span>
-          <h2>Dashboard ambiental por sede</h2>
-          <p class="muted">Consumo total de energía eléctrica, toneladas de CO₂ equivalente, árboles requeridos y prioridad de intervención.</p>
-        </div>
-        <div class="factor-box">
-          <label>Factor CO₂ kg/kWh
-            <input id="factorCo2Input" type="number" step="0.001" min="0" value="0.126" />
-          </label>
-          <label>kg CO₂ capturados por árbol/año
-            <input id="treeFactorInput" type="number" step="0.1" min="0.1" value="22" />
-          </label>
-          <button id="updateFactorsBtn" class="secondary">Actualizar cálculos</button>
-        </div>
-      </div>
-      <div class="hidden-territory-controls" aria-hidden="true">
-        <select id="dashboardTerritoryType" tabindex="-1"><option value="">Todo Medellín</option></select>
-        <select id="dashboardTerritory" tabindex="-1"><option value="">Todos los territorios</option></select>
-        <select id="dashboardNucleus" tabindex="-1"><option value="">Todos los núcleos</option></select>
-        <button id="clearDashboardTerritoryBtn" type="button" tabindex="-1">Limpiar territorio</button>
-      </div>
-      <div class="dashboard-site-search">
-        <label for="dashboardSiteSearch">Buscar institución o sede</label>
-        <div class="autocomplete site-autocomplete" id="dashboardSiteAutocomplete">
-          <input id="dashboardSiteSearch" type="search" autocomplete="off" spellcheck="false" placeholder="Escribe nombre, sede o dirección…" aria-autocomplete="list" aria-controls="dashboardSiteSuggestions" aria-expanded="false" />
-          <button id="clearDashboardSiteBtn" class="clear-search" type="button" title="Borrar búsqueda" aria-label="Borrar búsqueda">×</button>
-          <div id="dashboardSiteSuggestions" class="autocomplete-list" role="listbox" hidden></div>
-        </div>
-        <small class="search-address-note"><strong>Sugerencia:</strong> si el nombre de la sede no aparece, búscala por la dirección registrada en la factura.</small>
-        <small class="search-secondary-hint">Busca sin tildes y selecciona una institución o sede para filtrar el informe.</small>
-        <button id="generateSelectedReportBtn" class="primary dashboard-generate-report" type="button" disabled>📄 Generar informe de esta sede</button>
-      </div>
-      <div class="dashboard-grid">
-        <article class="big-total"><span>Total energía eléctrica</span><strong id="dashTotalKwh">0 kWh</strong></article>
-        <article class="big-total"><span>Total CO₂ equivalente</span><strong id="dashTotalCo2">0 t CO₂e</strong></article>
-        <article class="big-total"><span>Árboles necesarios</span><strong id="dashTotalTrees">0 árboles</strong></article>
-      </div>
-<div id="dashboardDataNotice" class="dashboard-data-notice" hidden></div>
-      <section id="siteProfile" class="site-profile" hidden aria-live="polite"></section>
-      <div class="dashboard-priority-note" role="note">
-        <strong>Criterios de prioridad por consumo eléctrico mensual promedio:</strong>
-        <span class="priority-chip high"><strong>Alta:</strong> ≥ 5.000 kWh/mes</span>
-        <span class="priority-chip medium"><strong>Media:</strong> 2.000–4.999 kWh/mes</span>
-        <span class="priority-chip low"><strong>Preventiva:</strong> &lt; 2.000 kWh/mes</span>
-      </div>
-      <div class="table-map-note" role="note">🏫 <strong>Ubicación:</strong> haz clic en cualquier dirección de la tabla para abrirla en Google Maps.</div>
-      <div class="table-ni-note" role="note"><strong>N.I.</strong> = No identificada. Indica que no hay una lectura asociada para ese dato; no significa consumo cero.</div>
-      
-      <div class="table-wrap dashboard-table-wrap">
-        <table class="dashboard-data-table">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Sede</th>
-              <th>Dirección</th>
-              <th>Periodos</th>
-              <th>Prioridad</th>
-              <th>Plan de acción</th>
-              <th>Energía total kWh</th>
-              <th>CO₂e t</th>
-              <th>Árboles</th>
-              <th>Prom. kWh/mes</th>
-            </tr>
-          </thead>
-          <tbody id="environmentBody"></tbody>
-        </table>
-      </div>
-    </section>
-
-    <section class="panel plan-panel" id="planPanel">
-      <div class="section-head">
-        <div>
-          <span class="section-kicker">Informe institucional</span>
-          <h2>Planes de Gestión por sede</h2>
-          <p class="muted">Selecciona una sede desde el dashboard ambiental. El sistema generará un informe personalizado para reducir consumo eléctrico y emisiones de GEI en alcance 2.</p>
-        </div>
-        <div class="plan-actions">
-          <button id="printPlanBtn" class="primary pdf-only-action" disabled>Descargar informe PDF</button>
-          <button id="downloadPlanBtn" class="secondary" disabled>Descargar HTML</button>
-        </div>
-      </div>
-      <div id="planReport" class="plan-empty">Aún no se ha seleccionado una sede. Usa el botón <strong>Plan de Gestión</strong> en la tabla del Dashboard ambiental por sede.</div>
-    </section>
-
-    </div>
-
-    <div class="app-section electricity-module" id="seccion-4" data-resource="electricidad" data-page-title="Electricidad · Facturas por I.E.">
-      <div class="resource-module-identity electricity-identity" role="note"><span>⚡</span><strong>Electricidad</strong><small>Módulo 4 de 9</small></div>
-    <section class="panel data-panel" id="registros">
-      <div class="hidden-territory-controls" aria-hidden="true">
-        <select id="territoryTypeFilter" tabindex="-1"><option value="">Todo Medellín</option></select>
-        <select id="territoryFilter" tabindex="-1"><option value="">Todos los territorios</option></select>
-        <select id="nucleusFilter" tabindex="-1"><option value="">Todos los núcleos</option></select>
-      </div>
-      <div class="toolbar filter-toolbar">
-        <div class="search-filter">
-          <label for="siteSearch">Institución o sede</label>
-          <div class="autocomplete" id="siteAutocomplete">
-            <input id="siteSearch" type="search" autocomplete="off" spellcheck="false" placeholder="Escribe nombre, sede o dirección…" aria-autocomplete="list" aria-controls="siteSuggestions" aria-expanded="false" />
-            <button id="clearSearchBtn" class="clear-search" type="button" title="Borrar búsqueda" aria-label="Borrar búsqueda">×</button>
-            <div id="siteSuggestions" class="autocomplete-list" role="listbox" hidden></div>
-          </div>
-          <small class="search-address-note"><strong>Sugerencia:</strong> si el nombre de la sede no aparece, búscala por la dirección registrada en la factura.</small>
-          <small id="searchHint" class="filter-hint search-secondary-hint">Puedes escribir sin tildes y usar varias palabras.</small>
-        </div>
-        <div>
-          <label for="periodFilter">Periodo</label>
-          <select id="periodFilter"><option value="">Todos los periodos</option></select>
-        </div>
-        <div>
-          <label for="serviceFilter">Dato energético</label>
-          <select id="serviceFilter"><option value="">Todos los registros</option><option value="energia">Con energía identificada</option></select>
-        </div>
-        <div>
-          <label for="sortFilter">Ordenar resultados</label>
-          <select id="sortFilter">
-            <option value="period-desc">Periodo: más reciente</option>
-            <option value="period-asc">Periodo: más antiguo</option>
-            <option value="site-asc">Sede: A–Z</option>
-            <option value="energy-desc">Energía: mayor a menor</option>
-            <option value="co2-desc">CO₂e: mayor a menor</option>
-          </select>
-        </div>
-        <div class="toolbar-buttons">
-          <button id="clearFiltersBtn" type="button" class="secondary">Limpiar filtros</button>
-          <button id="downloadFilteredPdfBtn" class="primary pdf-only-action">Descargar informe PDF</button>
-        </div>
-      </div>
-      <div class="filter-summary" aria-live="polite">
-        <strong id="filterResultCount">0 registros</strong>
-        <div id="activeFilters" class="active-filters"></div>
-      </div>
-      <div class="table-map-note" role="note">🏫 <strong>Ubicación:</strong> haz clic en cualquier dirección de la tabla para abrirla en Google Maps.</div>
-      <div class="table-wrap records-table-wrap">
-        <table class="records-data-table">
-          <thead>
-            <tr>
-              <th>Periodo</th><th>Sede</th><th>Dirección</th><th>Energía<br>kWh</th><th>CO₂e<br>kg</th><th>Fuente</th>
-            </tr>
-          </thead>
-          <tbody id="recordsBody"></tbody>
-        </table>
-      </div>
-    </section>
-    </div>
-
-    <div class="app-section electricity-module" id="seccion-5" data-resource="electricidad" data-page-title="Electricidad · Ranking">
-      <div class="resource-module-identity electricity-identity" role="note"><span>⚡</span><strong>Electricidad</strong><small>Módulo 5 de 9</small></div>
       <section class="panel ranking-section-intro" aria-labelledby="rankingSectionTitle">
         <div class="section-head">
           <div>
@@ -526,8 +376,98 @@
     </section>
     </div>
 
-    <div class="app-section electricity-module" id="seccion-6" data-resource="electricidad" data-page-title="Electricidad · Estado de la información">
-      <div class="resource-module-identity electricity-identity" role="note"><span>⚡</span><strong>Electricidad</strong><small>Módulo 6 de 9</small></div>
+<div class="app-section electricity-module" id="seccion-4" data-resource="electricidad" data-page-title="Electricidad · Informe por sede">
+      <div class="resource-module-identity electricity-identity" role="note"><span>⚡</span><strong>Electricidad</strong><small>Módulo 4 de 9</small></div>
+    <section class="panel dashboard-panel" id="dashboard-ambiental">
+      <div class="section-head">
+        <div>
+          <span class="section-kicker">Informe por sede</span>
+          <h2>Dashboard ambiental por sede</h2>
+          <p class="muted">Consumo total de energía eléctrica, toneladas de CO₂ equivalente, árboles requeridos y prioridad de intervención.</p>
+        </div>
+        <div class="factor-box">
+          <label>Factor CO₂ kg/kWh
+            <input id="factorCo2Input" type="number" step="0.001" min="0" value="0.126" />
+          </label>
+          <label>kg CO₂ capturados por árbol/año
+            <input id="treeFactorInput" type="number" step="0.1" min="0.1" value="22" />
+          </label>
+          <button id="updateFactorsBtn" class="secondary">Actualizar cálculos</button>
+        </div>
+      </div>
+      <div class="hidden-territory-controls" aria-hidden="true">
+        <select id="dashboardTerritoryType" tabindex="-1"><option value="">Todo Medellín</option></select>
+        <select id="dashboardTerritory" tabindex="-1"><option value="">Todos los territorios</option></select>
+        <select id="dashboardNucleus" tabindex="-1"><option value="">Todos los núcleos</option></select>
+        <button id="clearDashboardTerritoryBtn" type="button" tabindex="-1">Limpiar territorio</button>
+      </div>
+      <div class="dashboard-site-search">
+        <label for="dashboardSiteSearch">Buscar institución o sede</label>
+        <div class="autocomplete site-autocomplete" id="dashboardSiteAutocomplete">
+          <input id="dashboardSiteSearch" type="search" autocomplete="off" spellcheck="false" placeholder="Escribe nombre, sede o dirección…" aria-autocomplete="list" aria-controls="dashboardSiteSuggestions" aria-expanded="false" />
+          <button id="clearDashboardSiteBtn" class="clear-search" type="button" title="Borrar búsqueda" aria-label="Borrar búsqueda">×</button>
+          <div id="dashboardSiteSuggestions" class="autocomplete-list" role="listbox" hidden></div>
+        </div>
+        <small class="search-address-note"><strong>Sugerencia:</strong> si el nombre de la sede no aparece, búscala por la dirección registrada en la factura.</small>
+        <small class="search-secondary-hint">Busca sin tildes y selecciona una institución o sede para filtrar el informe.</small>
+        <button id="generateSelectedReportBtn" class="primary dashboard-generate-report" type="button" disabled>📄 Generar informe de esta sede</button>
+      </div>
+      <div class="dashboard-grid">
+        <article class="big-total"><span>Total energía eléctrica</span><strong id="dashTotalKwh">0 kWh</strong></article>
+        <article class="big-total"><span>Total CO₂ equivalente</span><strong id="dashTotalCo2">0 t CO₂e</strong></article>
+        <article class="big-total"><span>Árboles necesarios</span><strong id="dashTotalTrees">0 árboles</strong></article>
+      </div>
+<div id="dashboardDataNotice" class="dashboard-data-notice" hidden></div>
+      <section id="siteProfile" class="site-profile" hidden aria-live="polite"></section>
+      <div class="dashboard-priority-note" role="note">
+        <strong>Criterios de prioridad por consumo eléctrico mensual promedio:</strong>
+        <span class="priority-chip high"><strong>Alta:</strong> ≥ 5.000 kWh/mes</span>
+        <span class="priority-chip medium"><strong>Media:</strong> 2.000–4.999 kWh/mes</span>
+        <span class="priority-chip low"><strong>Preventiva:</strong> &lt; 2.000 kWh/mes</span>
+      </div>
+      <div class="table-map-note" role="note">🏫 <strong>Ubicación:</strong> haz clic en cualquier dirección de la tabla para abrirla en Google Maps.</div>
+      <div class="table-ni-note" role="note"><strong>N.I.</strong> = No identificada. Indica que no hay una lectura asociada para ese dato; no significa consumo cero.</div>
+      
+      <div class="table-wrap dashboard-table-wrap">
+        <table class="dashboard-data-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Sede</th>
+              <th>Dirección</th>
+              <th>Periodos</th>
+              <th>Prioridad</th>
+              <th>Plan de acción</th>
+              <th>Energía total kWh</th>
+              <th>CO₂e t</th>
+              <th>Árboles</th>
+              <th>Prom. kWh/mes</th>
+            </tr>
+          </thead>
+          <tbody id="environmentBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel plan-panel" id="planPanel">
+      <div class="section-head">
+        <div>
+          <span class="section-kicker">Informe institucional</span>
+          <h2>Planes de Gestión por sede</h2>
+          <p class="muted">Selecciona una sede desde el dashboard ambiental. El sistema generará un informe personalizado para reducir consumo eléctrico y emisiones de GEI en alcance 2.</p>
+        </div>
+        <div class="plan-actions">
+          <button id="printPlanBtn" class="primary pdf-only-action" disabled>Descargar informe PDF</button>
+          <button id="downloadPlanBtn" class="secondary" disabled>Descargar HTML</button>
+        </div>
+      </div>
+      <div id="planReport" class="plan-empty">Aún no se ha seleccionado una sede. Usa el botón <strong>Plan de Gestión</strong> en la tabla del Dashboard ambiental por sede.</div>
+    </section>
+
+    </div>
+
+<div class="app-section electricity-module" id="seccion-5" data-resource="electricidad" data-page-title="Electricidad · Estado de Información">
+      <div class="resource-module-identity electricity-identity" role="note"><span>⚡</span><strong>Electricidad</strong><small>Módulo 5 de 9</small></div>
       <section class="panel quality-panel" id="calidad-datos">
       <div class="section-head">
         <div>
@@ -565,8 +505,8 @@
     </section>
     </div>
 
-    <div class="app-section electricity-module" id="seccion-7" data-resource="electricidad" data-page-title="Electricidad · Aula">
-      <div class="resource-module-identity electricity-identity" role="note"><span>⚡</span><strong>Electricidad</strong><small>Módulo 7 de 9</small></div>
+<div class="app-section electricity-module" id="seccion-6" data-resource="electricidad" data-page-title="Electricidad · Aula">
+      <div class="resource-module-identity electricity-identity" role="note"><span>⚡</span><strong>Electricidad</strong><small>Módulo 6 de 9</small></div>
     <section class="panel aula-panel" id="aula-climatica">
       <div class="section-head">
         <div>
@@ -589,8 +529,8 @@
 
     </div>
 
-    <div class="app-section water-module" id="seccion-8" data-resource="agua" data-page-title="Agua · Gestión hídrica">
-      <div class="resource-module-identity water-identity" role="note"><span>💧</span><strong>Agua</strong><small>Módulo 8 de 9</small></div>
+<div class="app-section water-module" id="seccion-7" data-resource="agua" data-page-title="Agua · Gestión hídrica">
+      <div class="resource-module-identity water-identity" role="note"><span>💧</span><strong>Agua</strong><small>Módulo 7 de 9</small></div>
       <section class="panel water-hero-panel" id="agua">
         <div class="water-hero-copy">
           <span class="section-kicker">Módulo 8 · Gestión hídrica escolar</span>
@@ -714,8 +654,8 @@
       </section>
     </div>
 
-    <div class="app-section gas-module" id="seccion-9" data-resource="gas" data-page-title="Gas · Gestión eficiente">
-      <div class="resource-module-identity gas-identity" role="note"><span>🔥</span><strong>Gas</strong><small>Módulo 9 de 9</small></div>
+<div class="app-section gas-module" id="seccion-8" data-resource="gas" data-page-title="Gas · Gestión eficiente">
+      <div class="resource-module-identity gas-identity" role="note"><span>🔥</span><strong>Gas</strong><small>Módulo 8 de 9</small></div>
       <section class="panel gas-hero-panel" id="gas">
         <div class="gas-hero-copy">
           <span class="section-kicker">Módulo 9 · Gestión eficiente del gas</span>
@@ -838,22 +778,82 @@
         <div id="gasPlanPreview" class="gas-plan-preview" hidden></div>
       </section>
     </div>
+
+<div class="app-section neutral-module" id="seccion-9" data-resource="transversal" data-page-title="Facturas por I.E. · Fuentes documentales">
+      <div class="resource-module-identity neutral-identity" role="note"><span>📄</span><strong>Facturas por I.E.</strong><small>Módulo transversal · 9 de 9</small></div>
+    <section class="panel data-panel" id="registros">
+      <div class="transversal-module-note" role="note">
+        <strong>📄 Módulo transversal de facturas.</strong>
+        Esta sección no pertenece a Electricidad, Agua ni Gas. Centraliza la búsqueda, trazabilidad y descarga de las facturas PDF que sirven como fuente documental de SiMeCO₂.
+      </div>
+      <div class="hidden-territory-controls" aria-hidden="true">
+        <select id="territoryTypeFilter" tabindex="-1"><option value="">Todo Medellín</option></select>
+        <select id="territoryFilter" tabindex="-1"><option value="">Todos los territorios</option></select>
+        <select id="nucleusFilter" tabindex="-1"><option value="">Todos los núcleos</option></select>
+      </div>
+      <div class="toolbar filter-toolbar">
+        <div class="search-filter">
+          <label for="siteSearch">Institución o sede</label>
+          <div class="autocomplete" id="siteAutocomplete">
+            <input id="siteSearch" type="search" autocomplete="off" spellcheck="false" placeholder="Escribe nombre, sede o dirección…" aria-autocomplete="list" aria-controls="siteSuggestions" aria-expanded="false" />
+            <button id="clearSearchBtn" class="clear-search" type="button" title="Borrar búsqueda" aria-label="Borrar búsqueda">×</button>
+            <div id="siteSuggestions" class="autocomplete-list" role="listbox" hidden></div>
+          </div>
+          <small class="search-address-note"><strong>Sugerencia:</strong> si el nombre de la sede no aparece, búscala por la dirección registrada en la factura.</small>
+          <small id="searchHint" class="filter-hint search-secondary-hint">Puedes escribir sin tildes y usar varias palabras.</small>
+        </div>
+        <div>
+          <label for="periodFilter">Periodo</label>
+          <select id="periodFilter"><option value="">Todos los periodos</option></select>
+        </div>
+        <div>
+          <label for="serviceFilter">Filtro de registros</label>
+          <select id="serviceFilter"><option value="">Todos los registros</option><option value="energia">Con consumo eléctrico identificado</option></select>
+        </div>
+        <div>
+          <label for="sortFilter">Ordenar resultados</label>
+          <select id="sortFilter">
+            <option value="period-desc">Periodo: más reciente</option>
+            <option value="period-asc">Periodo: más antiguo</option>
+            <option value="site-asc">Sede: A–Z</option>
+            <option value="energy-desc">Energía: mayor a menor</option>
+            <option value="co2-desc">CO₂e: mayor a menor</option>
+          </select>
+        </div>
+        <div class="toolbar-buttons">
+          <button id="clearFiltersBtn" type="button" class="secondary">Limpiar filtros</button>
+          <button id="downloadFilteredPdfBtn" class="primary pdf-only-action">Descargar informe PDF</button>
+        </div>
+      </div>
+      <div class="filter-summary" aria-live="polite">
+        <strong id="filterResultCount">0 registros</strong>
+        <div id="activeFilters" class="active-filters"></div>
+      </div>
+      <div class="table-map-note" role="note">🏫 <strong>Ubicación:</strong> haz clic en cualquier dirección de la tabla para abrirla en Google Maps.</div>
+      <div class="table-wrap records-table-wrap">
+        <table class="records-data-table">
+          <thead>
+            <tr>
+              <th>Periodo</th><th>Sede</th><th>Dirección</th><th>Energía<br>kWh</th><th>CO₂e<br>kg</th><th>Fuente</th>
+            </tr>
+          </thead>
+          <tbody id="recordsBody"></tbody>
+        </table>
+      </div>
+    </section>
+    </div>
   </main>
 
-  <nav class="mobile-bottom-nav section-mobile-nav" aria-label="Navegación móvil por secciones">
-    <button type="button" class="mobile-section-tab active" data-section="seccion-1" data-action="actualizar" aria-label="Actualizar datos"><span aria-hidden="true">⚡</span><small>Electricidad · Actualizar</small></button>
-    <button type="button" class="mobile-section-tab" data-section="seccion-2" aria-label="Consultar histórico"><span aria-hidden="true">⚡</span><small>Electricidad · Histórico</small></button>
-    <button type="button" class="mobile-section-tab" data-section="seccion-3" aria-label="Consultar informes por sede"><span aria-hidden="true">⚡</span><small>Electricidad · Informe</small></button>
-    <button type="button" class="mobile-section-tab" data-section="seccion-4" aria-label="Consultar facturas"><span aria-hidden="true">⚡</span><small>Electricidad · Facturas</small></button>
-    <button type="button" class="mobile-section-tab" data-section="seccion-5" aria-label="Consultar rankings"><span aria-hidden="true">⚡</span><small>Electricidad · Ranking</small></button>
-    <button type="button" class="mobile-section-tab" data-section="seccion-6" aria-label="Consultar estado de la información"><span aria-hidden="true">⚡</span><small>Electricidad · Estado</small></button>
-    <button type="button" class="mobile-section-tab" data-section="seccion-7" aria-label="Abrir aula ambiental"><span aria-hidden="true">⚡</span><small>Electricidad · Aula</small></button>
-    <button type="button" class="mobile-section-tab water-mobile-tab" data-section="seccion-8" aria-label="Abrir módulo de agua">
-      <span aria-hidden="true">💧</span><small>Agua</small>
-    </button>
-    <button type="button" class="mobile-section-tab gas-mobile-tab" data-section="seccion-9" aria-label="Abrir módulo de gas">
-      <span aria-hidden="true">🔥</span><small>Gas</small>
-    </button>
+  <nav class="mobile-bottom-nav section-mobile-nav" aria-label="Navegación móvil por módulos">
+    <button type="button" class="mobile-section-tab active" data-section="seccion-1" data-action="actualizar" aria-label="Analizar datos de electricidad"><span aria-hidden="true">⚡</span><small>Analizar</small></button>
+    <button type="button" class="mobile-section-tab" data-section="seccion-2" aria-label="Histórico de electricidad"><span aria-hidden="true">⚡</span><small>Histórico</small></button>
+    <button type="button" class="mobile-section-tab" data-section="seccion-3" aria-label="Ranking de electricidad"><span aria-hidden="true">⚡</span><small>Ranking</small></button>
+    <button type="button" class="mobile-section-tab" data-section="seccion-4" aria-label="Informe eléctrico por sede"><span aria-hidden="true">⚡</span><small>Informe</small></button>
+    <button type="button" class="mobile-section-tab" data-section="seccion-5" aria-label="Estado de información eléctrica"><span aria-hidden="true">⚡</span><small>Estado</small></button>
+    <button type="button" class="mobile-section-tab" data-section="seccion-6" aria-label="Aula de electricidad"><span aria-hidden="true">⚡</span><small>Aula</small></button>
+    <button type="button" class="mobile-section-tab water-mobile-tab" data-section="seccion-7" aria-label="Módulo de agua"><span aria-hidden="true">💧</span><small>Agua</small></button>
+    <button type="button" class="mobile-section-tab gas-mobile-tab" data-section="seccion-8" aria-label="Módulo de gas"><span aria-hidden="true">🔥</span><small>Gas</small></button>
+    <button type="button" class="mobile-section-tab neutral-mobile-tab" data-section="seccion-9" aria-label="Facturas por institución educativa"><span aria-hidden="true">📄</span><small>Facturas</small></button>
   </nav>
 
   <footer class="brand-footer" aria-label="Pie de página Los Yoguis">
@@ -899,10 +899,10 @@
   <script>
     (() => {
       const sectionForTarget = {
-        inicio: 'seccion-1', importacion: 'seccion-1', 'resumen-ejecutivo': 'seccion-1', cards: 'seccion-1', 'calidad-datos': 'seccion-6',
-        'comparar-periodos': 'seccion-2', 'ranking-sedes': 'seccion-5', 'ranking-ahorro-energia': 'seccion-5',
-        'dashboard-ambiental': 'seccion-3', planPanel: 'seccion-3',
-        registros: 'seccion-4', 'aula-climatica': 'seccion-7', agua: 'seccion-8', 'ranking-consumo-agua': 'seccion-8', 'ranking-ahorro-agua': 'seccion-8', 'plan-ahorro-agua': 'seccion-8', gas: 'seccion-9', 'ranking-consumo-gas': 'seccion-9', 'ranking-ahorro-gas': 'seccion-9', 'plan-ahorro-gas': 'seccion-9'
+        inicio: 'seccion-1', importacion: 'seccion-1', 'resumen-ejecutivo': 'seccion-1', cards: 'seccion-1', 'calidad-datos': 'seccion-5',
+        'comparar-periodos': 'seccion-2', 'ranking-sedes': 'seccion-3', 'ranking-ahorro-energia': 'seccion-3',
+        'dashboard-ambiental': 'seccion-4', planPanel: 'seccion-4',
+        registros: 'seccion-9', 'aula-climatica': 'seccion-6', agua: 'seccion-7', 'ranking-consumo-agua': 'seccion-7', 'ranking-ahorro-agua': 'seccion-7', 'plan-ahorro-agua': 'seccion-7', gas: 'seccion-8', 'ranking-consumo-gas': 'seccion-8', 'ranking-ahorro-gas': 'seccion-8', 'plan-ahorro-gas': 'seccion-8'
       };
 
       function openSection(sectionId, options = {}) {
@@ -926,10 +926,10 @@
         if (sectionId === 'seccion-2' && typeof window.simecoRefreshHistory === 'function') {
           requestAnimationFrame(() => window.simecoRefreshHistory({ preserveSelection: true }));
         }
-        if (sectionId === 'seccion-8' && typeof window.simecoRefreshWater === 'function') {
+        if (sectionId === 'seccion-7' && typeof window.simecoRefreshWater === 'function') {
           requestAnimationFrame(() => window.simecoRefreshWater());
         }
-        if (sectionId === 'seccion-9' && typeof window.simecoRefreshGas === 'function') {
+        if (sectionId === 'seccion-8' && typeof window.simecoRefreshGas === 'function') {
           requestAnimationFrame(() => window.simecoRefreshGas());
         }
       }
@@ -964,7 +964,7 @@
   </script>
 
   <!-- v87: datos eléctricos ultracompactos cargados antes de app.js -->
-  <script src="data/registros.electricidad.min.js?v=95-identidad-graficos"></script>
+  <script src="data/registros.electricidad.min.js?v=96-menu-google-sites"></script>
   <script>
     (() => {
       const records = Array.isArray(window.SIMECO_REGISTROS) ? window.SIMECO_REGISTROS.length : 0;
@@ -990,18 +990,18 @@
       window.SIMECO_FAST_BOOT_DONE=true;
     })();
   </script>
-  <script src="data/resumenes.electricidad.min.js?v=95-identidad-graficos"></script>
-  <script defer src="data/sincronizacion-territorial.js?v=95-identidad-graficos"></script>
-  <script defer src="data/excepciones-servicios.js?v=95-identidad-graficos"></script>
+  <script src="data/resumenes.electricidad.min.js?v=96-menu-google-sites"></script>
+  <script defer src="data/sincronizacion-territorial.js?v=96-menu-google-sites"></script>
+  <script defer src="data/excepciones-servicios.js?v=96-menu-google-sites"></script>
 
-  <script defer src="app.js?v=95-identidad-graficos"></script>
-  <script defer src="data/registros.agua.min.js?v=95-identidad-graficos"></script>
-  <script defer src="data/resumenes.agua.min.js?v=95-identidad-graficos"></script>
-  <script defer src="water.js?v=95-identidad-graficos"></script>
-  <script defer src="data/registros.gas.min.js?v=95-identidad-graficos"></script>
-  <script defer src="data/resumenes.gas.min.js?v=95-identidad-graficos"></script>
-  <script defer src="gas.js?v=95-identidad-graficos"></script>
-  <script defer src="assistant-config.js?v=95-identidad-graficos"></script>
-  <script defer src="assistant.js?v=95-identidad-graficos"></script>
+  <script defer src="app.js?v=96-menu-google-sites"></script>
+  <script defer src="data/registros.agua.min.js?v=96-menu-google-sites"></script>
+  <script defer src="data/resumenes.agua.min.js?v=96-menu-google-sites"></script>
+  <script defer src="water.js?v=96-menu-google-sites"></script>
+  <script defer src="data/registros.gas.min.js?v=96-menu-google-sites"></script>
+  <script defer src="data/resumenes.gas.min.js?v=96-menu-google-sites"></script>
+  <script defer src="gas.js?v=96-menu-google-sites"></script>
+  <script defer src="assistant-config.js?v=96-menu-google-sites"></script>
+  <script defer src="assistant.js?v=96-menu-google-sites"></script>
 </body>
 </html>
