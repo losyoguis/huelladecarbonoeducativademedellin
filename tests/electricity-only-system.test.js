@@ -20,6 +20,6 @@ ok(app.includes('Plan de Gestión Energética y Reducción de GEI'),'Plan energ�
 ok(html.includes('id="seccion-7"') && html.includes('<strong>Agua</strong>'),'Módulo Agua no está aislado en sección 7');
 ok(html.includes('id="seccion-8"') && html.includes('<strong>Gas</strong>'),'Módulo Gas no está aislado en sección 8');
 ok(fs.existsSync('water.js') && fs.existsSync('gas.js'),'Faltan módulos independientes');
-ok(html.includes('app.js?v=96-menu-google-sites'),'Falta cache-busting v95');
+ok(html.includes('app.js?v=98-sidebar-legible'),'Falta cache-busting v95');
 ok(html.includes('id="seccion-9" data-resource="transversal"'),'Facturas debe ser transversal');
 console.log('OK electric-core-plus-water-gas-neutral-invoices');

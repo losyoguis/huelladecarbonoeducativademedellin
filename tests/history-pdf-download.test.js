@@ -9,7 +9,7 @@ ok(app.includes('download="${escapeHtml(name)}"'),'Falta atributo download');
 ok(app.includes("sources:[]"),'El histórico no conserva fuentes');
 ok(app.includes("sourceUrl||`data/${r.source}`"),'No se conserva URL de factura');
 ok(css.includes('.history-source-download'),'Faltan estilos de descarga histórica');
-ok(html.includes('app.js?v=96-menu-google-sites'),'Falta cache-busting v95');
+ok(html.includes('app.js?v=98-sidebar-legible'),'Falta cache-busting v95');
 
 const text=fs.readFileSync('data/resumenes.electricidad.min.js','utf8');
 const ctx={window:{}};ctx.window=ctx;vm.createContext(ctx);vm.runInContext(text,ctx);
