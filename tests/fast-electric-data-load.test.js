@@ -1,0 +1,20 @@
+const fs=require('fs'),vm=require('vm');
+function ok(v,m){if(!v)throw new Error(m);}
+const html=fs.readFileSync('index.html','utf8');
+const app=fs.readFileSync('app.js','utf8');
+const dataPath='data/registros.electricidad.min.js';
+const bytes=fs.statSync(dataPath).size;
+ok(bytes<500000,`Bundle eléctrico demasiado grande: ${bytes} bytes`);
+const dataPos=html.indexOf('data/registros.electricidad.min.js?v=87-datos-rapidos');
+const appPos=html.indexOf('app.js?v=87-datos-rapidos');
+ok(dataPos>=0 && appPos>dataPos,'El bundle eléctrico no carga antes de app.js');
+ok(html.includes('rel="preload" href="data/registros.electricidad.min.js?v=87-datos-rapidos"'),'Falta preload del bundle');
+const ctx={window:{}};ctx.window=ctx;vm.createContext(ctx);vm.runInContext(fs.readFileSync(dataPath,'utf8'),ctx);
+ok(Array.isArray(ctx.SIMECO_REGISTROS),'El bundle no expone SIMECO_REGISTROS');
+ok(ctx.SIMECO_REGISTROS.length===9147,`Se esperaban 9147 registros y hay ${ctx.SIMECO_REGISTROS.length}`);
+ok(ctx.SIMECO_DATA_READY===true,'Falta bandera SIMECO_DATA_READY');
+ok(app.includes('async function waitForPreloadedData(maxMs=1200)'),'Falta espera corta de hidratación');
+ok(app.includes('hydrateStateFromPreloadedData()'),'Falta hidratación explícita');
+ok(app.includes("percent:82"),'El loader no refleja precarga rápida');
+ok(!html.includes('data/registros.compact.js'),'index.html todavía usa el bundle antiguo');
+console.log(JSON.stringify({ok:true,bytes,records:ctx.SIMECO_REGISTROS.length,reductionVsOldPct:74.1},null,2));

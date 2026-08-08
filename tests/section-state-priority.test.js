@@ -27,5 +27,5 @@ ok(app.includes('data-label="Prioridad"') && app.includes('data-label="Plan de a
 ok(html.includes('<strong>Alta:</strong> ≥ 5.000 kWh/mes'),'Falta leyenda Alta');
 ok(html.includes('<strong>Media:</strong> 2.000–4.999 kWh/mes'),'Falta leyenda Media');
 ok(css.includes('grid-template-columns:repeat(7,minmax(0,1fr))'),'Navegación móvil no soporta 7 secciones');
-ok(html.includes('app.js?v=86-carga-inicial'),'Falta cache-busting v83');
+ok(html.includes('app.js?v=87-datos-rapidos'),'Falta cache-busting v83');
 console.log('OK section-state-priority');
