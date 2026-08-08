@@ -6,8 +6,8 @@ const css=fs.readFileSync('styles.css','utf8');
 
 ok(html.includes('data-section="seccion-5" aria-selected="false"><span>5</span><strong>Ranking</strong>'),'Falta sección 5 Ranking');
 ok(html.includes('data-section="seccion-7" aria-selected="false"><span>7</span><strong>Aula</strong>'),'Aula no es sección 7');
-ok(html.includes('id="seccion-5" data-page-title="Ranking"'),'Falta contenedor de Ranking');
-ok(html.includes('id="seccion-7" data-page-title="Aula"'),'Falta contenedor Aula sección 7');
+ok(html.includes('id="seccion-5" data-resource="electricidad" data-page-title="Electricidad · Ranking"'),'Falta contenedor eléctrico de Ranking');
+ok(html.includes('id="seccion-7" data-resource="electricidad" data-page-title="Electricidad · Aula"'),'Falta contenedor eléctrico Aula sección 7');
 const s5=html.indexOf('id="seccion-5"');
 const s6=html.indexOf('id="seccion-7"');
 const rank1=html.indexOf('id="ranking-sedes"');
@@ -24,6 +24,6 @@ ok(table.indexOf('<th>Periodos</th>') < table.indexOf('<th>Prioridad</th>') && t
 ok(table.indexOf('<th>Plan de acción</th>') < table.indexOf('<th>Energía total kWh</th>'),'Plan de acción no está antes de Energía');
 ok(app.includes('data-label="Plan de acción" class="plan-cell"'),'Fila del dashboard no mueve Plan de acción');
 ok(app.includes('<td colspan="4">TOTAL / DATOS DISPONIBLES</td><td>—</td><td>—</td><td>${energyRows.length'),'Fila total no respeta nuevas columnas');
-ok(css.includes('grid-template-columns:repeat(7,minmax(0,1fr))'),'Navegación móvil no admite 6 secciones');
-ok(html.includes('app.js?v=94-gas'),'Falta cache-busting JS v82');
+ok(css.includes('.section-switcher{grid-template-columns:repeat(5,minmax(0,1fr))}'),'Navegación principal no está preparada para 9 módulos');
+ok(html.includes('app.js?v=95-identidad-graficos'),'Falta cache-busting JS v95');
 console.log('OK section-ranking-plan-action');

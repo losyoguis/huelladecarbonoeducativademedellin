@@ -20,5 +20,5 @@ ok(app.includes('Plan de Gestión Energética y Reducción de GEI'),'Plan energ�
 ok(html.includes('id="seccion-8"') && html.includes('<strong>Agua</strong>'),'Módulo Agua no está aislado en sección 8');
 ok(html.includes('id="seccion-9"') && html.includes('<strong>Gas</strong>'),'Módulo Gas no está aislado en sección 9');
 ok(fs.existsSync('water.js') && fs.existsSync('gas.js'),'Faltan módulos independientes');
-ok(html.includes('app.js?v=94-gas'),'Falta cache-busting v94');
+ok(html.includes('app.js?v=95-identidad-graficos'),'Falta cache-busting v95');
 console.log('OK electric-core-plus-water-gas');
