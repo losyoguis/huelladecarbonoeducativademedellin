@@ -1,0 +1,16 @@
+SiMeCO₂ v77 — Histórico corregido y abreviatura N.I.
+
+CAMBIOS VISUALES
+- En las tablas, “No identificada” se abrevia como “N.I.” para mejorar la lectura en Google Sites.
+- Se agregó una leyenda encima de la tabla: “N.I. = No identificada. Indica que no hay una lectura asociada para ese dato; no significa consumo cero.”
+- Se mantienen los textos explicativos completos en mensajes técnicos y diagnósticos.
+
+CORRECCIÓN DEL HISTÓRICO
+- Los selectores centrales del histórico (tipo de comparación, indicador, periodo A y periodo B) vuelven a ser selectores nativos estables.
+- Se evita que el sistema reinicie Periodo A y Periodo B cada vez que cambia otro filtro si la selección sigue siendo válida.
+- Se agregó refreshHistoryModule() con manejo de errores.
+- El histórico se actualiza automáticamente al abrir la sección desde Google Sites.
+- El gráfico se redibuja con el ancho real disponible del contenedor/iframe.
+- Se mantienen comparación, narrativa, tabla de valores exactos y fuente oficial.
+- Los filtros por sede continúan usando autocompletado.
+- No se modificaron datos, históricos oficiales ni fórmulas.

@@ -4,7 +4,7 @@ let TREE_CO2_KG_YEAR = 22; // kg CO2e capturados por árbol al año. Ajustable d
 const FACTOR_KEY = 'simeco2_factores_ambientales_v8';
 const STORE_KEY = 'simeco2_servicios_v16';
 const CONFIG_KEY = 'simeco2_repo_config_v7';
-const DATA_VERSION = 'v76-informe-interactivo-tablas-maps-20260807';
+const DATA_VERSION = 'v77-historico-ni-corregido-20260807';
 
 const $ = (id)=>document.getElementById(id);
 const state = loadStore();
@@ -171,7 +171,7 @@ function refreshAllTerritoryFilters(){
 }
 function bindTerritoryFilters(){
   const configs=[
-    ['compare','compareTerritoryType','compareTerritory','compareNucleus',()=>{ if($('compareSite')) $('compareSite').value=''; const f=siteAutocompleteState.get('compareSiteSearch'); if(f){f.input.value='';f.clear.classList.remove('visible');} renderCompareControls({keepSite:true}); comparePeriods(); }],
+    ['compare','compareTerritoryType','compareTerritory','compareNucleus',()=>{ if($('compareSite')) $('compareSite').value=''; const f=siteAutocompleteState.get('compareSiteSearch'); if(f){f.input.value='';f.clear.classList.remove('visible');} refreshHistoryModule({preserveSelection:true}); }],
     ['dashboard','dashboardTerritoryType','dashboardTerritory','dashboardNucleus',()=>{ dashboardSiteKey=''; const f=siteAutocompleteState.get('dashboardSiteSearch'); if(f){f.input.value='';f.clear.classList.remove('visible');} renderDashboard(); }],
     ['table','territoryTypeFilter','territoryFilter','nucleusFilter',()=>{ selectedSiteKey=''; if($('siteSearch')) $('siteSearch').value=''; applyFilters(); }]
   ];
@@ -435,8 +435,7 @@ function chooseSiteFieldSuggestion(item,key){
   item.clear.classList.add('visible');
   if(item.mode==='compare'){
     $('compareSite').value=key;
-    renderCompareControls({keepSite:true});
-    comparePeriods();
+    refreshHistoryModule({preserveSelection:true});
   }else{
     dashboardSiteKey=key;
     const reportBtn=$('generateSelectedReportBtn');
@@ -450,8 +449,7 @@ function clearSiteAutocompleteField(item,focus=false){
   item.clear.classList.remove('visible');
   if(item.mode==='compare'){
     $('compareSite').value='';
-    renderCompareControls({keepSite:true});
-    comparePeriods();
+    refreshHistoryModule({preserveSelection:true});
   }else{
     dashboardSiteKey='';
     const reportBtn=$('generateSelectedReportBtn');
@@ -539,12 +537,12 @@ function bindEvents(){
   document.addEventListener('click',e=>{ const box=$('siteAutocomplete'); if(box && !box.contains(e.target)) closeAutocomplete(); });
   bindEvent('downloadFilteredPdfBtn','click',downloadFilteredPdfReport);
   bindEvent('downloadHistoryPdfBtn','click',downloadHistoryPdfReport);
-  bindEvent('compareMode','change',()=>{renderCompareControls();comparePeriods();});
-  bindEvent('compareMetric','change',()=>{renderCompareControls({keepSite:true});comparePeriods();});
-  bindEvent('compareSite','change',()=>{renderCompareControls({keepSite:true});comparePeriods();});
+  bindEvent('compareMode','change',()=>refreshHistoryModule());
+  bindEvent('compareMetric','change',()=>refreshHistoryModule({preserveSelection:true}));
+  bindEvent('compareSite','change',()=>refreshHistoryModule({preserveSelection:true}));
   initSiteAutocompleteField({inputId:'compareSiteSearch',listId:'compareSiteSuggestions',clearId:'clearCompareSiteBtn',mode:'compare'});
   initSiteAutocompleteField({inputId:'dashboardSiteSearch',listId:'dashboardSiteSuggestions',clearId:'clearDashboardSiteBtn',mode:'dashboard'});
-  bindEvent('compareBtn','click',comparePeriods);
+  bindEvent('compareBtn','click',()=>refreshHistoryModule({preserveSelection:true}));
   bindEvent('printPlanBtn','click',printCurrentPlan);
   bindEvent('downloadPlanBtn','click',downloadCurrentPlan);
   bindEvent('exportCsvBtn','click',exportCsv);
@@ -1106,7 +1104,7 @@ function energyDataState(row){
   if(row?.hasEnergy) return {code:'identified',label:'Energía identificada',shortLabel:'Identificada',detail:'La sede tiene lecturas eléctricas asociadas.',exception:null};
   const exception=serviceExceptionForSite(row,'energyKwh');
   if(exception) return {code:'external',label:exception.label||'Energía en contrato separado',shortLabel:exception.shortLabel||'Contrato separado',detail:exception.summary||exception.dataState||'La energía se gestiona mediante una fuente contractual separada.',exception};
-  return {code:'pending',label:'Energía no identificada',shortLabel:'No identificada',detail:`La sede tiene ${Number(row?.periodCount)||0} periodo(s) histórico(s), pero ninguna lectura eléctrica asociada a este nombre/dirección.`,exception:null};
+  return {code:'pending',label:'Energía no identificada',shortLabel:'N.I.',detail:`La sede tiene ${Number(row?.periodCount)||0} periodo(s) histórico(s), pero ninguna lectura eléctrica asociada a este nombre/dirección.`,exception:null};
 }
 function exceptionEvidenceHtml(exception){
   if(!exception) return '';
@@ -1700,11 +1698,18 @@ function renderCompareControls(opts={}){
   const options = groups.map(g=>`<option value="${escapeHtml(g.key)}">${escapeHtml(g.period)}</option>`).join('');
   $('compareA').innerHTML = options;
   $('compareB').innerHTML = options;
-  // v44: la comparación inicia siempre con la primera y la última fuente disponibles.
   if(groups.length){
-    $('compareA').value = groups[0].key;
-    $('compareB').value = groups[groups.length-1].key;
+    const validKeys=new Set(groups.map(g=>g.key));
+    $('compareA').value=validKeys.has(currentA)?currentA:groups[0].key;
+    $('compareB').value=validKeys.has(currentB)?currentB:groups[groups.length-1].key;
+    // Evita seleccionar el mismo periodo cuando existen al menos dos.
+    if(groups.length>1 && $('compareA').value===$('compareB').value){
+      $('compareA').value=groups[0].key;
+      $('compareB').value=groups[groups.length-1].key;
+    }
   }
+  syncSearchableSelect('compareA');
+  syncSearchableSelect('compareB');
 }
 function comparePeriods(){
   const mode = $('compareMode') ? $('compareMode').value : 'month';
@@ -1733,6 +1738,25 @@ function comparePeriods(){
   drawChart(agg); updateHistorySourceNote();
 }
 
+function refreshHistoryModule(options={}){
+  try{
+    renderCompareControls({keepSite:true});
+    comparePeriods();
+    syncAllSearchableSelects();
+    requestAnimationFrame(()=>{
+      const data=comparisonGroups($('compareMode')?.value||'month');
+      drawChart(data);
+      updateHistorySourceNote();
+    });
+    return true;
+  }catch(err){
+    console.error('Error al actualizar Histórico:',err);
+    if($('compareResult')) $('compareResult').innerHTML='<p class="bad">No fue posible actualizar el histórico. Recarga la página o limpia los filtros e inténtalo nuevamente.</p>';
+    return false;
+  }
+}
+window.simecoRefreshHistory=refreshHistoryModule;
+
 function compactAxisValue(value){
   const n=Number(value)||0;
   if(Math.abs(n)>=1000000) return `${fmt(n/1000000)} M`;
@@ -1751,7 +1775,8 @@ function drawChart(data){
   const c=$('chart');if(!c) return;
   const ctx=c.getContext('2d');if(!ctx) return;
   const cleanData=chartData.filter(item=>historyGroupHasMetric(item,metric.field));
-  const canvasWidth=Math.max(1100,Math.max(cleanData.length,1)*98+180),canvasHeight=470;
+  const containerWidth=Math.max(320,Math.floor(c.parentElement?.clientWidth||c.clientWidth||1100));
+  const canvasWidth=Math.max(containerWidth,Math.max(cleanData.length,1)*92+170),canvasHeight=470;
   c.width=canvasWidth;c.height=canvasHeight;c.style.width=`${canvasWidth}px`;c.style.maxWidth='none';c.style.height=`${canvasHeight}px`;
   ctx.clearRect(0,0,canvasWidth,canvasHeight);
   ctx.fillStyle='#13312d';ctx.textAlign='left';ctx.font='bold 22px Arial';
@@ -1837,7 +1862,7 @@ function downloadDashboardPdfReport(){
   const recs=dashboardRecords();
   if(!recs.length){alert('No hay información para generar el informe PDF.');return;}
   const agg=aggregateBySite(recs);
-  const rows=agg.map((x,i)=>`<tr><td>${i+1}</td><td>${escapeHtml(x.displaySite||x.site)}</td><td>${mapAddressLink(x.address,x.address||'Sin dirección',x.displaySite||x.site)}</td><td>${x.periodCount}</td><td>${x.hasEnergy?`${fmt(x.energyKwh)} kWh`:'No identificada'}</td><td>${x.hasEnergy?`${fmt(x.co2kg/1000)} t`:'No calculable'}</td><td>${x.hasEnergy?fmt(x.trees):'No calculable'}</td><td>${escapeHtml(qualityStatusForSite(x).label)}</td></tr>`).join('');
+  const rows=agg.map((x,i)=>`<tr><td>${i+1}</td><td>${escapeHtml(x.displaySite||x.site)}</td><td>${mapAddressLink(x.address,x.address||'Sin dirección',x.displaySite||x.site)}</td><td>${x.periodCount}</td><td>${x.hasEnergy?`${fmt(x.energyKwh)} kWh`:'N.I.'}</td><td>${x.hasEnergy?`${fmt(x.co2kg/1000)} t`:'No calculable'}</td><td>${x.hasEnergy?fmt(x.trees):'No calculable'}</td><td>${escapeHtml(qualityStatusForSite(x).label)}</td></tr>`).join('');
   const energyRows=agg.filter(x=>x.hasEnergy),energy=energyRows.reduce((a,x)=>a+x.energyKwh,0),co2=energyRows.reduce((a,x)=>a+x.co2kg,0),pending=agg.filter(x=>!x.hasEnergy).length;
   openPdfPrintDocument('Informe ambiental por sede',activeTerritoryText('dashboard'),`<div class="report-grid"><div class="metric"><span>Sedes</span><strong>${agg.length}</strong></div><div class="metric"><span>Energía identificada</span><strong>${fmt(energy)} kWh</strong></div><div class="metric"><span>Sedes con energía no identificada</span><strong>${pending}</strong></div></div><table><thead><tr><th>#</th><th>Sede</th><th>Dirección</th><th>Periodos</th><th>Energía</th><th>CO₂e</th><th>Árboles</th><th>Calidad</th></tr></thead><tbody>${rows}</tbody></table>`);
 }
@@ -2114,7 +2139,7 @@ function renderSiteProfile(rows){
   const quality=qualityStatusForSite(r), energyState=energyDataState(r); const periods=[...r.periods].sort(); const first=periods[0],last=periods[periods.length-1];
   const latest=[...recs].sort((a,b)=>String(b.period).localeCompare(String(a.period)))[0];
   const latestLink=latest?.sourceUrl&&latest.sourceUrl!=='local'?`<a class="secondary profile-evidence-link" href="${escapeHtml(latest.sourceUrl)}#page=${Math.max(1,Number(latest.page)||1)}" target="_blank" rel="noopener">Ver evidencia · ${escapeHtml(latest.source||'Factura')} · pág. ${Math.max(1,Number(latest.page)||1)}</a>`:'<span class="not-available">Sin enlace permanente a factura</span>';
-  const serviceCards=[['energyKwh','energyPeriodCount','hasEnergy'],['waterM3','waterPeriodCount','hasWater'],['alcM3','alcPeriodCount','hasAlc'],['gasM3','gasPeriodCount','hasGas'],['wasteTon','wastePeriodCount','hasWaste']].map(([field,pf,hf])=>{const m=serviceMetric(field);let strong=r[hf]?`${fmt(r[field])} ${m.unit}`:'No identificada',small=r[hf]?`${r[pf]}/${r.periodCount} periodos con lectura`:'Sin lectura asociada';if(field==='energyKwh'&&!r[hf]&&energyState.code==='external'){strong='Contrato separado';small='Consumo pendiente de integrar desde la fuente no regulada';}return `<article><span>${escapeHtml(m.label)}</span><strong>${strong}</strong><small>${small}</small></article>`;}).join('');
+  const serviceCards=[['energyKwh','energyPeriodCount','hasEnergy'],['waterM3','waterPeriodCount','hasWater'],['alcM3','alcPeriodCount','hasAlc'],['gasM3','gasPeriodCount','hasGas'],['wasteTon','wastePeriodCount','hasWaste']].map(([field,pf,hf])=>{const m=serviceMetric(field);let strong=r[hf]?`${fmt(r[field])} ${m.unit}`:'N.I.',small=r[hf]?`${r[pf]}/${r.periodCount} periodos con lectura`:'Sin lectura asociada';if(field==='energyKwh'&&!r[hf]&&energyState.code==='external'){strong='Contrato separado';small='Consumo pendiente de integrar desde la fuente no regulada';}return `<article><span>${escapeHtml(m.label)}</span><strong>${strong}</strong><small>${small}</small></article>`;}).join('');
   box.hidden=false;
   box.innerHTML=`<div class="site-profile-head"><div><span class="section-kicker">Ficha integral de sede</span><h3>${escapeHtml(r.displaySite||r.site)}</h3><p>${mapAddressLink(profileAddressText,profileAddressText,r.displaySite||r.site)}</p>${r.displaySite!==r.site||profileInvoiceSites.length>1?`<p class="invoice-alias">Nombre(s) en factura: ${escapeHtml(profileInvoiceText)}</p>`:''}</div><span class="quality-badge ${quality.code}" title="${escapeHtml(quality.detail)}">${escapeHtml(quality.label)}</span></div><div class="site-profile-meta"><span><strong>Territorio:</strong> ${escapeHtml(meta.territory||'Sin clasificar')}</span><span><strong>Núcleo:</strong> ${escapeHtml(meta.nucleus||'Sin clasificar')}</span><span><strong>Zona:</strong> ${escapeHtml(meta.zone||'Sin clasificar')}</span><span><strong>Periodo:</strong> ${escapeHtml(first||'—')} → ${escapeHtml(last||'—')}</span><span><strong>Confianza de vínculo:</strong> ${escapeHtml(sync.confidence||meta.confidence||'No definida')}${sync.matchScore?` · ${fmt(sync.matchScore)}%`:''}</span></div><div class="site-profile-services">${serviceCards}</div><div class="site-profile-quality"><strong>Lectura de calidad:</strong> ${escapeHtml(quality.detail)}${sync.note?` <span>${escapeHtml(sync.note)}</span>`:''}</div>${energyState.code==='external'?exceptionEvidenceHtml(energyState.exception):''}<div class="site-profile-evidence"><div><strong>Trazabilidad de factura consolidada</strong><p>La evidencia abre la factura y la página asociada al registro más reciente de esta sede.</p></div>${latestLink}</div>`;
 }
@@ -2132,7 +2157,7 @@ function renderDashboard(){
   const totalWaste = rows.filter(r=>r.hasWaste).reduce((a,r)=>a+r.wasteTon,0);
   const selectedNoEnergy=Boolean(dashboardSiteKey && rows.length===1 && !rows[0].hasEnergy);
   const selectedEnergyState=selectedNoEnergy?energyDataState(rows[0]):null;
-  $('dashTotalKwh').textContent = selectedNoEnergy ? (selectedEnergyState?.code==='external'?'Contrato separado':'No identificada') : fmt(totalKwh) + ' kWh';
+  $('dashTotalKwh').textContent = selectedNoEnergy ? (selectedEnergyState?.code==='external'?'Contrato separado':'N.I.') : fmt(totalKwh) + ' kWh';
   $('dashTotalCo2').textContent = selectedNoEnergy ? (selectedEnergyState?.code==='external'?'Pendiente de integrar':'No calculable') : fmt(totalCo2kg/1000) + ' t CO₂e';
   $('dashTotalTrees').textContent = selectedNoEnergy ? (selectedEnergyState?.code==='external'?'Pendiente de integrar':'No calculable') : fmt(totalTrees||0) + ' árboles';
   if($('dashTotalWater')) $('dashTotalWater').textContent = rows.some(r=>r.hasWater) ? fmt(totalWater)+' m³' : 'Sin dato';
@@ -2147,11 +2172,11 @@ function renderDashboard(){
   }
   const body = rows.map((r,i)=>{
     const energyState=energyDataState(r);
-    const priority = r.hasEnergy ? classifyEnergyIntensity(r.avgKwhMonth) : (energyState.code==='external'?{level:'Energía en contrato separado',short:'Contrato separado',cls:'external'}:{level:'Energía no identificada',short:'No identificada',cls:'pending'});
-    const energyText=r.hasEnergy?`<strong>${fmt(r.energyKwh)}</strong>`:(energyState.code==='external'?'<span class="quality-badge external">Contrato separado</span>':'<span class="not-available">No identificada</span>');
+    const priority = r.hasEnergy ? classifyEnergyIntensity(r.avgKwhMonth) : (energyState.code==='external'?{level:'Energía en contrato separado',short:'Contrato separado',cls:'external'}:{level:'Energía no identificada',short:'N.I.',cls:'pending'});
+    const energyText=r.hasEnergy?`<strong>${fmt(r.energyKwh)}</strong>`:(energyState.code==='external'?'<span class="quality-badge external">Contrato separado</span>':'<span class="not-available ni-abbr" title="No identificada">N.I.</span>');
     const co2Text=r.hasEnergy?fmt(r.co2kg/1000):(energyState.code==='external'?'<span class="not-available">Pendiente de integrar</span>':'<span class="not-available">No calculable</span>');
     const treesText=r.hasEnergy?`<strong>${fmt(r.trees)}</strong>`:(energyState.code==='external'?'<span class="not-available">Pendiente de integrar</span>':'<span class="not-available">No calculable</span>');
-    const avgText=r.hasEnergy?fmt(r.avgKwhMonth):(energyState.code==='external'?'<span class="not-available">Contrato separado</span>':'<span class="not-available">No identificada</span>');
+    const avgText=r.hasEnergy?fmt(r.avgKwhMonth):(energyState.code==='external'?'<span class="not-available">Contrato separado</span>':'<span class="not-available ni-abbr" title="No identificada">N.I.</span>');
     const invoiceAlias=r.displaySite!==r.site?`<small class="invoice-alias">En factura: ${escapeHtml(r.site)}</small>`:'';
     return `<tr>
     <td data-label="#">${i+1}</td>
@@ -2513,7 +2538,7 @@ function generateManagementPlan(key){
   const co2Target40 = hasEnergy ? target40 * FACTOR_CO2_KG_KWH / 1000 : null;
   const co2Solar80 = hasEnergy ? solar80 * FACTOR_CO2_KG_KWH / 1000 : null;
   const energyException=serviceExceptionForSite(recs[0],'energyKwh');
-  const intensity = hasEnergy ? classifyEnergyIntensity(avgMonth) : (energyException?{level:'Energía en contrato separado',short:'Contrato separado',cls:'external',text:energyException.summary||energyException.dataState}:{level:'Energía no identificada',short:'No identificada',cls:'pending',text:'Las facturas cargadas contienen información de la sede, pero no una lectura de energía eléctrica individualizada para este nombre/dirección. Esto no significa consumo cero: debe investigarse si la cuenta está facturada bajo otro nombre, producto, contrato o dirección.'});
+  const intensity = hasEnergy ? classifyEnergyIntensity(avgMonth) : (energyException?{level:'Energía en contrato separado',short:'Contrato separado',cls:'external',text:energyException.summary||energyException.dataState}:{level:'Energía no identificada',short:'N.I.',cls:'pending',text:'Las facturas cargadas contienen información de la sede, pero no una lectura de energía eléctrica individualizada para este nombre/dirección. Esto no significa consumo cero: debe investigarse si la cuenta está facturada bajo otro nombre, producto, contrato o dirección.'});
   const latest = recs[recs.length-1];
   const generatedAt = new Date().toLocaleDateString('es-CO', {year:'numeric', month:'long', day:'numeric'});
 

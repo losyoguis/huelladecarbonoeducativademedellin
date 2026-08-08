@@ -1,1 +1,1 @@
-v76 - Informe dinámico e interactivo y nota Google Maps en tablas
+v77 - Histórico corregido y abreviatura N.I.

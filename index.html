@@ -13,7 +13,7 @@
   <meta name="description" content="Sistema interactivo para medir, interpretar y gestionar la huella de carbono educativa a partir del consumo de servicios públicos." />
   <link rel="icon" type="image/png" href="assets/los-yoguis-logo-optimized.png" />
   <link rel="apple-touch-icon" href="assets/los-yoguis-logo-optimized.png" />
-  <link rel="stylesheet" href="styles.css?v=76-informe-interactivo" />
+  <link rel="stylesheet" href="styles.css?v=77-historico-ni" />
 </head>
 <body>
   <div class="invoice-loading active" id="invoiceLoading" role="status" aria-live="assertive" aria-hidden="false">
@@ -241,7 +241,7 @@
       </div>
       <div class="compare-controls compare-controls-advanced">
         <label>Tipo de comparación
-          <select id="compareMode">
+          <select id="compareMode" data-no-searchable="true">
             <option value="month">Mes vs mes</option>
             <option value="quarter">Trimestre vs trimestre</option>
             <option value="semester">Semestre vs semestre</option>
@@ -249,7 +249,7 @@
           </select>
         </label>
         <label>Indicador histórico
-          <select id="compareMetric">
+          <select id="compareMetric" data-no-searchable="true">
             <option value="energyKwh">Energía eléctrica (kWh)</option>
             <option value="waterM3">Agua (m³)</option>
             <option value="alcM3">Alcantarillado (m³)</option>
@@ -268,8 +268,8 @@
           </select>
           <small class="search-address-note"><strong>Sugerencia:</strong> si el nombre de la sede no aparece, búscala por la dirección registrada en la factura.</small>
         </label>
-        <label>Periodo A <select id="compareA"></select></label>
-        <label>Periodo B <select id="compareB"></select></label>
+        <label>Periodo A <select id="compareA" data-no-searchable="true"></select></label>
+        <label>Periodo B <select id="compareB" data-no-searchable="true"></select></label>
         <button id="compareBtn" class="primary">Comparar</button>
         <button id="downloadHistoryPdfBtn" class="secondary pdf-only-action">Descargar histórico PDF</button>
       </div>
@@ -438,6 +438,7 @@
       <div id="dashboardDataNotice" class="dashboard-data-notice" hidden></div>
       <section id="siteProfile" class="site-profile" hidden aria-live="polite"></section>
       <div class="table-map-note" role="note">🏫 <strong>Ubicación:</strong> haz clic en cualquier dirección de la tabla para abrirla en Google Maps.</div>
+      <div class="table-ni-note" role="note"><strong>N.I.</strong> = No identificada. Indica que no hay una lectura asociada para ese dato; no significa consumo cero.</div>
       <div class="table-wrap dashboard-table-wrap">
         <table class="dashboard-data-table">
           <thead>
@@ -655,6 +656,9 @@
           document.querySelector('.section-switcher')?.scrollIntoView({ behavior: options.instant ? 'auto' : 'smooth', block: 'start' });
         }
         window.dispatchEvent(new Event('resize'));
+        if (sectionId === 'seccion-2' && typeof window.simecoRefreshHistory === 'function') {
+          requestAnimationFrame(() => window.simecoRefreshHistory({ preserveSelection: true }));
+        }
       }
 
       window.simecoOpenSection = openSection;
@@ -691,7 +695,7 @@
   <script defer src="data/sincronizacion-territorial.js?v=60-territorios"></script>
   <script defer src="data/excepciones-servicios.js?v=60-instituciones"></script>
   
-  <script defer src="app.js?v=76-informe-interactivo"></script>
+  <script defer src="app.js?v=77-historico-ni"></script>
   <script defer src="assistant-config.js?v=65-rendimiento"></script>
   <script defer src="assistant.js?v=65-rendimiento"></script>
 </body>

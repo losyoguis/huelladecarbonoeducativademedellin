@@ -1,5 +1,5 @@
 CONTROL DE CALIDAD DE HISTÓRICOS — SiMeCO₂ v56
-Fecha: 2026-08-07
+Fecha: 2026-08-08
 
 CRITERIO DE FUENTE
 El histórico global usa exclusivamente el valor ACTUAL del Resumen de facturación de la página 1 de cada PDF.

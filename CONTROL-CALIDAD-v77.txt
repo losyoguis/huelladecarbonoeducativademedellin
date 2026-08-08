@@ -1,0 +1,25 @@
+CONTROL DE CALIDAD SiMeCO₂ v77
+Fecha: 2026-08-08
+
+CAMBIOS VISUALES
+- “No identificada” se muestra como N.I. en las tablas compactas.
+- Leyenda visible sobre la tabla: N.I. = No identificada; no significa consumo cero.
+- Se conservan explicaciones completas en diagnósticos y mensajes técnicos.
+
+HISTÓRICO
+- Selectores de modo, indicador, Periodo A y Periodo B convertidos a selectores nativos estables.
+- Se preservan A/B cuando siguen siendo válidos.
+- refreshHistoryModule() centraliza actualización y manejo de errores.
+- Al abrir la sección Histórico se refresca automáticamente.
+- Gráfica ajustada al ancho real del iframe/contenedor.
+- Se mantienen narrativa, tabla exacta, fuente oficial y filtro por sede.
+
+VALIDACIONES
+- npm run check: APROBADO.
+- npm test: APROBADO.
+- validar_sistema.py: APROBADO.
+- validar_historicos.py: APROBADO.
+- 9.147 registros.
+- 567 instituciones/sedes.
+- 17 períodos oficiales.
+RESULTADO: APROBADO.

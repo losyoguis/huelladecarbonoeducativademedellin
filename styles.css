@@ -2190,3 +2190,73 @@ body.viewport-phone .assistant-panel{
     display:none !important;
   }
 }
+
+
+/* v77 · Leyenda compacta de datos no identificados */
+.table-ni-note{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin:0 0 10px;
+  padding:9px 12px;
+  border:1px solid rgba(92,112,106,.18);
+  border-radius:12px;
+  background:#f7faf9;
+  color:#536b65;
+  font-size:.86rem;
+  line-height:1.35;
+}
+.table-ni-note strong{
+  display:inline-grid;
+  place-items:center;
+  min-width:34px;
+  padding:3px 7px;
+  border-radius:999px;
+  background:#eaf0ee;
+  color:#37534c;
+  font-weight:900;
+}
+.ni-abbr{
+  display:inline-block;
+  min-width:30px;
+  text-align:center;
+  font-weight:850;
+  white-space:nowrap;
+}
+
+/* Histórico v77 · controles nativos estables dentro de Google Sites */
+#comparar-periodos .compare-controls select[data-no-searchable="true"]{
+  display:block !important;
+  width:100%;
+  min-height:44px;
+  padding:9px 38px 9px 12px;
+  border:1px solid #c9ded8;
+  border-radius:12px;
+  background:#fff;
+  color:#173f37;
+  font:inherit;
+}
+#comparar-periodos .history-chart-scroll{
+  width:100%;
+  max-width:100%;
+  overflow-x:auto;
+  overflow-y:hidden;
+  -webkit-overflow-scrolling:touch;
+  overscroll-behavior-x:contain;
+  border-radius:14px;
+}
+#comparar-periodos #chart{
+  display:block;
+  max-width:none !important;
+}
+#comparar-periodos .compare-result,
+#comparar-periodos .interpretation-box,
+#comparar-periodos .history-data-table{
+  min-width:0;
+  max-width:100%;
+}
+@media (max-width:700px){
+  #comparar-periodos .compare-controls{
+    grid-template-columns:1fr !important;
+  }
+}
