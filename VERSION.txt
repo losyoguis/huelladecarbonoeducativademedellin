@@ -1,1 +1,1 @@
-v98 - Sidebar lateral legible y elegante para Google Sites
+v99 - Selección lateral visible y experiencia móvil tipo app

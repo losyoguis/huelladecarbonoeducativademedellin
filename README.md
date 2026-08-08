@@ -1,3 +1,8 @@
+# SiMeCO₂ v99 — Selección lateral visible
+
+La v99 corrige el estado activo del menú lateral dentro de Google Sites. La opción seleccionada conserva siempre un fondo sólido de alto contraste, incluso cuando `body.is-embedded` está activo. En móvil, el menú funciona como drawer tipo app y centra automáticamente el módulo activo.
+
+---
 # SiMeCO₂ v98 — Sidebar lateral legible
 
 La versión v98 corrige el problema visual observado en Google Sites donde los nombres de los módulos podían partirse letra por letra. El sidebar ahora usa una estructura flex estable: número a la izquierda y texto ocupando todo el ancho restante.

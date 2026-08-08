@@ -4410,3 +4410,168 @@ body.is-embedded .side-navigation .side-tab-copy small{
     font-size:.61rem!important;
   }
 }
+
+
+/* ==========================================================
+   SiMeCO₂ v99 · Estado activo siempre visible
+   Corrige la prioridad body.is-embedded de Google Sites
+   ========================================================== */
+
+/* Base seleccionado: sirve también como respaldo por ARIA */
+.side-navigation .section-tab.active,
+.side-navigation .section-tab[aria-selected="true"],
+body.is-embedded .side-navigation .section-tab.active,
+body.is-embedded .side-navigation .section-tab[aria-selected="true"]{
+  position:relative!important;
+  opacity:1!important;
+  filter:none!important;
+  color:#fff!important;
+  border-color:transparent!important;
+  box-shadow:0 10px 24px rgba(12,75,62,.22)!important;
+}
+
+/* Electricidad */
+.side-navigation .electricity-section-tab.active,
+.side-navigation .electricity-section-tab[aria-selected="true"],
+body.is-embedded .side-navigation .electricity-section-tab.active,
+body.is-embedded .side-navigation .electricity-section-tab[aria-selected="true"]{
+  background:#078c6d!important;
+  background-image:linear-gradient(135deg,#08745c 0%,#0b9b76 55%,#13ad80 100%)!important;
+  border-color:#08745c!important;
+}
+
+/* Agua */
+.side-navigation .water-section-tab.active,
+.side-navigation .water-section-tab[aria-selected="true"],
+body.is-embedded .side-navigation .water-section-tab.active,
+body.is-embedded .side-navigation .water-section-tab[aria-selected="true"]{
+  background:#087fa7!important;
+  background-image:linear-gradient(135deg,#08769a 0%,#0c91ba 55%,#1bb2d6 100%)!important;
+  border-color:#087fa7!important;
+}
+
+/* Gas */
+.side-navigation .gas-section-tab.active,
+.side-navigation .gas-section-tab[aria-selected="true"],
+body.is-embedded .side-navigation .gas-section-tab.active,
+body.is-embedded .side-navigation .gas-section-tab[aria-selected="true"]{
+  background:#a95a00!important;
+  background-image:linear-gradient(135deg,#995000 0%,#c46c08 55%,#e69020 100%)!important;
+  border-color:#a95a00!important;
+}
+
+/* Facturas transversal */
+.side-navigation .neutral-section-tab.active,
+.side-navigation .neutral-section-tab[aria-selected="true"],
+body.is-embedded .side-navigation .neutral-section-tab.active,
+body.is-embedded .side-navigation .neutral-section-tab[aria-selected="true"]{
+  background:#56616d!important;
+  background-image:linear-gradient(135deg,#4d5863 0%,#66727e 55%,#7d8995 100%)!important;
+  border-color:#56616d!important;
+}
+
+/* Texto seleccionado: no puede heredar verde/gris de reglas genéricas */
+.side-navigation .section-tab.active .side-tab-copy strong,
+.side-navigation .section-tab.active .side-tab-copy small,
+.side-navigation .section-tab[aria-selected="true"] .side-tab-copy strong,
+.side-navigation .section-tab[aria-selected="true"] .side-tab-copy small,
+body.is-embedded .side-navigation .section-tab.active .side-tab-copy strong,
+body.is-embedded .side-navigation .section-tab.active .side-tab-copy small,
+body.is-embedded .side-navigation .section-tab[aria-selected="true"] .side-tab-copy strong,
+body.is-embedded .side-navigation .section-tab[aria-selected="true"] .side-tab-copy small{
+  color:#fff!important;
+  opacity:1!important;
+  text-shadow:0 1px 1px rgba(0,0,0,.08);
+}
+
+/* Número seleccionado */
+.side-navigation .section-tab.active>span:first-child,
+.side-navigation .section-tab[aria-selected="true"]>span:first-child,
+body.is-embedded .side-navigation .section-tab.active>span:first-child,
+body.is-embedded .side-navigation .section-tab[aria-selected="true"]>span:first-child{
+  color:#fff!important;
+  background:rgba(255,255,255,.22)!important;
+  border:1px solid rgba(255,255,255,.18)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.12)!important;
+}
+
+/* Indicador lateral inequívoco */
+.side-navigation .section-tab.active::after,
+.side-navigation .section-tab[aria-selected="true"]::after,
+body.is-embedded .side-navigation .section-tab.active::after,
+body.is-embedded .side-navigation .section-tab[aria-selected="true"]::after{
+  content:""!important;
+  position:absolute!important;
+  right:9px!important;
+  top:50%!important;
+  transform:translateY(-50%)!important;
+  width:5px!important;
+  height:28px!important;
+  border-radius:999px!important;
+  background:#fff!important;
+  box-shadow:0 0 0 3px rgba(255,255,255,.10)!important;
+  opacity:.95!important;
+}
+
+/* Hover del activo nunca borra el fondo */
+.side-navigation .section-tab.active:hover,
+.side-navigation .section-tab[aria-selected="true"]:hover,
+body.is-embedded .side-navigation .section-tab.active:hover,
+body.is-embedded .side-navigation .section-tab[aria-selected="true"]:hover{
+  color:#fff!important;
+  filter:brightness(1.02)!important;
+}
+
+/* Modo contraído: seleccionado sigue siendo reconocible */
+.workspace-shell.sidebar-collapsed .side-navigation .section-tab.active,
+.workspace-shell.sidebar-collapsed .side-navigation .section-tab[aria-selected="true"],
+body.is-embedded .workspace-shell.sidebar-collapsed .side-navigation .section-tab.active,
+body.is-embedded .workspace-shell.sidebar-collapsed .side-navigation .section-tab[aria-selected="true"]{
+  box-shadow:0 7px 18px rgba(12,75,62,.22)!important;
+}
+.workspace-shell.sidebar-collapsed .side-navigation .section-tab.active::after,
+.workspace-shell.sidebar-collapsed .side-navigation .section-tab[aria-selected="true"]::after{
+  right:3px!important;
+  width:4px!important;
+  height:22px!important;
+}
+
+/* Móvil: aspecto de app, activo como tarjeta sólida */
+@media(max-width:760px){
+  body{
+    -webkit-tap-highlight-color:transparent;
+  }
+  .side-nav-mobile-launcher{
+    min-height:52px!important;
+    border-radius:16px!important;
+    box-shadow:0 8px 24px rgba(10,70,57,.14)!important;
+  }
+  .side-navigation{
+    border-radius:0 24px 24px 0!important;
+    box-shadow:22px 0 48px rgba(8,35,29,.28)!important;
+  }
+  .side-navigation .section-tab.active,
+  .side-navigation .section-tab[aria-selected="true"],
+  body.is-embedded .side-navigation .section-tab.active,
+  body.is-embedded .side-navigation .section-tab[aria-selected="true"]{
+    min-height:62px!important;
+    margin-block:2px!important;
+    border-radius:16px!important;
+    box-shadow:0 9px 22px rgba(9,73,59,.20)!important;
+  }
+  .side-navigation .section-tab.active .side-tab-copy strong,
+  .side-navigation .section-tab[aria-selected="true"] .side-tab-copy strong{
+    font-size:.9rem!important;
+  }
+  .side-navigation .section-tab.active::after,
+  .side-navigation .section-tab[aria-selected="true"]::after{
+    right:8px!important;
+    height:30px!important;
+  }
+  .side-navigation-header{
+    position:sticky!important;
+    top:0!important;
+    z-index:2!important;
+    background:linear-gradient(180deg,#f7fffb 0%,#effaf5 100%)!important;
+  }
+}
