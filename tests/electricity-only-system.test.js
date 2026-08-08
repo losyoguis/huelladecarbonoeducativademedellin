@@ -18,5 +18,5 @@ ok(!html.includes('value="waterM3"') && !html.includes('value="gasM3"'),'Quedan 
 ok(html.includes('<th>Energía<br>kWh</th>') && html.includes('<th>CO₂e<br>kg</th>'),'Facturas no muestran columnas eléctricas');
 ok(app.includes("const headers=['periodo','sede','direccion','energia_kwh','co2_kg','fuente']"),'CSV no es exclusivamente eléctrico');
 ok(app.includes('Plan de Gestión Energética y Reducción de GEI'),'Informe por sede no es exclusivamente energético');
-ok(html.includes('app.js?v=85-electricidad-ranking-co2-pdf'),'Falta cache-busting v84');
+ok(html.includes('app.js?v=86-carga-inicial'),'Falta cache-busting v84');
 console.log('OK electricity-only-system');

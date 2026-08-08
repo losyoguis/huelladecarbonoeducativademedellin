@@ -11,5 +11,5 @@ ok(app.includes("N.C."),'Falta estado No calculable para huella');
 ok(app.includes("CO₂e significa dióxido de carbono equivalente"),'Falta explicación de CO2e');
 ok(html.includes('Huella de carbono (t CO₂e)'),'La descripción inicial no explica huella');
 ok(css.includes('.environmental-ranking-chart #siteChart'),'Falta soporte visual del canvas ancho');
-ok(html.includes('app.js?v=85-electricidad-ranking-co2-pdf'),'Falta cache-busting JS v80');
+ok(html.includes('app.js?v=86-carga-inicial'),'Falta cache-busting JS v80');
 console.log('OK ranking-carbon-footprint-column');
