@@ -1,13 +1,13 @@
-/* SiMeCO2 Servicios Públicos - v60 agrupación institucional por sedes, calidad de datos, contratos separados, histórico multivariable y ranking por servicio */
+/* SiMeCO₂ v87 · plataforma eléctrica data-first optimizada para Google Sites */
 let FACTOR_CO2_KG_KWH = 0.126; // kg CO2e/kWh. Ajustable desde el dashboard.
 let TREE_CO2_KG_YEAR = 22; // kg CO2e capturados por árbol al año. Ajustable desde el dashboard.
 const FACTOR_KEY = 'simeco2_factores_ambientales_v8';
 const STORE_KEY = 'simeco2_servicios_v16';
 const CONFIG_KEY = 'simeco2_repo_config_v7';
-const DATA_VERSION = 'v86-carga-inicial-corregida-20260808';
+const DATA_VERSION = 'v87-datos-electricos-ultrarrapidos-20260808';
 
 const $ = (id)=>document.getElementById(id);
-const state = loadStore();
+let state = loadStore();
 let chartData = [];
 let selectedSiteKey = "";
 let autocompleteIndex = -1;
@@ -49,7 +49,7 @@ function selectedHistoryMetric(){ return serviceMetric($('compareMetric')?.value
 function selectedRankingMetric(){ return serviceMetric(rankingMetric || $('rankingMetricFilter')?.value || 'energyKwh'); }
 
 const PROJECT_LOADING_FACTS = [
-  'SiMeCO₂ transforma los consumos de servicios públicos en información útil para la gestión ambiental escolar.',
+  'SiMeCO₂ transforma el consumo eléctrico en información útil para la gestión ambiental escolar.',
   'La huella de carbono por electricidad corresponde al alcance 2: energía adquirida por las instituciones.',
   'El ranking ambiental permite identificar sedes prioritarias y orientar acciones de ahorro energético.',
   'Cada Plan de Gestión Ambiental puede incluir metas, responsables, indicadores, cronograma y evidencias.',
@@ -229,12 +229,29 @@ function initGoogleSitesResponsiveMode(){
   });
 }
 
-window.addEventListener('DOMContentLoaded', () => {
+window.addEventListener('DOMContentLoaded', async () => {
   const bootErrors=[];
   const safeBootStep=(name,fn)=>{
     try{ fn(); return true; }
     catch(err){ bootErrors.push({name,err}); console.error(`[SiMeCO₂] Error en ${name}:`,err); return false; }
   };
+
+  // v87: el bundle eléctrico de ~445 KB debe estar disponible antes de renderizar.
+  // En condiciones normales ya fue ejecutado de forma síncrona por index.html.
+  // La espera corta solo actúa como recuperación en iframes o redes lentas.
+  if(!state.records.length){
+    updateInvoiceProgress({percent:12,stage:'files',detail:'Cargando base eléctrica optimizada…',records:0});
+    await waitForPreloadedData(1200);
+  }
+  if(state.records.length){
+    updateInvoiceProgress({
+      percent:82,
+      processedFiles:17,totalFiles:17,
+      records:state.records.length,
+      stage:'consolidate',
+      detail:`${state.records.length.toLocaleString('es-CO')} registros eléctricos precargados. Preparando vistas…`
+    });
+  }
 
   safeBootStep('responsive Google Sites',initGoogleSitesResponsiveMode);
   safeBootStep('PDF.js',initPdfJs);
@@ -265,9 +282,10 @@ window.addEventListener('DOMContentLoaded', () => {
         log(`Datos listos: ${state.records.length} registros precargados. La verificación de PDF queda bajo demanda para acelerar el inicio.${bootErrors.length?` ${bootErrors.length} componente(s) secundario(s) requirieron recuperación segura.`:''}`);
         setInvoiceLoading(false, 'Datos listos para consultar.');
       }else{
-        log('No se encontraron registros precargados. Iniciando recuperación de facturas...');
-        setInvoiceLoading(false,'Preparando recuperación de facturas.');
-        setTimeout(() => scanDataFolder({automatic:true}), 220);
+        console.error('[SiMeCO₂] No se pudo cargar la base eléctrica compacta.');
+        log('No se pudo cargar la base eléctrica optimizada. Use “Actualizar datos” para reintentar o verifique que data/registros.electricidad.min.js esté publicado.');
+        updateInvoiceProgress({percent:0,records:0,stage:'files',detail:'No se encontró la base eléctrica optimizada.'});
+        setInvoiceLoading(false,'Base de datos no disponible.');
       }
     }
   });
@@ -275,13 +293,16 @@ window.addEventListener('DOMContentLoaded', () => {
   // Protección adicional para iframes de Google Sites: jamás dejar el overlay
   // indefinidamente si los registros precargados ya existen.
   setTimeout(()=>{
+    hydrateStateFromPreloadedData();
     const overlay=$('invoiceLoading');
     if(state.records.length && overlay?.classList.contains('active') && !isScanningData){
       console.warn('[SiMeCO₂] Cierre de seguridad del loader inicial.');
-      updateInvoiceProgress({percent:100,records:state.records.length,stage:'done',detail:'Datos precargados listos para consultar.'});
+      updateInvoiceProgress({percent:100,processedFiles:17,totalFiles:17,records:state.records.length,stage:'done',detail:'Base eléctrica optimizada lista para consultar.'});
       setInvoiceLoading(false,'Datos listos para consultar.');
+    }else if(overlay?.classList.contains('active') && !isScanningData){
+      setInvoiceLoading(false,'No fue posible cargar la base eléctrica.');
     }
-  },3500);
+  },1800);
 });
 
 
@@ -724,6 +745,29 @@ function loadStore(){
     sites:rebuildSites(records)
   };
 }
+function hydrateStateFromPreloadedData(){
+  const records=Array.isArray(window.SIMECO_REGISTROS)?window.SIMECO_REGISTROS:[];
+  if(!records.length) return false;
+  if(state?.records?.length===records.length) return true;
+  const fresh=loadStore();
+  state={
+    ...fresh,
+    records:Array.isArray(fresh.records)&&fresh.records.length?fresh.records:records,
+    sites:rebuildSites(Array.isArray(fresh.records)&&fresh.records.length?fresh.records:records)
+  };
+  invalidateSearchCaches();
+  return state.records.length>0;
+}
+async function waitForPreloadedData(maxMs=1200){
+  if(hydrateStateFromPreloadedData()) return true;
+  const started=performance.now();
+  while(performance.now()-started<maxMs){
+    await new Promise(resolve=>setTimeout(resolve,40));
+    if(hydrateStateFromPreloadedData()) return true;
+  }
+  return false;
+}
+
 function compactStorePayload(){
   const canonical=canonicalBundle();
   const customFiles={};

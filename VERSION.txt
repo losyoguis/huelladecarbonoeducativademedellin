@@ -1,1 +1,1 @@
-v86 - Carga inicial corregida y protegida para Google Sites
+v87 - Datos eléctricos ultrarrápidos y carga data-first corregida

@@ -1,0 +1,34 @@
+CONTROL DE CALIDAD SiMeCO₂ v87
+Fecha: 2026-08-08
+
+PROBLEMA
+La pantalla de carga podía permanecer en 0/0/0 dentro de Google Sites porque el bundle anterior era más pesado y app.js podía iniciar sin disponer todavía de los registros compactos.
+
+SOLUCIÓN
+- Nuevo data/registros.electricidad.min.js de aproximadamente 445 KB.
+- 9.147 registros eléctricos reconstruidos antes de ejecutar app.js.
+- Reducción aproximada del 74% frente al bundle compacto anterior.
+- Carga prioritaria mediante preload.
+- El bundle se ejecuta antes de app.js, evitando iniciar con state.records vacío.
+- app.js incluye hidratación explícita y espera corta de recuperación de hasta 1,2 s.
+- El loader inicia visualmente en 72%, mostrando 17 facturas fuente y 9.147 registros.
+- Al detectar los datos avanza a 82% y finaliza en 100%.
+- Salvaguarda de cierre a 1,8 s en Google Sites.
+- Ya no se leen los PDF durante cada apertura; PDF.js queda bajo demanda.
+- Todas las páginas principales utilizan el mismo bundle eléctrico ultracompacto.
+
+INTEGRIDAD
+- 9.147 registros.
+- 567 instituciones/sedes.
+- 17 periodos oficiales.
+- Histórico oficial de energía preservado.
+- Ranking, ahorro, CO₂e, Plan energético, Google Maps y descargas PDF preservados.
+
+PRUEBAS
+- npm run check: APROBADO.
+- npm test: APROBADO.
+- fast-electric-data-load.test.js: APROBADO.
+- startup-loader-safety.test.js: APROBADO.
+- validar_sistema.py: APROBADO.
+- validar_historicos.py: APROBADO.
+RESULTADO: APROBADO.

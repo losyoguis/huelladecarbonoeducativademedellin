@@ -1,0 +1,22 @@
+SiMeCO₂ v87 — Carga ultrarrápida de datos eléctricos
+
+PROBLEMA CORREGIDO
+- En Google Sites la pantalla podía permanecer en 0/0/0 porque app.js podía iniciar antes de disponer de la base compacta o porque el bundle anterior tardaba demasiado en transferirse y parsearse.
+
+OPTIMIZACIÓN
+- Nuevo archivo data/registros.electricidad.min.js.
+- 9.147 registros eléctricos reconstruidos desde un bundle de aproximadamente 445 KB.
+- Reducción aproximada del 74% frente al bundle compacto anterior de 1,72 MB.
+- Se eliminan del bundle de navegador columnas no utilizadas por el sistema eléctrico.
+- sourceUrl, type y key se reconstruyen en memoria al cargar para no transferir texto repetido.
+- Nuevo data/resumenes.electricidad.min.js con resúmenes oficiales exclusivamente eléctricos.
+- Los datos se cargan de forma prioritaria y antes de app.js.
+- Se añadieron preload hints en index.html.
+- app.js espera/hidrata explícitamente la base eléctrica antes de renderizar.
+- Si los datos ya están presentes, el loader avanza inmediatamente a 82% y termina en 100%.
+- El arranque ya no intenta leer los 17 PDF para mostrar la interfaz.
+- Si la base no existe, el loader se cierra con un mensaje recuperable en lugar de quedar bloqueado.
+
+ALCANCE
+- Todos los HTML principales usan el mismo bundle eléctrico ultracompacto.
+- Histórico, Ranking, Informe, Estado, Facturas y Aula conservan su funcionalidad.

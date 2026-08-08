@@ -13,7 +13,9 @@
   <meta name="description" content="Sistema interactivo para medir, interpretar y gestionar la huella de carbono educativa a partir del consumo de energía eléctrica." />
   <link rel="icon" type="image/png" href="assets/los-yoguis-logo-optimized.png" />
   <link rel="apple-touch-icon" href="assets/los-yoguis-logo-optimized.png" />
-  <link rel="stylesheet" href="styles.css?v=86-carga-inicial" />
+  <link rel="preload" href="data/registros.electricidad.min.js?v=87-datos-rapidos" as="script" />
+  <link rel="preload" href="data/resumenes.electricidad.min.js?v=87-datos-rapidos" as="script" />
+  <link rel="stylesheet" href="styles.css?v=87-datos-rapidos" />
 </head>
 <body>
   <div class="invoice-loading active" id="invoiceLoading" role="status" aria-live="assertive" aria-hidden="false">
@@ -30,26 +32,26 @@
         <span class="invoice-spinner" aria-hidden="true"></span>
         <div>
           <span class="invoice-loading-kicker">Procesamiento ambiental</span>
-          <strong id="invoiceLoadingText">Espere, cargando facturas...</strong>
+          <strong id="invoiceLoadingText">Cargando base eléctrica optimizada…</strong>
         </div>
       </div>
 
-      <p class="invoice-loading-detail" id="invoiceLoadingDetail">Preparando la lectura y consolidación de la información disponible.</p>
+      <p class="invoice-loading-detail" id="invoiceLoadingDetail">La base eléctrica precargada se está preparando para mostrar los indicadores.</p>
 
       <div class="invoice-progress-block">
-        <div class="invoice-progress-track" id="invoiceProgressTrack" role="progressbar" aria-label="Progreso de carga de facturas" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
-          <span id="invoiceProgressBar"></span>
+        <div class="invoice-progress-track" id="invoiceProgressTrack" role="progressbar" aria-label="Progreso de carga de facturas" aria-valuemin="0" aria-valuemax="100" aria-valuenow="72">
+          <span id="invoiceProgressBar" style="width:72%"></span>
         </div>
         <div class="invoice-progress-meta">
-          <strong id="invoiceProgressPercent">0%</strong>
-          <span id="invoiceProgressCounter">Preparando archivos…</span>
+          <strong id="invoiceProgressPercent">72%</strong>
+          <span id="invoiceProgressCounter">Preparando la interfaz…</span>
         </div>
       </div>
 
       <div class="invoice-loading-metrics" aria-label="Resumen del procesamiento">
-        <article><strong id="invoiceLoadingFiles">0/0</strong><span>Facturas</span></article>
-        <article><strong id="invoiceLoadingPages">0/0</strong><span>Páginas</span></article>
-        <article><strong id="invoiceLoadingRecords">0</strong><span>Registros</span></article>
+        <article><strong id="invoiceLoadingFiles">17/17</strong><span>Facturas fuente</span></article>
+        <article><strong id="invoiceLoadingPages">—</strong><span>PDF bajo demanda</span></article>
+        <article><strong id="invoiceLoadingRecords">9.147</strong><span>Registros</span></article>
       </div>
 
       <div class="invoice-loading-stages" aria-label="Etapas de procesamiento">
@@ -684,12 +686,13 @@
     })();
   </script>
 
-  <script defer src="data/registros.compact.js?v=66-ranking-ahorro"></script>
-  <script defer src="data/resumenes.js?v=60-historicos-multiservicio"></script>
-  <script defer src="data/sincronizacion-territorial.js?v=60-territorios"></script>
-  <script defer src="data/excepciones-servicios.js?v=60-instituciones"></script>
-  
-  <script defer src="app.js?v=86-carga-inicial"></script>
+  <!-- v87: datos eléctricos ultracompactos cargados antes de app.js -->
+  <script src="data/registros.electricidad.min.js?v=87-datos-rapidos"></script>
+  <script src="data/resumenes.electricidad.min.js?v=87-datos-rapidos"></script>
+  <script defer src="data/sincronizacion-territorial.js?v=87-datos-rapidos"></script>
+  <script defer src="data/excepciones-servicios.js?v=87-datos-rapidos"></script>
+
+  <script defer src="app.js?v=87-datos-rapidos"></script>
   <script defer src="assistant-config.js?v=65-rendimiento"></script>
   <script defer src="assistant.js?v=65-rendimiento"></script>
 </body>
