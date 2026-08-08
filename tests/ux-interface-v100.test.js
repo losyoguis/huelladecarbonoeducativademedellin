@@ -3,7 +3,7 @@ function ok(v,m){if(!v)throw new Error(m);}
 const html=fs.readFileSync('index.html','utf8');
 const css=fs.readFileSync('styles.css','utf8');
 
-ok(html.includes('id="simecoWorkspace" data-ux-version="100"'),'Workspace no marca UX v100');
+ok(html.includes('id="simecoWorkspace" data-ux-version="101"'),'Workspace no marca UX v101');
 for(let i=1;i<=9;i++) ok(html.includes(`id="seccion-${i}"`),`Falta sección ${i}`);
 
 for(const marker of [
