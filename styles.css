@@ -2722,3 +2722,160 @@ body.viewport-phone .assistant-panel{
     min-width:330px;
   }
 }
+
+
+/* =========================================================
+   v82 · Sección 6 Estado de la información + Prioridad antes del Plan
+   ========================================================= */
+
+/* Siete secciones principales. */
+@media (max-width:620px){
+  body.is-embedded .section-switcher{
+    grid-template-columns:repeat(7,minmax(0,1fr)) !important;
+  }
+  .section-mobile-nav{
+    grid-template-columns:repeat(7,minmax(0,1fr)) !important;
+  }
+  body.is-embedded .section-tab strong,
+  .section-mobile-nav .mobile-section-tab small{
+    font-size:8px !important;
+  }
+}
+
+/* Estado de la información vive como módulo independiente. */
+#seccion-6 .quality-panel{
+  margin-top:0;
+}
+#seccion-6 .quality-kpis{
+  grid-template-columns:repeat(auto-fit,minmax(210px,1fr));
+}
+
+/* Explicación de prioridad del Informe por sede. */
+.dashboard-priority-note{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:8px;
+  margin:0 0 12px;
+  padding:10px 12px;
+  border:1px solid rgba(16,112,91,.14);
+  border-radius:14px;
+  background:#f7fbf9;
+  color:#49665f;
+  font-size:.82rem;
+  line-height:1.35;
+}
+.dashboard-priority-note > strong{
+  color:#183f36;
+  margin-right:3px;
+}
+.dashboard-priority-note .priority-chip{
+  white-space:nowrap;
+}
+
+/* Orden definitivo:
+   1 # | 2 Sede | 3 Dirección | 4 Periodos | 5 Prioridad | 6 Plan | 7 Energía
+   | 8 Agua | 9 Alc | 10 Gas | 11 Aseo | 12 CO₂e | 13 Árboles | 14 Promedio */
+.dashboard-table-wrap .dashboard-data-table th:nth-child(5),
+.dashboard-table-wrap .dashboard-data-table td:nth-child(5),
+.dashboard-table-wrap > table th:nth-child(5),
+.dashboard-table-wrap > table td:nth-child(5){
+  width:112px !important;
+  min-width:112px !important;
+  text-align:center !important;
+  background:transparent !important;
+}
+.dashboard-table-wrap .dashboard-data-table th:nth-child(6),
+.dashboard-table-wrap .dashboard-data-table td:nth-child(6),
+.dashboard-table-wrap > table th:nth-child(6),
+.dashboard-table-wrap > table td:nth-child(6){
+  width:158px !important;
+  min-width:158px !important;
+  text-align:center !important;
+  background:#fbfffd !important;
+}
+.dashboard-table-wrap .total-row td:nth-child(6){
+  background:#12312d !important;
+  color:#fff !important;
+}
+.dashboard-table-wrap td:nth-child(6).plan-cell{
+  padding:8px !important;
+}
+.dashboard-table-wrap td:nth-child(6) .plan-btn{
+  width:100% !important;
+  min-width:0 !important;
+  min-height:52px !important;
+  padding:8px 9px !important;
+  border-radius:14px !important;
+  font-size:.78rem !important;
+  line-height:1.12 !important;
+}
+
+/* Indicadores numéricos desplazados una columna hacia la derecha. */
+.dashboard-table-wrap .dashboard-data-table th:nth-child(7),
+.dashboard-table-wrap .dashboard-data-table td:nth-child(7),
+.dashboard-table-wrap > table th:nth-child(7),
+.dashboard-table-wrap > table td:nth-child(7){width:112px !important;}
+.dashboard-table-wrap .dashboard-data-table th:nth-child(8),
+.dashboard-table-wrap .dashboard-data-table td:nth-child(8),
+.dashboard-table-wrap > table th:nth-child(8),
+.dashboard-table-wrap > table td:nth-child(8){width:82px !important;}
+.dashboard-table-wrap .dashboard-data-table th:nth-child(9),
+.dashboard-table-wrap .dashboard-data-table td:nth-child(9),
+.dashboard-table-wrap > table th:nth-child(9),
+.dashboard-table-wrap > table td:nth-child(9){width:78px !important;}
+.dashboard-table-wrap .dashboard-data-table th:nth-child(10),
+.dashboard-table-wrap .dashboard-data-table td:nth-child(10),
+.dashboard-table-wrap > table th:nth-child(10),
+.dashboard-table-wrap > table td:nth-child(10){width:78px !important;}
+.dashboard-table-wrap .dashboard-data-table th:nth-child(11),
+.dashboard-table-wrap .dashboard-data-table td:nth-child(11),
+.dashboard-table-wrap > table th:nth-child(11),
+.dashboard-table-wrap > table td:nth-child(11){width:92px !important;}
+.dashboard-table-wrap .dashboard-data-table th:nth-child(12),
+.dashboard-table-wrap .dashboard-data-table td:nth-child(12),
+.dashboard-table-wrap > table th:nth-child(12),
+.dashboard-table-wrap > table td:nth-child(12){width:82px !important;}
+.dashboard-table-wrap .dashboard-data-table th:nth-child(13),
+.dashboard-table-wrap .dashboard-data-table td:nth-child(13),
+.dashboard-table-wrap > table th:nth-child(13),
+.dashboard-table-wrap > table td:nth-child(13){width:90px !important;}
+.dashboard-table-wrap .dashboard-data-table th:nth-child(14),
+.dashboard-table-wrap .dashboard-data-table td:nth-child(14),
+.dashboard-table-wrap > table th:nth-child(14),
+.dashboard-table-wrap > table td:nth-child(14){
+  width:104px !important;
+  min-width:104px !important;
+  text-align:center !important;
+  background:transparent !important;
+}
+.dashboard-table-wrap .dashboard-data-table td:nth-child(n+7):nth-child(-n+14),
+.dashboard-table-wrap > table td:nth-child(n+7):nth-child(-n+14){
+  font-variant-numeric:tabular-nums;
+  text-align:center;
+  overflow-wrap:normal;
+  word-break:normal;
+  hyphens:none;
+}
+
+/* La prioridad debe ser muy fácil de detectar. */
+.dashboard-table-wrap td:nth-child(5) .priority-chip{
+  display:inline-flex;
+  justify-content:center;
+  min-width:86px;
+  font-weight:900;
+}
+
+/* Evita que reglas antiguas traten la última columna como Plan. */
+.dashboard-table-wrap th:last-child,
+.dashboard-table-wrap td:last-child{
+  min-width:104px !important;
+  background:transparent !important;
+}
+
+@media (max-width:620px){
+  .dashboard-priority-note{
+    align-items:flex-start;
+    flex-direction:column;
+  }
+}

@@ -1,0 +1,39 @@
+CONTROL DE CALIDAD SiMeCO₂ v82
+Fecha: 2026-08-08
+
+NAVEGACIÓN
+- Sección 1: Actualizar datos.
+- Sección 2: Histórico.
+- Sección 3: Informe por sede.
+- Sección 4: Facturas por I.E.
+- Sección 5: Ranking.
+- Sección 6: Estado información.
+- Sección 7: Aula.
+- Estado de la información por sede fue movido completo a la sección 6.
+- Aula fue movida a la sección 7.
+- Navegación superior, móvil y anclas internas actualizadas.
+
+INFORME POR SEDE
+- Orden: #, Sede, Dirección, Periodos, Prioridad, Plan de acción, Energía, Agua, Alc., Gas, Aseo, CO₂e, Árboles, Promedio.
+- Prioridad ubicada inmediatamente antes de Generar informe / Plan de acción.
+- Prioridad calculada con promedio mensual de energía:
+  Alta >= 5.000 kWh/mes.
+  Media 2.000–4.999 kWh/mes.
+  Preventiva < 2.000 kWh/mes.
+- Leyenda de criterios visible.
+- Tooltip de cada prioridad incluye promedio kWh/mes cuando existe lectura.
+- N.I. y contrato separado conservados.
+- Fila TOTAL correctamente alineada.
+
+INTEGRIDAD
+- 9.147 registros.
+- 567 instituciones/sedes.
+- 17 períodos oficiales.
+- Histórico, Rankings, CO₂e, Google Maps e Informe interactivo conservados.
+
+PRUEBAS
+- npm run check: APROBADO.
+- npm test: APROBADO.
+- validar_sistema.py: APROBADO.
+- validar_historicos.py: APROBADO.
+RESULTADO: APROBADO.

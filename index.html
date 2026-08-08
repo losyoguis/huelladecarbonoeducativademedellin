@@ -13,7 +13,7 @@
   <meta name="description" content="Sistema interactivo para medir, interpretar y gestionar la huella de carbono educativa a partir del consumo de servicios públicos." />
   <link rel="icon" type="image/png" href="assets/los-yoguis-logo-optimized.png" />
   <link rel="apple-touch-icon" href="assets/los-yoguis-logo-optimized.png" />
-  <link rel="stylesheet" href="styles.css?v=81-ranking-seccion-plan-accion" />
+  <link rel="stylesheet" href="styles.css?v=82-estado-prioridad" />
 </head>
 <body>
   <div class="invoice-loading active" id="invoiceLoading" role="status" aria-live="assertive" aria-hidden="false">
@@ -99,7 +99,8 @@
     <button type="button" class="section-tab" data-section="seccion-3" aria-selected="false"><span>3</span><strong>Informe por sede</strong><small>Dashboard y planes</small></button>
     <button type="button" class="section-tab" data-section="seccion-4" aria-selected="false"><span>4</span><strong>Facturas por I.E.</strong><small>Filtros, datos y descargas</small></button>
     <button type="button" class="section-tab" data-section="seccion-5" aria-selected="false"><span>5</span><strong>Ranking</strong><small>Consumo, CO₂e y ahorro</small></button>
-    <button type="button" class="section-tab" data-section="seccion-6" aria-selected="false"><span>6</span><strong>Aula</strong><small>Aprender, medir y actuar</small></button>
+    <button type="button" class="section-tab" data-section="seccion-6" aria-selected="false"><span>6</span><strong>Estado información</strong><small>Calidad y trazabilidad</small></button>
+    <button type="button" class="section-tab" data-section="seccion-7" aria-selected="false"><span>7</span><strong>Aula</strong><small>Aprender, medir y actuar</small></button>
   </nav>
 
   <main>
@@ -187,42 +188,7 @@
       </article>
     </section>
 
-    <section class="panel quality-panel" id="calidad-datos">
-      <div class="section-head">
-        <div>
-          <span class="section-kicker">Calidad y trazabilidad</span>
-          <h2>Estado de la información por sede</h2>
-          <p class="muted">Distingue datos completos, parciales y servicios no identificados. Una ausencia nunca se interpreta automáticamente como consumo cero.</p>
-        </div>
-        <div class="quality-legend" aria-label="Estados de calidad">
-          <span class="quality-badge complete">Datos completos</span>
-          <span class="quality-badge partial">Datos parciales</span>
-          <span class="quality-badge pending">Energía no identificada</span>
-          <span class="quality-badge external">Energía en contrato separado</span>
-          <span class="quality-badge review">En revisión</span>
-        </div>
-      </div>
-      <div class="quality-kpis" aria-label="Indicadores de cobertura">
-        <article><span>Cobertura energética</span><strong id="qualityEnergyCoverage">0%</strong><small id="qualityEnergyCoverageDetail">0 de 0 sedes</small></article>
-        <article><span>Con energía identificada</span><strong id="qualityEnergySites">0</strong><small>Sedes con al menos una lectura kWh</small></article>
-        <article><span>Por verificar</span><strong id="qualityPendingSites">0</strong><small>Sedes con históricos pero sin energía asociada</small></article>
-        <article><span>Contrato separado</span><strong id="qualityExternalSites">0</strong><small>Sedes cuya energía se gestiona en otra fuente contractual</small></article>
-        <article><span>Vinculación territorial</span><strong id="qualityTerritoryCoverage">0%</strong><small id="qualityTerritoryCoverageDetail">0 de 0 sedes clasificadas</small></article>
-      </div>
-      <div class="quality-summary" id="qualitySummary" role="status" aria-live="polite"></div>
-      <div class="service-exceptions" id="serviceExceptionsPanel" hidden>
-        <div class="service-exceptions-head"><div><strong>Excepciones verificadas</strong><p>Servicios que no aparecen en el consolidado educativo porque se gestionan mediante una fuente contractual separada.</p></div></div>
-        <div id="serviceExceptionsBody" class="service-exceptions-grid"></div>
-      </div>
-      <div class="table-map-note" role="note">🏫 <strong>Ubicación:</strong> haz clic en cualquier dirección de la tabla para abrirla en Google Maps.</div>
-      <div class="table-wrap quality-table-wrap">
-        <table class="quality-data-table">
-          <thead><tr><th>Sede</th><th>Dirección</th><th>Estado</th><th>Energía</th><th>Agua</th><th>Alc.</th><th>Gas</th><th>Aseo</th><th>Territorio</th><th>Acción</th></tr></thead>
-          <tbody id="qualityBody"></tbody>
-        </table>
-      </div>
-    </section>
-
+    
 
     </div>
 
@@ -335,6 +301,12 @@
       <section id="siteProfile" class="site-profile" hidden aria-live="polite"></section>
       <div class="table-map-note" role="note">🏫 <strong>Ubicación:</strong> haz clic en cualquier dirección de la tabla para abrirla en Google Maps.</div>
       <div class="table-ni-note" role="note"><strong>N.I.</strong> = No identificada. Indica que no hay una lectura asociada para ese dato; no significa consumo cero.</div>
+      <div class="dashboard-priority-note" role="note">
+        <strong>Prioridad por consumo eléctrico mensual promedio:</strong>
+        <span class="priority-chip high">Alta ≥ 5.000 kWh/mes</span>
+        <span class="priority-chip medium">Media 2.000–4.999 kWh/mes</span>
+        <span class="priority-chip low">Preventiva &lt; 2.000 kWh/mes</span>
+      </div>
       <div class="table-wrap dashboard-table-wrap">
         <table class="dashboard-data-table">
           <thead>
@@ -343,6 +315,7 @@
               <th>Sede</th>
               <th>Dirección</th>
               <th>Periodos</th>
+              <th>Prioridad</th>
               <th>Plan de acción</th>
               <th>Energía total kWh</th>
               <th>Agua m³</th>
@@ -352,7 +325,6 @@
               <th>CO₂e t</th>
               <th>Árboles</th>
               <th>Prom. kWh/mes</th>
-              <th>Prioridad</th>
             </tr>
           </thead>
           <tbody id="environmentBody"></tbody>
@@ -559,7 +531,45 @@
     </section>
     </div>
 
-    <div class="app-section" id="seccion-6" data-page-title="Aula">
+    <div class="app-section" id="seccion-6" data-page-title="Estado de la información">
+      <section class="panel quality-panel" id="calidad-datos">
+      <div class="section-head">
+        <div>
+          <span class="section-kicker">Calidad y trazabilidad</span>
+          <h2>Estado de la información por sede</h2>
+          <p class="muted">Distingue datos completos, parciales y servicios no identificados. Una ausencia nunca se interpreta automáticamente como consumo cero.</p>
+        </div>
+        <div class="quality-legend" aria-label="Estados de calidad">
+          <span class="quality-badge complete">Datos completos</span>
+          <span class="quality-badge partial">Datos parciales</span>
+          <span class="quality-badge pending">Energía no identificada</span>
+          <span class="quality-badge external">Energía en contrato separado</span>
+          <span class="quality-badge review">En revisión</span>
+        </div>
+      </div>
+      <div class="quality-kpis" aria-label="Indicadores de cobertura">
+        <article><span>Cobertura energética</span><strong id="qualityEnergyCoverage">0%</strong><small id="qualityEnergyCoverageDetail">0 de 0 sedes</small></article>
+        <article><span>Con energía identificada</span><strong id="qualityEnergySites">0</strong><small>Sedes con al menos una lectura kWh</small></article>
+        <article><span>Por verificar</span><strong id="qualityPendingSites">0</strong><small>Sedes con históricos pero sin energía asociada</small></article>
+        <article><span>Contrato separado</span><strong id="qualityExternalSites">0</strong><small>Sedes cuya energía se gestiona en otra fuente contractual</small></article>
+        <article><span>Vinculación territorial</span><strong id="qualityTerritoryCoverage">0%</strong><small id="qualityTerritoryCoverageDetail">0 de 0 sedes clasificadas</small></article>
+      </div>
+      <div class="quality-summary" id="qualitySummary" role="status" aria-live="polite"></div>
+      <div class="service-exceptions" id="serviceExceptionsPanel" hidden>
+        <div class="service-exceptions-head"><div><strong>Excepciones verificadas</strong><p>Servicios que no aparecen en el consolidado educativo porque se gestionan mediante una fuente contractual separada.</p></div></div>
+        <div id="serviceExceptionsBody" class="service-exceptions-grid"></div>
+      </div>
+      <div class="table-map-note" role="note">🏫 <strong>Ubicación:</strong> haz clic en cualquier dirección de la tabla para abrirla en Google Maps.</div>
+      <div class="table-wrap quality-table-wrap">
+        <table class="quality-data-table">
+          <thead><tr><th>Sede</th><th>Dirección</th><th>Estado</th><th>Energía</th><th>Agua</th><th>Alc.</th><th>Gas</th><th>Aseo</th><th>Territorio</th><th>Acción</th></tr></thead>
+          <tbody id="qualityBody"></tbody>
+        </table>
+      </div>
+    </section>
+    </div>
+
+    <div class="app-section" id="seccion-7" data-page-title="Aula">
     <section class="panel aula-panel" id="aula-climatica">
       <div class="section-head">
         <div>
@@ -599,7 +609,10 @@
     <button type="button" class="mobile-section-tab" data-section="seccion-5" aria-label="Consultar rankings">
       <span aria-hidden="true">↕</span><small>Ranking</small>
     </button>
-    <button type="button" class="mobile-section-tab" data-section="seccion-6" aria-label="Abrir aula ambiental">
+    <button type="button" class="mobile-section-tab" data-section="seccion-6" aria-label="Consultar estado de la información">
+      <span aria-hidden="true">✓</span><small>Estado</small>
+    </button>
+    <button type="button" class="mobile-section-tab" data-section="seccion-7" aria-label="Abrir aula ambiental">
       <span aria-hidden="true">✦</span><small>Aula</small>
     </button>
   </nav>
@@ -647,10 +660,10 @@
   <script>
     (() => {
       const sectionForTarget = {
-        inicio: 'seccion-1', importacion: 'seccion-1', 'resumen-ejecutivo': 'seccion-1', cards: 'seccion-1', 'calidad-datos': 'seccion-1',
+        inicio: 'seccion-1', importacion: 'seccion-1', 'resumen-ejecutivo': 'seccion-1', cards: 'seccion-1', 'calidad-datos': 'seccion-6',
         'comparar-periodos': 'seccion-2', 'ranking-sedes': 'seccion-5', 'ranking-ahorro-energia': 'seccion-5',
         'dashboard-ambiental': 'seccion-3', planPanel: 'seccion-3',
-        registros: 'seccion-4', 'aula-climatica': 'seccion-6'
+        registros: 'seccion-4', 'aula-climatica': 'seccion-7'
       };
 
       function openSection(sectionId, options = {}) {
@@ -710,7 +723,7 @@
   <script defer src="data/sincronizacion-territorial.js?v=60-territorios"></script>
   <script defer src="data/excepciones-servicios.js?v=60-instituciones"></script>
   
-  <script defer src="app.js?v=81-ranking-seccion-plan-accion"></script>
+  <script defer src="app.js?v=82-estado-prioridad"></script>
   <script defer src="assistant-config.js?v=65-rendimiento"></script>
   <script defer src="assistant.js?v=65-rendimiento"></script>
 </body>

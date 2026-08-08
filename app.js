@@ -4,7 +4,7 @@ let TREE_CO2_KG_YEAR = 22; // kg CO2e capturados por árbol al año. Ajustable d
 const FACTOR_KEY = 'simeco2_factores_ambientales_v8';
 const STORE_KEY = 'simeco2_servicios_v16';
 const CONFIG_KEY = 'simeco2_repo_config_v7';
-const DATA_VERSION = 'v81-ranking-seccion-plan-accion-20260808';
+const DATA_VERSION = 'v82-estado-informacion-prioridad-20260808';
 
 const $ = (id)=>document.getElementById(id);
 const state = loadStore();
@@ -2212,6 +2212,7 @@ function renderDashboard(){
     <td data-label="Sede"><strong>${escapeHtml(r.displaySite||r.site)}</strong>${invoiceAlias}</td>
     <td data-label="Dirección">${mapAddressLink(r.address,r.address||'Sin dirección',preferredSiteName(r)||r.site)}</td>
     <td data-label="Periodos">${fmt(r.periodCount)}</td>
+    <td data-label="Prioridad"><span class="priority-chip ${priority.cls}" title="${escapeHtml(priority.level)} · ${r.hasEnergy?`${fmt(r.avgKwhMonth)} kWh/mes promedio`:(energyState.code==='external'?'Contrato separado':'Energía no identificada')}">${escapeHtml(priority.short || priority.level)}</span></td>
     <td data-label="Plan de acción" class="plan-cell"><button type="button" class="plan-btn primary" data-site-key="${escapeHtml(r.key)}" title="Generar, visualizar y descargar el Plan de Gestión de ${escapeHtml(r.displaySite||r.site)}">📄 Generar informe<br><small>${r.hasEnergy?'Plan de acción':'Informe con datos disponibles'}</small></button></td>
     <td data-label="Energía total kWh">${energyText}</td>
     <td data-label="Agua m³">${dashboardValue(r,'waterM3')}</td>
@@ -2221,10 +2222,9 @@ function renderDashboard(){
     <td data-label="CO₂e t">${co2Text}</td>
     <td data-label="Árboles requeridos">${treesText}</td>
     <td data-label="Promedio kWh/mes">${avgText}</td>
-    <td data-label="Prioridad"><span class="priority-chip ${priority.cls}" title="${escapeHtml(priority.level)}">${escapeHtml(priority.short || priority.level)}</span></td>
   </tr>`;
   }).join('');
-  const totalRow = `<tr class="total-row"><td colspan="4">TOTAL / DATOS DISPONIBLES</td><td>—</td><td>${energyRows.length?fmt(totalKwh):'—'}</td><td>${rows.some(r=>r.hasWater)?fmt(totalWater):'—'}</td><td>${rows.some(r=>r.hasAlc)?fmt(totalAlc):'—'}</td><td>${rows.some(r=>r.hasGas)?fmt(totalGas):'—'}</td><td>${rows.some(r=>r.hasWaste)?fmt(totalWaste):'—'}</td><td>${energyRows.length?fmt(totalCo2kg/1000):'—'}</td><td>${energyRows.length?fmt(totalTrees||0):'—'}</td><td>—</td><td>—</td></tr>`;
+  const totalRow = `<tr class="total-row"><td colspan="4">TOTAL / DATOS DISPONIBLES</td><td>—</td><td>—</td><td>${energyRows.length?fmt(totalKwh):'—'}</td><td>${rows.some(r=>r.hasWater)?fmt(totalWater):'—'}</td><td>${rows.some(r=>r.hasAlc)?fmt(totalAlc):'—'}</td><td>${rows.some(r=>r.hasGas)?fmt(totalGas):'—'}</td><td>${rows.some(r=>r.hasWaste)?fmt(totalWaste):'—'}</td><td>${energyRows.length?fmt(totalCo2kg/1000):'—'}</td><td>${energyRows.length?fmt(totalTrees||0):'—'}</td><td>—</td></tr>`;
   $('environmentBody').innerHTML = totalRow + body;
 }
 
