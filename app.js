@@ -1,10 +1,10 @@
-/* SiMeCO₂ v100 · control integral UX/UI y maquetación responsive */
+/* SiMeCO₂ v101 · menú superior de tarjetas por recurso */
 let FACTOR_CO2_KG_KWH = 0.126; // kg CO2e/kWh. Ajustable desde el dashboard.
 let TREE_CO2_KG_YEAR = 22; // kg CO2e capturados por árbol al año. Ajustable desde el dashboard.
 const FACTOR_KEY = 'simeco2_factores_ambientales_v8';
 const STORE_KEY = 'simeco2_servicios_v16';
 const CONFIG_KEY = 'simeco2_repo_config_v7';
-const DATA_VERSION = 'v100-ux-interface-organizada-20260808';
+const DATA_VERSION = 'v101-menu-tarjetas-recursos-20260808';
 
 const $ = (id)=>document.getElementById(id);
 function siteKey(site,address=''){

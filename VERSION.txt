@@ -1,1 +1,1 @@
-v100 - Control integral UX/UI y maquetación responsive
+v101 - Menú superior de tarjetas por recurso

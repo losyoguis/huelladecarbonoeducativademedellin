@@ -1,3 +1,15 @@
+# SiMeCO₂ v101 — Menú superior de tarjetas
+
+La navegación vuelve al estilo superior de tarjetas de la versión visual de referencia. La diferencia es que ahora cada módulo está claramente identificado por recurso:
+
+- ⚡ Electricidad: módulos 1–6.
+- 💧 Agua: módulo 7.
+- 🔥 Gas: módulo 8.
+- 📄 Facturas por I.E.: módulo 9 transversal.
+
+El menú usa 5 columnas en pantallas amplias, 3 en anchos intermedios y 2 en tablet/móvil, manteniendo la estética de tarjeta y evitando textos comprimidos.
+
+---
 # SiMeCO₂ v100 — Control integral de experiencia de usuario
 
 La v100 aplica una capa final de UX/UI sobre las 9 secciones. La lógica y los datos se conservan, pero filtros, tarjetas, paneles, tablas, gráficos y acciones utilizan ahora un sistema visual coherente y responsive.
