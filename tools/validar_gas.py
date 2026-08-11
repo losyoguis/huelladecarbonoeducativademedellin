@@ -34,7 +34,7 @@ for r in records:
 gas_sites=[x for x in sites.values() if x['gas_periods']]
 positive_sites=[x for x in gas_sites if x['gas']>0]
 
-print('CONTROL DE CALIDAD DE GAS — SiMeCO₂ v103')
+print('CONTROL DE CALIDAD DE GAS — SiMeCO₂ v104')
 print('Fecha: 2026-08-08\n')
 print(f'Registros base: {len(records):,}')
 print(f'Registros con lectura de gas: {len(valid):,}')
