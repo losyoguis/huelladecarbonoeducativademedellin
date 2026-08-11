@@ -14,7 +14,7 @@ La v102 conserva la estrategia **data-first** y agrega un videotutorial sin rale
 - YouTube no se carga durante el arranque.
 - Durante la pantalla de progreso aparece “Ver videotutorial”.
 - El menú principal incorpora la tarjeta **10. Videotutorial**.
-- El video se abre en un modal responsive y empieza en el segundo 18.
+- El video se abre en un modal responsive y empieza desde el segundo 0.
 - En móvil el modal ocupa la pantalla como una vista de app.
 
 ---

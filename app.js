@@ -1,10 +1,10 @@
-/* SiMeCO₂ v103 · bienvenida tutorial de primera visita + carga data-first */
+/* SiMeCO₂ v104 · videotutorial desde segundo 0 + bienvenida de primera visita */
 let FACTOR_CO2_KG_KWH = 0.126; // kg CO2e/kWh. Ajustable desde el dashboard.
 let TREE_CO2_KG_YEAR = 22; // kg CO2e capturados por árbol al año. Ajustable desde el dashboard.
 const FACTOR_KEY = 'simeco2_factores_ambientales_v8';
 const STORE_KEY = 'simeco2_servicios_v16';
 const CONFIG_KEY = 'simeco2_repo_config_v7';
-const DATA_VERSION = 'v103-tutorial-primera-visita-20260811';
+const DATA_VERSION = 'v104-videotutorial-segundo-cero-20260811';
 
 const $ = (id)=>document.getElementById(id);
 function siteKey(site,address=''){
