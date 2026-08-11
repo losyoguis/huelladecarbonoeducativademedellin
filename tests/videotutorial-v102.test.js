@@ -10,7 +10,7 @@ ok(html.includes('id="tutorialModal" hidden aria-hidden="true"'),'Modal no inici
 ok(html.includes('role="dialog" aria-modal="true"'),'Modal no es accesible');
 ok(html.includes('id="tutorialVideoFrame"'),'Falta iframe del video');
 ok(html.includes('SrQj2rXw1ow'),'ID del video incorrecto');
-ok(html.includes('start=18'),'El video no inicia desde el segundo 18');
+ok(html.includes('start=0'),'El video no inicia desde el segundo 0');
 ok(html.includes("window.simecoOpenTutorial=openTutorial"),'No se expone apertura del tutorial');
 ok(html.includes("window.simecoCloseTutorial=closeTutorial"),'No se expone cierre del tutorial');
 ok(html.includes("event.key==='Escape'"),'El modal no cierra con Escape');
@@ -26,4 +26,4 @@ for(const marker of [
   '@media(max-width:760px)'
 ]) ok(css.includes(marker),`Falta CSS tutorial: ${marker}`);
 
-console.log(JSON.stringify({ok:true,card:10,modal:true,youtubeId:'SrQj2rXw1ow',start:18,accessible:true}));
+console.log(JSON.stringify({ok:true,card:10,modal:true,youtubeId:'SrQj2rXw1ow',start:0,accessible:true}));

@@ -27,5 +27,5 @@ ok(app.includes('data-label="Prioridad"') && app.includes('data-label="Plan de a
 ok(html.includes('<strong>Alta:</strong> ≥ 5.000 kWh/mes'),'Falta leyenda Alta');
 ok(html.includes('<strong>Media:</strong> 2.000–4.999 kWh/mes'),'Falta leyenda Media');
 ok(css.includes('.top-card-menu,') && html.includes('id="topCardMenu"'),'Menú superior de tarjetas no está disponible');
-ok(html.includes('app.js?v=103-primera-visita'),'Falta cache-busting v102');
+ok(html.includes('app.js?v=104-video-segundo-0'),'Falta cache-busting v102');
 console.log('OK section-state-priority');

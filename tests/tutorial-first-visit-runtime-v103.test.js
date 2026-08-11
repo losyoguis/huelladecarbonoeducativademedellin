@@ -17,7 +17,7 @@ function createEnv(initialSeen=false){
   const storage=new Map(initialSeen?[['simeco-tutorial-bienvenida-v1','1']]:[]);
   const welcome={hidden:true};
   const frame={
-    dataset:{src:'https://www.youtube-nocookie.com/embed/SrQj2rXw1ow?start=18'},
+    dataset:{src:'https://www.youtube-nocookie.com/embed/SrQj2rXw1ow?start=0'},
     attrs:{},
     set src(v){this.attrs.src=v},
     get src(){return this.attrs.src||''},

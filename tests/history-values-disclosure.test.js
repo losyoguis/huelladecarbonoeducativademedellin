@@ -10,6 +10,6 @@ ok(app.includes("bindEvent('historyDataTable','click',handleHistoryValuesToggle)
 ok(app.includes("panel.hidden=!open"),'El panel no cambia de visibilidad');
 ok(css.includes('.history-values-disclosure.is-open .history-values-caret'),'Falta animación del indicador');
 ok(css.includes('.history-values-panel[hidden]'),'Falta regla de panel oculto');
-ok(html.includes('styles.css?v=103-primera-visita'),'Falta cache-busting CSS v79');
-ok(html.includes('app.js?v=103-primera-visita'),'Falta cache-busting JS v79');
+ok(html.includes('styles.css?v=104-video-segundo-0'),'Falta cache-busting CSS v79');
+ok(html.includes('app.js?v=104-video-segundo-0'),'Falta cache-busting JS v79');
 console.log('OK history-values-disclosure');
