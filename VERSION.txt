@@ -1,1 +1,1 @@
-v101 - Menú superior de tarjetas por recurso
+v103 - Videotutorial automático solo en primera visita

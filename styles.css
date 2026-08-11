@@ -5930,3 +5930,475 @@ body.is-embedded .top-card-menu .section-tab.active .menu-resource{
 @media print{
   .top-card-menu{display:none!important}
 }
+
+
+/* ==========================================================
+   SiMeCO₂ v102 · Videotutorial + carga data-first
+   ========================================================== */
+
+/* Tarjeta 10: ayuda / video */
+.top-card-menu .tutorial-section-tab{
+  border-color:#f1d0d0!important;
+  background:linear-gradient(180deg,#fff 0%,#fffafa 100%)!important;
+}
+.top-card-menu .tutorial-section-tab .menu-number{
+  background:#fff0f0!important;
+  color:#b42323!important;
+}
+.top-card-menu .tutorial-section-tab .menu-resource{
+  color:#b42323!important;
+}
+.top-card-menu .tutorial-section-tab:hover{
+  border-color:#e5a8a8!important;
+  box-shadow:0 10px 24px rgba(163,35,35,.10)!important;
+}
+.top-card-menu .tutorial-section-tab:focus-visible{
+  outline:3px solid rgba(190,40,40,.18)!important;
+  outline-offset:2px!important;
+}
+
+/* Invitación durante la carga: no contiene iframe ni recursos externos */
+.invoice-loading-tutorial{
+  display:grid;
+  grid-template-columns:48px minmax(0,1fr) auto;
+  gap:12px;
+  align-items:center;
+  padding:13px 14px;
+  border:1px solid #d9e9e4;
+  border-radius:18px;
+  background:linear-gradient(135deg,#fff 0%,#f8fbfa 100%);
+  box-shadow:0 6px 18px rgba(14,67,56,.06);
+}
+.invoice-loading-tutorial-icon{
+  width:46px;
+  height:46px;
+  display:grid;
+  place-items:center;
+  border-radius:14px;
+  background:linear-gradient(135deg,#c82f2f,#e84a4a);
+  color:#fff;
+  font-size:1.05rem;
+  font-weight:950;
+  box-shadow:0 7px 16px rgba(180,35,35,.18);
+}
+.invoice-loading-tutorial-copy{
+  min-width:0;
+  display:grid;
+  gap:3px;
+}
+.invoice-loading-tutorial-copy strong{
+  color:#244940;
+  font-size:.86rem;
+  line-height:1.2;
+}
+.invoice-loading-tutorial-copy span{
+  color:#6a817a;
+  font-size:.7rem;
+  line-height:1.35;
+}
+.invoice-tutorial-button{
+  min-height:42px;
+  padding:9px 13px;
+  border:1px solid #d8b0b0;
+  border-radius:12px;
+  background:#fff;
+  color:#a72929;
+  font:850 .76rem/1.1 inherit;
+  cursor:pointer;
+  white-space:nowrap;
+}
+.invoice-tutorial-button:hover,
+.invoice-tutorial-button:focus-visible{
+  background:#fff3f3;
+  border-color:#c97b7b;
+  outline:3px solid rgba(190,40,40,.10);
+  outline-offset:1px;
+}
+
+/* Modal de videotutorial */
+.tutorial-modal[hidden]{
+  display:none!important;
+}
+.tutorial-modal{
+  position:fixed;
+  inset:0;
+  z-index:12000;
+  display:grid;
+  place-items:center;
+  padding:clamp(12px,3vw,34px);
+}
+.tutorial-modal-backdrop{
+  position:absolute;
+  inset:0;
+  background:rgba(3,22,19,.76);
+  backdrop-filter:blur(8px);
+  -webkit-backdrop-filter:blur(8px);
+}
+.tutorial-modal-dialog{
+  position:relative;
+  z-index:1;
+  width:min(1080px,96vw);
+  max-height:min(92dvh,900px);
+  overflow:auto;
+  border:1px solid rgba(255,255,255,.74);
+  border-radius:28px;
+  background:linear-gradient(155deg,#fff 0%,#f7fbf9 100%);
+  box-shadow:0 30px 90px rgba(0,0,0,.38);
+  color:#173e35;
+}
+.tutorial-modal-header{
+  position:relative;
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  gap:18px;
+  align-items:start;
+  padding:22px 24px 18px;
+  border-bottom:1px solid #dfebe7;
+  background:linear-gradient(135deg,#fbfffd,#f3faf7);
+}
+.tutorial-modal-header>div{
+  min-width:0;
+}
+.tutorial-modal-kicker{
+  display:block;
+  margin-bottom:5px;
+  color:#a62d2d;
+  font-size:.68rem;
+  font-weight:950;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+.tutorial-modal-header h2{
+  margin:0 0 6px;
+  color:#153f36;
+  font-size:clamp(1.35rem,2.6vw,2.05rem);
+  line-height:1.1;
+}
+.tutorial-modal-header p{
+  max-width:75ch;
+  margin:0;
+  color:#667f77;
+  font-size:.9rem;
+  line-height:1.45;
+}
+.tutorial-modal-close{
+  width:44px;
+  height:44px;
+  display:grid;
+  place-items:center;
+  border:1px solid #d6e5e0;
+  border-radius:14px;
+  background:#fff;
+  color:#375b52;
+  font:700 1.7rem/1 system-ui,sans-serif;
+  cursor:pointer;
+}
+.tutorial-modal-close:hover,
+.tutorial-modal-close:focus-visible{
+  background:#eef8f4;
+  color:#0c7258;
+  outline:3px solid rgba(13,154,119,.12);
+  outline-offset:2px;
+}
+.tutorial-video-shell{
+  display:grid;
+  gap:12px;
+  padding:20px 24px 24px;
+}
+.tutorial-video-frame{
+  position:relative;
+  width:100%;
+  aspect-ratio:16/9;
+  overflow:hidden;
+  border-radius:20px;
+  background:#08110f;
+  box-shadow:0 14px 36px rgba(0,0,0,.18);
+}
+.tutorial-video-frame::before{
+  content:"Cargando videotutorial…";
+  position:absolute;
+  inset:0;
+  display:grid;
+  place-items:center;
+  color:#cbd8d4;
+  font-size:.84rem;
+  font-weight:750;
+}
+.tutorial-video-frame iframe{
+  position:absolute;
+  inset:0;
+  z-index:1;
+  width:100%;
+  height:100%;
+  border:0;
+  background:#08110f;
+}
+.tutorial-video-note{
+  display:grid;
+  grid-template-columns:34px minmax(0,1fr);
+  gap:10px;
+  align-items:center;
+  padding:10px 12px;
+  border:1px solid #e0ebe7;
+  border-radius:13px;
+  background:#fafdfc;
+}
+.tutorial-video-note>span{
+  width:32px;
+  height:32px;
+  display:grid;
+  place-items:center;
+  border-radius:10px;
+  background:#fff0f0;
+  color:#b42323;
+  font-size:.74rem;
+}
+.tutorial-video-note p{
+  margin:0;
+  color:#637c75;
+  font-size:.73rem;
+  line-height:1.35;
+}
+.tutorial-video-note strong{
+  color:#34584f;
+}
+body.tutorial-modal-open{
+  overflow:hidden!important;
+}
+
+/* Google Sites: 10 tarjetas = 2 filas exactas en ancho grande */
+@media(min-width:1451px){
+  .top-card-menu,
+  body.is-embedded .top-card-menu{
+    grid-template-columns:repeat(5,minmax(0,1fr))!important;
+  }
+}
+
+/* Tablet / iframe */
+@media(max-width:760px){
+  .invoice-loading-tutorial{
+    grid-template-columns:42px minmax(0,1fr);
+    padding:11px 12px;
+  }
+  .invoice-loading-tutorial-icon{
+    width:40px;
+    height:40px;
+    border-radius:12px;
+  }
+  .invoice-tutorial-button{
+    grid-column:1/-1;
+    width:100%;
+    min-height:44px;
+  }
+  .tutorial-modal{
+    padding:0;
+    place-items:stretch;
+  }
+  .tutorial-modal-dialog{
+    width:100%;
+    max-height:100dvh;
+    min-height:100dvh;
+    border:0;
+    border-radius:0;
+  }
+  .tutorial-modal-header{
+    position:sticky;
+    top:0;
+    z-index:3;
+    padding:max(16px,env(safe-area-inset-top)) 15px 14px;
+    gap:10px;
+  }
+  .tutorial-modal-header h2{
+    font-size:1.3rem;
+  }
+  .tutorial-modal-header p{
+    font-size:.8rem;
+  }
+  .tutorial-modal-close{
+    width:42px;
+    height:42px;
+  }
+  .tutorial-video-shell{
+    padding:14px 12px calc(18px + env(safe-area-inset-bottom));
+  }
+  .tutorial-video-frame{
+    border-radius:15px;
+  }
+}
+
+/* Teléfono estrecho: la tarjeta 10 mantiene el mismo patrón app */
+@media(max-width:390px){
+  .invoice-loading-tutorial-copy span{
+    display:none;
+  }
+  .tutorial-modal-kicker{
+    font-size:.6rem;
+  }
+  .tutorial-video-note{
+    grid-template-columns:30px minmax(0,1fr);
+  }
+}
+
+/* El modal no forma parte de informes impresos */
+@media print{
+  .tutorial-modal{display:none!important}
+}
+
+
+/* ==========================================================
+   SiMeCO₂ v103 · Bienvenida automática solo en primera visita
+   ========================================================== */
+
+/* En primera visita la pantalla de carga permanece visible detrás */
+.tutorial-modal.tutorial-first-visit .tutorial-modal-backdrop{
+  background:rgba(3,22,19,.54)!important;
+  backdrop-filter:blur(5px)!important;
+  -webkit-backdrop-filter:blur(5px)!important;
+}
+.tutorial-modal.tutorial-first-visit .tutorial-modal-dialog{
+  box-shadow:0 32px 100px rgba(0,0,0,.44)!important;
+}
+
+/* Estado de carga visible dentro del tutorial */
+.tutorial-welcome-status{
+  display:grid;
+  gap:10px;
+  padding:12px 14px;
+  border:1px solid #cfe8df;
+  border-radius:15px;
+  background:linear-gradient(135deg,#eefaf5 0%,#fbfffd 100%);
+}
+.tutorial-welcome-status[hidden]{
+  display:none!important;
+}
+.tutorial-welcome-status-copy{
+  display:grid;
+  grid-template-columns:auto minmax(0,1fr);
+  gap:10px;
+  align-items:center;
+}
+.tutorial-welcome-badge{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:30px;
+  padding:6px 9px;
+  border-radius:999px;
+  background:#0a8c6d;
+  color:#fff;
+  font-size:.64rem;
+  font-weight:950;
+  letter-spacing:.045em;
+  text-transform:uppercase;
+  white-space:nowrap;
+}
+.tutorial-welcome-status-copy>div{
+  min-width:0;
+  display:grid;
+  gap:2px;
+}
+.tutorial-welcome-status-copy strong{
+  color:#275149;
+  font-size:.78rem;
+  line-height:1.2;
+}
+.tutorial-welcome-status-copy small{
+  color:#668078;
+  font-size:.68rem;
+  line-height:1.35;
+}
+.tutorial-welcome-progress{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 48px;
+  gap:10px;
+  align-items:center;
+}
+.tutorial-welcome-progress-track{
+  height:9px;
+  overflow:hidden;
+  border-radius:999px;
+  background:#dbeae5;
+  box-shadow:inset 0 1px 2px rgba(17,63,52,.08);
+}
+.tutorial-welcome-progress-track>span{
+  display:block;
+  height:100%;
+  width:72%;
+  border-radius:inherit;
+  background:linear-gradient(90deg,#0a8a6b,#15b488);
+  transition:width .22s ease;
+}
+.tutorial-welcome-progress>strong{
+  color:#0b7d62;
+  font-size:.72rem;
+  text-align:right;
+}
+
+/* Antes de cargar YouTube, se prioriza la base principal */
+.tutorial-modal.tutorial-waiting-data .tutorial-video-frame::before{
+  content:"Preparando los datos principales… el video se habilitará enseguida."!important;
+  z-index:2;
+  padding:18px;
+  text-align:center;
+  color:#dbe8e4;
+}
+.tutorial-modal.tutorial-waiting-data .tutorial-video-frame::after{
+  content:"";
+  position:absolute;
+  left:50%;
+  top:calc(50% + 34px);
+  z-index:2;
+  width:30px;
+  height:30px;
+  margin-left:-15px;
+  border:4px solid rgba(255,255,255,.22);
+  border-top-color:#fff;
+  border-radius:50%;
+  animation:invoiceSpin 1s linear infinite;
+}
+
+/* Primera visita: mensaje más evidente sin ralentizar el sistema */
+body.tutorial-first-visit-open .invoice-loading{
+  opacity:1!important;
+  visibility:visible!important;
+}
+body.tutorial-first-visit-open .invoice-loading-card{
+  filter:saturate(.96);
+}
+
+/* Móvil: bienvenida tipo app y progreso siempre legible */
+@media(max-width:760px){
+  .tutorial-modal.tutorial-first-visit .tutorial-modal-backdrop{
+    background:rgba(3,22,19,.68)!important;
+  }
+  .tutorial-welcome-status{
+    padding:11px 12px;
+    border-radius:13px;
+  }
+  .tutorial-welcome-status-copy{
+    grid-template-columns:1fr;
+    gap:7px;
+  }
+  .tutorial-welcome-badge{
+    justify-self:start;
+  }
+  .tutorial-welcome-progress{
+    grid-template-columns:minmax(0,1fr) 42px;
+  }
+  .tutorial-welcome-status-copy strong{
+    font-size:.76rem;
+  }
+  .tutorial-welcome-status-copy small{
+    font-size:.65rem;
+  }
+}
+
+/* Movimiento reducido */
+@media(prefers-reduced-motion:reduce){
+  .tutorial-welcome-progress-track>span{
+    transition:none;
+  }
+  .tutorial-modal.tutorial-waiting-data .tutorial-video-frame::after{
+    animation-duration:1.8s;
+  }
+}

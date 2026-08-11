@@ -1,3 +1,23 @@
+# SiMeCO₂ v103 — Bienvenida de primera visita
+
+En la primera visita de un navegador/perfil, SiMeCO₂ abre automáticamente el videotutorial mientras mantiene la pantalla de carga de datos. La base principal tiene prioridad: YouTube solo empieza a cargarse cuando los 9.147 registros eléctricos están listos.
+
+La bienvenida se registra una sola vez. En visitas posteriores, el videotutorial únicamente se abre desde la tarjeta **10. Videotutorial** o desde un botón explícito de videotutorial.
+
+---
+# SiMeCO₂ v102 — Carga rápida y Videotutorial
+
+La v102 conserva la estrategia **data-first** y agrega un videotutorial sin ralentizar el arranque.
+
+- La base eléctrica recibe prioridad alta.
+- Agua, Gas y Asistente se descargan con prioridad baja.
+- YouTube no se carga durante el arranque.
+- Durante la pantalla de progreso aparece “Ver videotutorial”.
+- El menú principal incorpora la tarjeta **10. Videotutorial**.
+- El video se abre en un modal responsive y empieza en el segundo 18.
+- En móvil el modal ocupa la pantalla como una vista de app.
+
+---
 # SiMeCO₂ v101 — Menú superior de tarjetas
 
 La navegación vuelve al estilo superior de tarjetas de la versión visual de referencia. La diferencia es que ahora cada módulo está claramente identificado por recurso:
