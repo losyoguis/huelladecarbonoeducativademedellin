@@ -25,5 +25,5 @@ ok(!dashboardRows.includes('data-label="Gas m³"'),'Fila dinámica todavía rend
 ok(!dashboardRows.includes('data-label="Aseo / residuos t"'),'Fila dinámica todavía renderiza Aseo');
 ok(app.includes('<td colspan="4">TOTAL / DATOS DISPONIBLES</td><td>—</td><td>—</td><td>${energyRows.length'),'Fila total no está alineada');
 ok(css.includes('min-width:1120px !important'),'No se actualizó el ancho de tabla');
-ok(html.includes('app.js?v=101-menu-tarjetas'),'Falta cache-busting v83');
+ok(html.includes('app.js?v=103-primera-visita'),'Falta cache-busting v83');
 console.log('OK dashboard-energy-priority-table');

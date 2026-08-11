@@ -10,6 +10,6 @@ ok(css.includes('@media(max-width:620px)'),'Falta breakpoint móvil');
 ok(css.includes('.top-card-menu .menu-detail')&&css.includes('display:none!important'),'Móvil no simplifica descripción');
 ok(css.includes('touch-action:manipulation!important'),'Tarjetas móviles no están optimizadas para toque');
 ok(css.includes('word-break:normal!important')&&css.includes('overflow-wrap:normal!important'),'No se protege el texto');
-ok(html.includes('data-ux-version="101"'),'Workspace no marca UX v101');
+ok(html.includes('data-ux-version="103"'),'Workspace no marca UX v103');
 ok(!html.includes('side-nav-mobile-launcher'),'No debe quedar launcher lateral');
 console.log(JSON.stringify({ok:true,desktop:5,medium:3,tablet:2,mobile:2,appLike:true}));
