@@ -1,10 +1,10 @@
-/* SiMeCO₂ v105 · electricidad INEM integrada desde data/inem + videotutorial desde segundo 0 */
+/* SiMeCO₂ v106 · PDF INEM sincronizado con electricidad integrada desde data/inem */
 let FACTOR_CO2_KG_KWH = 0.126; // kg CO2e/kWh. Ajustable desde el dashboard.
 let TREE_CO2_KG_YEAR = 22; // kg CO2e capturados por árbol al año. Ajustable desde el dashboard.
 const FACTOR_KEY = 'simeco2_factores_ambientales_v8';
 const STORE_KEY = 'simeco2_servicios_v16';
 const CONFIG_KEY = 'simeco2_repo_config_v7';
-const DATA_VERSION = 'v105-inem-electricidad-20260924';
+const DATA_VERSION = 'v106-inem-pdf-20260924';
 
 const $ = (id)=>document.getElementById(id);
 function siteKey(site,address=''){
@@ -2189,7 +2189,7 @@ function recordHasReading(record,field){
 }
 function recordHasEnergyReading(record){ return recordHasReading(record,'energyKwh'); }
 function isIntegratedExternalEnergyRecord(record){
-  const url=String(record?.sourceUrl||'');
+  const url=String(record?.energySourceUrl||record?.sourceUrl||'');
   return recordHasEnergyReading(record) && /^data\/inem\//i.test(url);
 }
 function aggregateBySite(records){
@@ -2825,11 +2825,16 @@ function buildPlanMetricSeries(recs){
     if(!period) continue;
     if(!byPeriod.has(period)) byPeriod.set(period,{period,energy:0,energyCount:0,sources:new Map()});
     const x=byPeriod.get(period);
-    if(recordHasEnergyReading(r)){x.energy+=Number(r.energyKwh)||0;x.energyCount++;}
-    const sourceName=String(r.source||'Factura PDF').trim();
-    const sourceUrl=String(r.sourceUrl||'').trim() || (sourceName && sourceName!=='Factura PDF'?`data/${sourceName}`:'');
-    const sourceKey=`${sourceUrl}|${r.page||1}|${sourceName}`;
-    if(sourceName || sourceUrl) x.sources.set(sourceKey,{name:sourceName||'Factura PDF',url:sourceUrl,page:Math.max(1,Number(r.page)||1)});
+    const hasEnergy=recordHasEnergyReading(r);
+    if(hasEnergy){x.energy+=Number(r.energyKwh)||0;x.energyCount++;}
+    // Para un informe energético, la fuente primaria debe ser la factura que contiene
+    // la lectura eléctrica. Esto es especialmente importante para el INEM: el PDF
+    // consolidado puede contener agua/aseo, mientras la electricidad proviene de data/inem.
+    const sourceName=String(hasEnergy?(r.energySource||r.source||'Factura eléctrica'):(r.source||'Factura PDF')).trim();
+    const sourceUrl=String(hasEnergy?(r.energySourceUrl||r.sourceUrl||''):(r.sourceUrl||'')).trim() || (sourceName && sourceName!=='Factura PDF'?`data/${sourceName}`:'');
+    const sourcePage=hasEnergy?(r.energySourcePage||r.page||1):(r.page||1);
+    const sourceKey=`${sourceUrl}|${sourcePage}|${sourceName}`;
+    if(hasEnergy && (sourceName || sourceUrl)) x.sources.set(sourceKey,{name:sourceName||'Factura eléctrica',url:sourceUrl,page:Math.max(1,Number(sourcePage)||1)});
   }
   return [...byPeriod.values()].map(x=>{
     const hasEnergy=x.energyCount>0;
@@ -2997,11 +3002,12 @@ function buildPlanSummaryCards(d){
     const avgEnergy=energyRows.reduce((sum,r)=>sum+r.energy,0)/energyRows.length;
     const maxCo2=energyRows.reduce((a,b)=>a.co2>=b.co2?a:b);
     cards.push(`<div><span>Periodo de mayor consumo eléctrico</span><strong>${escapeHtml(maxEnergy.period)}</strong><small>${fmt(maxEnergy.energy)} kWh</small></div>`);
-    cards.push(`<div><span>Promedio mensual de energía</span><strong>${fmt(avgEnergy)} kWh</strong><small>${energyRows.length} periodo(s) con dato</small></div>`);
+    cards.push(`<div><span>Promedio mensual de energía</span><strong>${fmt(avgEnergy)} kWh</strong><small>${energyRows.length} periodo(s) eléctricos verificados</small></div>`);
     cards.push(`<div><span>Mayor impacto en CO₂e</span><strong>${escapeHtml(maxCo2.period)}</strong><small>${fmt(maxCo2.co2)} t CO₂e</small></div>`);
+    if(d.energyException) cards.push(`<div><span>Fuente eléctrica</span><strong>Contrato separado integrado</strong><small>${energyRows.length} periodo(s) desde data/inem</small></div>`);
   }else{
     cards.push(d.energyException
-      ?'<div><span>Consumo eléctrico</span><strong>Contrato separado</strong><small>Pendiente de integrar desde la fuente contractual</small></div>'
+      ?'<div><span>Consumo eléctrico</span><strong>Contrato separado</strong><small>Sin lecturas eléctricas verificadas en data/inem</small></div>'
       :'<div><span>Consumo eléctrico</span><strong>Sin dato asociado</strong><small>No se interpreta como 0 kWh</small></div>');
   }
   return `<div class="plan-summary-grid">${cards.join('')}</div>`;
@@ -3047,21 +3053,30 @@ function handlePlanInteractiveClick(ev){
 }
 
 function buildPlanHtml(d){
-  const periodText = d.periods.length ? `${d.periods[0]} a ${d.periods[d.periods.length-1]} (${d.periods.length} periodo(s) importado(s))` : 'Sin periodo';
   const consolidatedMonths=buildPlanMetricSeries(d.recs);
+  const electricalMonths=consolidatedMonths.filter(r=>r.hasEnergy);
+  const firstEnergyPeriod=electricalMonths[0]?.period||'';
+  const lastEnergyPeriod=electricalMonths[electricalMonths.length-1]?.period||'';
+  const periodText = d.hasEnergy
+    ?`${firstEnergyPeriod} a ${lastEnergyPeriod} (${electricalMonths.length} periodo(s) eléctricos con dato; ${d.periods.length} periodo(s) históricos importados)`
+    :(d.periods.length ? `${d.periods[0]} a ${d.periods[d.periods.length-1]} (${d.periods.length} periodo(s) importado(s))` : 'Sin periodo');
   const monthlyRows=consolidatedMonths.map(r=>`<tr>
     <td>${escapeHtml(r.period)}</td>
-    <td>${r.hasEnergy?`${fmt(r.energy)} kWh`:(d.energyException?'<span class="not-available">Contrato separado</span>':'<span class="not-available">N.I.</span>')}</td>
+    <td>${r.hasEnergy?`${fmt(r.energy)} kWh`:'<span class="not-available">N.I.</span>'}</td>
     <td>${r.hasEnergy?`${fmt(r.co2)} t CO₂e`:'No calculable'}</td>
     <td>${r.hasEnergy?fmt(r.trees):'No calculable'}</td>
-    <td>${renderPlanPdfSources(r)}</td>
+    <td>${r.hasEnergy?renderPlanPdfSources(r):'<span class="not-available">Sin fuente eléctrica verificada</span>'}</td>
   </tr>`).join('');
   const summaryCards=buildPlanSummaryCards(d);
   const monthlyCharts=buildPlanMonthlyCharts(d);
   const reductionCharts=buildPlanReductionCharts(d);
-  const energyStatusNote=d.hasEnergy?'':(d.energyException
-    ?`<p class="plan-note plan-data-warning external-contract-note"><strong>Energía en contrato separado:</strong> ${escapeHtml(d.energyException.summary||d.energyException.dataState)} El consumo eléctrico queda pendiente de integrar desde esa fuente y no se interpreta como 0 kWh.</p>`
-    :`<p class="plan-note plan-data-warning"><strong>Energía no identificada:</strong> la sede aparece en ${d.periods.length} periodo(s), pero no tiene una lectura eléctrica individualizada para este nombre/dirección. Esto no implica consumo cero. La prioridad es identificar y vincular correctamente la cuenta, contrato o medidor eléctrico.</p>`);
+  const energyStatusNote=d.hasEnergy
+    ?(d.energyException
+      ?`<p class="plan-note plan-data-warning external-contract-note"><strong>Contrato separado integrado:</strong> La electricidad de esta sede se gestiona mediante un contrato independiente del consolidado educativo. SiMeCO₂ ya incorporó <strong>${electricalMonths.length} periodo(s) eléctricos verificables</strong>${firstEnergyPeriod&&lastEnergyPeriod?` (${escapeHtml(firstEnergyPeriod)} a ${escapeHtml(lastEnergyPeriod)})`:''} desde <strong>data/inem</strong>, por lo que consumo, CO₂e, gráficas, metas y prioridad se calculan con esas lecturas. Los meses históricos sin factura eléctrica específica se muestran como N.I. y no como 0 kWh.</p>`
+      :'')
+    :(d.energyException
+      ?`<p class="plan-note plan-data-warning external-contract-note"><strong>Energía en contrato separado:</strong> ${escapeHtml(d.energyException.summary||d.energyException.dataState)} No hay lecturas eléctricas verificables integradas para los periodos mostrados y no se interpreta como 0 kWh.</p>`
+      :`<p class="plan-note plan-data-warning"><strong>Energía no identificada:</strong> la sede aparece en ${d.periods.length} periodo(s), pero no tiene una lectura eléctrica individualizada para este nombre/dirección. Esto no implica consumo cero. La prioridad es identificar y vincular correctamente la cuenta, contrato o medidor eléctrico.</p>`);
   const energyGoals=d.hasEnergy
     ?`<table class="plan-table"><thead><tr><th>Horizonte</th><th>Meta energética</th><th>Reducción estimada</th><th>CO₂e evitado estimado</th></tr></thead><tbody>
       <tr><td>Corto plazo · 1 año</td><td>Reducir 15% mediante hábitos, control operativo, sensores y LED.</td><td>${fmt(d.target15)} kWh/año</td><td>${fmt(d.co2Target15)} t CO₂e/año</td></tr>
@@ -3074,12 +3089,13 @@ function buildPlanHtml(d){
       <tr><td>3 · Línea base</td><td>Acumular lecturas eléctricas verificadas antes de fijar metas porcentuales.</td><td>Evitar cálculos basados en ausencia de datos.</td></tr>
     </tbody></table>`;
   const objectiveText=d.hasEnergy
-    ?`Reducir la huella de carbono de alcance 2 de la sede <strong>${escapeHtml(d.site)}</strong> mediante eficiencia energética, monitoreo del consumo eléctrico, educación ambiental y evaluación de generación solar fotovoltaica.`
+    ?`Reducir la huella de carbono de alcance 2 de la sede <strong>${escapeHtml(d.site)}</strong> mediante eficiencia energética, monitoreo del consumo eléctrico, educación ambiental y evaluación de generación solar fotovoltaica, utilizando como línea base los ${electricalMonths.length} periodo(s) eléctricos verificados disponibles.`
     :`Completar la identificación y asociación del consumo eléctrico de la sede <strong>${escapeHtml(d.site)}</strong> y establecer una línea base energética verificable antes de calcular emisiones o metas porcentuales de reducción.`;
   const indicatorsRows=d.hasEnergy
     ?`<tr><td>Consumo eléctrico mensual</td><td>kWh facturados por mes</td><td>Mensual</td><td>Disminución progresiva</td></tr>
       <tr><td>Emisiones alcance 2</td><td>kWh × ${fmt(FACTOR_CO2_KG_KWH)} kg CO₂e/kWh</td><td>Mensual</td><td>Reducir 15% en un año</td></tr>
-      <tr><td>Árboles equivalentes</td><td>kg CO₂e ÷ ${fmt(TREE_CO2_KG_YEAR)} kg/árbol/año</td><td>Semestral</td><td>Disminuir necesidad de compensación</td></tr>`
+      <tr><td>Árboles equivalentes</td><td>kg CO₂e ÷ ${fmt(TREE_CO2_KG_YEAR)} kg/árbol/año</td><td>Semestral</td><td>Disminuir necesidad de compensación</td></tr>
+      ${d.energyException?`<tr><td>Trazabilidad contrato INEM</td><td>Periodos eléctricos con fuente en data/inem</td><td>Mensual</td><td>Mantener 100% de las lecturas eléctricas con evidencia</td></tr>`:''}`
     :`<tr><td>Cobertura del dato eléctrico</td><td>Periodos con kWh asociados ÷ periodos de factura × 100</td><td>Mensual</td><td>Alcanzar 100%</td></tr>
       <tr><td>Trazabilidad eléctrica</td><td>Lecturas con fuente verificable ÷ lecturas revisadas × 100</td><td>Mensual</td><td>100%</td></tr>`;
 
@@ -3099,8 +3115,8 @@ function buildPlanHtml(d){
 
       <div class="plan-meta-grid">
         <div><span>Fecha de generación</span><strong>${escapeHtml(d.generatedAt)}</strong></div>
-        <div><span>Periodo analizado</span><strong>${escapeHtml(periodText)}</strong></div>
-        <div><span>Factor eléctrico</span><strong>${fmt(FACTOR_CO2_KG_KWH)} kg CO₂e/kWh</strong></div>
+        <div><span>Periodo eléctrico analizado</span><strong>${escapeHtml(periodText)}</strong></div>
+        <div><span>Factor eléctrico</span><strong>${Number(FACTOR_CO2_KG_KWH).toLocaleString('es-CO',{minimumFractionDigits:3,maximumFractionDigits:3})} kg CO₂e/kWh</strong></div>
         <div><span>Enfoque</span><strong>Electricidad · Alcance 2</strong></div>
       </div>
 
@@ -3118,7 +3134,7 @@ function buildPlanHtml(d){
       <p class="plan-note"><strong>Lectura técnica:</strong> ${escapeHtml(d.intensity.text)}</p>
 
       <h3 id="plan-sec-graficas" class="plan-section-anchor">2. Gráficas energéticas</h3>
-      <p>Cada barra representa un único periodo mensual consolidado. Las visualizaciones muestran únicamente energía eléctrica, CO₂e y árboles equivalentes.</p>
+      <p>Cada barra representa un único periodo mensual consolidado con lectura eléctrica verificada. Las visualizaciones muestran energía eléctrica, CO₂e y árboles equivalentes.</p>
       ${summaryCards}
       ${monthlyCharts}
 
@@ -3146,7 +3162,8 @@ function buildPlanHtml(d){
       <table class="plan-table"><thead><tr><th>Indicador</th><th>Fórmula / dato</th><th>Frecuencia</th><th>Meta</th></tr></thead><tbody>${indicatorsRows}</tbody></table>
 
       <h3 id="plan-sec-registros" class="plan-section-anchor">8. Registros eléctricos usados por el plan</h3>
-      <table class="plan-table"><thead><tr><th>Periodo</th><th>Energía</th><th>CO₂e</th><th>Árboles</th><th>Fuente</th></tr></thead><tbody>${monthlyRows}</tbody></table>
+      <p class="plan-note">Los periodos sin lectura eléctrica verificable se muestran como <strong>N.I.</strong>. En el caso del INEM, la evidencia eléctrica integrada proviene de <strong>data/inem</strong>.</p>
+      <table class="plan-table"><thead><tr><th>Periodo</th><th>Energía</th><th>CO₂e</th><th>Árboles</th><th>Fuente eléctrica</th></tr></thead><tbody>${monthlyRows}</tbody></table>
     </article>`;
 }
 

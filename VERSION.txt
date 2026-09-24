@@ -1,1 +1,1 @@
-v105 - Electricidad INEM integrada desde data/inem
+v106 - Informe PDF INEM sincronizado con electricidad integrada desde data/inem
