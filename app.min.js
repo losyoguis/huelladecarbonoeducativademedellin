@@ -4,7 +4,7 @@ let TREE_CO2_KG_YEAR = 22; // kg CO2e capturados por árbol al año. Ajustable d
 const FACTOR_KEY = 'simeco2_factores_ambientales_v8';
 const STORE_KEY = 'simeco2_servicios_v16';
 const CONFIG_KEY = 'simeco2_repo_config_v7';
-const DATA_VERSION = 'v107-light-20260924';
+const DATA_VERSION = 'v108-action-plan-20260924';
 
 const $ = (id)=>document.getElementById(id);
 function siteKey(site,address=''){
@@ -123,6 +123,10 @@ let selectedSiteKey = "";
 let autocompleteIndex = -1;
 let isScanningData = false;
 let dashboardSiteKey = "";
+function syncEnvironmentalPlanButton(){
+  const btn=$('generateEnvironmentalPlanBtn');
+  if(btn) btn.disabled=!dashboardSiteKey;
+}
 const siteAutocompleteState = new Map();
 const territoryMetaCache = new WeakMap();
 const recordSearchTextCache = new WeakMap();
@@ -603,6 +607,7 @@ function chooseSiteFieldSuggestion(item,key){
     dashboardSiteKey=key;
     const reportBtn=$('generateSelectedReportBtn');
     if(reportBtn) reportBtn.disabled=false;
+    syncEnvironmentalPlanButton();
     renderDashboard();
   }
   closeSiteAutocomplete(item);
@@ -617,6 +622,7 @@ function clearSiteAutocompleteField(item,focus=false){
     dashboardSiteKey='';
     const reportBtn=$('generateSelectedReportBtn');
     if(reportBtn) reportBtn.disabled=true;
+    syncEnvironmentalPlanButton();
     renderDashboard();
   }
   closeSiteAutocomplete(item);
@@ -2336,6 +2342,7 @@ function renderSiteProfile(rows){
 }
 
 function renderDashboard(){
+  syncEnvironmentalPlanButton();
   if(!$('environmentBody')) return;
   const rows = aggregateBySite(dashboardRecords());
   const energyRows=rows.filter(r=>r.hasEnergy);
@@ -2801,7 +2808,31 @@ function recordsForSiteKey(key){
   return rows.sort((a,b)=>String(a.period).localeCompare(String(b.period)));
 }
 
+window.simecoGetSelectedSiteContext=function(){
+  const key=dashboardSiteKey||window.SIMECO_SELECTED_SITE_KEY||'';
+  if(!key) return null;
+  const recs=recordsForSiteKey(key);
+  if(!recs.length) return null;
+  const energyRecs=recs.filter(recordHasEnergyReading);
+  const energyPeriods=[...new Set(energyRecs.map(r=>r.period).filter(Boolean))];
+  const energy=energyRecs.reduce((sum,r)=>sum+(Number(r.energyKwh)||0),0);
+  const avgMonth=energyRecs.length?energy/Math.max(1,energyPeriods.length):null;
+  const co2t=energyRecs.length?(energy*FACTOR_CO2_KG_KWH)/1000:null;
+  const site=preferredSiteName(recs[0]);
+  const energyException=serviceExceptionForSite(recs[0],'energyKwh');
+  const intensity=avgMonth!==null?classifyEnergyIntensity(avgMonth):(energyException
+    ?{level:'Energía en contrato separado',short:'Contrato separado',cls:'external',text:energyException.summary||energyException.dataState}
+    :{level:'Energía no identificada',short:'N.I.',cls:'pending',text:'No existe una lectura eléctrica individualizada asociada a esta sede; no se interpreta como consumo cero.'});
+  return {
+    key,site,invoiceSite:recs[0].site||site,address:recs[0].address||'',records:recs,
+    periods:[...new Set(recs.map(r=>r.period).filter(Boolean))].sort(),energyPeriods,energy,avgMonth,co2t,
+    annualProjection:avgMonth!==null?avgMonth*12:null,factorCo2:FACTOR_CO2_KG_KWH,treeFactor:TREE_CO2_KG_YEAR,
+    intensity,energyException
+  };
+};
+
 function generateManagementPlan(key){
+  if(key){dashboardSiteKey=key;window.SIMECO_SELECTED_SITE_KEY=key;syncEnvironmentalPlanButton();}
   const recs = recordsForSiteKey(key);
   if(!recs.length){
     log('No se encontraron registros para generar el plan de gestión energética.');
@@ -3256,3 +3287,8 @@ function printCurrentPlan(){
   },40);
 }
 
+
+// v108 · API mínima para el Plan de Acción Ambiental cargado bajo demanda.
+window.generateManagementPlan=generateManagementPlan;
+window.printCurrentPlan=printCurrentPlan;
+window.openPdfPrintDocument=openPdfPrintDocument;

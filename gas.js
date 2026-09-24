@@ -585,6 +585,9 @@
     buildGasSavingsRows,
     resolveGasSite,
     buildGasPlan,
+    gasPlanActions,
+    generateGasPlanForSite,
+    downloadGasPlanPdf,
     buildGasPlanHistoryChartSvg
   };
 

@@ -585,6 +585,9 @@
     buildWaterSavingsRows,
     resolveWaterSite,
     buildWaterPlan,
+    planActions,
+    generateWaterPlanForSite,
+    downloadWaterPlanPdf,
     buildWaterPlanHistoryChartSvg
   };
 

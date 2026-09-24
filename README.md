@@ -1,3 +1,23 @@
+# SiMeCO₂ v108 — Plan de Acción Ambiental Integrado por sede
+
+La v108 conserva la arquitectura liviana de la v107 y agrega, dentro de **Informe por sede**, un nuevo **Plan de Acción Ambiental** que integra los históricos disponibles de cada institución en cinco componentes: **Energía y GEI, Agua, Gas, Solar y Seguimiento**.
+
+## Nuevo flujo
+
+1. Buscar y seleccionar una institución o sede en **4. Informe por sede**.
+2. Generar el informe energético tradicional si se requiere.
+3. Pulsar **🌱 Generar / actualizar Plan Ambiental**.
+4. Consultar las pestañas Energía y GEI, Agua, Gas, Solar y Seguimiento.
+5. Actualizar estado y evidencia de cada acción.
+6. Descargar el **PDF Plan Ambiental** o la **Matriz GEI CSV**, compatible con Excel y Google Sheets.
+
+El plan crea una ruta **0–30, 31–60 y 61–90 días** con acción, responsable, indicador, meta, estado y evidencia. El seguimiento se conserva localmente por sede en el navegador. El predimensionamiento solar es una referencia preliminar y no sustituye diseño, visita técnica ni cotización.
+
+## Rendimiento
+
+`plan-ambiental.js`, Agua y Gas siguen fuera de la carga inicial. Solo se descargan cuando el usuario solicita el Plan Ambiental o abre esos módulos. De esta forma, la nueva funcionalidad no vuelve a cargar los PDF ni los módulos pesados durante el arranque.
+
+---
 # SiMeCO₂ v107 — Informe PDF del INEM sincronizado con `data/inem`
 
 La v106 conserva la serie eléctrica verificable de la **I.E. INEM José Félix de Restrepo** en `data/inem/` y corrige el **Plan de Gestión Energética / PDF por sede** para que utilice esas lecturas. El informe ya no presenta al INEM como “pendiente de integrar” cuando existen datos: incorpora **enero–julio de 2026: 258.461,17 kWh**, equivalentes a aproximadamente **32,57 t CO₂e** con el factor actual de 0,126 kg CO₂e/kWh.

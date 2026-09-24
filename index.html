@@ -13,9 +13,9 @@
   <meta name="description" content="Sistema interactivo para medir, interpretar y gestionar la huella de carbono educativa a partir del consumo de energía eléctrica." />
   <link rel="icon" type="image/png" href="assets/los-yoguis-logo-optimized.png" />
   <link rel="apple-touch-icon" href="assets/los-yoguis-logo-optimized.png" />
-  <link rel="preload" href="data/registros.electricidad.min.js?v=107-light" as="script" fetchpriority="high" />
-  <link rel="preload" href="data/resumenes.electricidad.min.js?v=107-light" as="script" fetchpriority="high" />
-  <link rel="stylesheet" href="styles.css?v=107-light" />
+  <link rel="preload" href="data/registros.electricidad.min.js?v=108-action-plan" as="script" fetchpriority="high" />
+  <link rel="preload" href="data/resumenes.electricidad.min.js?v=108-action-plan" as="script" fetchpriority="high" />
+  <link rel="stylesheet" href="styles.css?v=108-action-plan" />
 </head>
 <body>
   <div class="invoice-loading active" id="invoiceLoading" role="status" aria-live="assertive" aria-hidden="false">
@@ -106,7 +106,7 @@
   </header>
 
 
-  <div class="workspace-shell" id="simecoWorkspace" data-ux-version="107">
+  <div class="workspace-shell" id="simecoWorkspace" data-ux-version="108">
     <nav class="section-switcher top-card-menu" id="topCardMenu" aria-label="Secciones principales de SiMeCO₂">
       <button type="button" class="section-tab electricity-section-tab active" id="scanDataBtn" data-section="seccion-1" data-action="actualizar" aria-selected="true" aria-current="page" title="1. Analizar Datos — Electricidad">
         <span class="menu-number">1</span>
@@ -505,6 +505,26 @@
         </div>
       </div>
       <div id="planReport" class="plan-empty">Aún no se ha seleccionado una sede. Usa el botón <strong>Plan de Gestión</strong> en la tabla del Dashboard ambiental por sede.</div>
+    </section>
+
+    <section class="panel environmental-action-panel" id="environmentalActionPanel">
+      <div class="section-head">
+        <div>
+          <span class="section-kicker">Gestión ambiental integrada</span>
+          <h2>Plan de Acción Ambiental por sede</h2>
+          <p class="muted">Integra el histórico disponible de <strong>Energía y GEI, Agua, Gas y Solar</strong> en una ruta 30/60/90 días. Cada acción incluye responsable, indicador, meta, estado y evidencia.</p>
+        </div>
+        <div class="plan-actions environmental-main-actions">
+          <button id="generateEnvironmentalPlanBtn" class="primary" type="button" disabled>🌱 Generar / actualizar Plan Ambiental</button>
+          <button id="downloadEnvironmentalPlanPdf" class="secondary pdf-only-action" type="button" disabled>📄 PDF Plan Ambiental</button>
+          <button id="downloadEnvironmentalMatrixBtn" class="secondary" type="button" disabled>📊 Matriz GEI CSV</button>
+        </div>
+      </div>
+      <div class="environmental-action-intro" role="note">
+        <strong>Plan vivo:</strong> los PDF y módulos pesados se cargan únicamente cuando los solicitas. El seguimiento se puede actualizar por sede y conservar evidencia en este navegador, sin aumentar la carga inicial de SiMeCO₂.
+      </div>
+      <div id="environmentalPlanStatus" class="environmental-plan-status" aria-live="polite">Selecciona una sede en el buscador superior para habilitar el plan integrado.</div>
+      <div id="environmentalPlanPreview" class="plan-empty environmental-plan-preview">Aún no se ha generado el Plan de Acción Ambiental. Selecciona una institución o sede y pulsa <strong>Generar / actualizar Plan Ambiental</strong>.</div>
     </section>
 
     </div>
@@ -1132,14 +1152,14 @@
       const sectionForTarget = {
         inicio: 'seccion-1', importacion: 'seccion-1', 'resumen-ejecutivo': 'seccion-1', cards: 'seccion-1', 'calidad-datos': 'seccion-5',
         'comparar-periodos': 'seccion-2', 'ranking-sedes': 'seccion-3', 'ranking-ahorro-energia': 'seccion-3',
-        'dashboard-ambiental': 'seccion-4', planPanel: 'seccion-4',
+        'dashboard-ambiental': 'seccion-4', planPanel: 'seccion-4', environmentalActionPanel: 'seccion-4',
         registros: 'seccion-9', 'aula-climatica': 'seccion-6', agua: 'seccion-7', 'ranking-consumo-agua': 'seccion-7', 'ranking-ahorro-agua': 'seccion-7', 'plan-ahorro-agua': 'seccion-7', gas: 'seccion-8', 'ranking-consumo-gas': 'seccion-8', 'ranking-ahorro-gas': 'seccion-8', 'plan-ahorro-gas': 'seccion-8'
       };
 
 
       const loadedScripts=new Map();
       const modulePromises=new Map();
-      const version='107-light';
+      const version='108-action-plan';
       const script=(src)=>{
         if(loadedScripts.has(src)) return loadedScripts.get(src);
         const promise=new Promise((resolve,reject)=>{
@@ -1196,6 +1216,20 @@
         }
         return Promise.resolve();
       };
+      const ensureEnvironmentalPlan=()=>{
+        if(window.SIMECO_ENVIRONMENTAL_PLAN_READY) return Promise.resolve();
+        if(modulePromises.has('environmental-plan')) return modulePromises.get('environmental-plan');
+        const status=document.getElementById('environmentalPlanStatus');
+        if(status) status.textContent='Cargando Agua, Gas y motor de planes bajo demanda…';
+        const promise=(async()=>{
+          await ensureModule('seccion-7');
+          await ensureModule('seccion-8');
+          await script('plan-ambiental.js');
+        })().catch(err=>{modulePromises.delete('environmental-plan');throw err;});
+        modulePromises.set('environmental-plan',promise);
+        return promise;
+      };
+      window.simecoEnsureEnvironmentalPlan=ensureEnvironmentalPlan;
       const prepareVisibleSection=async(sectionId)=>{
         try{
           if(['seccion-2','seccion-3','seccion-4','seccion-5','seccion-9'].includes(sectionId)) await ensureTerritorial();
@@ -1261,6 +1295,25 @@
         document.querySelectorAll('[data-section]').forEach(control => {
           control.addEventListener('click', () => openSection(control.dataset.section));
         });
+        const environmentalPlanBtn=document.getElementById('generateEnvironmentalPlanBtn');
+        if(environmentalPlanBtn){
+          environmentalPlanBtn.addEventListener('click',async()=>{
+            const original=environmentalPlanBtn.textContent;
+            environmentalPlanBtn.disabled=true;
+            environmentalPlanBtn.textContent='⏳ Preparando plan ambiental…';
+            try{
+              await ensureEnvironmentalPlan();
+              await window.simecoGenerateEnvironmentalPlan?.();
+            }catch(err){
+              console.error('[SiMeCO₂] Plan Ambiental:',err);
+              const status=document.getElementById('environmentalPlanStatus');
+              if(status) status.textContent='No fue posible generar el plan ambiental: '+(err?.message||err);
+            }finally{
+              environmentalPlanBtn.textContent=original||'🌱 Generar / actualizar Plan Ambiental';
+              environmentalPlanBtn.disabled=!window.simecoGetSelectedSiteContext?.();
+            }
+          });
+        }
         document.querySelectorAll('a[href^="#"]').forEach(link => {
           link.addEventListener('click', event => {
             const id = decodeURIComponent(link.getAttribute('href').slice(1));
@@ -1282,8 +1335,8 @@
   </script>
 
   <!-- v87: datos eléctricos ultracompactos cargados antes de app.js -->
-  <script src="data/registros.electricidad.min.js?v=107-light" fetchpriority="high"></script>
-  <script src="data/inem/registros.inem.js?v=107-light" fetchpriority="high"></script>
+  <script src="data/registros.electricidad.min.js?v=108-action-plan" fetchpriority="high"></script>
+  <script src="data/inem/registros.inem.js?v=108-action-plan" fetchpriority="high"></script>
   <script>
     (() => {
       const records = Array.isArray(window.SIMECO_REGISTROS) ? window.SIMECO_REGISTROS.length : 0;
@@ -1322,10 +1375,10 @@
       }
     })();
   </script>
-  <script src="data/resumenes.electricidad.min.js?v=107-light" fetchpriority="high"></script>
-  <script defer src="data/excepciones-servicios.js?v=107-light"></script>
+  <script src="data/resumenes.electricidad.min.js?v=108-action-plan" fetchpriority="high"></script>
+  <script defer src="data/excepciones-servicios.js?v=108-action-plan"></script>
 
 
-  <script defer src="app.js?v=107-light" fetchpriority="high"></script>
+  <script defer src="app.js?v=108-action-plan" fetchpriority="high"></script>
 </body>
 </html>
