@@ -11,6 +11,6 @@ ok(app.includes('Cada barra representa un único periodo mensual consolidado'),'
 ok(html.includes('haz clic en cualquier dirección de la tabla para abrirla en Google Maps'),'Falta observación de Google Maps al inicio de la tabla');
 ok(!app.includes('Ver ubicación'),'Todavía aparece texto Ver ubicación en JS');
 ok(!css.includes('content:"Ver ubicación"'),'Todavía aparece etiqueta Ver ubicación en CSS');
-ok(html.includes('styles.css?v=108-action-plan'),'Falta cache-busting CSS v75');
-ok(html.includes('app.js?v=108-action-plan'),'Falta cache-busting JS v75');
+ok(html.includes('styles.css?v=109-documents-email'),'Falta cache-busting CSS v75');
+ok(html.includes('app.js?v=109-documents-email'),'Falta cache-busting JS v75');
 console.log('OK report-visualization-addresses');

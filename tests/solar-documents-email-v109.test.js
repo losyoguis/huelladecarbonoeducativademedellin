@@ -1,0 +1,20 @@
+const fs=require('fs');
+const path=require('path');
+const root=path.join(__dirname,'..');
+const plan=fs.readFileSync(path.join(root,'plan-ambiental.js'),'utf8');
+const index=fs.readFileSync(path.join(root,'index.html'),'utf8');
+const backend=fs.readFileSync(path.join(root,'apps-script-documentos','Code.gs'),'utf8');
+function ok(cond,msg){if(!cond)throw new Error(msg);}
+ok(plan.includes('SOLAR_PRICE_TABLE'),'Falta tabla económica solar');
+ok(plan.includes('finance120'),'Falta financiación a 120 meses');
+ok(plan.includes('Selección preliminar de inversores'),'Falta selección de inversores');
+ok(plan.includes('Crear 4 PDF + Google Sheets'),'Falta acción de paquete documental');
+ok(plan.includes('Enviar todo por e-mail'),'Falta acción de e-mail');
+ok(plan.includes('documentCenter'),'Falta centro documental');
+ok(plan.includes("action:'simeco2-documents'"),'Falta payload documental');
+ok(backend.includes('function doPost(e)'),'Falta endpoint doPost');
+ok(backend.includes('generateSiMeCO2DocumentPackage_'),'Falta generador documental backend');
+ok(backend.includes('createReductionPlanGoogleSheet_'),'Falta Google Sheets de reducciones');
+ok(backend.includes('MailApp.sendEmail'),'Falta envío de correo');
+ok(index.includes("const version='109-documents-email'"),'Cache-busting no actualizado a v109');
+console.log('✓ v109 solar completo + documentos + e-mail');
