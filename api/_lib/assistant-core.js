@@ -246,10 +246,13 @@ function deterministicAnswer(grounded,message=''){
   }
   if(grounded.intent==='quality'){
     const t=grounded.quality?.totals||{};
-    return `**Calidad de datos de SiMeCO₂:** ${fmt(t.datos_principales_completos||0)} con datos principales completos, ${fmt(t.datos_parciales||0)} con datos parciales, ${fmt(t.energia_no_identificada||0)} con energía no identificada y ${fmt(t.energia_contrato_separado||0)} con energía en contrato separado. Ninguna ausencia se convierte automáticamente en 0.`;
+    return `**Calidad de datos de SiMeCO₂:** ${fmt(t.datos_principales_completos||0)} con datos principales completos, ${fmt(t.datos_parciales||0)} con datos parciales, ${fmt(t.cobertura_electrica_parcial||0)} con cobertura eléctrica parcial, ${fmt(t.energia_no_identificada||0)} con energía no identificada y ${fmt(t.energia_contrato_separado||0)} con energía en contrato separado pendiente. Ninguna ausencia se convierte automáticamente en 0.`;
   }
   if(grounded.intent==='city_indicators'){
     const c=grounded.city||{}, t=c.totals||{};
+    if(t.energySource==='resumen_oficial_mas_contratos_integrados'){
+      return `En el alcance consultado, SiMeCO₂ consolida **${fmt(c.institutionCount)} instituciones/sedes**, **${fmt(c.recordCount)} registros** y **${fmt(c.periodCount)} periodos**. Energía eléctrica integrada: **${fmt(t.energyKwh)} kWh** (consolidado oficial: **${fmt(t.officialEnergyKwh)} kWh** + contratos separados integrados: **${fmt(t.externalIntegratedEnergyKwh)} kWh**).`;
+    }
     return `En el alcance consultado, SiMeCO₂ consolida **${fmt(c.institutionCount)} instituciones/sedes**, **${fmt(c.recordCount)} registros** y **${fmt(c.periodCount)} periodos**. Energía eléctrica oficial disponible: **${fmt(t.energyKwh)} kWh**${t.energySource==='resumen_oficial_factura'?' (resumen oficial de factura)':''}.`;
   }
   return null;

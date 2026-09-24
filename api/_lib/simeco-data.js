@@ -220,13 +220,13 @@ function monthlyRows(list) {
       const s = sumNullable(rows, metric.valueField);
       result.cost[field] = s.available ? s.value : null;
     }
-    result.evidence = [...new Map(rows.map(r => [`${r.source}|${r.page}`, {
-      source: r.source,
-      page: r.page,
-      url: r.sourceUrl || (r.source ? `data/${r.source}` : ''),
-      invoiceName: r.site,
-      address: r.address,
-    }])).values()];
+    result.evidence = [...new Map(rows.map(r => {
+      const hasEnergySource = nullableNumber(r.energyKwh) !== null && r.energySourceUrl;
+      const source = hasEnergySource ? (r.energySource || String(r.energySourceUrl).split('/').pop()) : r.source;
+      const page = hasEnergySource ? (r.energySourcePage || 1) : r.page;
+      const url = hasEnergySource ? r.energySourceUrl : (r.sourceUrl || (r.source ? `data/${r.source}` : ''));
+      return [`${source}|${page}`, {source, page, url, invoiceName:r.site, address:r.address}];
+    })).values()];
     return result;
   });
 }
@@ -461,10 +461,20 @@ function cityIndicators(opts = {}) {
     .filter(v=>v!==null);
   if(officialEnergyValues.length){
     const officialEnergyKwh=officialEnergyValues.reduce((a,b)=>a+b,0);
+    const externalIntegratedEnergyKwh=list
+      .filter(r=>r && r.energyKwh!==null && r.energyKwh!==undefined && (
+        String(r.energySourceType||'').toLowerCase().includes('external_contract') ||
+        String(r.energySourceUrl||'').startsWith('data/inem/')
+      ))
+      .reduce((sum,r)=>sum+(Number(r.energyKwh)||0),0);
     totals.detailEnergyKwh=totals.energyKwh;
-    totals.energyKwh=officialEnergyKwh;
-    totals.co2kg=officialEnergyKwh*DEFAULT_CO2_FACTOR_KG_KWH;
-    totals.energySource='resumen_oficial_factura';
+    totals.officialEnergyKwh=officialEnergyKwh;
+    totals.externalIntegratedEnergyKwh=externalIntegratedEnergyKwh;
+    totals.energyKwh=officialEnergyKwh+externalIntegratedEnergyKwh;
+    totals.co2kg=totals.energyKwh*DEFAULT_CO2_FACTOR_KG_KWH;
+    totals.energySource=externalIntegratedEnergyKwh>0
+      ? 'resumen_oficial_mas_contratos_integrados'
+      : 'resumen_oficial_factura';
   }else{
     totals.energySource='detalle_sedes';
   }
