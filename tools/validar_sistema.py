@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Control de calidad integral de SiMeCO₂ v105: datos, rendimiento, API y frontend."""
+"""Control de calidad integral de SiMeCO₂ v106: datos, rendimiento, API y frontend."""
 from __future__ import annotations
 import json, re, subprocess, sys
 from html.parser import HTMLParser
@@ -58,7 +58,7 @@ def main():
     if 'pdf-lib.min.js' in search: errors.append('Búsqueda institucional todavía carga PDF-Lib al inicio')
     if 'ensurePdfLib' not in (ROOT/'institucional.js').read_text(encoding='utf8'): errors.append('Falta carga bajo demanda de PDF-Lib')
     app=(ROOT/'app.js').read_text(encoding='utf8')
-    for marker in ["simeco2_servicios_v16","v105-inem-electricidad-20260924","function ensurePdfJs","RECORD_TABLE_PAGE_SIZE = 200","function renderRecordPagination","function renderSavingsRanking","function monthBefore","function rankingAddressText","function drawRankingIdentity","function googleMapsAddressUrl","handleRankingCanvasMapClick","handleSavingsCanvasMapClick","La verificación de PDF queda bajo demanda"]:
+    for marker in ["simeco2_servicios_v16","v106-inem-pdf-20260924","function ensurePdfJs","RECORD_TABLE_PAGE_SIZE = 200","function renderRecordPagination","function renderSavingsRanking","function monthBefore","function rankingAddressText","function drawRankingIdentity","function googleMapsAddressUrl","handleRankingCanvasMapClick","handleSavingsCanvasMapClick","La verificación de PDF queda bajo demanda"]:
         if marker not in app: errors.append(f'Falta marcador requerido en app.js: {marker}')
     checks.append('PDF.js/PDF-Lib bajo demanda y tabla paginada')
 
@@ -106,7 +106,7 @@ console.log(JSON.stringify({n:compact.length,equal,uniqueKeys}));
     for marker in ['"feEnergy": 73924','"inemStatus": "cobertura_electrica_parcial"','"mode": "data-first"']:
         if marker not in data_test: errors.append(f'No se confirmó prueba crítica: {marker}')
 
-    print('CONTROL DE CALIDAD SiMeCO2 v105')
+    print('CONTROL DE CALIDAD SiMeCO2 v106')
     for c in checks: print('OK -',c)
     if errors:
         for e in errors: print('ERROR -',e)

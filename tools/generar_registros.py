@@ -334,7 +334,7 @@ def main() -> None:
     except Exception as exc:
         print(f"Advertencia: no fue posible integrar data/inem: {exc}", flush=True)
     payload = {
-        "version": "v105-detail-inem-20260924",
+        "version": "v106-detail-inem-20260924",
         "generatedFrom": f"{len(pdfs)} facturas PDF consolidadas verificadas + electricidad INEM desde data/inem",
         "records": records,
     }

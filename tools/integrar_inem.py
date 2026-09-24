@@ -31,7 +31,7 @@ def write_full_bundles(payload: dict) -> None:
     columns = dict_columns + other_columns
     rows = [[*(indexes[col][row.get(col)] for col in dict_columns), *(row.get(col) for col in other_columns)] for row in records]
     compact_payload = {
-        "version": "v105-compact-inem",
+        "version": "v106-compact-inem",
         "dictColumns": dict_columns,
         "d": dictionaries,
         "c": columns,
@@ -40,10 +40,10 @@ def write_full_bundles(payload: dict) -> None:
     (DATA / "registros.compact.json").write_text(json.dumps(compact_payload, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
     compact_js = json.dumps({"d": dictionaries, "c": columns, "r": rows}, ensure_ascii=False, separators=(",", ":"))
     decoder = (
-        "/* SiMeCO2 v105 · registros compactos + electricidad INEM */\n"
+        "/* SiMeCO2 v106 · registros compactos + electricidad INEM */\n"
         "(()=>{'use strict';const P=" + compact_js + ",D=P.d,C=P.c,N=" + str(len(dict_columns)) + ";"
         "const R=P.r.map(a=>{const o={};for(let i=0;i<C.length;i++){const k=C[i];o[k]=i<N?D[k][a[i]]:a[i];}return o;});"
-        "window.SIMECO_PRELOADED_BUNDLE={version:'v105-compact-inem-20260924',generatedFrom:'facturas consolidadas + data/inem',records:R};"
+        "window.SIMECO_PRELOADED_BUNDLE={version:'v106-compact-inem-20260924',generatedFrom:'facturas consolidadas + data/inem',records:R};"
         "window.SIMECO_REGISTROS=R;})();\n"
     )
     (DATA / "registros.compact.js").write_text(decoder, encoding="utf-8")
@@ -82,17 +82,73 @@ def write_electricity_bundle(records: list[dict]) -> None:
     ]
     packed = json.dumps({"d": dictionaries, "c": columns, "r": rows}, ensure_ascii=False, separators=(",", ":"))
     decoder = (
-        "/* SiMeCO2 v105 · bundle ultracompacto de electricidad + INEM. */\n"
+        "/* SiMeCO2 v106 · bundle ultracompacto de electricidad + INEM. */\n"
         "(()=>{'use strict';const P=" + packed + ",D=P.d,C=P.c,N=4;"
         "const R=P.r.map((a,idx)=>{const o={};for(let i=0;i<C.length;i++){const k=C[i];o[k]=i<N?D[k][a[i]]:a[i];}"
         "o.type='sede';o.sourceUrl='data/'+o.source;o.key=`${o.period}|${o.site}|${o.address}|${idx}|${o.source}`;return o;});"
-        "window.SIMECO_PRELOADED_BUNDLE={version:'v105-electricidad-inem-20260924',generatedFrom:'17 facturas consolidadas + data/inem',records:R};"
+        "window.SIMECO_PRELOADED_BUNDLE={version:'v106-electricidad-inem-20260924',generatedFrom:'17 facturas consolidadas + data/inem',records:R};"
         "window.SIMECO_REGISTROS=R;window.SIMECO_DATA_READY=true;})();\n"
     )
     (DATA / "registros.electricidad.min.js").write_text(decoder, encoding="utf-8")
     (DATA / "registros.electricidad.js").write_text(decoder, encoding="utf-8")
 
 
+
+
+def write_inem_overlay(records: list[dict]) -> None:
+    """Genera una capa eléctrica pequeña del INEM para evitar datos obsoletos en caché.
+
+    La capa se carga después del bundle eléctrico general y antes de app.js. Si el
+    navegador conserva una copia antigua del bundle principal, estas lecturas se
+    superponen por periodo/sede/dirección. También permite agregar meses nuevos.
+    """
+    rows = []
+    for row in records:
+        if str(row.get("energySourceType") or "") != "inem_external_contract":
+            continue
+        if row.get("energyKwh") is None:
+            continue
+        rows.append({
+            "period": row.get("period"),
+            "site": row.get("site"),
+            "address": row.get("address"),
+            "energyKwh": row.get("energyKwh"),
+            "energyValue": row.get("energyValue"),
+            "co2kg": row.get("co2kg"),
+            "source": str(row.get("energySourceUrl") or row.get("sourceUrl") or "").removeprefix("data/"),
+            "sourceUrl": row.get("energySourceUrl") or row.get("sourceUrl"),
+            "page": row.get("energySourcePage") or row.get("page") or 1,
+            "energySource": row.get("energySource"),
+            "energySourceUrl": row.get("energySourceUrl"),
+            "energySourcePage": row.get("energySourcePage"),
+            "energySourceType": row.get("energySourceType"),
+            "energyInvoicePeriod": row.get("energyInvoicePeriod"),
+            "energyContract": row.get("energyContract"),
+            "energyServiceId": row.get("energyServiceId"),
+            "energyMarket": row.get("energyMarket"),
+            "energyCategory": row.get("energyCategory"),
+            "energyVoltageLevel": row.get("energyVoltageLevel"),
+            "type": "sede",
+        })
+    rows.sort(key=lambda r: str(r.get("period") or ""))
+    payload = json.dumps(rows, ensure_ascii=False, separators=(",", ":"))
+    js = f"""/* SiMeCO2 v106 · capa eléctrica INEM para sincronización de PDF e interfaz. */
+(()=>{{'use strict';
+const incoming={payload};
+const norm=v=>String(v||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,' ').trim();
+const base=Array.isArray(window.SIMECO_REGISTROS)?window.SIMECO_REGISTROS:[];
+for(const row of incoming){{
+  const idx=base.findIndex(x=>String(x.period||'')===String(row.period||'')&&norm(x.site)===norm(row.site)&&norm(x.address)===norm(row.address));
+  if(idx>=0) Object.assign(base[idx],row,{{key:base[idx].key||`${{row.period}}|${{row.site}}|${{row.address}}|inem-overlay|${{row.source||''}}`}});
+  else base.push(Object.assign({{}},row,{{key:`${{row.period}}|${{row.site}}|${{row.address}}|inem-overlay|${{row.source||''}}`}}));
+}}
+window.SIMECO_REGISTROS=base;
+window.SIMECO_INEM_ELECTRICITY={{version:'v106-inem-overlay-20260924',records:incoming}};
+}})();
+"""
+    target = DATA / "inem" / "registros.inem.js"
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(js, encoding="utf-8")
 
 def format_co(value: float, decimals: int = 2) -> str:
     raw = f"{value:,.{decimals}f}"
@@ -157,7 +213,7 @@ def update_inem_exception(stats: dict) -> None:
     external_evidence = [e for e in item.get("evidence", []) if e.get("type") != "local_invoice"]
     item["evidence"] = local_evidence + external_evidence
 
-    payload["version"] = "v105-service-exceptions-inem-integrated"
+    payload["version"] = "v106-service-exceptions-inem-integrated"
     payload["generatedAt"] = date.today().isoformat()
     payload["description"] = "Excepciones y fuentes eléctricas separadas verificadas. El INEM se sincroniza desde data/inem."
 
@@ -172,11 +228,12 @@ def update_inem_exception(stats: dict) -> None:
 def main() -> None:
     payload = json.loads((DATA / "registros.json").read_text(encoding="utf-8"))
     records, stats = enrich_records(payload.get("records", []), DATA)
-    payload["version"] = "v105-detail-inem-20260924"
+    payload["version"] = "v106-detail-inem-20260924"
     payload["generatedFrom"] = "17 facturas consolidadas verificadas + electricidad INEM desde data/inem"
     payload["records"] = records
     write_full_bundles(payload)
     write_electricity_bundle(records)
+    write_inem_overlay(records)
     update_inem_exception(stats)
     print(json.dumps({"ok": True, **stats}, ensure_ascii=False, indent=2))
 
