@@ -10,7 +10,7 @@ ok(html.includes('id="compareB" data-no-searchable="true"'),'Periodo B no está 
 ok(html.includes('id="compareMode" data-no-searchable="true"'),'Modo histórico no usa selector nativo');
 ok(app.includes('function refreshHistoryModule(options={})'),'Falta refresco robusto del histórico');
 ok(app.includes('window.simecoRefreshHistory=refreshHistoryModule'),'Histórico no expone refresco al cambio de sección');
-ok(html.includes("sectionId === 'seccion-2'"),'La sección Histórico no se refresca al abrirse');
+ok(html.includes('prepareVisibleSection(sectionId)') && app.includes("sectionId==='seccion-2'"),'La sección Histórico no se refresca al abrirse');
 ok(app.includes('validKeys.has(currentA)?currentA:groups[0].key'),'No se preserva Periodo A');
 ok(app.includes("const containerWidth=Math.max(320"),'Gráfica histórica no usa ancho real');
 ok(css.includes('#comparar-periodos .history-chart-scroll'),'Falta scroll responsive del histórico');

@@ -13,5 +13,5 @@ ok(app.includes('class="plan-source-download"'),'Fuente del plan no ofrece desca
 ok(app.includes('download="${escapeHtml(fileName)}"'),'Enlace PDF no usa atributo download');
 ok(app.includes('r.hasEnergy?renderPlanPdfSources(r)'),'Registros mensuales con lectura eléctrica no usan la descarga PDF');
 ok(css.includes('.plan-source-download'),'Faltan estilos de descarga PDF');
-ok(html.includes('app.js?v=106-inem-pdf'),'Falta cache-busting JS v85');
+ok(html.includes('app.js?v=107-light'),'Falta cache-busting JS v85');
 console.log('OK ranking-co2-plan-pdf');
