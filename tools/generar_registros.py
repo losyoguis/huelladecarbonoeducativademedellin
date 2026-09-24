@@ -327,9 +327,15 @@ def main() -> None:
             print(f"{name}: {period} · {len(rows)} secciones", flush=True)
             all_rows.extend(rows)
     records = merge_rows(all_rows)
+    try:
+        from inem_energy import enrich_records
+        records, inem_stats = enrich_records(records, DATA)
+        print(f"INEM: {inem_stats['periods']} periodo(s) eléctricos integrados desde data/inem · {inem_stats['totalKwh']:,.2f} kWh", flush=True)
+    except Exception as exc:
+        print(f"Advertencia: no fue posible integrar data/inem: {exc}", flush=True)
     payload = {
-        "version": "v56-detail-20260801",
-        "generatedFrom": "17 facturas PDF verificadas con pdftotext",
+        "version": "v105-detail-inem-20260924",
+        "generatedFrom": f"{len(pdfs)} facturas PDF consolidadas verificadas + electricidad INEM desde data/inem",
         "records": records,
     }
     (DATA / "registros.json").write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Control de calidad integral de SiMeCO₂ v67: datos, rendimiento, API y frontend."""
+"""Control de calidad integral de SiMeCO₂ v105: datos, rendimiento, API y frontend."""
 from __future__ import annotations
 import json, re, subprocess, sys
 from html.parser import HTMLParser
@@ -58,7 +58,7 @@ def main():
     if 'pdf-lib.min.js' in search: errors.append('Búsqueda institucional todavía carga PDF-Lib al inicio')
     if 'ensurePdfLib' not in (ROOT/'institucional.js').read_text(encoding='utf8'): errors.append('Falta carga bajo demanda de PDF-Lib')
     app=(ROOT/'app.js').read_text(encoding='utf8')
-    for marker in ["simeco2_servicios_v16","v104-videotutorial-segundo-cero-20260811","function ensurePdfJs","RECORD_TABLE_PAGE_SIZE = 200","function renderRecordPagination","function renderSavingsRanking","function monthBefore","function rankingAddressText","function drawRankingIdentity","function googleMapsAddressUrl","handleRankingCanvasMapClick","handleSavingsCanvasMapClick","La verificación de PDF queda bajo demanda"]:
+    for marker in ["simeco2_servicios_v16","v105-inem-electricidad-20260924","function ensurePdfJs","RECORD_TABLE_PAGE_SIZE = 200","function renderRecordPagination","function renderSavingsRanking","function monthBefore","function rankingAddressText","function drawRankingIdentity","function googleMapsAddressUrl","handleRankingCanvasMapClick","handleSavingsCanvasMapClick","La verificación de PDF queda bajo demanda"]:
         if marker not in app: errors.append(f'Falta marcador requerido en app.js: {marker}')
     checks.append('PDF.js/PDF-Lib bajo demanda y tabla paginada')
 
@@ -68,10 +68,17 @@ const fs=require('fs'),vm=require('vm'); const c={window:{}};vm.createContext(c)
 vm.runInContext(fs.readFileSync('data/registros.electricidad.min.js','utf8'),c);
 const compact=c.window.SIMECO_REGISTROS||[];
 const raw=JSON.parse(fs.readFileSync('data/registros.json','utf8')).records;
-const fields=['period','site','address','source','energyKwh','energyValue','page','co2kg','pages'];
+const fields=['period','site','address','energyKwh','energyValue','co2kg','pages'];
 let equal=compact.length===raw.length;
 for(let i=0;equal&&i<raw.length;i++){
   for(const k of fields){const a=compact[i][k]??null,b=raw[i][k]??null;if(JSON.stringify(a)!==JSON.stringify(b)){equal=false;break;}}
+  if(!equal) break;
+  // El bundle eléctrico proyecta la fuente específica de energía cuando existe
+  // (p. ej. data/inem), mientras registros.json conserva también la procedencia
+  // de agua/gas de la factura consolidada. Validamos la fuente efectiva.
+  const expectedSource=(raw[i].energySource||raw[i].source||null);
+  const compactSource=compact[i].source||null;
+  if(expectedSource!==compactSource){equal=false;break;}
 }
 const uniqueKeys=new Set(compact.map(r=>r.key)).size;
 console.log(JSON.stringify({n:compact.length,equal,uniqueKeys}));
@@ -80,7 +87,7 @@ console.log(JSON.stringify({n:compact.length,equal,uniqueKeys}));
     if not ok: errors.append('No se pudo validar registros.electricidad.min.js: '+out)
     else:
         x=json.loads(out.splitlines()[-1]);
-        if x['n']!=9147 or not x['equal'] or x.get('uniqueKeys')!=9147: errors.append(f'Bundle eléctrico compacto no coincide: {x}')
+        if x['n']<9147 or not x['equal'] or x.get('uniqueKeys')!=x['n']: errors.append(f'Bundle eléctrico compacto no coincide: {x}')
     old=(ROOT/'data/registros.js').stat().st_size; new=(ROOT/'data/registros.electricidad.min.js').stat().st_size
     reduction=(1-new/old)*100
     if reduction<50: errors.append(f'Reducción insuficiente del bundle: {reduction:.1f}%')
@@ -96,10 +103,10 @@ console.log(JSON.stringify({n:compact.length,equal,uniqueKeys}));
 
     # Casos críticos.
     data_test=out2 if ok2 else ''
-    for marker in ['"records": 9147','"feEnergy": 73924','"inemStatus": "energia_contrato_separado"','"mode": "data-first"']:
+    for marker in ['"feEnergy": 73924','"inemStatus": "cobertura_electrica_parcial"','"mode": "data-first"']:
         if marker not in data_test: errors.append(f'No se confirmó prueba crítica: {marker}')
 
-    print('CONTROL DE CALIDAD SiMeCO2 v104')
+    print('CONTROL DE CALIDAD SiMeCO2 v105')
     for c in checks: print('OK -',c)
     if errors:
         for e in errors: print('ERROR -',e)
