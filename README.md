@@ -1,3 +1,15 @@
+# SiMeCO₂ v105 — Electricidad INEM integrada desde `data/inem`
+
+La v105 incorpora la serie eléctrica verificable de la **I.E. INEM José Félix de Restrepo** sin mezclarla con el consolidado educativo. La factura del contrato no regulado se almacena en `data/inem/` y el sistema integra **enero–julio de 2026: 258.461,17 kWh**, equivalentes a aproximadamente **32,57 t CO₂e** con el factor actual de 0,126 kg CO₂e/kWh.
+
+- La sede pasa de “Contrato separado / pendiente” a **cobertura eléctrica parcial integrada**.
+- Histórico, Ranking, Informe por sede, CO₂e, prioridad energética y asistente ya usan las lecturas del INEM.
+- El PDF eléctrico del INEM se conserva como evidencia en `data/inem/INEM ENERO - JULIO 115445775150.pdf`.
+- Los indicadores eléctricos globales suman el consolidado oficial más las fuentes contractuales separadas ya integradas. Con la serie INEM disponible, el acumulado integrado es **19.058.890,53 kWh** y **2.401,42 t CO₂e**.
+- Para nuevas facturas del INEM: copiar el PDF a `data/inem/`, ejecutar `npm run integrate:inem` (equivale a `python tools/integrar_inem.py`), luego `npm run check` y `npm test`.
+- El integrador toma la lectura más reciente disponible para cada mes y mantiene 9.147 filas cuando el periodo ya existe en el consolidado; si aparece un mes INEM aún inexistente, crea una fila eléctrica específica para no perder el dato.
+
+---
 # SiMeCO₂ v103 — Bienvenida de primera visita
 
 En la primera visita de un navegador/perfil, SiMeCO₂ abre automáticamente el videotutorial mientras mantiene la pantalla de carga de datos. La base principal tiene prioridad: YouTube solo empieza a cargarse cuando los 9.147 registros eléctricos están listos.
@@ -391,7 +403,7 @@ La entrega fue sometida a validación estática, estructural, sintáctica, docum
 
 ## v59 · Contratos separados y trazabilidad energética
 
-SiMeCO₂ distingue ahora tres estados eléctricos diferentes: consumo medido, energía no identificada y energía gestionada mediante contrato separado. La primera excepción verificada es la I.E. INEM José Félix de Restrepo (Cr 48 Cl 1 -125): el consolidado educativo contiene otros servicios, mientras la documentación pública del Distrito identifica la sede dentro del suministro de energía para usuario no regulado. La plataforma no asigna 0 kWh ni calcula CO₂e/ranking energético hasta incorporar una serie eléctrica verificable de esa fuente.
+SiMeCO₂ distingue entre consumo medido, energía no identificada y energía gestionada mediante contrato separado. La I.E. INEM José Félix de Restrepo (Cr 48 Cl 1 -125) conserva su condición de usuario no regulado, pero desde la v105 la serie verificable disponible se integra desde `data/inem`. Actualmente están incorporados enero–julio de 2026; los periodos anteriores o posteriores sin factura eléctrica siguen mostrándose como pendientes y nunca como 0 kWh.
 
 ## v61 · API y Asistente Ambiental IA
 
