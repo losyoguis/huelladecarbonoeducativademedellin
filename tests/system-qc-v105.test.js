@@ -79,8 +79,8 @@ ok(water.length===9147,'Base Agua alterada');
 ok(gas.length===9147,'Base Gas alterada');
 ok(electric.length>=water.length,'La base eléctrica no puede tener menos filas que Agua tras integrar data/inem');
 
-ok(app.includes("const DATA_VERSION = 'v107-light-20260924';"),'DATA_VERSION no es v105');
-ok(html.includes('app.js?v=107-light'),'Cache-busting v105 ausente');
+ok(app.includes("const DATA_VERSION = 'v108-action-plan-20260924';"),'DATA_VERSION no es v105');
+ok(html.includes('app.js?v=108-action-plan'),'Cache-busting v105 ausente');
 
 ok(menu.includes('<span class="menu-number">10</span>') && menu.includes('<strong>Videotutorial</strong>'),'Falta tarjeta 10 Videotutorial');
 ok(html.includes('id="tutorialModal"') && html.includes('id="tutorialVideoFrame"'),'Falta modal de videotutorial');

@@ -42,6 +42,6 @@ ok(/kWh/.test(ex.dataState)&&/periodo/i.test(ex.dataState),'El estado INEM no do
 
 const app=fs.readFileSync('app.js','utf8');
 ok(app.includes('isIntegratedExternalEnergyRecord'),'El total global no reconoce fuentes eléctricas contractuales integradas');
-ok(app.includes("const DATA_VERSION = 'v107-light-20260924';"),'DATA_VERSION v105 ausente');
+ok(app.includes("const DATA_VERSION = 'v108-action-plan-20260924';"),'DATA_VERSION v105 ausente');
 ok(fs.existsSync('tools/integrar_inem.py')&&fs.existsSync('tools/inem_energy.py'),'Faltan herramientas de integración INEM');
 console.log(JSON.stringify({ok:true,months:y2026.length,totalKwh:total,co2kg:co2,contract:july.energyContract,source:july.energySourceUrl},null,2));

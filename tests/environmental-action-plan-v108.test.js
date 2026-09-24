@@ -1,0 +1,26 @@
+const fs=require('fs');
+const path=require('path');
+const root=path.resolve(__dirname,'..');
+const index=fs.readFileSync(path.join(root,'index.html'),'utf8');
+const app=fs.readFileSync(path.join(root,'app.js'),'utf8');
+const env=fs.readFileSync(path.join(root,'plan-ambiental.js'),'utf8');
+const water=fs.readFileSync(path.join(root,'water.js'),'utf8');
+const gas=fs.readFileSync(path.join(root,'gas.js'),'utf8');
+function assert(ok,msg){if(!ok)throw new Error(msg);}
+assert(index.includes('id="environmentalActionPanel"'),'Falta el panel ambiental integrado.');
+assert(index.includes('id="generateEnvironmentalPlanBtn"'),'Falta botón de generación ambiental.');
+assert(index.includes("script('plan-ambiental.js')"),'El plan ambiental debe cargarse bajo demanda.');
+assert(!/<script[^>]+src=["']plan-ambiental\.js/.test(index),'plan-ambiental.js no debe cargarse en el arranque.');
+assert(index.includes("await ensureModule('seccion-7')")&&index.includes("await ensureModule('seccion-8')"),'La integración debe reutilizar Agua y Gas bajo demanda.');
+assert(app.includes('window.simecoGetSelectedSiteContext'),'Falta el contexto de sede para el plan integrado.');
+['energy','water','gas','solar','tracking'].forEach(tab=>assert(env.includes(`data-env-tab=\\"${tab}\\"`)||env.includes(`data-env-tab="${tab}"`),`Falta pestaña ${tab}.`));
+assert(env.includes('0–30 días')&&env.includes('31–60 días')&&env.includes('61–90 días'),'Falta ruta 30/60/90.');
+assert(env.includes('localStorage')&&env.includes('Evidencia'),'Falta seguimiento persistente con evidencias.');
+assert(env.includes('Predimensionamiento Solar')&&env.includes('SOLAR_PANEL_KWP'),'Falta predimensionamiento solar.');
+assert(env.includes('text/csv')&&env.includes('plan-reducciones-gei'),'Falta matriz GEI editable/exportable.');
+assert(env.includes('openPdfPrintDocument'),'Falta generación PDF bajo demanda.');
+assert(water.includes('planActions,')&&water.includes('generateWaterPlanForSite')&&water.includes('downloadWaterPlanPdf,'),'Agua no expone sus acciones/PDF al plan integrado.');
+assert(gas.includes('gasPlanActions,')&&gas.includes('generateGasPlanForSite')&&gas.includes('downloadGasPlanPdf,'),'Gas no expone sus acciones/PDF al plan integrado.');
+assert(app.includes('window.printCurrentPlan=printCurrentPlan'),'Energía no expone el PDF al plan integrado.');
+assert(env.includes('PDF energético')&&env.includes('PDF agua')&&env.includes('PDF gas')&&env.includes('PDF solar'),'Falta acceso directo a los cuatro documentos PDF.');
+console.log('environmental-action-plan-v108.test.js: OK');

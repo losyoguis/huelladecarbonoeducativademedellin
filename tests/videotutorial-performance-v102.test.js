@@ -9,10 +9,10 @@ ok(!/\ssrc="https:\/\/www\.youtube/.test(iframe),'YouTube se carga antes de abri
 ok(html.includes("frame.dataset.loaded!=='true'"),'No existe control de carga bajo demanda');
 ok(html.includes("frame.removeAttribute('src')"),'El video no libera la conexión al cerrar');
 
-ok(html.includes('data/registros.electricidad.min.js?v=107-light" as="script" fetchpriority="high"'),'Bundle eléctrico no tiene prioridad alta');
-ok(html.includes('data/resumenes.electricidad.min.js?v=107-light" as="script" fetchpriority="high"'),'Resumen eléctrico no tiene prioridad alta');
-ok(html.includes('<script src="data/registros.electricidad.min.js?v=107-light" fetchpriority="high"></script>'),'Script eléctrico no tiene prioridad alta');
-ok(html.includes('<script defer src="app.js?v=107-light" fetchpriority="high"></script>'),'app.js no tiene prioridad alta');
+ok(html.includes('data/registros.electricidad.min.js?v=108-action-plan" as="script" fetchpriority="high"'),'Bundle eléctrico no tiene prioridad alta');
+ok(html.includes('data/resumenes.electricidad.min.js?v=108-action-plan" as="script" fetchpriority="high"'),'Resumen eléctrico no tiene prioridad alta');
+ok(html.includes('<script src="data/registros.electricidad.min.js?v=108-action-plan" fetchpriority="high"></script>'),'Script eléctrico no tiene prioridad alta');
+ok(html.includes('<script defer src="app.js?v=108-action-plan" fetchpriority="high"></script>'),'app.js no tiene prioridad alta');
 ok(html.includes("loadSequence(['data/registros.agua.min.js','data/resumenes.agua.min.js','water.js'])"),'Agua no se carga bajo demanda');
 ok(html.includes("loadSequence(['data/registros.gas.min.js','data/resumenes.gas.min.js','gas.js'])"),'Gas no se carga bajo demanda');
 ok(html.includes("loadSequence(['assistant-config.js','assistant.js'])"),'Asistente no se carga bajo demanda');
