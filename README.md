@@ -1,6 +1,8 @@
-# SiMeCO₂ v108 — Plan de Acción Ambiental Integrado por sede
+# SiMeCO₂ v109 — Solar completo + PDF + Sheets + e-mail
 
-La v108 conserva la arquitectura liviana de la v107 y agrega, dentro de **Informe por sede**, un nuevo **Plan de Acción Ambiental** que integra los históricos disponibles de cada institución en cinco componentes: **Energía y GEI, Agua, Gas, Solar y Seguimiento**.
+La v109 conserva la arquitectura liviana de la v108 y amplía el **Plan de Acción Ambiental por sede**. La pestaña **Solar** muestra en pantalla el predimensionamiento técnico-económico completo y el nuevo **Centro documental** permite crear bajo demanda los cuatro PDF (Energía/GEI, Agua, Gas y Solar), un Google Sheets editable de Reducciones GEI, el expediente privado en Drive y el envío de los PDF por e-mail mediante Google Apps Script.
+
+El motor documental se encuentra en `apps-script-documentos/`. Debe desplegarse como Web App una vez y pegar su URL `/exec` en el Centro documental de SiMeCO₂; la URL se guarda localmente en el navegador. Esta separación evita cargar Google Docs/Drive/Correo durante el arranque de la app.
 
 ## Nuevo flujo
 
