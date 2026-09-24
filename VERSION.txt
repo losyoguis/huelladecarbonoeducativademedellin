@@ -1,1 +1,1 @@
-v106 - Informe PDF INEM sincronizado con electricidad integrada desde data/inem
+SiMeCO₂ v107 · Carga progresiva y módulos bajo demanda · 2026-09-24

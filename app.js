@@ -1,10 +1,10 @@
-/* SiMeCO₂ v106 · PDF INEM sincronizado con electricidad integrada desde data/inem */
+/* SiMeCO₂ v107 · carga progresiva y módulos bajo demanda · INEM integrado */
 let FACTOR_CO2_KG_KWH = 0.126; // kg CO2e/kWh. Ajustable desde el dashboard.
 let TREE_CO2_KG_YEAR = 22; // kg CO2e capturados por árbol al año. Ajustable desde el dashboard.
 const FACTOR_KEY = 'simeco2_factores_ambientales_v8';
 const STORE_KEY = 'simeco2_servicios_v16';
 const CONFIG_KEY = 'simeco2_repo_config_v7';
-const DATA_VERSION = 'v106-inem-pdf-20260924';
+const DATA_VERSION = 'v107-light-20260924';
 
 const $ = (id)=>document.getElementById(id);
 function siteKey(site,address=''){
@@ -150,6 +150,9 @@ let savingsAutocompleteIndex = -1;
 const SAVINGS_PAGE_SIZE = 10;
 const RECORD_TABLE_PAGE_SIZE = 200;
 let recordTablePage = 0;
+// v107 · evita recalcular miles de filas cuando el factor y la base no cambiaron.
+let co2CalculationSignature = '';
+const sectionRenderState = new Set();
 
 const SERVICE_METRICS = {
   energyKwh:{field:'energyKwh',label:'Energía eléctrica',short:'Energía',unit:'kWh',hasFlag:'hasEnergy',periodField:'energyPeriodCount',colorLabel:'energético'}
@@ -372,9 +375,8 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   requestAnimationFrame(() => {
     try{
-      safeBootStep('render principal',renderAll);
-      safeBootStep('selectores de búsqueda',initSearchableSelects);
-      safeBootStep('filtros territoriales iniciales',refreshAllTerritoryFilters);
+      safeBootStep('render inicial liviano',renderInitialView);
+      // Los selectores, rankings, tablas y filtros territoriales se preparan al abrir su módulo.
     }finally{
       // El loader inicial nunca debe quedar bloqueado por un fallo de una vista.
       if(state.records.length){
@@ -790,10 +792,13 @@ function updateFactors(){
   renderAll();
   log("Factores actualizados: " + FACTOR_CO2_KG_KWH + " kg CO₂e/kWh y " + TREE_CO2_KG_YEAR + " kg CO₂e/árbol/año.");
 }
-function recalculateCo2(){
+function recalculateCo2(force=false){
+  const signature=`${FACTOR_CO2_KG_KWH}|${state?.dataVersion||''}|${state?.records?.length||0}|${Object.keys(state?.files||{}).length}`;
+  if(!force && signature===co2CalculationSignature) return;
   state.records.forEach(r=>{
     r.co2kg = recordHasEnergyReading(r) ? round(Number(r.energyKwh)*FACTOR_CO2_KG_KWH,2) : null;
   });
+  co2CalculationSignature=signature;
 }
 function saveConfig(){
   const cfg = getRepoConfig();
@@ -1540,6 +1545,7 @@ function renderFilterSummary(){
   }));
 }
 function renderAll(){
+  sectionRenderState.clear();
   const steps=[
     ['recalcular CO₂e',recalculateCo2],
     ['filtros territoriales',refreshAllTerritoryFilters],
@@ -1562,6 +1568,54 @@ function renderAll(){
     catch(err){console.error('[SiMeCO₂] Error al dibujar Histórico:',err);}
   }
 }
+
+// v107 · el arranque solo prepara la portada. Las vistas pesadas se calculan cuando el usuario las abre.
+function renderInitialView(){
+  const steps=[
+    ['recalcular CO₂e',recalculateCo2],
+    ['indicadores',renderCards],
+    ['resumen ejecutivo',renderExecutiveSummary],
+    ['impacto energético',renderProjectImpact]
+  ];
+  for(const [name,fn] of steps){
+    try{fn();}catch(err){console.error(`[SiMeCO₂] Error al renderizar ${name}:`,err);}
+  }
+  sectionRenderState.add('seccion-1');
+}
+
+function prepareSection(sectionId,{force=false}={}){
+  if(!sectionId) return;
+  // Las vistas se pueden refrescar explícitamente cuando cambian datos/factores.
+  if(!force && sectionRenderState.has(sectionId)){
+    if(sectionId==='seccion-2') requestAnimationFrame(()=>refreshHistoryModule?.({preserveSelection:true}));
+    return;
+  }
+  try{
+    if(sectionId==='seccion-1') renderInitialView();
+    else if(sectionId==='seccion-2'){
+      renderCompareControls({keepSite:true});
+      updateHistorySourceNote();
+      refreshSiteAutocompleteFields();
+      drawChart(comparisonGroups($('compareMode')?.value||'month'));
+    }else if(sectionId==='seccion-3'){
+      renderRanking();
+    }else if(sectionId==='seccion-4'){
+      refreshSiteAutocompleteFields();
+      renderDashboard();
+    }else if(sectionId==='seccion-5'){
+      renderDataQuality();
+    }else if(sectionId==='seccion-9'){
+      renderControls();
+      renderTable();
+      refreshSiteAutocompleteFields();
+    }
+    sectionRenderState.add(sectionId);
+  }catch(err){
+    console.error(`[SiMeCO₂] Error preparando ${sectionId}:`,err);
+  }
+}
+window.simecoPrepareSection=prepareSection;
+
 function renderControls(){
   const periods=[...new Set(state.records.map(r=>r.period))].sort();
   const periodFilter=$('periodFilter');

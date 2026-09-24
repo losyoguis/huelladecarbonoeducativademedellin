@@ -588,8 +588,13 @@
     buildWaterPlanHistoryChartSvg
   };
 
-  document.addEventListener('DOMContentLoaded',()=>{
+  function initWaterModule(){
+    if(window.SIMECO_WATER_MODULE_INITIALIZED) return;
+    window.SIMECO_WATER_MODULE_INITIALIZED=true;
     bindWaterEvents();
     refreshWaterModule();
-  });
+  }
+  (!document.readyState || document.readyState==='loading')
+    ? document.addEventListener('DOMContentLoaded',initWaterModule,{once:true})
+    : initWaterModule();
 })();

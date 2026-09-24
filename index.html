@@ -13,10 +13,9 @@
   <meta name="description" content="Sistema interactivo para medir, interpretar y gestionar la huella de carbono educativa a partir del consumo de energía eléctrica." />
   <link rel="icon" type="image/png" href="assets/los-yoguis-logo-optimized.png" />
   <link rel="apple-touch-icon" href="assets/los-yoguis-logo-optimized.png" />
-  <link rel="preload" href="data/registros.electricidad.min.js?v=106-inem-pdf" as="script" fetchpriority="high" />
-  <link rel="preload" href="data/inem/registros.inem.js?v=106-inem-pdf" as="script" fetchpriority="high" />
-  <link rel="preload" href="data/resumenes.electricidad.min.js?v=106-inem-pdf" as="script" fetchpriority="high" />
-  <link rel="stylesheet" href="styles.css?v=106-inem-pdf" />
+  <link rel="preload" href="data/registros.electricidad.min.js?v=107-light" as="script" fetchpriority="high" />
+  <link rel="preload" href="data/resumenes.electricidad.min.js?v=107-light" as="script" fetchpriority="high" />
+  <link rel="stylesheet" href="styles.css?v=107-light" />
 </head>
 <body>
   <div class="invoice-loading active" id="invoiceLoading" role="status" aria-live="assertive" aria-hidden="false">
@@ -107,7 +106,7 @@
   </header>
 
 
-  <div class="workspace-shell" id="simecoWorkspace" data-ux-version="105">
+  <div class="workspace-shell" id="simecoWorkspace" data-ux-version="107">
     <nav class="section-switcher top-card-menu" id="topCardMenu" aria-label="Secciones principales de SiMeCO₂">
       <button type="button" class="section-tab electricity-section-tab active" id="scanDataBtn" data-section="seccion-1" data-action="actualizar" aria-selected="true" aria-current="page" title="1. Analizar Datos — Electricidad">
         <span class="menu-number">1</span>
@@ -1137,6 +1136,74 @@
         registros: 'seccion-9', 'aula-climatica': 'seccion-6', agua: 'seccion-7', 'ranking-consumo-agua': 'seccion-7', 'ranking-ahorro-agua': 'seccion-7', 'plan-ahorro-agua': 'seccion-7', gas: 'seccion-8', 'ranking-consumo-gas': 'seccion-8', 'ranking-ahorro-gas': 'seccion-8', 'plan-ahorro-gas': 'seccion-8'
       };
 
+
+      const loadedScripts=new Map();
+      const modulePromises=new Map();
+      const version='107-light';
+      const script=(src)=>{
+        if(loadedScripts.has(src)) return loadedScripts.get(src);
+        const promise=new Promise((resolve,reject)=>{
+          const el=document.createElement('script');
+          el.src=`${src}?v=${version}`;
+          el.async=true;
+          el.onload=()=>resolve(src);
+          el.onerror=()=>{loadedScripts.delete(src);reject(new Error(`No se pudo cargar ${src}`));};
+          document.head.appendChild(el);
+        });
+        loadedScripts.set(src,promise);
+        return promise;
+      };
+      const loadSequence=async(files)=>{for(const file of files) await script(file);};
+      const setModuleBusy=(sectionId,busy,label='Preparando módulo…')=>{
+        const section=document.getElementById(sectionId);
+        const tab=document.querySelector(`[data-section="${sectionId}"]`);
+        if(section) section.setAttribute('aria-busy',String(Boolean(busy)));
+        if(tab){
+          tab.classList.toggle('module-loading',Boolean(busy));
+          const detail=tab.querySelector('.menu-detail');
+          if(detail){
+            if(busy){detail.dataset.originalText=detail.dataset.originalText||detail.textContent;detail.textContent=label;}
+            else if(detail.dataset.originalText){detail.textContent=detail.dataset.originalText;}
+          }
+        }
+      };
+      const ensureTerritorial=()=>{
+        if(window.SIMECO_TERRITORIAL_SYNC) return Promise.resolve();
+        if(modulePromises.has('territorial')) return modulePromises.get('territorial');
+        const promise=script('data/sincronizacion-territorial.js').then(()=>{
+          try{window.simecoPrepareSection?.(document.querySelector('.app-section.active')?.id,{force:true});}catch(_err){}
+        });
+        modulePromises.set('territorial',promise);return promise;
+      };
+      const ensureModule=(sectionId)=>{
+        if(sectionId==='seccion-7'){
+          if(window.SIMECO_WATER_MODULE_INITIALIZED) return Promise.resolve();
+          if(modulePromises.has('water')) return modulePromises.get('water');
+          setModuleBusy(sectionId,true,'Cargando Agua…');
+          const promise=loadSequence(['data/registros.agua.min.js','data/resumenes.agua.min.js','water.js'])
+            .then(()=>window.simecoRefreshWater?.())
+            .finally(()=>setModuleBusy(sectionId,false));
+          modulePromises.set('water',promise);return promise;
+        }
+        if(sectionId==='seccion-8'){
+          if(window.SIMECO_GAS_MODULE_INITIALIZED) return Promise.resolve();
+          if(modulePromises.has('gas')) return modulePromises.get('gas');
+          setModuleBusy(sectionId,true,'Cargando Gas…');
+          const promise=loadSequence(['data/registros.gas.min.js','data/resumenes.gas.min.js','gas.js'])
+            .then(()=>window.simecoRefreshGas?.())
+            .finally(()=>setModuleBusy(sectionId,false));
+          modulePromises.set('gas',promise);return promise;
+        }
+        return Promise.resolve();
+      };
+      const prepareVisibleSection=async(sectionId)=>{
+        try{
+          if(['seccion-2','seccion-3','seccion-4','seccion-5','seccion-9'].includes(sectionId)) await ensureTerritorial();
+          await ensureModule(sectionId);
+          window.simecoPrepareSection?.(sectionId);
+        }catch(err){console.error('[SiMeCO₂] Carga progresiva:',err);}
+      };
+
       function openSection(sectionId, options = {}) {
         const target = document.getElementById(sectionId);
         if (!target) return;
@@ -1159,18 +1226,33 @@
           target.scrollIntoView({ behavior: options.instant ? 'auto' : 'smooth', block: 'start' });
         }
         window.dispatchEvent(new Event('resize'));
-        if (sectionId === 'seccion-2' && typeof window.simecoRefreshHistory === 'function') {
-          requestAnimationFrame(() => window.simecoRefreshHistory({ preserveSelection: true }));
-        }
-        if (sectionId === 'seccion-7' && typeof window.simecoRefreshWater === 'function') {
-          requestAnimationFrame(() => window.simecoRefreshWater());
-        }
-        if (sectionId === 'seccion-8' && typeof window.simecoRefreshGas === 'function') {
-          requestAnimationFrame(() => window.simecoRefreshGas());
-        }
+        requestAnimationFrame(() => prepareVisibleSection(sectionId));
       }
 
       window.simecoOpenSection = openSection;
+
+      // v107 · el asistente se descarga únicamente cuando el usuario lo abre.
+      let assistantPromise=null;
+      async function ensureAssistant(){
+        if(window.SIMECO_ASSISTANT_LOADED) return;
+        if(!assistantPromise){
+          assistantPromise=(async()=>{
+            await ensureTerritorial();
+            await loadSequence(['assistant-config.js','assistant.js']);
+            window.SIMECO_ASSISTANT_LOADED=true;
+          })();
+        }
+        await assistantPromise;
+      }
+      document.addEventListener('click',async event=>{
+        const launcher=event.target.closest?.('#simecoAssistantLauncher');
+        if(!launcher || window.SIMECO_ASSISTANT_LOADED) return;
+        event.preventDefault();event.stopImmediatePropagation();
+        launcher.classList.add('module-loading');
+        try{await ensureAssistant();launcher.click();}
+        catch(err){console.error('[SiMeCO₂] No fue posible cargar el asistente:',err);}
+        finally{launcher.classList.remove('module-loading');}
+      },true);
 
       document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('.app-section').forEach((section, index) => {
@@ -1200,8 +1282,8 @@
   </script>
 
   <!-- v87: datos eléctricos ultracompactos cargados antes de app.js -->
-  <script src="data/registros.electricidad.min.js?v=106-inem-pdf" fetchpriority="high"></script>
-  <script src="data/inem/registros.inem.js?v=106-inem-pdf" fetchpriority="high"></script>
+  <script src="data/registros.electricidad.min.js?v=107-light" fetchpriority="high"></script>
+  <script src="data/inem/registros.inem.js?v=107-light" fetchpriority="high"></script>
   <script>
     (() => {
       const records = Array.isArray(window.SIMECO_REGISTROS) ? window.SIMECO_REGISTROS.length : 0;
@@ -1240,19 +1322,10 @@
       }
     })();
   </script>
-  <script src="data/resumenes.electricidad.min.js?v=106-inem-pdf" fetchpriority="high"></script>
-  <script defer src="data/sincronizacion-territorial.js?v=106-inem-pdf"></script>
-  <script defer src="data/excepciones-servicios.js?v=106-inem-pdf"></script>
+  <script src="data/resumenes.electricidad.min.js?v=107-light" fetchpriority="high"></script>
+  <script defer src="data/excepciones-servicios.js?v=107-light"></script>
 
 
-  <script defer src="app.js?v=106-inem-pdf" fetchpriority="high"></script>
-  <script defer src="data/registros.agua.min.js?v=106-inem-pdf" fetchpriority="low"></script>
-  <script defer src="data/resumenes.agua.min.js?v=106-inem-pdf" fetchpriority="low"></script>
-  <script defer src="water.js?v=106-inem-pdf" fetchpriority="low"></script>
-  <script defer src="data/registros.gas.min.js?v=106-inem-pdf" fetchpriority="low"></script>
-  <script defer src="data/resumenes.gas.min.js?v=106-inem-pdf" fetchpriority="low"></script>
-  <script defer src="gas.js?v=106-inem-pdf" fetchpriority="low"></script>
-  <script defer src="assistant-config.js?v=106-inem-pdf" fetchpriority="low"></script>
-  <script defer src="assistant.js?v=106-inem-pdf" fetchpriority="low"></script>
+  <script defer src="app.js?v=107-light" fetchpriority="high"></script>
 </body>
 </html>

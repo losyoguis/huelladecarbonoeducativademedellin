@@ -1,4 +1,4 @@
-# SiMeCO₂ v106 — Informe PDF del INEM sincronizado con `data/inem`
+# SiMeCO₂ v107 — Informe PDF del INEM sincronizado con `data/inem`
 
 La v106 conserva la serie eléctrica verificable de la **I.E. INEM José Félix de Restrepo** en `data/inem/` y corrige el **Plan de Gestión Energética / PDF por sede** para que utilice esas lecturas. El informe ya no presenta al INEM como “pendiente de integrar” cuando existen datos: incorpora **enero–julio de 2026: 258.461,17 kWh**, equivalentes a aproximadamente **32,57 t CO₂e** con el factor actual de 0,126 kg CO₂e/kWh.
 
@@ -123,6 +123,10 @@ La versión v95 organiza visualmente SiMeCO₂ por recurso:
 - **Módulo 9: 🔥 Gas**
 
 Cada sección muestra una insignia de recurso y las pestañas superiores indican de forma explícita a qué recurso corresponde cada módulo. En móvil, los módulos 1–7 también se presentan como “Electricidad · …”.
+
+## Rendimiento v107
+La aplicación usa carga progresiva: Electricidad abre primero; Agua, Gas, sincronización territorial y Asistente se descargan únicamente cuando son necesarios. Las vistas pesadas (Histórico, Ranking, Informe, Estado y Facturas) se renderizan al abrirlas y no durante la pantalla inicial. Esto reduce trabajo de CPU y transferencia inicial sin retirar funciones.
+
 
 ## Gráficos en planes de acción
 

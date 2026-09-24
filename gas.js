@@ -588,8 +588,13 @@
     buildGasPlanHistoryChartSvg
   };
 
-  document.addEventListener('DOMContentLoaded',()=>{
+  function initGasModule(){
+    if(window.SIMECO_GAS_MODULE_INITIALIZED) return;
+    window.SIMECO_GAS_MODULE_INITIALIZED=true;
     bindGasEvents();
     refreshGasModule();
-  });
+  }
+  (!document.readyState || document.readyState==='loading')
+    ? document.addEventListener('DOMContentLoaded',initGasModule,{once:true})
+    : initGasModule();
 })();
