@@ -15,10 +15,10 @@ const assistant=require('../api/_lib/assistant-core');
   assert.equal(r.mode,'data');
   assert(/73\.924/.test(r.text),'El informe grounded debe conservar 73.924 kWh');
 
-  r=await assistant.answerAssistant({message:'¿Por qué el INEM no aparece en el ranking de energía?',history:[],apiKey:'',model:'gpt-5-mini'});
+  r=await assistant.answerAssistant({message:'Dame un informe de la electricidad del INEM José Félix de Restrepo',history:[],apiKey:'',model:'gpt-5-mini'});
   assert.equal(r.mode,'data');
-  assert(/contrato separado/i.test(r.text));
-  assert(!/0 kWh/i.test(r.text),'INEM no debe convertirse en 0 kWh');
+  assert(/258\.461,17 kWh/.test(r.text),'El informe del INEM debe usar los 258.461,17 kWh integrados');
+  assert(/cobertura eléctrica parcial/i.test(r.text),'Debe advertir que la cobertura eléctrica del INEM es parcial');
 
   r=await assistant.answerAssistant({message:'Muéstrame el top 10 de energía en julio de 2026',history:[],apiKey:'',model:'gpt-5-mini'});
   assert.equal(r.mode,'data');
@@ -28,8 +28,9 @@ const assistant=require('../api/_lib/assistant-core');
 
   r=await assistant.answerAssistant({message:'¿Cuánta energía total registra Medellín?',history:[],apiKey:'',model:'gpt-5-mini'});
   assert.equal(r.mode,'data');
-  assert(/18\.800\.429,36 kWh/.test(r.text),'El total de ciudad debe usar el resumen oficial de facturas');
-  assert(/resumen oficial de factura/i.test(r.text),'Debe identificar la fuente oficial del total de ciudad');
+  assert(/19\.058\.890,53 kWh/.test(r.text),'El total integrado debe sumar el consolidado oficial y el INEM');
+  assert(/18\.800\.429,36 kWh/.test(r.text),'Debe conservar visible el consolidado oficial');
+  assert(/258\.461,17 kWh/.test(r.text),'Debe identificar la energía integrada de contratos separados');
 
   // Todos los schemas strict deben declarar como required cada propiedad.
   for(const tool of assistant.TOOL_DEFS){
@@ -42,7 +43,8 @@ const assistant=require('../api/_lib/assistant-core');
   // El bundle compacto del navegador debe reconstruir los mismos 9.147 registros.
   const code=fs.readFileSync(path.join(__dirname,'..','data','registros.electricidad.min.js'),'utf8');
   const context={window:{}}; vm.createContext(context); vm.runInContext(code,context,{timeout:5000});
-  assert.equal(context.window.SIMECO_REGISTROS.length,9147);
+  const fullCount=JSON.parse(fs.readFileSync(path.join(__dirname,'..','data','registros.json'),'utf8')).records.length;
+  assert.equal(context.window.SIMECO_REGISTROS.length,fullCount);
   assert.equal(context.window.SIMECO_REGISTROS[0].period,'2025-01');
 
   const oldSize=fs.statSync(path.join(__dirname,'..','data','registros.js')).size;

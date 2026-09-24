@@ -71,9 +71,13 @@ for(const file of fs.readdirSync(ROOT).filter(x=>x.endsWith('.html'))){
 function evalBundle(file,globalName){
   const c={window:{}};c.window=c;vm.createContext(c);vm.runInContext(fs.readFileSync(file,'utf8'),c);return c[globalName];
 }
-ok(evalBundle('data/registros.electricidad.min.js','SIMECO_REGISTROS').length===9147,'Base eléctrica alterada');
-ok(evalBundle('data/registros.agua.min.js','SIMECO_WATER_RECORDS').length===9147,'Base Agua alterada');
-ok(evalBundle('data/registros.gas.min.js','SIMECO_GAS_RECORDS').length===9147,'Base Gas alterada');
+const electric=evalBundle('data/registros.electricidad.min.js','SIMECO_REGISTROS');
+const water=evalBundle('data/registros.agua.min.js','SIMECO_WATER_RECORDS');
+const gas=evalBundle('data/registros.gas.min.js','SIMECO_GAS_RECORDS');
+ok(electric.length>=9147,'Base eléctrica perdió registros canónicos');
+ok(water.length===9147,'Base Agua alterada');
+ok(gas.length===9147,'Base Gas alterada');
+ok(electric.length>=water.length,'La base eléctrica no puede tener menos filas que Agua tras integrar data/inem');
 
 ok(app.includes("const DATA_VERSION = 'v105-inem-electricidad-20260924';"),'DATA_VERSION no es v105');
 ok(html.includes('app.js?v=105-inem-electricidad'),'Cache-busting v105 ausente');

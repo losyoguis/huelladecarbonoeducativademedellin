@@ -17,5 +17,5 @@ const rows=global.SIMECO_REGISTROS;
 const zeros=rows.filter(r=>r.energyKwh===0).length;
 const missing=rows.filter(r=>r.energyKwh==null).length;
 ok(zeros===9,`Se esperaban 9 lecturas de 0 kWh, hay ${zeros}`);
-ok(missing===1367,`Se esperaban 1367 registros sin lectura, hay ${missing}`);
+ok(missing===1360,`Se esperaban 1360 registros sin lectura tras integrar 7 meses del INEM, hay ${missing}`);
 console.log(JSON.stringify({ok:true,zeroKwh:zeros,missingEnergy:missing}));

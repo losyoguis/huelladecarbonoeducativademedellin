@@ -28,7 +28,7 @@ for(const institution of data.institutions){
 julySavings.sort((a,b)=>b.saved-a.saved);
 assert(julySavings.length>50, `Se esperaban múltiples sedes con ahorro junio→julio; recibidas ${julySavings.length}`);
 assert(julySavings[0].saved>0, 'El primer lugar debe tener ahorro positivo');
-assert(!julySavings.some(x=>/INEM/i.test(x.name)), 'INEM no debe aparecer como ahorro con energía ausente/contrato separado');
+assert(!julySavings.some(x=>/INEM/i.test(x.name)), 'INEM no debe aparecer como ahorro en julio porque su consumo aumentó frente a junio');
 
 const comparablePeriods=periods.filter(p=>periods.includes(monthBefore(p)));
 assert(!comparablePeriods.includes('2025-11'), 'Noviembre 2025 no debe compararse contra agosto: octubre no existe');

@@ -13,12 +13,14 @@ assert(!Object.prototype.hasOwnProperty.call(fe.totals,'waterM3'),'La API públi
 
 const inem = data.institutionReport('INEM José Félix de Restrepo');
 assert(inem.institution && /INEM/i.test(inem.institution.name), 'Debe resolver INEM');
-assert.strictEqual(inem.totals.energyKwh, null, 'INEM no debe convertir energía ausente en 0');
-assert.strictEqual(inem.quality.status, 'energia_contrato_separado', 'INEM debe conservar excepción de contrato separado');
+assert(Math.abs(inem.totals.energyKwh - 258461.17) < 0.001, `Energía INEM esperada 258461.17, recibida ${inem.totals.energyKwh}`);
+assert.strictEqual(inem.quality.status, 'cobertura_electrica_parcial', 'INEM debe quedar con cobertura eléctrica parcial enero-julio 2026');
+assert(inem.quality.exceptions.some(x => x.status === 'external_contract_integrated'), 'INEM debe conservar trazabilidad del contrato separado integrado');
 
 const rank = data.ranking('energyKwh',{period:'2026-07',limit:10});
 assert(rank.ranking.length > 0, 'Ranking debe devolver resultados');
-assert(!rank.ranking.some(x => /INEM/i.test(x.name)), 'INEM no debe aparecer con 0 en ranking energético');
+assert(/INEM/i.test(rank.ranking[0].name), 'INEM debe aparecer primero en el ranking energético de julio de 2026');
+assert(Math.abs(rank.ranking[0].value - 39643.75) < 0.001, `Consumo INEM julio esperado 39643.75, recibido ${rank.ranking[0].value}`);
 
 const search = data.searchInstitutions('Cr 29 Cl 110 A -83',3);
 assert(search.length && /Santo Domingo Savio/i.test(search[0].name), 'Debe buscar por dirección');
