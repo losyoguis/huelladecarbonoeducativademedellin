@@ -1,4 +1,4 @@
-/* SiMeCO₂ v110 · Plan Ambiental + documentos/e-mail con transporte iframe POST compatible entre dominios */
+/* SiMeCO₂ v111 · Plan Ambiental + documentos/e-mail con transporte iframe POST compatible entre dominios */
 (() => {
   'use strict';
 
@@ -402,7 +402,7 @@
   function buildDocumentPayload(plan,settings,action){
     const c=plan.context,e=plan.energy,w=plan.water,g=plan.gas,s=plan.solar;
     const latest=(c.energyPeriods||[]).slice().sort().pop()||new Date().toISOString().slice(0,7);
-    return {action:'simeco2-documents',mode:action==='send'?'send':'generate',fullName:settings.recipientName||c.site,email:settings.email,requesterType:'Institución Educativa',offerRecipientName:settings.recipientName||c.site,offerRecipientRole:settings.recipientRole||'',notes:settings.notes,institutionName:c.site,serviceAddress:c.address||'',city:'Medellín',billingPeriod:latest,billingDays:30,contractNumber:'',analysisConfidence:'alta',source:'Histórico consolidado SiMeCO₂',consent:settings.consent,gsvConsent:settings.gsvConsent,studentCount:Number(settings.studentCount)||0,consumption:Number(e.avg)||0,tariff:Number(e.tariff)||0,monthlyBillApprox:(Number(e.avg)||0)*(Number(e.tariff)||0),coverage:Number(s.coveragePct)||80,factor:Number(c.factorCo2)||0.126,annualCarbon:(Number(e.avg)||0)*12*(Number(c.factorCo2)||0.126)/1000,waterM3:Number(w.site?.avgWaterMonth)||0,gasM3:Number(g.site?.avgGasMonth)||0,clientVersion:'SiMeCO₂ v110',historyPeriods:(c.energyPeriods||[]).length};
+    return {action:'simeco2-documents',mode:action==='send'?'send':'generate',fullName:settings.recipientName||c.site,email:settings.email,requesterType:'Institución Educativa',offerRecipientName:settings.recipientName||c.site,offerRecipientRole:settings.recipientRole||'',notes:settings.notes,institutionName:c.site,serviceAddress:c.address||'',city:'Medellín',billingPeriod:latest,billingDays:30,contractNumber:'',analysisConfidence:'alta',source:'Histórico consolidado SiMeCO₂',consent:settings.consent,gsvConsent:settings.gsvConsent,studentCount:Number(settings.studentCount)||0,consumption:Number(e.avg)||0,tariff:Number(e.tariff)||0,monthlyBillApprox:(Number(e.avg)||0)*(Number(e.tariff)||0),coverage:Number(s.coveragePct)||80,factor:Number(c.factorCo2)||0.126,annualCarbon:(Number(e.avg)||0)*12*(Number(c.factorCo2)||0.126)/1000,waterM3:Number(w.site?.avgWaterMonth)||0,gasM3:Number(g.site?.avgGasMonth)||0,clientVersion:'SiMeCO₂ v111',historyPeriods:(c.energyPeriods||[]).length};
   }
 
   function renderDocumentResult(result){
@@ -450,13 +450,18 @@
     const payload=buildDocumentPayload(currentPlan,settings,action);
     if(!(payload.consumption>0)){if(status)status.textContent='⚠️ La sede no tiene una línea base eléctrica mensual válida.';return;}
     const buttons=[...document.querySelectorAll('[data-doc-action]')];buttons.forEach(b=>b.disabled=true);
-    if(status)status.textContent=action==='send'?'Generando 4 PDF, Google Sheets, expediente Drive y enviando e-mail…':'Generando 4 PDF, Google Sheets y expediente Drive…';
+    if(status){
+      status.innerHTML=action==='send'
+        ? '<span class="doc-hourglass" aria-hidden="true">⏳</span><strong> Generando y enviando…</strong> Creando 4 PDF, Google Sheets y expediente Drive. El correo se enviará antes de finalizar el seguimiento del dashboard.'
+        : '<span class="doc-hourglass" aria-hidden="true">⏳</span><strong> Generando expediente…</strong> Creando 4 PDF, Google Sheets y carpeta de Drive.';
+      status.classList.add('is-processing');
+    }
     try{
       const result=await postDocumentsViaIframe(endpoint,payload);
       if(!result?.ok)throw new Error(result?.error||'No fue posible crear los documentos.');
       renderDocumentResult(result);if(status)status.textContent=result.emailed?`✅ Correo enviado a ${result.sentTo}.`:'✅ Expediente documental creado correctamente.';
     }catch(err){console.error('[SiMeCO₂] Documentos:',err);if(status)status.textContent='❌ '+(err?.message||String(err));}
-    finally{buttons.forEach(b=>b.disabled=false);}
+    finally{buttons.forEach(b=>b.disabled=false);if(status)status.classList.remove('is-processing');}
   }
 
   function render(plan){

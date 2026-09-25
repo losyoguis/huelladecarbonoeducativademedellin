@@ -1,0 +1,1238 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SiMeCO₂ · Estudio desde factura</title>
+  <style>
+    :root {
+      --green: #003A5D;
+      --green-dark: #17231F;
+      --green-soft: #EEF8F2;
+      --bg: #F5FAF7;
+      --border: #DCEBE4;
+      --muted: #586962;
+      --danger: #B3261E;
+      --blue: #1A73E8;
+      --white: #FFFFFF;
+      --shadow: 0 12px 30px rgba(0, 58, 93, .14);
+      --accent: #0B6B4B;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: var(--bg);
+      color: var(--green-dark);
+      line-height: 1.45;
+    }
+
+    .page {
+      width: min(1120px, calc(100% - 28px));
+      margin: 24px auto 48px;
+    }
+
+    .hero {
+      background: linear-gradient(135deg, #003A5D, #0B6B4B);
+      color: #fff;
+      border-radius: 22px;
+      padding: 28px;
+      box-shadow: var(--shadow);
+    }
+
+    .hero h1 {
+      margin: 0 0 8px;
+      font-size: clamp(1.7rem, 4vw, 2.6rem);
+      letter-spacing: -.02em;
+    }
+
+    .hero p {
+      margin: 0;
+      max-width: 880px;
+      color: #EAF4F0;
+      font-size: 1.05rem;
+    }
+
+
+    .hero-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid rgba(255,255,255,.22);
+      background: rgba(255,255,255,.12);
+      border-radius: 999px;
+      padding: 8px 12px;
+      color: #FFFFFF;
+      font-size: .92rem;
+      font-weight: 700;
+    }
+
+    .benefits-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 14px;
+      margin-top: 16px;
+    }
+
+    .process-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 16px;
+    }
+
+    .benefit-card,
+    .process-card {
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 16px;
+      background: #F8FAFC;
+      min-height: 128px;
+    }
+
+    .benefit-icon,
+    .process-number {
+      width: 38px;
+      height: 38px;
+      display: grid;
+      place-items: center;
+      border-radius: 14px;
+      background: var(--green-soft);
+      color: var(--accent);
+      font-weight: 800;
+      margin-bottom: 10px;
+    }
+
+    .benefit-card h3,
+    .process-card h3 {
+      margin: 0 0 6px;
+      color: var(--green-dark);
+      font-size: 1rem;
+    }
+
+    .benefit-card p,
+    .process-card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: .92rem;
+    }
+
+    .notice-box {
+      margin-top: 16px;
+      border: 1px solid #BFD8CC;
+      border-radius: 18px;
+      padding: 16px;
+      background: linear-gradient(135deg, #EEF8F2, #FFFFFF);
+      color: var(--green-dark);
+    }
+
+    .notice-box strong { color: var(--green); }
+
+    .section {
+      margin-top: 20px;
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      padding: 24px;
+      box-shadow: 0 8px 22px rgba(34, 61, 92, .08);
+    }
+
+    .section-title {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+
+    .step-number {
+      width: 48px;
+      height: 48px;
+      flex: 0 0 48px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: var(--green);
+      color: #fff;
+      font-size: 1.35rem;
+      font-weight: 700;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: clamp(1.25rem, 2.8vw, 1.75rem);
+      color: var(--green-dark);
+    }
+
+    .hint {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: .98rem;
+    }
+
+    .upload-card {
+      margin-top: 22px;
+      border: 2px dashed #9EB1C4;
+      background: #F8FAFC;
+      border-radius: 20px;
+      padding: 34px 20px;
+      text-align: center;
+    }
+
+    .upload-title {
+      margin: 0 0 14px;
+      font-size: clamp(1.1rem, 2.5vw, 1.45rem);
+      font-weight: 700;
+      color: #202124;
+    }
+
+    .upload-help {
+      margin: 12px 0 0;
+      color: #6B6F72;
+      font-size: .98rem;
+    }
+
+
+    .processing-status {
+      width: min(720px, 100%);
+      margin: 18px auto 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      border: 1px solid #BAC9D8;
+      background: linear-gradient(135deg, #EEF3F8, #FFFFFF);
+      color: var(--green-dark);
+      border-radius: 16px;
+      padding: 14px 16px;
+      font-weight: 700;
+    }
+
+    .hourglass {
+      font-size: 1.7rem;
+      display: inline-block;
+      animation: hourglassFlip 1.2s ease-in-out infinite;
+      transform-origin: center;
+    }
+
+    .processing-status small {
+      display: block;
+      font-weight: 400;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    @keyframes hourglassFlip {
+      0%, 100% { transform: rotate(0deg); }
+      50% { transform: rotate(180deg); }
+    }
+
+    /* v111: reloj de arena visible durante TODO el proceso documental */
+    #reportProcessingStatus.processing-report {
+      position: sticky;
+      bottom: 18px;
+      z-index: 50;
+      width: min(820px, calc(100% - 16px));
+      padding: 20px 22px;
+      border: 2px solid #9FB8CD;
+      box-shadow: 0 12px 34px rgba(26, 58, 85, .18);
+      background: linear-gradient(135deg, #F5F9FC, #FFFFFF);
+      justify-content: flex-start;
+    }
+    #reportProcessingStatus .hourglass {
+      flex: 0 0 auto;
+      font-size: 3.1rem;
+      line-height: 1;
+      animation: hourglassFlip 1.05s ease-in-out infinite;
+      filter: drop-shadow(0 3px 4px rgba(0,0,0,.12));
+    }
+    .processing-copy { min-width: 0; }
+    .processing-title { display:block; font-size:1.15rem; font-weight:800; color:#102D26; }
+    .processing-stage { display:block; margin-top:5px; color:#50665E; font-weight:600; }
+    .processing-elapsed { display:block; margin-top:6px; font-size:.9rem; color:#6B7D76; font-weight:500; }
+    @media (max-width:640px) {
+      #reportProcessingStatus.processing-report { align-items:flex-start; padding:16px; }
+      #reportProcessingStatus .hourglass { font-size:2.5rem; }
+    }
+
+    .file-input { display: none; }
+
+    .add-file-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      appearance: none;
+      border: 1px solid #DADCE0;
+      background: #fff;
+      color: var(--blue);
+      border-radius: 6px;
+      padding: 12px 18px;
+      font-size: 1.05rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: box-shadow .15s ease, border-color .15s ease, background .15s ease;
+    }
+
+    .add-file-btn:hover {
+      border-color: var(--blue);
+      box-shadow: 0 2px 8px rgba(26, 115, 232, .15);
+      background: #F8FBFF;
+    }
+
+    .add-file-btn svg {
+      width: 22px;
+      height: 22px;
+      fill: currentColor;
+    }
+
+    .selected-files {
+      width: min(720px, 100%);
+      margin: 18px auto 0;
+      display: grid;
+      gap: 8px;
+      text-align: left;
+    }
+
+    .file-pill {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px 12px;
+      color: var(--green-dark);
+      font-size: .95rem;
+    }
+
+    .file-pill span:last-child {
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .actions.center { justify-content: center; }
+
+    button.primary,
+    button.secondary {
+      border: 0;
+      border-radius: 999px;
+      padding: 13px 20px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    button.primary {
+      background: var(--green);
+      color: #fff;
+    }
+
+    button.secondary {
+      background: var(--green-soft);
+      color: var(--green);
+    }
+
+    button:disabled {
+      opacity: .6;
+      cursor: not-allowed;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .field label {
+      display: block;
+      margin-bottom: 7px;
+      font-weight: 700;
+      color: var(--green-dark);
+    }
+
+    .field small {
+      display: block;
+      margin-top: 5px;
+      color: var(--muted);
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      border: 1px solid #C4D0DC;
+      border-radius: 12px;
+      padding: 12px 13px;
+      font-size: 1rem;
+      color: var(--green-dark);
+      background: #fff;
+      outline: none;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      border-color: var(--green);
+      box-shadow: 0 0 0 3px rgba(34, 61, 92, .14);
+    }
+
+    input[readonly] {
+      background: #F1F4F7;
+      color: #506377;
+    }
+
+    textarea { min-height: 96px; resize: vertical; }
+
+    .full { grid-column: 1 / -1; }
+
+    .result-box,
+    .message {
+      margin-top: 16px;
+      border-radius: 16px;
+      padding: 14px 16px;
+      border: 1px solid var(--border);
+      background: #F8FAFC;
+      color: var(--green-dark);
+      white-space: pre-wrap;
+    }
+
+    .message.error {
+      border-color: #F2B8B5;
+      background: #FFF8F7;
+      color: var(--danger);
+    }
+
+    .message.ok {
+      border-color: #BAC9D8;
+      background: #EEF3F8;
+      color: #223D5C;
+    }
+
+    .hidden { display: none !important; }
+
+    .consent {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 14px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: #F8FAFC;
+    }
+
+    .consent input {
+      width: auto;
+      margin-top: 4px;
+    }
+
+    .privacy-notice {
+      border: 1px solid #BAC9D8;
+      border-radius: 14px;
+      background: #F8FAFC;
+      padding: 14px 16px;
+      color: var(--green-dark);
+    }
+
+    .privacy-notice summary {
+      cursor: pointer;
+      font-weight: 800;
+      color: var(--green);
+    }
+
+    .privacy-notice p,
+    .privacy-notice ul {
+      margin: 10px 0 0;
+    }
+
+    .privacy-notice li { margin-bottom: 6px; }
+
+    .optional-consent {
+      border-color: #BAC9D8;
+      background: #EEF3F8;
+    }
+
+    .website-field {
+      position: absolute !important;
+      left: -10000px !important;
+      width: 1px !important;
+      height: 1px !important;
+      overflow: hidden !important;
+      opacity: 0 !important;
+      pointer-events: none !important;
+    }
+
+    @media (max-width: 760px) {
+      .page { width: min(100% - 16px, 1120px); margin-top: 12px; }
+      .hero, .section { padding: 18px; border-radius: 18px; }
+      .grid,
+      .benefits-grid,
+      .process-grid { grid-template-columns: 1fr; }
+      .upload-card { padding: 24px 12px; }
+      .section-title { align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <h1>De tu factura a un plan de acción sostenible</h1>
+      <p>Como continuidad de Climate Week Medellín, SiMeCO₂ convierte una factura de servicios públicos en información útil para comprender el consumo, estimar la huella de carbono, priorizar oportunidades de ahorro y visualizar el potencial de energía solar.</p>
+      <div class="hero-badges" aria-label="Beneficios principales">
+        <span class="hero-badge">⚡ Gestión energética y GEI</span>
+        <span class="hero-badge">💧 Ahorro de agua</span>
+        <span class="hero-badge">🌎 Huella de carbono</span>
+        <span class="hero-badge">☀️ Energía solar</span>
+        <span class="hero-badge">📩 Entregables por correo</span>
+      </div>
+    </section>
+
+    <section class="section" aria-label="Beneficios y procedimiento">
+      <div class="section-title">
+        <div class="step-number">✓</div>
+        <div>
+          <h2>¿Qué recibirás al enviar tu factura?</h2>
+          <p class="hint">La factura es el punto de partida para construir un diagnóstico preliminar, organizar un plan inicial de gestión y visualizar oportunidades antes de una evaluación técnica definitiva.</p>
+        </div>
+      </div>
+
+      <div class="benefits-grid">
+        <article class="benefit-card">
+          <div class="benefit-icon">⚡</div>
+          <h3>Plan de Gestión Energética y Reducción de GEI</h3>
+          <p>Línea base, acciones priorizadas, ruta 30/60/90, indicadores y plan editable de reducciones.</p>
+        </article>
+        <article class="benefit-card">
+          <div class="benefit-icon">💧</div>
+          <h3>Plan de Ahorro y Uso Eficiente del Agua</h3>
+          <p>Consumo normalizado, acciones operativas, metas preliminares y seguimiento para el uso eficiente.</p>
+        </article>
+        <article class="benefit-card">
+          <div class="benefit-icon">CO₂</div>
+          <h3>Análisis del consumo y huella de carbono</h3>
+          <p>Consumo confirmado, indicadores calculados, emisiones de referencia y lectura ejecutiva con trazabilidad.</p>
+        </article>
+        <article class="benefit-card">
+          <div class="benefit-icon">☀️</div>
+          <h3>Predimensionamiento preliminar de energía solar</h3>
+          <p>Potencia, paneles, área, generación y cobertura estimadas como punto de referencia inicial.</p>
+        </article>
+        <article class="benefit-card">
+          <div class="benefit-icon">📉</div>
+          <h3>Ahorro, emisiones evitadas y oportunidades de mejora</h3>
+          <p>Escenarios preliminares para identificar prioridades económicas, ambientales y operativas.</p>
+        </article>
+      </div>
+
+      <div class="notice-box">
+        <strong>Sobre la energía solar:</strong> el predimensionamiento es un <strong>punto de referencia diseñado por Líderes Ambientales</strong> para comprender el potencial de la sede. No es una cotización ni un diseño definitivo. Si deseas llevar esta información a una propuesta técnico-comercial formal, y autorizas expresamente compartir los datos, podemos escalar el estudio a <a href="https://gsvingenieria.com/" target="_blank" rel="noopener noreferrer"><strong>GSV Ingeniería</strong></a> para la validación técnica y comercial correspondiente.
+      </div>
+
+      <div class="notice-box">
+        <strong>Procedimiento:</strong> 1) subes la factura, 2) el OCR extrae los datos, 3) confirmas la información, 4) SiMeCO₂ genera los informes y el expediente y 5) recibes por correo los documentos con el mismo enfoque presentado durante el evento.
+      </div>
+    </section>
+
+    <section class="section" id="stepUpload">
+      <div class="section-title">
+        <div class="step-number">1</div>
+        <div>
+          <h2>Sube la factura de servicios públicos</h2>
+          <p class="hint">Usa un PDF original o imágenes nítidas. Deben verse consumo, valor pagado, contrato, dirección y periodo. Si subes varios archivos o varias fotos de la misma factura, el OCR analizará todos los archivos y consolidará la información encontrada.</p>
+        </div>
+      </div>
+
+      <div class="upload-card">
+        <p class="upload-title">FACTURA DE SERVICIOS (debe incluir # de contrato)</p>
+        <input id="invoiceFiles" class="file-input" type="file" multiple accept="application/pdf,image/jpeg,image/png,image/webp" onchange="handleFileSelection(event)">
+        <button type="button" class="add-file-btn" onclick="document.getElementById('invoiceFiles').click()">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20h14v-2H5v2Zm7-18L6.5 7.5 7.9 8.9 11 5.85V16h2V5.85l3.1 3.05 1.4-1.4L12 2Z"/></svg>
+          Añadir archivo
+        </button>
+        <p class="upload-help">Sube hasta 5 archivos compatibles. Tamaño máximo por archivo: 10 MB.</p>
+        <div id="selectedFiles" class="selected-files"></div>
+        <div id="processingStatus" class="processing-status hidden" role="status" aria-live="polite">
+          <span class="hourglass" aria-hidden="true">⏳</span>
+          <span>Procesando factura con OCR...<small>Estamos revisando todos los archivos para encontrar consumo, contrato, periodo, municipio y datos de la sede.</small></span>
+        </div>
+      </div>
+
+      <div class="actions center">
+        <button id="analyzeBtn" type="button" class="primary" onclick="analyzeSelectedFiles()" disabled>Procesar factura</button>
+      </div>
+      <div id="uploadMessage" class="message hidden"></div>
+    </section>
+
+    <section class="section hidden" id="stepData">
+      <div class="section-title">
+        <div class="step-number">2</div>
+        <div>
+          <h2>Confirma los datos para generar tus beneficios</h2>
+          <p class="hint">Revisa y corrige los datos extraídos por el OCR. El consumo y la tarifa que confirmes serán la base de los planes, el análisis de huella de carbono, las estimaciones de ahorro y el predimensionamiento solar preliminar.</p>
+        </div>
+      </div>
+
+      <form id="studyForm" onsubmit="submitStudy(event)">
+        <input type="hidden" id="invoiceToken" name="invoiceToken">
+        <input type="hidden" id="notesMirror" name="notas">
+        <div class="website-field" aria-hidden="true">
+          <label for="website">Sitio web</label>
+          <input id="website" name="website" type="text" tabindex="-1" autocomplete="off">
+        </div>
+
+        <div class="grid">
+          <div class="field">
+            <label for="fullName">Nombre del solicitante *</label>
+            <input id="fullName" name="fullName" type="text" required minlength="2" maxlength="140">
+          </div>
+
+          <div class="field">
+            <label for="email">Correo del solicitante *</label>
+            <input id="email" name="email" type="email" required>
+          </div>
+
+          <div class="field">
+            <label for="whatsapp">WhatsApp *</label>
+            <input id="whatsapp" name="whatsapp" type="tel" required pattern="\+?\d{7,15}" placeholder="Ej: 3001234567">
+          </div>
+
+          <div class="field">
+            <label for="requesterType">Tipo de solicitante *</label>
+            <select id="requesterType" name="requesterType" required onchange="updateStudentCountVisibility()">
+              <option value="">Selecciona una opción</option>
+              <option>Institución Educativa</option>
+              <option>Colegio Privado</option>
+              <option>Universidad</option>
+              <option>Empresa</option>
+              <option>Propiedad Horizontal</option>
+              <option>Apartamento</option>
+              <option>Casa</option>
+              <option>Finca</option>
+              <option>Cabaña</option>
+              <option>Otros</option>
+            </select>
+          </div>
+
+          <div class="field full">
+            <label for="institutionName">Solicitante o sede asociada a la factura *</label>
+            <input id="institutionName" name="institutionName" type="text" required placeholder="Ej: Sede Principal MJB, Universidad EAFIT, Unidad Residencial Los Pinos">
+          </div>
+
+          <div class="field hidden" id="studentCountField">
+            <label for="studentCount">Número de estudiantes</label>
+            <input id="studentCount" name="studentCount" type="number" min="1" step="1" placeholder="Ej: 850">
+          </div>
+
+          <div class="field">
+            <label for="offerRecipientName">Persona o institución a quien se dirige la oferta *</label>
+            <input id="offerRecipientName" name="offerRecipientName" type="text" required minlength="2" maxlength="180" placeholder="Ej: Rectoría, María Pérez, representante legal, administración">
+          </div>
+
+          <div class="field">
+            <label for="offerRecipientRole">Cargo de la persona destinataria</label>
+            <input id="offerRecipientRole" name="offerRecipientRole" type="text" maxlength="120" placeholder="Ej: Rector(a), gerente, administrador(a), representante legal">
+          </div>
+
+          <div class="field full">
+            <label for="serviceAddress">Dirección detectada o confirmada *</label>
+            <input id="serviceAddress" name="serviceAddress" type="text" required>
+          </div>
+
+          <div class="field">
+            <label for="municipio">Municipio detectado o confirmado *</label>
+            <input id="municipio" name="municipio" type="text" required minlength="2" maxlength="120" placeholder="Ej: Medellín">
+          </div>
+
+          <div class="field">
+            <label for="contractNumber">Número de contrato de energía</label>
+            <input id="contractNumber" name="contractNumber" type="text">
+          </div>
+
+          <div class="field">
+            <label for="billingPeriod">Periodo de facturación</label>
+            <input id="billingPeriod" name="billingPeriod" type="text" placeholder="AAAA-MM">
+          </div>
+
+          <div class="field">
+            <label for="coverage">Cobertura solar objetivo (%) *</label>
+            <input id="coverage" name="coverage" type="number" min="1" max="100" step="1" value="100" required>
+          </div>
+
+          <div class="field">
+            <label for="consumption">Consumo energía (kWh/mes) *</label>
+            <input id="consumption" name="consumption" type="number" min="0.001" step="0.001" required>
+          </div>
+
+          <div class="field">
+            <label for="tariff">Tarifa energía (COP/kWh) *</label>
+            <input id="tariff" name="tariff" type="number" min="0.01" step="0.01" required>
+          </div>
+
+          <div class="field">
+            <label for="waterM3">Consumo agua (m³/mes)</label>
+            <input id="waterM3" name="waterM3" type="number" min="0" step="0.001">
+          </div>
+
+          <div class="field">
+            <label for="gasM3">Consumo gas (m³/mes)</label>
+            <input id="gasM3" name="gasM3" type="number" min="0" step="0.001">
+          </div>
+
+          <div class="field full">
+            <label for="notes">Notas u observaciones para la propuesta</label>
+            <textarea id="notes" name="notes" maxlength="2000" oninput="syncNotesMirror()" placeholder="Ej: cubierta disponible, horario de atención, nombre de contacto, observaciones de la factura, condiciones especiales de la sede o solicitud de visita técnica."></textarea>
+          </div>
+
+          <div class="field full">
+            <details class="privacy-notice">
+              <summary>Aviso de privacidad y tratamiento de datos</summary>
+              <p><strong>Responsable:</strong> Proyecto Líderes Ambientales de Medellín de la I.E. Manuel J. Betancur. Canal para consultas y reclamos: <a href="mailto:lideres.ambientales@iemanueljbetancur.edu.co">lideres.ambientales@iemanueljbetancur.edu.co</a>.</p>
+              <p><strong>Datos tratados:</strong> identificación y contacto del solicitante, institución o sede, dirección, factura de servicios, consumos, número de contrato, observaciones y resultados del estudio.</p>
+              <p><strong>Finalidades necesarias:</strong> leer la factura, generar y enviar el diagnóstico SiMeCO₂, guardar el expediente y registro técnico, atender solicitudes, comprobar la autorización y realizar seguimiento administrativo del estudio.</p>
+              <p><strong>Almacenamiento y destinatarios:</strong> la información se almacena en Google Drive y Google Sheets administrados por el responsable. El envío del estudio incluye una copia al correo institucional del proyecto. No se comparte con GSV Ingeniería sin marcar la autorización opcional.</p>
+              <p><strong>Conservación:</strong> los archivos temporales se eliminan en un plazo máximo de 48 horas. El expediente y el registro se conservarán hasta por 24 meses, salvo una obligación legal aplicable o una solicitud válida de supresión.</p>
+              <p><strong>Derechos:</strong> puedes conocer, actualizar y rectificar tus datos; solicitar prueba de la autorización; conocer su uso; revocar la autorización o pedir la supresión cuando proceda; y presentar consultas o reclamos mediante el correo indicado. También puedes acudir a la <a href="https://www.sic.gov.co/tema/proteccion-de-datos-personales" target="_blank" rel="noopener noreferrer">Superintendencia de Industria y Comercio</a>.</p>
+              <p><strong>GSV Ingeniería:</strong> compartir la información para elaborar una propuesta técnico-comercial es opcional y requiere una autorización separada. No marcarla no impide recibir el estudio preliminar SiMeCO₂.</p>
+              <p><strong>Versión:</strong> Aviso de privacidad SiMeCO₂ · v2 · 2026-09-11.</p>
+            </details>
+          </div>
+
+          <div class="field full">
+            <label class="consent">
+              <input id="consent" name="consent" type="checkbox">
+              <span>He leído el aviso de privacidad y autorizo de manera previa, expresa e informada el tratamiento de los datos y de la factura para las finalidades necesarias descritas. *</span>
+            </label>
+          </div>
+
+          <div class="field full">
+            <label class="consent optional-consent">
+              <input id="gsvConsent" name="gsvConsent" type="checkbox">
+              <span><strong>Autorización opcional para escalar el proyecto solar:</strong> autorizo compartir con GSV Ingeniería mis datos de contacto, la información de la sede, la factura y los resultados de SiMeCO₂, exclusivamente para elaborar y contactarme sobre una propuesta técnico-comercial formal relacionada con este estudio.</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="notice-box" style="margin-top:18px;"><strong>Antes de enviar:</strong> acepta el aviso de privacidad. La autorización para GSV Ingeniería es opcional. El estudio solo se generará cuando hagas clic en <strong>Generar y enviar estudio</strong>.</div>
+
+        <div class="actions">
+          <button type="button" class="secondary" onclick="previewSolar()">Previsualizar predimensionamiento</button>
+          <button id="submitBtn" type="submit" class="primary">Generar y enviar estudio</button>
+        </div>
+
+        <div id="reportProcessingStatus" class="processing-status processing-report hidden" role="status" aria-live="assertive">
+          <span id="reportHourglass" class="hourglass" aria-hidden="true">⏳</span>
+          <span class="processing-copy">
+            <span class="processing-title">Generando el estudio SiMeCO₂…</span>
+            <span id="reportProcessingStage" class="processing-stage">Preparando los documentos…</span>
+            <small>Estamos creando los PDF, el Google Sheets y el expediente de Drive; después se envía el correo. No cierres esta ventana.</small>
+            <span id="reportProcessingElapsed" class="processing-elapsed">Tiempo transcurrido: 00:00</span>
+          </span>
+        </div>
+      </form>
+
+      <div id="analysisMessage" class="message hidden"></div>
+      <div id="previewBox" class="result-box hidden"></div>
+    </section>
+  </main>
+
+  <script>
+    const PAGE_SESSION_TOKEN = <?!= JSON.stringify(pageSessionToken) ?>;
+    const FORM_STARTED_AT = Date.now();
+    const MAX_FILES = 5;
+    const MAX_SIZE_BYTES = 10 * 1024 * 1024;
+    const ALLOWED_TYPES = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'];
+    const ALLOWED_EXTENSIONS = ['pdf', 'jpg', 'jpeg', 'png', 'webp'];
+    const EDUCATIONAL_TYPES = ['Institución Educativa', 'Colegio Privado', 'Universidad'];
+    let selectedFilesState = [];
+    let studySendInProgress = false;
+    let studyAlreadySent = false;
+    let reportProgressTimer = null;
+    let reportProgressStartedAt = 0;
+
+    const REPORT_PROGRESS_STAGES = [
+      [0, 'Validando datos y preparando el expediente…'],
+      [12, 'Creando PDF de Energía y GEI…'],
+      [28, 'Creando planes de Agua y Gas…'],
+      [45, 'Generando el predimensionamiento solar…'],
+      [65, 'Creando Google Sheets de Reducciones GEI…'],
+      [90, 'Guardando el expediente en Google Drive…'],
+      [120, 'Preparando adjuntos y enviando el correo…'],
+      [180, 'Google está finalizando el envío. Mantén esta ventana abierta…']
+    ];
+
+    function formatElapsed(seconds) {
+      const m = Math.floor(seconds / 60);
+      const s = seconds % 60;
+      return String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+    }
+
+    function updateReportProgress() {
+      if (!reportProgressStartedAt) return;
+      const seconds = Math.max(0, Math.floor((Date.now() - reportProgressStartedAt) / 1000));
+      let stage = REPORT_PROGRESS_STAGES[0][1];
+      REPORT_PROGRESS_STAGES.forEach(function(item) { if (seconds >= item[0]) stage = item[1]; });
+      const stageEl = $('reportProcessingStage');
+      const elapsedEl = $('reportProcessingElapsed');
+      const hourglassEl = $('reportHourglass');
+      if (stageEl) stageEl.textContent = stage;
+      if (elapsedEl) elapsedEl.textContent = 'Tiempo transcurrido: ' + formatElapsed(seconds);
+      if (hourglassEl) hourglassEl.textContent = seconds % 2 === 0 ? '⏳' : '⌛';
+    }
+
+    function startReportProgress() {
+      if (reportProgressTimer) return;
+      reportProgressStartedAt = Date.now();
+      updateReportProgress();
+      reportProgressTimer = setInterval(updateReportProgress, 1000);
+      setTimeout(function() {
+        const box = $('reportProcessingStatus');
+        if (box && !box.classList.contains('hidden')) box.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 80);
+    }
+
+    function stopReportProgress() {
+      if (reportProgressTimer) clearInterval(reportProgressTimer);
+      reportProgressTimer = null;
+      reportProgressStartedAt = 0;
+      const elapsedEl = $('reportProcessingElapsed');
+      if (elapsedEl) elapsedEl.textContent = 'Tiempo transcurrido: 00:00';
+    }
+
+    function $(id) { return document.getElementById(id); }
+
+    function updateStudentCountVisibility() {
+      const requesterType = $('requesterType') ? $('requesterType').value : '';
+      const show = EDUCATIONAL_TYPES.includes(requesterType);
+      const field = $('studentCountField');
+      const input = $('studentCount');
+      if (field) field.classList.toggle('hidden', !show);
+      if (input) {
+        input.required = false;
+        if (!show) input.value = '';
+      }
+    }
+
+    function setMessage(id, text, type) {
+      const el = $(id);
+      el.textContent = text || '';
+      el.className = 'message' + (text ? '' : ' hidden') + (type ? ' ' + type : '');
+    }
+
+    function setBusy(isBusy, text) {
+      const analyzeBtn = $('analyzeBtn');
+      const submitBtn = $('submitBtn');
+      const processingStatus = $('processingStatus');
+      const reportProcessingStatus = $('reportProcessingStatus');
+      const statusText = String(text || '').toLowerCase();
+      const isInvoiceProcessing = isBusy && statusText.indexOf('procesando') >= 0;
+      const isReportGenerating = isBusy && statusText.indexOf('generando') >= 0;
+      if (analyzeBtn) {
+        analyzeBtn.disabled = isBusy || !selectedFilesState.length;
+        analyzeBtn.textContent = isInvoiceProcessing ? '⏳ Procesando factura...' : 'Procesar factura';
+      }
+      if (submitBtn) {
+        submitBtn.disabled = isBusy;
+        submitBtn.textContent = isReportGenerating ? '⏳ Generando estudio...' : 'Generar y enviar estudio';
+      }
+      if (processingStatus) {
+        processingStatus.classList.toggle('hidden', !isInvoiceProcessing);
+      }
+      if (reportProcessingStatus) {
+        reportProcessingStatus.classList.toggle('hidden', !isReportGenerating);
+      }
+      if (isReportGenerating) startReportProgress(); else stopReportProgress();
+      const stepData = $('stepData');
+      if (stepData) stepData.setAttribute('aria-busy', isReportGenerating ? 'true' : 'false');
+    }
+
+
+
+
+    function bytesToMb(bytes) {
+      return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+    }
+
+    function handleFileSelection(event) {
+      setMessage('uploadMessage', '', '');
+      const processingStatus = $('processingStatus');
+      if (processingStatus) processingStatus.classList.add('hidden');
+      studySendInProgress = false;
+      studyAlreadySent = false;
+      if ($('invoiceToken')) $('invoiceToken').value = '';
+      const files = Array.from(event.target.files || []);
+
+      if (!files.length) {
+        selectedFilesState = [];
+        renderSelectedFiles();
+        return;
+      }
+
+      if (files.length > MAX_FILES) {
+        event.target.value = '';
+        selectedFilesState = [];
+        renderSelectedFiles();
+        setMessage('uploadMessage', 'Puedes subir máximo 5 archivos.', 'error');
+        return;
+      }
+
+      for (const file of files) {
+        if (!isAllowedInvoiceFile(file)) {
+          event.target.value = '';
+          selectedFilesState = [];
+          renderSelectedFiles();
+          setMessage('uploadMessage', 'Formato no permitido. Usa PDF, JPG, PNG o WEBP.', 'error');
+          return;
+        }
+        if (file.size > MAX_SIZE_BYTES) {
+          event.target.value = '';
+          selectedFilesState = [];
+          renderSelectedFiles();
+          setMessage('uploadMessage', 'Cada archivo debe pesar máximo 10 MB. Archivo rechazado: ' + file.name + ' (' + bytesToMb(file.size) + ').', 'error');
+          return;
+        }
+      }
+
+      selectedFilesState = files;
+      renderSelectedFiles();
+    }
+
+    function getFileExtension(name) {
+      const parts = String(name || '').toLowerCase().split('.');
+      return parts.length > 1 ? parts.pop() : '';
+    }
+
+    function getNormalizedMimeType(file) {
+      const reported = String(file && file.type || '').toLowerCase().split(';')[0].trim();
+      if (ALLOWED_TYPES.includes(reported)) return reported;
+      const byExtension = {
+        pdf: 'application/pdf',
+        jpg: 'image/jpeg',
+        jpeg: 'image/jpeg',
+        png: 'image/png',
+        webp: 'image/webp'
+      };
+      return byExtension[getFileExtension(file && file.name)] || reported;
+    }
+
+    function isAllowedInvoiceFile(file) {
+      const mime = getNormalizedMimeType(file);
+      const extension = getFileExtension(file && file.name);
+      return ALLOWED_TYPES.includes(mime) && ALLOWED_EXTENSIONS.includes(extension);
+    }
+
+    function renderSelectedFiles() {
+      const container = $('selectedFiles');
+      container.innerHTML = '';
+      selectedFilesState.forEach(function(file, index) {
+        const item = document.createElement('div');
+        item.className = 'file-pill';
+        item.innerHTML = '<span>' + (index + 1) + '. ' + escapeHtml(file.name) + '</span><span>' + bytesToMb(file.size) + '</span>';
+        container.appendChild(item);
+      });
+      $('analyzeBtn').disabled = !selectedFilesState.length;
+    }
+
+    function fileToPayload(file) {
+      return new Promise(function(resolve, reject) {
+        const reader = new FileReader();
+        reader.onload = function() {
+          const result = String(reader.result || '');
+          const base64 = result.indexOf(',') >= 0 ? result.split(',')[1] : result;
+          resolve({
+            name: file.name,
+            mimeType: getNormalizedMimeType(file),
+            size: file.size,
+            base64: base64
+          });
+        };
+        reader.onerror = function() { reject(new Error('No se pudo leer el archivo: ' + file.name)); };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    async function analyzeSelectedFiles() {
+      if (!selectedFilesState.length) {
+        setMessage('uploadMessage', 'Debes añadir la factura de servicios.', 'error');
+        return;
+      }
+
+      try {
+        setBusy(true, 'Procesando factura...');
+        setMessage('uploadMessage', '⏳ Procesando factura. El OCR está leyendo todos los archivos visibles y consolidando los datos; espera un momento...', 'ok');
+        const payloads = [];
+        for (const file of selectedFilesState) {
+          payloads.push(await fileToPayload(file));
+        }
+
+        google.script.run
+          .withSuccessHandler(handleAnalyzeSuccess)
+          .withFailureHandler(handleServerError)
+          .analyzeInvoice(payloads, PAGE_SESSION_TOKEN);
+      } catch (err) {
+        setBusy(false);
+        setMessage('uploadMessage', err.message || String(err), 'error');
+      }
+    }
+
+    function handleAnalyzeSuccess(result) {
+      setBusy(false);
+      if (!result || !result.ok) {
+        setMessage('uploadMessage', 'No fue posible analizar la factura.', 'error');
+        return;
+      }
+
+      $('invoiceToken').value = result.token || '';
+      $('institutionName').value = result.institutionName || result.customerName || '';
+      $('serviceAddress').value = result.serviceAddress || '';
+      $('municipio').value = result.city || result.municipio || result.municipality || '';
+      $('contractNumber').value = result.contractNumber || '';
+      $('billingPeriod').value = result.billingPeriod || '';
+      $('consumption').value = positiveNumberOrBlank(result.consumption, result.energyKwh);
+      $('tariff').value = detectedTariffOrBlank(result);
+      $('waterM3').value = result.waterM3 || '';
+      $('gasM3').value = result.gasM3 || '';
+
+      $('stepData').classList.remove('hidden');
+      setMessage('uploadMessage', result.warning || 'Factura procesada correctamente.', 'ok');
+      setMessage(
+        'analysisMessage',
+        'Datos colocados automáticamente desde la factura. Revísalos y corrige cualquier lectura antes de hacer clic en “Generar y enviar estudio”:\n' +
+        'Municipio: ' + ($('municipio').value || 'debes escribirlo manualmente') + '\n' +
+        'Consumo: ' + ($('consumption').value || 'Por confirmar') + ' kWh/mes\n' +
+        'Tarifa: ' + ($('tariff').value || 'Por confirmar') + ' COP/kWh\n\n' +
+        'Versión OCR: ' + (result.build || 'versión anterior sin identificar') + '\n' +
+        'Confianza OCR: ' + (result.confidence || 'por validar') +
+        '\nArchivo principal: ' + (result.fileName || '') +
+        '\nArchivos subidos: ' + (result.fileCount || 1) +
+        '\nArchivos leídos por OCR: ' + (result.ocrReadableFiles || result.fileCount || 1) + '/' + (result.ocrTotalFiles || result.fileCount || 1),
+        'ok'
+      );
+      $('stepData').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function positiveNumberOrBlank(primary, fallback) {
+      const first = Number(primary);
+      if (Number.isFinite(first) && first > 0) return Math.round(first * 1000) / 1000;
+      const second = Number(fallback);
+      return Number.isFinite(second) && second > 0 ? Math.round(second * 1000) / 1000 : '';
+    }
+
+    function wholeNumberOrBlank(primary, fallback) {
+      const first = Number(primary);
+      if (Number.isFinite(first) && first > 0) return Math.round(first);
+      const second = Number(fallback);
+      return Number.isFinite(second) && second > 0 ? Math.round(second) : '';
+    }
+
+    function detectedTariffOrBlank(result) {
+      const direct = positiveNumberOrBlank(result && result.tariff, result && result.energyTariff);
+      if (direct !== '') return direct;
+
+      // Respaldo verificable: solo si el backend identificó el valor bruto de
+      // energía y el consumo. No se usa el total general de la factura.
+      const consumption = Number(result && (result.consumption || result.energyKwh));
+      const energyCharge = Number(result && result.energyCharge);
+      if (Number.isFinite(consumption) && consumption > 0 && Number.isFinite(energyCharge) && energyCharge > 0) {
+        const calculated = energyCharge / consumption;
+        if (calculated >= 80 && calculated <= 4000) return Math.round(calculated * 100) / 100;
+      }
+      return '';
+    }
+
+    function getNotesValue() {
+      const el = $('notes');
+      return el ? String(el.value || '').trim() : '';
+    }
+
+    function syncNotesMirror() {
+      const value = getNotesValue();
+      const mirror = $('notesMirror');
+      if (mirror) mirror.value = value;
+      return value;
+    }
+
+    function collectPayload() {
+      const notesValue = syncNotesMirror();
+      return {
+        invoiceToken: $('invoiceToken').value,
+        pageSessionToken: PAGE_SESSION_TOKEN,
+        formStartedAt: FORM_STARTED_AT,
+        website: $('website').value,
+        fullName: $('fullName').value.trim(),
+        email: $('email').value.trim(),
+        whatsapp: $('whatsapp').value.trim().replace(/[\s\-().]/g, ''),
+        requesterType: $('requesterType').value,
+        institutionName: $('institutionName').value.trim(),
+        studentCount: Number($('studentCount') && $('studentCount').value || 0),
+        offerRecipientName: $('offerRecipientName').value.trim(),
+        proposalRecipientName: $('offerRecipientName').value.trim(),
+        dirigidoA: $('offerRecipientName').value.trim(),
+        offerRecipientRole: $('offerRecipientRole').value.trim(),
+        proposalRecipientRole: $('offerRecipientRole').value.trim(),
+        cargoDirigidoA: $('offerRecipientRole').value.trim(),
+        serviceAddress: $('serviceAddress').value.trim(),
+        municipio: $('municipio').value.trim(),
+        municipality: $('municipio').value.trim(),
+        contractNumber: $('contractNumber').value.trim(),
+        billingPeriod: $('billingPeriod').value.trim(),
+        consumption: Number($('consumption').value || 0),
+        tariff: Number($('tariff').value || 0),
+        waterM3: Number($('waterM3').value || 0),
+        gasM3: Number($('gasM3').value || 0),
+        coverage: Number($('coverage').value || 100),
+        notes: notesValue,
+        notas: notesValue,
+        observaciones: notesValue,
+        observations: notesValue,
+        'Notas u observaciones': notesValue,
+        debugNotesLength: notesValue.length,
+        consent: $('consent').checked,
+        gsvConsent: $('gsvConsent').checked,
+        consentVersion: 'Aviso de privacidad SiMeCO₂ · v2 · 2026-09-11',
+        privacyNoticeVersion: 'Aviso de privacidad SiMeCO₂ · v2 · 2026-09-11',
+        source: 'Formulario Web App SiMeCO₂'
+      };
+    }
+
+    function previewSolar() {
+      const payload = collectPayload();
+      if (!payload.consumption || !payload.tariff) {
+        setMessage('analysisMessage', 'Confirma consumo y tarifa antes de previsualizar.', 'error');
+        return;
+      }
+
+      setBusy(true, 'Calculando...');
+      google.script.run
+        .withSuccessHandler(function(res) {
+          setBusy(false);
+          if (!res || !res.ok) return;
+          $('previewBox').classList.remove('hidden');
+          $('previewBox').textContent = [
+            'Potencia preliminar: ' + formatNumber(res.kwp, 1) + ' kWp',
+            'Paneles estimados: ' + formatNumber(res.panels, 0),
+            'Área requerida: ' + formatNumber(res.area, 0) + ' m²',
+            'Generación estimada: ' + formatNumber(res.generationMonthly, 0) + ' kWh/mes',
+            'Ahorro mensual estimado: $ ' + formatNumber(res.monthlySaving, 0),
+            'Valor referencial: $ ' + formatNumber(res.projectValue, 0),
+            'Cuota 60 meses: $ ' + formatNumber(res.finance60, 0),
+            'Referencia económica: ' + (res.economicReferenceVersion || 'sin versión') + ' · fecha original: ' + (res.economicReferenceSourceDate || 'no documentada'),
+            'Modelo financiero: ' + (res.financeModelVersion || 'sin versión') + ' · simulación referencial, no tasa bancaria vigente'
+          ].join('\n');
+        })
+        .withFailureHandler(handleServerError)
+        .previewSolarPredimensioning({
+          consumption: payload.consumption,
+          tariff: payload.tariff,
+          coverage: payload.coverage
+        });
+    }
+
+    function submitStudy(event) {
+      event.preventDefault();
+      sendStudy('manual');
+    }
+
+    function sendStudy(mode) {
+      if (studySendInProgress || studyAlreadySent) return;
+      const payload = collectPayload();
+      if (!payload.invoiceToken) {
+        setMessage('analysisMessage', 'Primero debes procesar la factura.', 'error');
+        return;
+      }
+      if (!payload.consent) {
+        setMessage(
+          'analysisMessage',
+          'Debes aceptar el aviso de privacidad para generar y enviar el estudio. La autorización para GSV Ingeniería es opcional.',
+          'error'
+        );
+        return;
+      }
+
+      studySendInProgress = true;
+      setBusy(true, 'Generando...');
+      setMessage('analysisMessage', 'Generando informe detallado PGEE-UPME, planes ambientales, expediente, registro en Sheets y correo...', 'ok');
+      google.script.run
+        .withSuccessHandler(function(res) {
+          studySendInProgress = false;
+          setBusy(false);
+          if (!res || !res.ok) {
+            setMessage('analysisMessage', 'No fue posible finalizar el estudio.', 'error');
+            return;
+          }
+          studyAlreadySent = true;
+          const successLines = [
+            '✅ Tus beneficios SiMeCO₂ fueron generados y enviados correctamente' + (mode === 'auto' ? ' de forma automática.' : '.'),
+            'Código: ' + res.code,
+            'Correo enviado a: ' + res.sentTo,
+            'Registro en la base técnica: fila ' + res.databaseRow,
+            'Autorización para compartir con GSV Ingeniería: ' + (res.detected && res.detected.gsvConsent ? 'Sí' : 'No')
+          ];
+          if (res.economicTraceability) {
+            successLines.push('Referencia económica: ' + res.economicTraceability.referenceVersion);
+            successLines.push('Modelo financiero: ' + res.economicTraceability.financeModelVersion + ' · no es tasa bancaria vigente');
+          }
+          if (Array.isArray(res.reports)) {
+            successLines.push('Documentos adjuntos enviados: ' + res.reports.length);
+          }
+          if (res.reductionPlanSheetUrl) {
+            successLines.push('Google Sheets editable Plan de Reducciones GEI: ' + res.reductionPlanSheetUrl);
+          }
+          if (res.dashboardWarning) {
+            successLines.push('Aviso de seguimiento: ' + res.dashboardWarning);
+          }
+          if (Array.isArray(res.invoiceAttachmentsOmitted) && res.invoiceAttachmentsOmitted.length) {
+            successLines.push('Factura(s) guardada(s) en Drive, pero no adjunta(s) por tamaño: ' + res.invoiceAttachmentsOmitted.join(', '));
+            successLines.push(res.expedienteAccessGranted
+              ? 'El correo incluye el enlace al expediente privado de Drive.'
+              : 'Solicita una copia respondiendo al correo recibido e indicando el código del estudio.');
+          }
+          setMessage('analysisMessage', successLines.join('\n'), 'ok');
+        })
+        .withFailureHandler(handleServerError)
+        .generateAndSendStudy(payload);
+    }
+
+    function handleServerError(error) {
+      studySendInProgress = false;
+      setBusy(false);
+      setMessage('analysisMessage', error && error.message ? error.message : String(error), 'error');
+      setMessage('uploadMessage', error && error.message ? error.message : String(error), 'error');
+    }
+
+    function formatNumber(value, decimals) {
+      const n = Number(value || 0);
+      return n.toLocaleString('es-CO', {
+        minimumFractionDigits: decimals,
+        maximumFractionDigits: decimals
+      });
+    }
+
+    function escapeHtml(value) {
+      return String(value || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    updateStudentCountVisibility();
+  </script>
+</body>
+</html>

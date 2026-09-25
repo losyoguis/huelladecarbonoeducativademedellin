@@ -1,0 +1,18 @@
+ACTUALIZACIÓN SIMECO2 v111
+
+APPS SCRIPT (misma aplicación web):
+1. Reemplaza Code.gs por Code.gs de esta carpeta.
+2. Reemplaza Index.html por Index.html de esta carpeta si usas el formulario Web App.
+3. Mantén/actualiza appsscript.json.
+4. Guarda.
+5. En el selector de funciones ejecuta UNA VEZ: autorizarYProbarCorreoSiMeCO2.
+6. Acepta permisos. Debe llegar un correo de prueba a CONTACT_EMAIL.
+7. Implementar > Administrar implementaciones > Editar > Nueva versión > Implementar.
+8. Conserva la misma URL /exec.
+
+SIMECO2 WEB:
+- Publica/reemplaza la carpeta completa v111.
+- Haz recarga fuerte (Ctrl/Cmd + Shift + R).
+- Prueba Centro documental > Crear y enviar por e-mail.
+
+IMPORTANTE: si autorizarYProbarCorreoSiMeCO2 no envía, el problema es autorización/cuota/cuenta implementadora y no la interfaz.

@@ -1,4 +1,6 @@
-# SiMeCO₂ v109 — Solar completo + PDF + Sheets + e-mail
+# SiMeCO₂ v111 · Correo robusto + reloj de arena
+
+La v111 corrige el flujo de entrega documental: una vez creados los 4 PDF, el Google Sheets y el expediente Drive, el correo se envía **antes** de sincronizar el dashboard. Así, una falla o lentitud del dashboard no bloquea el e-mail. Incluye reintento controlado de MailApp, función `autorizarYProbarCorreoSiMeCO2()` y un reloj de arena animado con etapas y tiempo transcurrido.
 
 La v110 conserva la arquitectura liviana de la v109 y amplía el **Plan de Acción Ambiental por sede**. La pestaña **Solar** muestra en pantalla el predimensionamiento técnico-económico completo y el nuevo **Centro documental** permite crear bajo demanda los cuatro PDF (Energía/GEI, Agua, Gas y Solar), un Google Sheets editable de Reducciones GEI, el expediente privado en Drive y el envío de los PDF por e-mail mediante Google Apps Script.
 

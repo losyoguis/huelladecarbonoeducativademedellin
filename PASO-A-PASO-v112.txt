@@ -1,0 +1,14 @@
+SiMeCO₂ v112 · REMITENTE OFICIAL
+
+1. Abre Apps Script con la cuenta lideres.ambientales@iemanueljbetancur.edu.co.
+2. Reemplaza Code.gs por el Code.gs v112 completo.
+3. Conserva Index.html y appsscript.json de este paquete.
+4. Guarda.
+5. Ejecuta verificarCuentaRemitenteSiMeCO2(). Debe indicar ok=true y remitenteEfectivo=lideres.ambientales@iemanueljbetancur.edu.co.
+6. Ejecuta autorizarYProbarCorreoSiMeCO2(). Autoriza Drive, Sheets y envío de correo si Google lo solicita.
+7. Confirma que llega el correo de prueba a lideres.ambientales@iemanueljbetancur.edu.co.
+8. Ve a Implementar > Administrar implementaciones > Editar > Nueva versión > Implementar.
+9. No crees otra Web App. Mantén la misma URL /exec.
+10. Prueba Crear expediente y luego Crear y enviar por e-mail desde SiMeCO₂.
+
+IMPORTANTE: MailApp no permite definir arbitrariamente el campo From. El remitente real es la cuenta que ejecuta la Web App; por eso v112 bloquea el envío si la implementación no corre con la cuenta institucional oficial.
