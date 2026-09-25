@@ -1,0 +1,9 @@
+SiMeCO₂ v114 · ACTUALIZACIÓN
+
+1. Publica la carpeta completa v114 en el mismo hosting/sitio donde está SiMeCO₂.
+2. Haz recarga fuerte del navegador: Cmd+Shift+R (Mac) o Ctrl+Shift+R (Windows).
+3. No debes configurar ninguna URL de Apps Script: el motor oficial /exec ya viene integrado.
+4. En Informe por sede > Plan Ambiental, completa destinatario y autorización.
+5. Usa “Crear expediente documental” o “Crear y enviar por e-mail”.
+6. El nuevo botón “SUBIR MI FACTURA Y TENER PLANES DE ACCIÓN (HOGAR O EMPRESA)” abre directamente Sistema 1.1.
+7. La Web App de Apps Script existente se conserva. Si reemplazas Code.gs por el incluido, publica una nueva versión de la MISMA implementación.

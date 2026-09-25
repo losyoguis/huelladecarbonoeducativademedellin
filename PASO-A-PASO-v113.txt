@@ -1,0 +1,31 @@
+SiMeCO₂ v113 · ACTUALIZACIÓN DE INTEGRACIÓN DOCUMENTAL DIRECTA
+
+1. GOOGLE APPS SCRIPT
+   - En el MISMO proyecto que ya funciona, reemplaza Código.gs por Code.gs v113.
+   - Reemplaza appsscript.json por el de v113.
+   - Conserva Index.html del paquete v113.
+   - Guarda.
+   - Implementar > Administrar implementaciones > lápiz > Nueva versión > Implementar.
+   - Ejecutar como: Yo, usando lideres.ambientales@iemanueljbetancur.edu.co.
+   - No crees una nueva Web App.
+
+2. SIMECO2
+   - Publica la carpeta completa v113 o reemplaza la versión anterior.
+   - Haz recarga fuerte del navegador (Cmd+Shift+R / Ctrl+Shift+R).
+
+3. INFORME POR SEDE
+   - Genera el Plan Ambiental.
+   - Abre Centro documental.
+   - En URL /exec puedes pegar cualquiera de estas formas:
+     https://script.google.com/macros/s/ID/exec
+     https://script.google.com/a/macros/iemanueljbetancur.edu.co/s/ID/exec
+   - v113 convierte automáticamente la segunda a la URL canónica de la misma implementación.
+   - Completa destinatario y autorización.
+   - Prueba primero Crear expediente documental.
+   - Luego Crear y enviar por e-mail.
+
+4. RESULTADO ESPERADO
+   - Reloj de arena animado y tiempo transcurrido.
+   - 4 PDF + Google Sheets + expediente Drive.
+   - Correo enviado desde lideres.ambientales@iemanueljbetancur.edu.co.
+   - En Apps Script > Ejecuciones debe aparecer doPost como Aplicación web.

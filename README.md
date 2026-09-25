@@ -1,3 +1,9 @@
+# SiMeCO₂ v114 · Motor documental permanente + Subir mi factura
+
+La URL oficial del motor Google Apps Script está integrada directamente. Los usuarios ya no deben pegar ni configurar `/exec`. Incluye un botón destacado para que hogares o empresas suban su factura y reciban planes de acción.
+
+Esta versión corrige la conexión desde **Informe por sede** hacia la Web App de Google Apps Script para crear el expediente documental y enviar el paquete por e-mail. Acepta y normaliza URLs de Google Workspace `/a/macros/<dominio>/.../exec`.
+
 # SiMeCO₂ v111 · Correo robusto + reloj de arena
 
 La v111 corrige el flujo de entrega documental: una vez creados los 4 PDF, el Google Sheets y el expediente Drive, el correo se envía **antes** de sincronizar el dashboard. Así, una falla o lentitud del dashboard no bloquea el e-mail. Incluye reintento controlado de MailApp, función `autorizarYProbarCorreoSiMeCO2()` y un reloj de arena animado con etapas y tiempo transcurrido.

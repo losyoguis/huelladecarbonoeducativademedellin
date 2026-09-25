@@ -1,9 +1,12 @@
-/* SiMeCO₂ v111 · Plan Ambiental + documentos/e-mail con transporte iframe POST compatible entre dominios */
+/* SiMeCO₂ v114 · Motor documental fijo + CTA subir factura */
 (() => {
   'use strict';
 
   const STORAGE_KEY = 'simeco2_plan_ambiental_seguimiento_v109';
   const DOC_SETTINGS_KEY = 'simeco2_documentos_v109';
+  const PERMANENT_DOCUMENT_BACKEND_URL = 'https://script.google.com/macros/s/AKfycby5UBGXjnvWRnhpXhy7F3X6v497g8Z3S8ekdXX07rst27zZ9Ej1clHuBi7_mDAYsJY/exec';
+  const INVOICE_ACTION_PLANS_URL = 'https://sites.google.com/iemanueljbetancur.edu.co/lideres-ambientales/sistemas-de-informaci%C3%B3n/sistema-1-1-sube-tu-factura?authuser=0';
+  window.SIMECO_DOCUMENT_BACKEND_URL = PERMANENT_DOCUMENT_BACKEND_URL;
   const SOLAR_IRRADIANCE_H_DAY = 4.2;
   const SOLAR_DAYS_MONTH = 30;
   const SOLAR_SPECIFIC_YIELD_KWH_KWP_MONTH = SOLAR_IRRADIANCE_H_DAY * SOLAR_DAYS_MONTH;
@@ -367,11 +370,37 @@
       <button type="button" data-env-doc="matrix">📊 Matriz GEI CSV</button>
       <button type="button" class="doc-package-btn" data-doc-action="generate">🗂️ Crear 4 PDF + Google Sheets</button>
       <button type="button" class="doc-email-btn" data-doc-action="send">📧 Enviar todo por e-mail</button>
+      <a class="invoice-action-cta" href="${esc(INVOICE_ACTION_PLANS_URL)}" target="_blank" rel="noopener noreferrer">📤 SUBIR MI FACTURA Y TENER PLANES DE ACCIÓN (HOGAR O EMPRESA)</a>
     </div>`;
   }
 
+  function normalizeAppsScriptExecUrl(raw){
+    let value=String(raw||'').trim();
+    if(!value)return '';
+    try{
+      const parsed=new URL(value);
+      if(parsed.protocol!=='https:'||parsed.hostname!=='script.google.com')return value;
+      const path=parsed.pathname.replace(/\/dev\/?$/i,'/exec');
+      const standard=path.match(/^\/macros\/s\/([^/]+)\/exec\/?$/i);
+      const workspace=path.match(/^\/a\/macros\/[^/]+\/s\/([^/]+)\/exec\/?$/i);
+      const deploymentId=(standard||workspace)?.[1]||'';
+      // Para Web Apps públicas de Workspace usamos la URL canónica sin /a/macros/<dominio>.
+      // Evita redirecciones adicionales cuando SiMeCO₂ está embebido en Google Sites.
+      if(deploymentId)return `https://script.google.com/macros/s/${deploymentId}/exec`;
+      return `${parsed.origin}${path}${parsed.search||''}`;
+    }catch(_err){return value.replace(/\/dev(?:\?.*)?$/i,'/exec');}
+  }
+  function isAppsScriptExecUrl(raw){
+    const value=normalizeAppsScriptExecUrl(raw);
+    return /^https:\/\/script\.google\.com\/macros\/s\/[^/]+\/exec(?:\?.*)?$/i.test(value);
+  }
+
   function loadDocSettings(){
-    try{return JSON.parse(localStorage.getItem(DOC_SETTINGS_KEY)||'{}')||{};}catch(_err){return {};}
+    try{
+      const settings=JSON.parse(localStorage.getItem(DOC_SETTINGS_KEY)||'{}')||{};
+      delete settings.backendUrl;
+      return settings;
+    }catch(_err){return {};}
   }
   function saveDocSettings(settings){try{localStorage.setItem(DOC_SETTINGS_KEY,JSON.stringify(settings));}catch(_err){}}
   function documentCenter(plan){
@@ -386,7 +415,7 @@
       </div>
       <label class="document-notes-label">Observaciones<input id="docNotes" type="text" maxlength="400" value="${esc(s.notes||'')}" placeholder="Observaciones para incluir en el expediente"></label>
       <div class="document-consents"><label><input id="docPrivacyConsent" type="checkbox" ${s.consent?'checked':''}> Autorizo la generación, almacenamiento en Drive y envío de estos documentos al correo indicado.</label><label><input id="docGsvConsent" type="checkbox" ${s.gsvConsent?'checked':''}> Autorizo, de forma opcional, que el predimensionamiento pueda escalarse a GSV Ingeniería.</label></div>
-      <details class="document-backend-config"><summary>⚙️ Configuración del motor Google Apps Script</summary><label>URL de implementación /exec<input id="docBackendUrl" type="url" value="${esc(s.backendUrl||window.SIMECO_DOCUMENT_BACKEND_URL||'')}" placeholder="https://script.google.com/macros/s/.../exec"></label><p>Se configura una sola vez en este navegador. El motor se incluye en la carpeta <code>apps-script-documentos</code> de la v109.</p></details>
+      <div class="document-backend-fixed" role="note"><strong>✅ Motor documental conectado automáticamente</strong><span>PDF, Google Sheets, Drive y e-mail están vinculados al motor oficial de SiMeCO₂. No requiere configuración del usuario.</span></div>
       <div class="document-center-actions"><button type="button" class="primary" data-doc-action="generate">🗂️ Crear expediente documental</button><button type="button" class="primary email" data-doc-action="send">📧 Crear y enviar por e-mail</button></div>
       <div id="documentCenterStatus" class="document-center-status" role="status">Los documentos se crean solo cuando los solicitas.</div>
       <div id="documentCenterResult" class="document-center-result" hidden></div>
@@ -394,15 +423,14 @@
   }
 
   function collectDocumentSettings(){
-    const backendUrl=String($('docBackendUrl')?.value||window.SIMECO_DOCUMENT_BACKEND_URL||'').trim();
-    const settings={open:true,backendUrl,recipientName:String($('docRecipientName')?.value||'').trim(),recipientRole:String($('docRecipientRole')?.value||'').trim(),email:String($('docRecipientEmail')?.value||'').trim(),studentCount:String($('docStudentCount')?.value||'').trim(),notes:String($('docNotes')?.value||'').trim(),consent:Boolean($('docPrivacyConsent')?.checked),gsvConsent:Boolean($('docGsvConsent')?.checked)};
+    const settings={open:true,recipientName:String($('docRecipientName')?.value||'').trim(),recipientRole:String($('docRecipientRole')?.value||'').trim(),email:String($('docRecipientEmail')?.value||'').trim(),studentCount:String($('docStudentCount')?.value||'').trim(),notes:String($('docNotes')?.value||'').trim(),consent:Boolean($('docPrivacyConsent')?.checked),gsvConsent:Boolean($('docGsvConsent')?.checked)};
     saveDocSettings(settings);return settings;
   }
 
   function buildDocumentPayload(plan,settings,action){
     const c=plan.context,e=plan.energy,w=plan.water,g=plan.gas,s=plan.solar;
     const latest=(c.energyPeriods||[]).slice().sort().pop()||new Date().toISOString().slice(0,7);
-    return {action:'simeco2-documents',mode:action==='send'?'send':'generate',fullName:settings.recipientName||c.site,email:settings.email,requesterType:'Institución Educativa',offerRecipientName:settings.recipientName||c.site,offerRecipientRole:settings.recipientRole||'',notes:settings.notes,institutionName:c.site,serviceAddress:c.address||'',city:'Medellín',billingPeriod:latest,billingDays:30,contractNumber:'',analysisConfidence:'alta',source:'Histórico consolidado SiMeCO₂',consent:settings.consent,gsvConsent:settings.gsvConsent,studentCount:Number(settings.studentCount)||0,consumption:Number(e.avg)||0,tariff:Number(e.tariff)||0,monthlyBillApprox:(Number(e.avg)||0)*(Number(e.tariff)||0),coverage:Number(s.coveragePct)||80,factor:Number(c.factorCo2)||0.126,annualCarbon:(Number(e.avg)||0)*12*(Number(c.factorCo2)||0.126)/1000,waterM3:Number(w.site?.avgWaterMonth)||0,gasM3:Number(g.site?.avgGasMonth)||0,clientVersion:'SiMeCO₂ v111',historyPeriods:(c.energyPeriods||[]).length};
+    return {action:'simeco2-documents',mode:action==='send'?'send':'generate',fullName:settings.recipientName||c.site,email:settings.email,requesterType:'Institución Educativa',offerRecipientName:settings.recipientName||c.site,offerRecipientRole:settings.recipientRole||'',notes:settings.notes,institutionName:c.site,serviceAddress:c.address||'',city:'Medellín',billingPeriod:latest,billingDays:30,contractNumber:'',analysisConfidence:'alta',source:'Histórico consolidado SiMeCO₂',consent:settings.consent,gsvConsent:settings.gsvConsent,studentCount:Number(settings.studentCount)||0,consumption:Number(e.avg)||0,tariff:Number(e.tariff)||0,monthlyBillApprox:(Number(e.avg)||0)*(Number(e.tariff)||0),coverage:Number(s.coveragePct)||80,factor:Number(c.factorCo2)||0.126,annualCarbon:(Number(e.avg)||0)*12*(Number(c.factorCo2)||0.126)/1000,waterM3:Number(w.site?.avgWaterMonth)||0,gasM3:Number(g.site?.avgGasMonth)||0,clientVersion:'SiMeCO₂ v114',historyPeriods:(c.energyPeriods||[]).length};
   }
 
   function renderDocumentResult(result){
@@ -431,7 +459,7 @@
         if(!data||data.channel!=='simeco2-document-result'||data.requestId!==requestId)return;
         finish(resolve,data.result||{ok:false,error:'El motor documental no devolvió un resultado.'});
       };
-      const timer=setTimeout(()=>finish(reject,new Error('El motor documental tardó demasiado en responder. Revisa la implementación /exec y vuelve a intentar.')),240000);
+      const timer=setTimeout(()=>finish(reject,new Error('El motor documental continúa procesando la solicitud. Revisa el correo y Drive; si después de unos minutos no recibes resultados, vuelve a intentar.')),360000);
       window.addEventListener('message',onMessage);
       document.body.appendChild(iframe);document.body.appendChild(form);
       try{form.submit();}catch(err){finish(reject,err);}
@@ -443,25 +471,30 @@
     const center=document.querySelector('.environmental-document-center');if(center)center.open=true;
     const settings=collectDocumentSettings();
     const status=$('documentCenterStatus');
-    const endpoint=settings.backendUrl;
-    if(!/^https:\/\/script\.google\.com\/macros\/s\/.+\/exec(?:\?.*)?$/i.test(endpoint)){if(status)status.innerHTML='⚠️ Configura primero la URL <strong>/exec</strong> del Google Apps Script incluido en la v110.';document.querySelector('.environmental-document-center')?.setAttribute('open','');return;}
+    const endpoint=normalizeAppsScriptExecUrl(PERMANENT_DOCUMENT_BACKEND_URL);
+    if(!isAppsScriptExecUrl(endpoint)){if(status)status.textContent='❌ El motor documental oficial de SiMeCO₂ no está disponible. Contacta al administrador.';return;}
     if(action==='send'&&!settings.email){if(status)status.textContent='⚠️ Escribe el correo destinatario.';return;}
     if(!settings.consent){if(status)status.textContent='⚠️ Debes autorizar la generación y almacenamiento de los documentos.';return;}
     const payload=buildDocumentPayload(currentPlan,settings,action);
     if(!(payload.consumption>0)){if(status)status.textContent='⚠️ La sede no tiene una línea base eléctrica mensual válida.';return;}
     const buttons=[...document.querySelectorAll('[data-doc-action]')];buttons.forEach(b=>b.disabled=true);
-    if(status){
-      status.innerHTML=action==='send'
-        ? '<span class="doc-hourglass" aria-hidden="true">⏳</span><strong> Generando y enviando…</strong> Creando 4 PDF, Google Sheets y expediente Drive. El correo se enviará antes de finalizar el seguimiento del dashboard.'
-        : '<span class="doc-hourglass" aria-hidden="true">⏳</span><strong> Generando expediente…</strong> Creando 4 PDF, Google Sheets y carpeta de Drive.';
+    const startedAt=Date.now();
+    let progressTimer=null;
+    const paintProgress=()=>{
+      if(!status)return;
+      const elapsed=Math.max(0,Math.floor((Date.now()-startedAt)/1000));
+      const mm=String(Math.floor(elapsed/60)).padStart(2,'0'),ss=String(elapsed%60).padStart(2,'0');
+      const stage=elapsed<12?'Preparando datos de la sede…':elapsed<35?'Generando los PDF…':elapsed<60?'Creando Google Sheets y expediente Drive…':action==='send'?'Finalizando documentos y enviando el e-mail…':'Finalizando el expediente documental…';
+      status.innerHTML=`<span class="doc-hourglass" aria-hidden="true">⏳</span><strong> ${action==='send'?'Generando y enviando…':'Generando expediente…'}</strong> ${esc(stage)} <span class="doc-elapsed">Tiempo: ${mm}:${ss}</span>`;
       status.classList.add('is-processing');
-    }
+    };
+    paintProgress();progressTimer=setInterval(paintProgress,1000);
     try{
       const result=await postDocumentsViaIframe(endpoint,payload);
       if(!result?.ok)throw new Error(result?.error||'No fue posible crear los documentos.');
       renderDocumentResult(result);if(status)status.textContent=result.emailed?`✅ Correo enviado a ${result.sentTo}.`:'✅ Expediente documental creado correctamente.';
     }catch(err){console.error('[SiMeCO₂] Documentos:',err);if(status)status.textContent='❌ '+(err?.message||String(err));}
-    finally{buttons.forEach(b=>b.disabled=false);if(status)status.classList.remove('is-processing');}
+    finally{if(progressTimer)clearInterval(progressTimer);buttons.forEach(b=>b.disabled=false);if(status)status.classList.remove('is-processing');}
   }
 
   function render(plan){
@@ -606,6 +639,6 @@
 
   bindStatic();
   window.simecoGenerateEnvironmentalPlan=generate;
-  window.simecoEnvironmentalPlanDebug={buildPlan,buildSolarPlan,selectSolarPricePackage,financePayment,printablePlan,downloadCsv,trackingFor,buildDocumentPayload};
+  window.simecoEnvironmentalPlanDebug={buildPlan,buildSolarPlan,selectSolarPricePackage,financePayment,printablePlan,downloadCsv,trackingFor,buildDocumentPayload,normalizeAppsScriptExecUrl,isAppsScriptExecUrl,postDocumentsViaIframe,PERMANENT_DOCUMENT_BACKEND_URL,INVOICE_ACTION_PLANS_URL};
   window.SIMECO_ENVIRONMENTAL_PLAN_READY=true;
 })();

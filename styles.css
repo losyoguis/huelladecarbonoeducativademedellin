@@ -6424,8 +6424,8 @@ body.tutorial-first-visit-open .invoice-loading-card{
 .environmental-plan-priority{min-width:168px;padding:12px 14px;border:1px solid rgba(255,255,255,.25);border-radius:14px;background:rgba(255,255,255,.1);text-align:right}
 .environmental-plan-priority strong{display:block;font-size:1.15rem;color:#fff}.environmental-plan-priority small{display:block;margin-top:5px;color:#dbece6;font-size:.72rem}
 .environmental-doc-actions{display:flex;flex-wrap:wrap;gap:8px;padding:14px 18px;border-bottom:1px solid #e2ece8;background:#f9fcfb}
-.environmental-doc-actions button{border:1px solid #c6ddd4;background:#fff;color:#0b6048;border-radius:999px;padding:9px 12px;font-weight:800;cursor:pointer}
-.environmental-doc-actions button:hover{background:#eef8f2;border-color:#7fbba5}
+.environmental-doc-actions button,.environmental-doc-actions a{border:1px solid #c6ddd4;background:#fff;color:#0b6048;border-radius:999px;padding:9px 12px;font-weight:800;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;line-height:1.25}
+.environmental-doc-actions button:hover,.environmental-doc-actions a:hover{background:#eef8f2;border-color:#7fbba5}
 .environmental-plan-tabs{display:flex;gap:8px;overflow:auto;padding:14px 18px 0;background:#fff;border-bottom:1px solid #e5eeea;scrollbar-width:thin}
 .env-plan-tab{white-space:nowrap;border:0;background:#edf4f1;color:#45615a;border-radius:11px 11px 0 0;padding:11px 14px;font-weight:800;cursor:pointer}
 .env-plan-tab.active{background:#0b6b4b;color:#fff}
@@ -6451,7 +6451,7 @@ body.tutorial-first-visit-open .invoice-loading-card{
   .environmental-main-actions{justify-content:stretch;width:100%}.environmental-main-actions button{width:100%}
   .environmental-plan-header{display:block;padding:18px}.environmental-plan-priority{margin-top:12px;min-width:0;text-align:left}
   .environmental-plan-tabs{padding-left:10px;padding-right:10px}.environmental-plan-panes{padding:14px 10px}
-  .environmental-metrics{grid-template-columns:1fr 1fr}.environmental-doc-actions{display:grid;grid-template-columns:1fr 1fr}.environmental-doc-actions button{width:100%}
+  .environmental-metrics{grid-template-columns:1fr 1fr}.environmental-doc-actions{display:grid;grid-template-columns:1fr 1fr}.environmental-doc-actions button,.environmental-doc-actions a{width:100%}
   .env-tracking-wrap{overflow-x:auto}.environmental-tracking-table{min-width:1100px}.environmental-action-table{min-width:850px}
 }
 @media(max-width:480px){.environmental-metrics{grid-template-columns:1fr}.environmental-doc-actions{grid-template-columns:1fr}}
@@ -6475,3 +6475,15 @@ body.tutorial-first-visit-open .invoice-loading-card{
 .document-center-status.is-processing{padding:14px 16px;border-radius:12px;background:#f3f8fb;border:1px solid #b8cad8;font-weight:600;}
 .doc-hourglass{display:inline-block;font-size:1.6rem;vertical-align:middle;animation:simecoDocHourglass 1.05s ease-in-out infinite;transform-origin:center;}
 @keyframes simecoDocHourglass{0%,100%{transform:rotate(0deg)}50%{transform:rotate(180deg)}}
+
+/* v113 · progreso documental visible */
+.doc-elapsed{display:inline-block;margin-left:8px;padding:3px 8px;border-radius:999px;background:#fff;border:1px solid #c9d9e4;color:#456474;font-size:.76rem;font-weight:800;}
+
+
+/* SiMeCO₂ v114 · motor documental fijo + acceso para Hogar o Empresa */
+.environmental-doc-actions .invoice-action-cta{flex:1 1 100%;border-color:#087a58;background:linear-gradient(135deg,#0f9b73,#10c79a);color:#fff;font-weight:950;letter-spacing:.01em;padding:12px 16px;box-shadow:0 8px 20px rgba(15,155,115,.16)}
+.environmental-doc-actions .invoice-action-cta:hover{background:linear-gradient(135deg,#0b805f,#0eae87);color:#fff;border-color:#086e51}
+.document-backend-fixed{display:flex;gap:8px 14px;align-items:center;flex-wrap:wrap;margin:0 18px 12px;padding:11px 13px;border:1px solid #b9d8cc;border-radius:11px;background:#eef8f4;color:#345a4d;font-size:.82rem}
+.document-backend-fixed strong{color:#0b6048}.document-backend-fixed span{color:#5b7169}
+@media(max-width:720px){.environmental-doc-actions .invoice-action-cta{grid-column:1/-1}.document-backend-fixed{display:grid}}
+@media print{.invoice-action-cta,.document-backend-fixed{display:none!important}}
