@@ -16,5 +16,5 @@ ok(backend.includes('function doPost(e)'),'Falta endpoint doPost');
 ok(backend.includes('generateSiMeCO2DocumentPackage_'),'Falta generador documental backend');
 ok(backend.includes('createReductionPlanGoogleSheet_'),'Falta Google Sheets de reducciones');
 ok(backend.includes('MailApp.sendEmail'),'Falta envío de correo');
-ok(index.includes("const version='109-documents-email'"),'Cache-busting no actualizado a v109');
+ok(index.includes("const version='110-document-buttons'") || index.includes("const version='110-document-buttons'"),'Cache-busting documental no reconocido');
 console.log('✓ v109 solar completo + documentos + e-mail');
