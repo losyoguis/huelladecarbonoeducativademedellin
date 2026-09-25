@@ -3,7 +3,7 @@ function ok(v,m){if(!v)throw new Error(m)}
 const html=fs.readFileSync('index.html','utf8');
 const app=fs.readFileSync('app.js','utf8');
 for(const f of ['data/registros.agua.min.js','data/resumenes.agua.min.js','water.js','data/registros.gas.min.js','data/resumenes.gas.min.js','gas.js','assistant.js']){
-  ok(!html.includes(`<script defer src="${f}?v=110-document-buttons"`),`${f} todavía se carga en el arranque`);
+  ok(!html.includes(`<script defer src="${f}?v=114-fixed-backend"`),`${f} todavía se carga en el arranque`);
 }
 ok(html.includes("loadSequence(['data/registros.agua.min.js','data/resumenes.agua.min.js','water.js'])"),'Falta carga bajo demanda de Agua');
 ok(html.includes("loadSequence(['data/registros.gas.min.js','data/resumenes.gas.min.js','gas.js'])"),'Falta carga bajo demanda de Gas');

@@ -27,9 +27,9 @@ ok(app.includes("Los meses históricos sin factura eléctrica específica se mue
 ok(!app.includes('El consumo eléctrico queda pendiente de integrar desde esa fuente'),'Persiste el mensaje antiguo de integración pendiente en el informe');
 
 // 3) El overlay debe cargar antes de app.js y con nueva versión de caché.
-const basePos=html.indexOf('data/registros.electricidad.min.js?v=110-document-buttons');
-const overlayPos=html.indexOf('data/inem/registros.inem.js?v=110-document-buttons');
-const appPos=html.indexOf('app.js?v=110-document-buttons');
+const basePos=html.indexOf('data/registros.electricidad.min.js?v=114-fixed-backend');
+const overlayPos=html.indexOf('data/inem/registros.inem.js?v=114-fixed-backend');
+const appPos=html.indexOf('app.js?v=114-fixed-backend');
 ok(basePos>=0&&overlayPos>basePos&&appPos>overlayPos,'Orden de carga incorrecto: bundle -> overlay INEM -> app.js');
 
 // 4) Los archivos que cambian con nuevas facturas no deben quedar immutable un año.

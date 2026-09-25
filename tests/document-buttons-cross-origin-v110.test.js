@@ -14,5 +14,5 @@ ok(backend.includes('function siMeCO2IframeResponse_'),'Falta respuesta iframe d
 ok(backend.includes("transport === 'iframe'"),'doPost no reconoce transporte iframe');
 ok(backend.includes('HtmlService.XFrameOptionsMode.ALLOWALL'),'La respuesta no permite iframe');
 ok(backend.includes("channel: 'simeco2-document-result'"),'Backend no publica canal postMessage');
-ok(index.includes("const version='110-document-buttons'"),'Cache-busting no actualizado a v110');
+ok(index.includes("const version='114-fixed-backend'"),'Cache-busting documental no actualizado a v114');
 console.log('✓ v110 botones documentales cross-origin');
