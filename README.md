@@ -1,8 +1,8 @@
 # SiMeCO₂ v109 — Solar completo + PDF + Sheets + e-mail
 
-La v109 conserva la arquitectura liviana de la v108 y amplía el **Plan de Acción Ambiental por sede**. La pestaña **Solar** muestra en pantalla el predimensionamiento técnico-económico completo y el nuevo **Centro documental** permite crear bajo demanda los cuatro PDF (Energía/GEI, Agua, Gas y Solar), un Google Sheets editable de Reducciones GEI, el expediente privado en Drive y el envío de los PDF por e-mail mediante Google Apps Script.
+La v110 conserva la arquitectura liviana de la v109 y amplía el **Plan de Acción Ambiental por sede**. La pestaña **Solar** muestra en pantalla el predimensionamiento técnico-económico completo y el nuevo **Centro documental** permite crear bajo demanda los cuatro PDF (Energía/GEI, Agua, Gas y Solar), un Google Sheets editable de Reducciones GEI, el expediente privado en Drive y el envío de los PDF por e-mail mediante Google Apps Script.
 
-El motor documental se encuentra en `apps-script-documentos/`. Debe desplegarse como Web App una vez y pegar su URL `/exec` en el Centro documental de SiMeCO₂; la URL se guarda localmente en el navegador. Esta separación evita cargar Google Docs/Drive/Correo durante el arranque de la app.
+La v110 corrige la comunicación entre la app publicada y Google Apps Script mediante POST por iframe + postMessage, evitando el bloqueo CORS de los botones documentales. El motor documental se encuentra en `apps-script-documentos/`. Debe desplegarse como Web App una vez y pegar su URL `/exec` en el Centro documental de SiMeCO₂; la URL se guarda localmente en el navegador. Esta separación evita cargar Google Docs/Drive/Correo durante el arranque de la app.
 
 ## Nuevo flujo
 

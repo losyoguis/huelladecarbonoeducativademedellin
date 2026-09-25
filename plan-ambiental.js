@@ -1,4 +1,4 @@
-/* SiMeCO₂ v109 · Plan Ambiental + predimensionamiento solar completo + documentos/e-mail · carga bajo demanda */
+/* SiMeCO₂ v110 · Plan Ambiental + documentos/e-mail con transporte iframe POST compatible entre dominios */
 (() => {
   'use strict';
 
@@ -402,7 +402,7 @@
   function buildDocumentPayload(plan,settings,action){
     const c=plan.context,e=plan.energy,w=plan.water,g=plan.gas,s=plan.solar;
     const latest=(c.energyPeriods||[]).slice().sort().pop()||new Date().toISOString().slice(0,7);
-    return {action:'simeco2-documents',mode:action==='send'?'send':'generate',fullName:settings.recipientName||c.site,email:settings.email,requesterType:'Institución Educativa',offerRecipientName:settings.recipientName||c.site,offerRecipientRole:settings.recipientRole||'',notes:settings.notes,institutionName:c.site,serviceAddress:c.address||'',city:'Medellín',billingPeriod:latest,billingDays:30,contractNumber:'',analysisConfidence:'alta',source:'Histórico consolidado SiMeCO₂',consent:settings.consent,gsvConsent:settings.gsvConsent,studentCount:Number(settings.studentCount)||0,consumption:Number(e.avg)||0,tariff:Number(e.tariff)||0,monthlyBillApprox:(Number(e.avg)||0)*(Number(e.tariff)||0),coverage:Number(s.coveragePct)||80,factor:Number(c.factorCo2)||0.126,annualCarbon:(Number(e.avg)||0)*12*(Number(c.factorCo2)||0.126)/1000,waterM3:Number(w.site?.avgWaterMonth)||0,gasM3:Number(g.site?.avgGasMonth)||0,clientVersion:'SiMeCO₂ v109',historyPeriods:(c.energyPeriods||[]).length};
+    return {action:'simeco2-documents',mode:action==='send'?'send':'generate',fullName:settings.recipientName||c.site,email:settings.email,requesterType:'Institución Educativa',offerRecipientName:settings.recipientName||c.site,offerRecipientRole:settings.recipientRole||'',notes:settings.notes,institutionName:c.site,serviceAddress:c.address||'',city:'Medellín',billingPeriod:latest,billingDays:30,contractNumber:'',analysisConfidence:'alta',source:'Histórico consolidado SiMeCO₂',consent:settings.consent,gsvConsent:settings.gsvConsent,studentCount:Number(settings.studentCount)||0,consumption:Number(e.avg)||0,tariff:Number(e.tariff)||0,monthlyBillApprox:(Number(e.avg)||0)*(Number(e.tariff)||0),coverage:Number(s.coveragePct)||80,factor:Number(c.factorCo2)||0.126,annualCarbon:(Number(e.avg)||0)*12*(Number(c.factorCo2)||0.126)/1000,waterM3:Number(w.site?.avgWaterMonth)||0,gasM3:Number(g.site?.avgGasMonth)||0,clientVersion:'SiMeCO₂ v110',historyPeriods:(c.energyPeriods||[]).length};
   }
 
   function renderDocumentResult(result){
@@ -413,13 +413,38 @@
     box.innerHTML=`<strong>✅ ${result?.emailed?'Documentos creados y correo enviado.':'Expediente documental creado.'}</strong>${result?.code?`<span>Código: ${esc(result.code)}</span>`:''}<div class="document-result-links">${html}</div>`;box.hidden=false;
   }
 
+  function postDocumentsViaIframe(endpoint,payload){
+    return new Promise((resolve,reject)=>{
+      const requestId='simeco2-doc-'+Date.now()+'-'+Math.random().toString(36).slice(2,10);
+      const frameName='simeco2_doc_frame_'+requestId.replace(/[^a-z0-9_]/gi,'_');
+      const iframe=document.createElement('iframe');
+      iframe.name=frameName;iframe.title='Procesamiento documental SiMeCO₂';iframe.hidden=true;
+      const form=document.createElement('form');
+      form.method='POST';form.action=endpoint;form.target=frameName;form.hidden=true;
+      const fields={transport:'iframe',requestId,payload:JSON.stringify(payload)};
+      Object.entries(fields).forEach(([name,value])=>{const input=document.createElement('input');input.type='hidden';input.name=name;input.value=value;form.appendChild(input);});
+      let settled=false;
+      const cleanup=()=>{window.removeEventListener('message',onMessage);clearTimeout(timer);setTimeout(()=>{form.remove();iframe.remove();},50);};
+      const finish=(fn,value)=>{if(settled)return;settled=true;cleanup();fn(value);};
+      const onMessage=(event)=>{
+        const data=event?.data;
+        if(!data||data.channel!=='simeco2-document-result'||data.requestId!==requestId)return;
+        finish(resolve,data.result||{ok:false,error:'El motor documental no devolvió un resultado.'});
+      };
+      const timer=setTimeout(()=>finish(reject,new Error('El motor documental tardó demasiado en responder. Revisa la implementación /exec y vuelve a intentar.')),240000);
+      window.addEventListener('message',onMessage);
+      document.body.appendChild(iframe);document.body.appendChild(form);
+      try{form.submit();}catch(err){finish(reject,err);}
+    });
+  }
+
   async function createOrSendDocuments(action){
     if(!currentPlan)return alert('Primero genera el Plan de Acción Ambiental.');
     const center=document.querySelector('.environmental-document-center');if(center)center.open=true;
     const settings=collectDocumentSettings();
     const status=$('documentCenterStatus');
     const endpoint=settings.backendUrl;
-    if(!/^https:\/\/script\.google\.com\/macros\/s\/.+\/exec(?:\?.*)?$/i.test(endpoint)){if(status)status.innerHTML='⚠️ Configura primero la URL <strong>/exec</strong> del Google Apps Script incluido en la v109.';document.querySelector('.environmental-document-center')?.setAttribute('open','');return;}
+    if(!/^https:\/\/script\.google\.com\/macros\/s\/.+\/exec(?:\?.*)?$/i.test(endpoint)){if(status)status.innerHTML='⚠️ Configura primero la URL <strong>/exec</strong> del Google Apps Script incluido en la v110.';document.querySelector('.environmental-document-center')?.setAttribute('open','');return;}
     if(action==='send'&&!settings.email){if(status)status.textContent='⚠️ Escribe el correo destinatario.';return;}
     if(!settings.consent){if(status)status.textContent='⚠️ Debes autorizar la generación y almacenamiento de los documentos.';return;}
     const payload=buildDocumentPayload(currentPlan,settings,action);
@@ -427,8 +452,7 @@
     const buttons=[...document.querySelectorAll('[data-doc-action]')];buttons.forEach(b=>b.disabled=true);
     if(status)status.textContent=action==='send'?'Generando 4 PDF, Google Sheets, expediente Drive y enviando e-mail…':'Generando 4 PDF, Google Sheets y expediente Drive…';
     try{
-      const response=await fetch(endpoint,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)});
-      const raw=await response.text();let result;try{result=JSON.parse(raw);}catch(_err){throw new Error('El motor respondió en un formato no reconocido. Verifica que la implementación corresponda a la carpeta apps-script-documentos de la v109.');}
+      const result=await postDocumentsViaIframe(endpoint,payload);
       if(!result?.ok)throw new Error(result?.error||'No fue posible crear los documentos.');
       renderDocumentResult(result);if(status)status.textContent=result.emailed?`✅ Correo enviado a ${result.sentTo}.`:'✅ Expediente documental creado correctamente.';
     }catch(err){console.error('[SiMeCO₂] Documentos:',err);if(status)status.textContent='❌ '+(err?.message||String(err));}
