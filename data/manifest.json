@@ -1,7 +1,7 @@
 {
   "description": "Facturas canónicas verificadas para SiMeCO₂.",
   "dataVersion": "v56-reconciled-data-20260801",
-  "generatedAt": "2026-08-01",
+  "generatedAt": "2026-09-27",
   "files": [
     {
       "name": "1-2025Enero.pdf",
@@ -172,6 +172,16 @@
       "period": "2025-08",
       "size": 2636053,
       "pages": 374
+    },
+    {
+      "name": "8-2026Agosto.pdf",
+      "url": "data/8-2026Agosto.pdf",
+      "sha": "ca12ae4e25e4ba7e5318d0809b608aeba7506eb4",
+      "sha256": "9cf42ed959976d3fca1f922d2c19e3d19cd8c000c40542375790e0f2ec1e44c5",
+      "algorithm": "git-blob-sha1 + sha256",
+      "period": "2026-08",
+      "size": 2502466,
+      "pages": 366
     }
   ]
 }

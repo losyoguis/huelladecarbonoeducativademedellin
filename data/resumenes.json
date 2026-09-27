@@ -1,6 +1,6 @@
 {
   "version": "v56-reconciled-data-20260801",
-  "generatedAt": "2026-08-01",
+  "generatedAt": "2026-09-27",
   "summaries": [
     {
       "period": "2025-01",
@@ -259,7 +259,7 @@
       "previousEnergyKwh": 1169243.39,
       "detailRecords": 535,
       "reconciliation": {
-        "energyDifferencePct": -2.4848,
+        "energyDifferencePct": 1.2276,
         "waterDifferencePct": -0.0,
         "alcDifferencePct": -0.0233,
         "gasDifferencePct": -0.0095
@@ -283,7 +283,7 @@
       "previousEnergyKwh": 755186.76,
       "detailRecords": 535,
       "reconciliation": {
-        "energyDifferencePct": -1.704,
+        "energyDifferencePct": 2.3853,
         "waterDifferencePct": 0.0,
         "alcDifferencePct": -0.0217,
         "gasDifferencePct": -0.1031
@@ -307,7 +307,7 @@
       "previousEnergyKwh": 833873.56,
       "detailRecords": 535,
       "reconciliation": {
-        "energyDifferencePct": -0.6059,
+        "energyDifferencePct": 2.6127,
         "waterDifferencePct": -1.4223,
         "alcDifferencePct": -1.3687,
         "gasDifferencePct": -0.2062
@@ -331,7 +331,7 @@
       "previousEnergyKwh": 1252323.71,
       "detailRecords": 534,
       "reconciliation": {
-        "energyDifferencePct": -0.6044,
+        "energyDifferencePct": 2.4636,
         "waterDifferencePct": 0.0,
         "alcDifferencePct": -0.0153,
         "gasDifferencePct": -0.0115
@@ -355,7 +355,7 @@
       "previousEnergyKwh": 1266248.75,
       "detailRecords": 534,
       "reconciliation": {
-        "energyDifferencePct": -0.258,
+        "energyDifferencePct": 2.9495,
         "waterDifferencePct": 0.0,
         "alcDifferencePct": -0.0159,
         "gasDifferencePct": 2.2744
@@ -379,7 +379,7 @@
       "previousEnergyKwh": 1255948.11,
       "detailRecords": 532,
       "reconciliation": {
-        "energyDifferencePct": -0.6941,
+        "energyDifferencePct": 2.2055,
         "waterDifferencePct": -0.3896,
         "alcDifferencePct": -0.3908,
         "gasDifferencePct": 0.0029
@@ -403,10 +403,34 @@
       "previousEnergyKwh": 1284372.89,
       "detailRecords": 533,
       "reconciliation": {
-        "energyDifferencePct": -1.2001,
+        "energyDifferencePct": 2.4767,
         "waterDifferencePct": -0.295,
         "alcDifferencePct": -0.3029,
         "gasDifferencePct": 0.0031
+      },
+      "qualityStatus": "verified"
+    },
+    {
+      "period": "2026-08",
+      "source": "8-2026Agosto.pdf",
+      "sourceUrl": "data/8-2026Agosto.pdf",
+      "waterM3": 75835.15,
+      "alcM3": 76541.91,
+      "energyKwh": 1093549.03,
+      "gasM3": 83.22,
+      "waterValue": 382653197.02,
+      "alcValue": 306060144.32,
+      "energyValue": 954981942.47,
+      "gasValue": 370673.6,
+      "otherValue": 204658421.74,
+      "verifiedFrom": "Resumen de facturación, página 1",
+      "previousEnergyKwh": 1078205.6,
+      "detailRecords": 533,
+      "reconciliation": {
+        "energyDifferencePct": 2.578,
+        "waterDifferencePct": -0.2321,
+        "alcDifferencePct": -0.2469,
+        "gasDifferencePct": -0.0024
       },
       "qualityStatus": "verified"
     }
@@ -614,6 +638,18 @@
       "canonical": true,
       "size": 2636053,
       "pages": 374,
+      "qualityStatus": "verified"
+    },
+    "8-2026Agosto.pdf": {
+      "name": "8-2026Agosto.pdf",
+      "fingerprint": "ca12ae4e25e4ba7e5318d0809b608aeba7506eb4",
+      "sha256": "9cf42ed959976d3fca1f922d2c19e3d19cd8c000c40542375790e0f2ec1e44c5",
+      "algorithm": "git-blob-sha1 + sha256",
+      "period": "2026-08",
+      "count": 533,
+      "canonical": true,
+      "size": 2502466,
+      "pages": 366,
       "qualityStatus": "verified"
     }
   }
