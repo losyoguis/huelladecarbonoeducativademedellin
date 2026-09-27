@@ -6621,3 +6621,9 @@ canvas{display:block;max-width:100%!important;height:auto!important}
 .resource-values-panel[hidden]{display:none!important}
 /* Los rankings visuales siempre deben ocupar su propia franja antes de la tabla. */
 .water-ranking-panel .resource-ranking-chart,.water-savings-panel .resource-ranking-chart,.gas-ranking-panel .resource-ranking-chart,.gas-savings-panel .resource-ranking-chart{display:block!important;visibility:visible!important;min-height:120px}
+
+/* v128: filtros por periodo y navegación completa de rankings */
+.resource-period-filter{display:flex;justify-content:flex-end;gap:12px;padding:12px 0 10px}.resource-period-filter label{display:flex;align-items:center;gap:10px;font-weight:800;color:#174b40}.resource-period-filter select{min-width:220px;max-width:100%;padding:10px 36px 10px 12px;border:1px solid #b9ddd6;border-radius:12px;background:#fff;color:#173f37;font:inherit}.resource-chart-address .water-map-link,.resource-chart-address .gas-map-link{display:block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-decoration:none}.resource-chart-address a:hover{text-decoration:underline}.water-pagination,.gas-pagination{flex-wrap:wrap;gap:10px;justify-content:center}@media(max-width:640px){.resource-period-filter{justify-content:stretch}.resource-period-filter label{width:100%;flex-direction:column;align-items:stretch}.resource-period-filter select{width:100%;min-width:0}.water-pagination button,.gas-pagination button{min-height:44px}}
+
+/* v129 · periodos visibles en rankings gráficos de Agua y Gas */
+.resource-chart-periods{display:block;margin-top:2px;font-size:.72rem;font-weight:750;color:#648079;white-space:nowrap}

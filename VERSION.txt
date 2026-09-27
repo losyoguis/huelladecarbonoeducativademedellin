@@ -1,1 +1,1 @@
-SiMeCO2 v127 · desplegables históricos + rankings visuales robustos Agua/Gas
+SiMeCO2 v129 · periodos visibles en rankings gráficos de Agua/Gas · Google Maps · paginación 10 en 10

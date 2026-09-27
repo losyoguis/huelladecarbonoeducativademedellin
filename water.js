@@ -194,7 +194,10 @@
 
     const body=$w('waterMonthlyBody');
     if(body){
-      body.innerHTML=stats.rows.map((r,i)=>{
+      const exactPeriod=$w('waterExactValuesPeriod')?.value||'';
+      const exactRows=exactPeriod?stats.rows.filter(r=>r.period===exactPeriod):stats.rows;
+      body.innerHTML=exactRows.map((r)=>{
+        const i=stats.rows.findIndex(x=>x.period===r.period);
         const prev=i?stats.rows[i-1]:null;
         const isConsecutive=prev && monthBeforeWater(r.period)===prev.period;
         const diff=isConsecutive?Number(r.waterM3)-Number(prev.waterM3):null;
@@ -222,13 +225,13 @@
     return host;
   }
 
-  function renderWaterRankingChart(id,rows,valueGetter,valueFormatter,subtitle,startIndex=0){
+  function renderWaterRankingChart(id,rows,valueGetter,valueFormatter,subtitle,startIndex=0,periodGetter=null){
     const host=ensureWaterRankingChartHost(id); if(!host) return;
     const top=(rows||[]).slice(0,PAGE_SIZE);
     if(!top.length){host.innerHTML='<div class="resource-chart-empty">Sin datos para representar en esta selección.</div>';return;}
     const values=top.map(valueGetter).map(Number).filter(Number.isFinite),max=Math.max(...values,0);
     const title=id.includes('Savings')?'Ranking de sedes por ahorro de agua':'Ranking de sedes por consumo de agua (m³)';
-    host.innerHTML=`<div class="resource-visual-title"><strong>${esc(title)}</strong><small>${esc(subtitle)} · nombre y dirección · vista de ${top.length} sedes.</small></div><div class="resource-chart-grid resource-chart-grid-electric">${top.map((r,i)=>{const value=Number(valueGetter(r))||0,width=max>0?Math.max(2,100*value/max):0;return `<div class="resource-chart-row resource-chart-row-electric"><div class="resource-chart-name"><b>${startIndex+i+1}.</b><span title="${esc(r.displaySite)}">${esc(r.displaySite)}</span></div><div class="resource-chart-address" title="${esc(r.address||'Dirección no disponible')}">🏫 ${esc(r.address||'Dirección no disponible')}</div><div class="resource-chart-track"><i style="width:${width.toFixed(2)}%"></i></div><div class="resource-chart-value">${esc(valueFormatter(r,value))}</div></div>`;}).join('')}</div>`;
+    host.innerHTML=`<div class="resource-visual-title"><strong>${esc(title)}</strong><small>${esc(subtitle)} · nombre y dirección · vista de ${top.length} sedes.</small></div><div class="resource-chart-grid resource-chart-grid-electric">${top.map((r,i)=>{const value=Number(valueGetter(r))||0,width=max>0?Math.max(2,100*value/max):0;return `<div class="resource-chart-row resource-chart-row-electric"><div class="resource-chart-name"><b>${startIndex+i+1}.</b><span title="${esc(r.displaySite)}">${esc(r.displaySite)}</span></div><div class="resource-chart-address" title="${esc(r.address||'Dirección no disponible')}">${mapLink(r.address,r.address,r.displaySite)}</div><div class="resource-chart-track"><i style="width:${width.toFixed(2)}%"></i></div><div class="resource-chart-value">${esc(valueFormatter(r,value))}${periodGetter?`<small class="resource-chart-periods">${esc(periodGetter(r))}</small>`:''}</div></div>`;}).join('')}</div>`;
   }
 
   function filteredConsumptionRows(){
@@ -260,7 +263,7 @@
       const top=rows[0];
       $w('waterConsumptionSummary').innerHTML=top?`<strong>${rows.length} sedes con lectura.</strong> ${period?`Periodo: ${esc(monthLabelWater(period))}.`:'Acumulado de todos los periodos.'} Mayor consumo: <strong>${esc(top.displaySite)}</strong> con <strong>${fmt(top.waterM3)} m³</strong>. Total detallado de la selección: <strong>${fmt(total)} m³</strong>.`:'No hay sedes con lectura de agua para esta selección.';
     }
-    renderWaterRankingChart('waterConsumptionChart',visible,r=>r.waterM3,(r,v)=>`${fmt(v)} m³`,period?`Consumo de ${monthLabelWater(period)}`:'Consumo acumulado de todos los periodos',start);
+    renderWaterRankingChart('waterConsumptionChart',visible,r=>r.waterM3,(r,v)=>`${fmt(v)} m³`,period?`Consumo de ${monthLabelWater(period)}`:'Consumo acumulado de todos los periodos',start,r=>period?'1/1 período':`${r.waterPeriodCount}/${r.periodCount} períodos`);
     body.innerHTML=visible.length?visible.map((r,i)=>`<tr>
       <td>${start+i+1}</td>
       <td><strong>${esc(r.displaySite)}</strong>${r.displaySite!==r.site?`<small class="invoice-alias">En factura: ${esc(r.site)}</small>`:''}</td>
@@ -271,8 +274,10 @@
       <td><button type="button" class="water-plan-row-btn" data-water-plan-key="${esc(r.key)}">💧 Plan</button></td>
     </tr>`).join(''):'<tr><td colspan="7">No hay lecturas de agua para mostrar.</td></tr>';
     if($w('waterConsumptionPageInfo')) $w('waterConsumptionPageInfo').textContent=rows.length?`${start+1}–${Math.min(start+visible.length,rows.length)} de ${rows.length} · Página ${consumptionPage+1} de ${pages}`:'Sin resultados';
+    if($w('waterConsumptionFirst')) $w('waterConsumptionFirst').disabled=consumptionPage<=0;
     if($w('waterConsumptionPrev')) $w('waterConsumptionPrev').disabled=consumptionPage<=0;
     if($w('waterConsumptionNext')) $w('waterConsumptionNext').disabled=consumptionPage>=pages-1;
+    if($w('waterConsumptionLast')) $w('waterConsumptionLast').disabled=consumptionPage>=pages-1;
   }
 
   function waterBySitePeriod(){
@@ -359,7 +364,7 @@
         :`<strong>${rows.length} sedes con ahorro neto y reducciones verificables.</strong> Mejor Índice de Gestión del Ahorro de Agua: <strong>${esc(top.displaySite)}</strong> con <strong>${fmt(top.managementScore,1)} puntos</strong>.`
         :'No hay sedes con ahorro verificable para esta selección.';
     }
-    renderWaterRankingChart('waterSavingsChart',visible,r=>selected?r.savingsPercent:r.managementScore,(r,v)=>selected?`${fmt(v,1)}%`:`${fmt(v,1)} pts`,selected?'Porcentaje de reducción mensual verificada':'Índice de gestión del ahorro · normalizado por porcentaje',start);
+    renderWaterRankingChart('waterSavingsChart',visible,r=>selected?r.savingsPercent:r.managementScore,(r,v)=>selected?`${fmt(v,1)}%`:`${fmt(v,1)} pts`,selected?'Porcentaje de reducción mensual verificada':'Índice de gestión del ahorro · normalizado por porcentaje',start,r=>selected?'1/1 comparación':`${r.decreaseCount}/${r.comparisons.length} períodos a la baja`);
     body.innerHTML=visible.length?visible.map((r,i)=>{
       const metric=selected?`<strong>↓ ${fmt(r.savingsM3)} m³</strong>`:`<strong>🏆 ${fmt(r.managementScore,1)} pts</strong>`;
       const saving=selected?`${fmt(r.savingsPercent,1)}% menos`:`Ahorro neto ${fmt(r.netSavingsM3)} m³`;
@@ -375,12 +380,20 @@
       </tr>`;
     }).join(''):'<tr><td colspan="7">No hay reducciones de agua verificables para mostrar.</td></tr>';
     if($w('waterSavingsPageInfo')) $w('waterSavingsPageInfo').textContent=rows.length?`${start+1}–${Math.min(start+visible.length,rows.length)} de ${rows.length} · Página ${savingsPage+1} de ${pages}`:'Sin resultados';
+    if($w('waterSavingsFirst')) $w('waterSavingsFirst').disabled=savingsPage<=0;
     if($w('waterSavingsPrev')) $w('waterSavingsPrev').disabled=savingsPage<=0;
     if($w('waterSavingsNext')) $w('waterSavingsNext').disabled=savingsPage>=pages-1;
+    if($w('waterSavingsLast')) $w('waterSavingsLast').disabled=savingsPage>=pages-1;
   }
 
   function populateWaterFilters(){
     const periods=[...new Set(waterRecords().map(r=>r.period).filter(Boolean))].sort();
+    const exact=$w('waterExactValuesPeriod');
+    if(exact){
+      const value=exact.value;
+      exact.innerHTML='<option value="">Todos los periodos</option>'+periods.map(p=>`<option value="${esc(p)}">${esc(monthLabelWater(p))}</option>`).join('');
+      exact.value=periods.includes(value)?value:'';
+    }
     const consumption=$w('waterConsumptionPeriod');
     if(consumption){
       const value=consumption.value;
@@ -577,17 +590,22 @@
   }
 
   function bindWaterEvents(){
+    $w('waterExactValuesPeriod')?.addEventListener('change',()=>renderWaterOverview());
     $w('waterConsumptionPeriod')?.addEventListener('change',()=>{consumptionPage=0;renderWaterConsumptionRanking();});
     $w('waterConsumptionSearch')?.addEventListener('input',()=>{consumptionPage=0;renderWaterConsumptionRanking();});
     $w('waterConsumptionRefresh')?.addEventListener('click',()=>{if($w('waterConsumptionPeriod'))$w('waterConsumptionPeriod').value='';if($w('waterConsumptionSearch'))$w('waterConsumptionSearch').value='';consumptionPage=0;renderWaterConsumptionRanking();});
+    $w('waterConsumptionFirst')?.addEventListener('click',()=>{consumptionPage=0;renderWaterConsumptionRanking();});
     $w('waterConsumptionPrev')?.addEventListener('click',()=>{consumptionPage=Math.max(0,consumptionPage-1);renderWaterConsumptionRanking();});
     $w('waterConsumptionNext')?.addEventListener('click',()=>{consumptionPage++;renderWaterConsumptionRanking();});
+    $w('waterConsumptionLast')?.addEventListener('click',()=>{const rows=filteredConsumptionRows();consumptionPage=Math.max(0,Math.ceil(rows.length/PAGE_SIZE)-1);renderWaterConsumptionRanking();});
 
     $w('waterSavingsPeriod')?.addEventListener('change',()=>{savingsPage=0;renderWaterSavingsRanking();});
     $w('waterSavingsSearch')?.addEventListener('input',()=>{savingsPage=0;renderWaterSavingsRanking();});
     $w('waterSavingsRefresh')?.addEventListener('click',()=>{if($w('waterSavingsPeriod'))$w('waterSavingsPeriod').value='';if($w('waterSavingsSearch'))$w('waterSavingsSearch').value='';savingsPage=0;renderWaterSavingsRanking();});
+    $w('waterSavingsFirst')?.addEventListener('click',()=>{savingsPage=0;renderWaterSavingsRanking();});
     $w('waterSavingsPrev')?.addEventListener('click',()=>{savingsPage=Math.max(0,savingsPage-1);renderWaterSavingsRanking();});
     $w('waterSavingsNext')?.addEventListener('click',()=>{savingsPage++;renderWaterSavingsRanking();});
+    $w('waterSavingsLast')?.addEventListener('click',()=>{const rows=buildWaterSavingsRows();savingsPage=Math.max(0,Math.ceil(rows.length/PAGE_SIZE)-1);renderWaterSavingsRanking();});
 
     document.addEventListener('click',ev=>{
       const btn=ev.target.closest('[data-water-plan-key]');
