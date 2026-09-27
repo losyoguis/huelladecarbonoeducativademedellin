@@ -1,6 +1,6 @@
 {
   "version": "v106-service-exceptions-inem-integrated",
-  "generatedAt": "2026-09-24",
+  "generatedAt": "2026-09-27",
   "description": "Excepciones y fuentes eléctricas separadas verificadas. El INEM se sincroniza desde data/inem.",
   "exceptions": [
     {
@@ -14,9 +14,21 @@
       "shortLabel": "INEM integrado",
       "confidence": "Alta",
       "summary": "La energía eléctrica del INEM se gestiona mediante un contrato de mercado no regulado separado del consolidado educativo. SiMeCO₂ integra automáticamente la serie verificable disponible desde la subcarpeta data/inem.",
-      "dataState": "7 periodo(s) integrados (2026-01 a 2026-07): 258.461,17 kWh. La serie se actualiza al incorporar nuevas facturas en data/inem y ejecutar el integrador.",
+      "dataState": "8 periodo(s) integrados (2026-01 a 2026-08): 300.904,38 kWh. La serie se actualiza al incorporar nuevas facturas en data/inem y ejecutar el integrador.",
       "zeroMeaning": false,
       "evidence": [
+        {
+          "type": "local_invoice",
+          "title": "Factura eléctrica INEM · 2026-09",
+          "url": "data/inem/115943831285.pdf",
+          "detail": "Fuente eléctrica integrada desde data/inem. Archivo: 115943831285.pdf."
+        },
+        {
+          "type": "local_invoice",
+          "title": "Factura eléctrica INEM · 2026-08",
+          "url": "data/inem/INEM 1.pdf",
+          "detail": "Fuente eléctrica integrada desde data/inem. Archivo: INEM 1.pdf."
+        },
         {
           "type": "local_invoice",
           "title": "Factura eléctrica INEM · 2026-08",
