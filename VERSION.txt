@@ -1,1 +1,1 @@
-SiMeCO2 v126 · rankings visuales paginados de 10 en 10 para Agua y Gas
+SiMeCO2 v127 · desplegables históricos + rankings visuales robustos Agua/Gas

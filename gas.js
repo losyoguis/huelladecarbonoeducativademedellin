@@ -207,8 +207,23 @@
     drawGasHistory();
   }
 
+  function ensureGasRankingChartHost(id){
+    let host=$w(id);
+    if(host) return host;
+    const bodyId=id.includes('Savings')?'gasSavingsBody':'gasConsumptionBody';
+    const body=$w(bodyId);
+    const wrap=body?.closest('.table-wrap');
+    if(!wrap) return null;
+    host=document.createElement('div');
+    host.id=id;
+    host.className='resource-ranking-chart gas-ranking-chart';
+    host.setAttribute('aria-label',id.includes('Savings')?'Gráfico del ranking de ahorro de gas':'Gráfico del ranking de consumo de gas');
+    wrap.parentNode.insertBefore(host,wrap);
+    return host;
+  }
+
   function renderGasRankingChart(id,rows,valueGetter,valueFormatter,subtitle,startIndex=0){
-    const host=$w(id); if(!host) return;
+    const host=ensureGasRankingChartHost(id); if(!host) return;
     const top=(rows||[]).slice(0,PAGE_SIZE);
     if(!top.length){host.innerHTML='<div class="resource-chart-empty">Sin datos para representar en esta selección.</div>';return;}
     const values=top.map(valueGetter).map(Number).filter(Number.isFinite),max=Math.max(...values,0);
@@ -611,6 +626,15 @@
     if(window.SIMECO_GAS_MODULE_INITIALIZED) return;
     window.SIMECO_GAS_MODULE_INITIALIZED=true;
     bindGasEvents();
+    document.querySelectorAll('.resource-values-disclosure[data-resource="gas"] .resource-values-toggle').forEach(button=>{
+      button.addEventListener('click',()=>{
+        const panel=document.getElementById(button.getAttribute('aria-controls'));
+        const open=button.getAttribute('aria-expanded')!=='true';
+        button.setAttribute('aria-expanded',String(open));
+        button.closest('.resource-values-disclosure')?.classList.toggle('is-open',open);
+        if(panel) panel.hidden=!open;
+      });
+    });
     refreshGasModule();
   }
   (!document.readyState || document.readyState==='loading')

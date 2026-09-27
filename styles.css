@@ -6610,3 +6610,14 @@ canvas{display:block;max-width:100%!important;height:auto!important}
 .resource-visual-title{min-width:960px;margin:0 0 22px 14px}.resource-visual-title strong{display:block;color:#173f37;font-size:1.12rem;line-height:1.25}.resource-visual-title small{display:block;margin-top:5px;color:#667b76;font-size:.82rem;font-weight:650}
 .resource-chart-grid-electric{min-width:960px;gap:9px}.resource-chart-row-electric{grid-template-columns:minmax(175px,210px) minmax(180px,215px) minmax(260px,1fr) minmax(105px,150px);gap:12px;min-height:34px}.resource-chart-row-electric .resource-chart-name{justify-content:flex-end}.resource-chart-row-electric .resource-chart-name span{max-width:170px}.resource-chart-address{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:6px 10px;border-radius:10px;background:#edf7f4;border:1px solid #dcece7;color:#486a63;font-size:.8rem;font-weight:650}.resource-chart-row-electric .resource-chart-track{height:24px;background:transparent;border-radius:9px}.resource-chart-row-electric .resource-chart-track i{min-width:3px}.resource-chart-row-electric .resource-chart-value{text-align:left;font-size:.83rem;color:#244a42}
 @media(max-width:720px){.resource-ranking-chart{padding:18px 14px 22px}.resource-visual-title,.resource-chart-grid-electric{min-width:820px}.resource-chart-row-electric{grid-template-columns:175px 185px minmax(220px,1fr) 115px}.resource-chart-row-electric .resource-chart-value{grid-column:auto;margin-top:0}.resource-chart-row-electric .resource-chart-track{height:20px}}
+
+/* v127: desplegables de valores exactos Agua/Gas */
+.resource-values-disclosure{margin-top:14px}
+.resource-values-toggle{width:100%;display:flex;align-items:center;gap:12px;padding:14px 18px;border:1px solid #d5e8e2;border-radius:16px;background:#f8fcfa;color:#174d42;font:inherit;font-weight:850;text-align:left;cursor:pointer}
+.resource-values-toggle:hover{background:#eef8f5}
+.resource-values-caret{transition:transform .2s ease}
+.resource-values-disclosure.is-open .resource-values-caret{transform:rotate(90deg)}
+.resource-values-panel{margin-top:10px}
+.resource-values-panel[hidden]{display:none!important}
+/* Los rankings visuales siempre deben ocupar su propia franja antes de la tabla. */
+.water-ranking-panel .resource-ranking-chart,.water-savings-panel .resource-ranking-chart,.gas-ranking-panel .resource-ranking-chart,.gas-savings-panel .resource-ranking-chart{display:block!important;visibility:visible!important;min-height:120px}
