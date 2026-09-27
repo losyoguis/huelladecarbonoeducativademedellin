@@ -312,11 +312,16 @@
       }
     }
     if(!selected&&rows.length){
-      const maxNet=Math.max(...rows.map(r=>Math.max(0,r.netSavingsM3)),1);
       rows.forEach(r=>{
+        // El ranking de ahorro no debe favorecer automáticamente a las sedes que más consumen.
+        // 70% = constancia de meses con reducción; 30% = reducción porcentual promedio
+        // en las comparaciones donde realmente hubo ahorro. Los m³ ahorrados se conservan
+        // como dato informativo, pero no inflan el puntaje por el tamaño de la sede.
         const consistency=Math.max(0,Math.min(100,r.decreaseRate));
-        const magnitude=100*Math.max(0,r.netSavingsM3)/maxNet;
-        r.managementScore=.70*consistency+.30*magnitude;
+        const positivePct=r.comparisons.filter(c=>c.delta>0 && Number.isFinite(c.pct)).map(c=>Math.max(0,Math.min(100,c.pct)));
+        const avgReductionPct=positivePct.length?positivePct.reduce((a,v)=>a+v,0)/positivePct.length:0;
+        r.avgReductionPct=avgReductionPct;
+        r.managementScore=.70*consistency+.30*avgReductionPct;
         r.rankingValue=r.managementScore;
       });
     }
@@ -325,7 +330,7 @@
       const hay=norm(`${r.displaySite} ${r.site} ${r.address}`);
       return query.split(' ').filter(Boolean).every(t=>hay.includes(t));
     }):rows;
-    return filtered.sort((a,b)=>selected?(b.rankingValue-a.rankingValue)||((b.savingsPercent||0)-(a.savingsPercent||0)):(b.managementScore-a.managementScore)||(b.decreaseRate-a.decreaseRate)||(b.netSavingsM3-a.netSavingsM3));
+    return filtered.sort((a,b)=>selected?((b.savingsPercent||0)-(a.savingsPercent||0))||(b.rankingValue-a.rankingValue):(b.managementScore-a.managementScore)||(b.decreaseRate-a.decreaseRate)||((b.avgReductionPct||0)-(a.avgReductionPct||0))||(b.netSavingsM3-a.netSavingsM3));
   }
 
   function renderGasSavingsRanking(){
@@ -344,7 +349,7 @@
         :`<strong>${rows.length} sedes con ahorro neto y reducciones verificables.</strong> Mejor Índice de Gestión del Ahorro de Gas: <strong>${esc(top.displaySite)}</strong> con <strong>${fmt(top.managementScore,1)} puntos</strong>.`
         :'No hay sedes con ahorro verificable para esta selección.';
     }
-    renderGasRankingChart('gasSavingsChart',rows,r=>selected?r.savingsM3:r.managementScore,(r,v)=>selected?`${fmt(v)} m³`:`${fmt(v,1)} pts`,selected?'Reducción mensual verificada':'Índice de gestión del ahorro');
+    renderGasRankingChart('gasSavingsChart',rows,r=>selected?r.savingsPercent:r.managementScore,(r,v)=>selected?`${fmt(v,1)}%`:`${fmt(v,1)} pts`,selected?'Porcentaje de reducción mensual verificada':'Índice de gestión del ahorro · normalizado por porcentaje');
     body.innerHTML=visible.length?visible.map((r,i)=>{
       const metric=selected?`<strong>↓ ${fmt(r.savingsM3)} m³</strong>`:`<strong>🏆 ${fmt(r.managementScore,1)} pts</strong>`;
       const saving=selected?`${fmt(r.savingsPercent,1)}% menos`:`Ahorro neto ${fmt(r.netSavingsM3)} m³`;
