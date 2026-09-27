@@ -4,7 +4,7 @@ let TREE_CO2_KG_YEAR = 22; // kg CO2e capturados por árbol al año. Ajustable d
 const FACTOR_KEY = 'simeco2_factores_ambientales_v8';
 const STORE_KEY = 'simeco2_servicios_v16';
 const CONFIG_KEY = 'simeco2_repo_config_v7';
-const DATA_VERSION = 'v108-action-plan-20260924';
+const DATA_VERSION = 'v121-performance-qc-20260927';
 
 const $ = (id)=>document.getElementById(id);
 function siteKey(site,address=''){
@@ -405,6 +405,16 @@ window.addEventListener('DOMContentLoaded', async () => {
       }
     }
   });
+
+  // v121: sincronización silenciosa en tiempo ocioso. La portada y la interacción
+  // tienen prioridad; después se comprueba si hay facturas nuevas en data/ o data/inem.
+  // Si todo está actualizado, no se vuelve a renderizar la aplicación completa.
+  const scheduleBackgroundInvoiceSync=()=>{
+    const run=()=>{ if(!isScanningData) scanDataFolder({quiet:true,automatic:true}); };
+    if('requestIdleCallback' in window) window.requestIdleCallback(run,{timeout:8000});
+    else setTimeout(run,6500);
+  };
+  scheduleBackgroundInvoiceSync();
 
   // Protección adicional para iframes de Google Sites: jamás dejar el overlay
   // indefinidamente si los registros precargados ya existen.
@@ -899,7 +909,7 @@ function compactStorePayload(){
     if(!base || (meta?.fingerprint && meta.fingerprint!==base.fingerprint)) customFiles[name]=meta;
   });
   const customSources=new Set(Object.keys(customFiles));
-  const records=(state.records||[]).filter(r=>customSources.has(r.source) || r.sourceUrl==='local' || !canonical.files[r.source]);
+  const records=(state.records||[]).filter(r=>customSources.has(r.source) || customSources.has(r.energySource) || [...customSources].some(src=>String(r.energySourceUrl||'').endsWith(src)) || r.sourceUrl==='local' || !canonical.files[r.source]);
   const summaries=(state.summaries||[]).filter(r=>customSources.has(r.source) || !canonical.files[r.source]);
   return {dataVersion:DATA_VERSION,records,summaries,files:customFiles};
 }
@@ -1062,8 +1072,19 @@ async function scanDataFolderCore(options={}){
       const res = await fetch(api, {cache:'default'});
       if(!res.ok) throw new Error(`${res.status} ${res.statusText}`);
       const json = await res.json();
-      files = json.filter(f=>f.type==='file' && f.name.toLowerCase().endsWith('.pdf')).map(f=>({name:f.name,url:f.download_url,sha:f.sha}));
-      log(`GitHub API: ${files.length} PDF encontrados en /data.`);
+      const rootFiles=json.filter(f=>f.type==='file' && f.name.toLowerCase().endsWith('.pdf')).map(f=>({name:f.name,url:f.download_url,sha:f.sha,path:f.path||('data/'+f.name),kind:'general'}));
+      let inemFiles=[];
+      try{
+        const inemApi=`https://api.github.com/repos/${encodeURIComponent(cfg.owner)}/${encodeURIComponent(cfg.repo)}/contents/data/inem?ref=${encodeURIComponent(cfg.branch)}`;
+        const inemRes=await fetch(inemApi,{cache:'default'});
+        if(inemRes.ok){
+          const inemJson=await inemRes.json();
+          inemFiles=inemJson.filter(f=>f.type==='file'&&f.name.toLowerCase().endsWith('.pdf')).map(f=>({name:'inem/'+f.name,url:f.download_url,sha:f.sha,path:f.path||('data/inem/'+f.name),kind:'inem'}));
+        }
+      }catch(err){ log(`Subcarpeta INEM no disponible (${err.message}).`); }
+      files=rootFiles.concat(inemFiles);
+      const seenRemote=new Set(); files=files.filter(f=>{const k=f.sha||f.url||f.name;if(seenRemote.has(k))return false;seenRemote.add(k);return true;});
+      log(`GitHub API: ${rootFiles.length} PDF generales y ${inemFiles.length} PDF INEM encontrados (${files.length} únicos).`);
     } catch(err){
       log(`No se pudo leer GitHub API (${err.message}). Intentando data/manifest.json...`);
     }
@@ -1074,8 +1095,10 @@ async function scanDataFolderCore(options={}){
       if(res.ok){
         const manifest = await res.json();
         const arr = Array.isArray(manifest) ? manifest : manifest.files || [];
-        files = arr.filter(x => String(typeof x==='string'?x:x.name).toLowerCase().endsWith('.pdf')).map(x=> typeof x==='string' ? {name:x,url:'data/'+encodeURIComponent(x)} : {name:x.name,url:x.url||('data/'+encodeURIComponent(x.name))});
-        log(`Manifest: ${files.length} PDF encontrados.`);
+        files = arr.filter(x => String(typeof x==='string'?x:x.name).toLowerCase().endsWith('.pdf')).map(x=> typeof x==='string' ? {name:x,url:'data/'+encodeURIComponent(x),kind:String(x).startsWith('inem/')?'inem':'general'} : {name:x.name,url:x.url||('data/'+encodeURIComponent(x.name)),sha:x.sha||x.sha256,kind:x.kind||(String(x.name||'').startsWith('inem/')?'inem':'general')});
+        // El manifiesto puede incluir también data/inem. Se eliminan copias binarias idénticas.
+        const seen=new Set(); files=files.filter(f=>{const k=f.sha||f.url||f.name;if(seen.has(k))return false;seen.add(k);return true;});
+        log(`Manifest: ${files.length} PDF únicos encontrados.`);
       }
     }catch(err){ log(`No se pudo leer manifest.json: ${err.message}`); }
   }
@@ -1136,7 +1159,7 @@ async function scanDataFolderCore(options={}){
         if(!response.ok) throw new Error(`${response.status} ${response.statusText}`);
         const buf=await response.arrayBuffer();
         reportFileProgress(file,.08,{stage:'read',detail:'Factura descargada. Preparando páginas',currentPage:0,totalPages:0});
-        const result=await parsePdfArrayBuffer(buf,file.name,file.url,progress=>{
+        const result=await parseInvoiceArrayBuffer(buf,file.name,file.url,file.kind||'general',progress=>{
           const pageFraction=progress.totalPages ? progress.currentPage/progress.totalPages : 0;
           reportFileProgress(file,.08+(pageFraction*.78),{
             stage:'read',
@@ -1171,7 +1194,12 @@ async function scanDataFolderCore(options={}){
     });
   }
   log(`Proceso terminado. Importados: ${imported}. Omitidos ya existentes: ${skipped}. Fallidos: ${failed}.`);
-  saveStore(); scheduleRenderAll();
+  // v121: si no hubo facturas nuevas, no fuerces un render completo.
+  // Esto preserva la carga progresiva y evita recalcular rankings/tablas/gráficos en cada visita.
+  if(imported>0){
+    saveStore();
+    scheduleRenderAll();
+  }
   if(pending.length && failed===pending.length && imported===0){
     throw new Error(`No fue posible consolidar ninguna de las ${pending.length} facturas pendientes.`);
   }
@@ -1191,7 +1219,7 @@ async function handleLocalPdf(ev){
   log(`Leyendo PDF local: ${file.name}`);
   try{
     const buf = await file.arrayBuffer();
-    const result = await parsePdfArrayBuffer(buf, file.name, 'local',progress=>{
+    const result = await parseInvoiceArrayBuffer(buf, file.name, 'local', 'auto', progress=>{
       updateInvoiceProgress({
         percent:8+(progress.currentPage/Math.max(1,progress.totalPages))*78,
         processedFiles:0,totalFiles:1,currentFile:`· ${file.name}`,
@@ -1226,9 +1254,13 @@ function addImport(result, fingerprint){
   invalidateSearchCaches();
   const existingKeys=new Set();
   for(const r of result.records||[]){
+    if(r.energySourceType==='inem_external_contract'){
+      const idx=state.records.findIndex(x=>String(x.period||'')===String(r.period||'') && loose(x.site)===loose(r.site) && loose(x.address)===loose(r.address));
+      if(idx>=0){ Object.assign(state.records[idx],r,{source:state.records[idx].source||r.source,sourceUrl:state.records[idx].sourceUrl||r.sourceUrl}); continue; }
+    }
     if(!existingKeys.has(r.key)){ state.records.push(r); existingKeys.add(r.key); }
   }
-  if(result.summary){
+  if(result.summary && !result.isInem){
     state.summaries=(state.summaries||[]).filter(r=>r.source!==result.fileName && r.period!==result.summary.period);
     state.summaries.push(result.summary);
     state.summaries.sort((a,b)=>String(a.period).localeCompare(String(b.period)));
@@ -1237,6 +1269,45 @@ function addImport(result, fingerprint){
   state.files[result.fileName]={name:result.fileName, fingerprint, period:result.period, importedAt:new Date().toISOString(), count:(result.records||[]).length};
 }
 
+function isInemInvoiceText(text,fileName=''){
+  const n=loose(`${fileName} ${text}`);
+  return n.includes('inem') && (n.includes('consumo activa') || n.includes('comportamiento historico de consumos') || n.includes('mercado no regulado'));
+}
+function parseInemHistoricalText(allText,fileName,sourceUrl){
+  const months={ene:'01',feb:'02',mar:'03',abr:'04',may:'05',jun:'06',jul:'07',ago:'08',sep:'09',oct:'10',nov:'11',dic:'12'};
+  const start=allText.search(/Comportamiento\s+hist[oó]rico\s+de\s+consumos/i);
+  const scope=start>=0?allText.slice(start,start+9000):allText;
+  const rx=/\b(Ene|Feb|Mar|Abr|May|Jun|Jul|Ago|Sep|Oct|Nov|Dic)-(\d{2})\s+([\d.]+,\d{1,3})/gi;
+  const values=new Map(); let m;
+  while((m=rx.exec(scope))){ const v=parseMeasurement(m[3],'energy'); if(Number.isFinite(v)) values.set(`20${m[2]}-${months[m[1].toLowerCase()]}`,v); }
+  const invoicePeriod=detectPeriod(allText,fileName);
+  const records=[...values.entries()].sort().map(([period,energyKwh],idx)=>({period,site:'Inem J F De Rpo',address:'Cr 48 Cl 1 -125',waterM3:null,alcM3:null,energyKwh,gasM3:null,wasteTon:null,waterValue:null,alcValue:null,energyValue:null,gasValue:null,wasteValue:null,source:fileName,sourceUrl,page:1,type:'sede',co2kg:Math.round(energyKwh*FACTOR_CO2_KG_KWH*1000)/1000,key:`${period}|inem j f de rpo|cr 48 cl 1 125|inem-${idx}|${fileName}`,energySource:fileName,energySourceUrl:sourceUrl,energySourcePage:1,energySourceType:'inem_external_contract',energyInvoicePeriod:invoicePeriod}));
+  return {fileName,period:invoicePeriod||records.at(-1)?.period||'',records,summary:null,numPages:0,sample:allText.slice(0,3000),isInem:true};
+}
+async function parseInvoiceArrayBuffer(arrayBuffer,fileName,sourceUrl,kind='auto',onProgress=null){
+  await ensurePdfJs();
+  const pdf=await pdfjsLib.getDocument({data:arrayBuffer}).promise;
+  let allText='';
+  for(let p=1;p<=pdf.numPages;p++){
+    const page=await pdf.getPage(p), content=await page.getTextContent({disableCombineTextItems:false});
+    const items=content.items.map(it=>({str:it.str||'',x:it.transform[4]||0,y:it.transform[5]||0})).filter(i=>i.str.trim());
+    allText+='\nPÁGINA '+p+'\n'+groupTextItemsIntoLines(items).join('\n'); page.cleanup();
+    if(typeof onProgress==='function') onProgress({currentPage:p,totalPages:pdf.numPages});
+    if(p%12===0) await new Promise(resolve=>setTimeout(resolve,0));
+  }
+  if(kind==='inem'||isInemInvoiceText(allText,fileName)){
+    const out=parseInemHistoricalText(allText,fileName,sourceUrl); out.numPages=pdf.numPages; return out;
+  }
+  return parsePdfTextContent(allText,fileName,sourceUrl,pdf.numPages,onProgress);
+}
+function parsePdfTextContent(allText,fileName,sourceUrl,numPages=0,onProgress=null){
+  const rawLines=allText.split(/\n/); const allLines=[]; let page=1;
+  for(const line of rawLines){const pm=line.match(/^PÁGINA\s+(\d+)/);if(pm){page=Number(pm[1]);continue;}if(line.trim())allLines.push({page,text:line});}
+  const period=detectPeriod(allText,fileName), blocks=makeBlocks(allLines), summary=parseSummary(allText), records=[];
+  blocks.forEach((block,idx)=>{const rec=parseBlock(block,period,fileName,sourceUrl,idx);if(rec&&hasAnyMeasure(rec))records.push(rec);});
+  const summaryRecord={period,source:fileName,sourceUrl,waterM3:summary.waterM3,waterValue:summary.waterValue,gasM3:summary.gasM3,gasValue:summary.gasValue,energyKwh:summary.energyKwh,energyValue:summary.energyValue,verifiedFrom:'Resumen de facturación, página 1'};
+  return {fileName,period,records,summary:summaryRecord,numPages,sample:allText.slice(0,3000)};
+}
 async function parsePdfArrayBuffer(arrayBuffer, fileName, sourceUrl, onProgress=null){
   await ensurePdfJs();
   if(!window.pdfjsLib) throw new Error('PDF.js no está disponible.');

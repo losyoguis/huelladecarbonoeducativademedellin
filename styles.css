@@ -6487,3 +6487,113 @@ body.tutorial-first-visit-open .invoice-loading-card{
 .document-backend-fixed strong{color:#0b6048}.document-backend-fixed span{color:#5b7169}
 @media(max-width:720px){.environmental-doc-actions .invoice-action-cta{grid-column:1/-1}.document-backend-fixed{display:grid}}
 @media print{.invoice-action-cta,.document-backend-fixed{display:none!important}}
+
+/* SiMeCO₂ v118 · rankings integrados dentro de Agua y Gas */
+.resource-inner-nav{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:14px 0 20px;padding:14px;border:1px solid #dce9e5;border-radius:18px;background:rgba(255,255,255,.92);box-shadow:0 10px 30px rgba(20,70,58,.07);position:sticky;top:8px;z-index:8;backdrop-filter:blur(10px)}
+.resource-inner-link{appearance:none;border:1px solid #d9e6e2;border-radius:14px;background:#fff;padding:13px 14px;display:grid;grid-template-columns:auto 1fr;grid-template-areas:"icon title" "icon detail";column-gap:10px;text-align:left;cursor:pointer;color:#24483e;transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease;min-height:70px}
+.resource-inner-link>span{grid-area:icon;font-size:1.45rem;align-self:center}.resource-inner-link>strong{grid-area:title;align-self:end;font-size:.92rem}.resource-inner-link>small{grid-area:detail;color:#6a7e78;font-size:.75rem;line-height:1.25}.resource-inner-link:hover,.resource-inner-link.is-current{transform:translateY(-2px);box-shadow:0 8px 18px rgba(20,70,58,.10)}
+.water-inner-nav .resource-inner-link.featured{background:linear-gradient(135deg,#f0fbff,#f7fffd);border-color:#9ed9e8}.water-inner-nav .resource-inner-link:hover,.water-inner-nav .resource-inner-link.is-current{border-color:#2aa9c7;color:#08758e}
+.gas-inner-nav .resource-inner-link.featured{background:linear-gradient(135deg,#fff8ed,#fffdf8);border-color:#f0c98d}.gas-inner-nav .resource-inner-link:hover,.gas-inner-nav .resource-inner-link.is-current{border-color:#dc8a23;color:#9a5200}
+#ranking-consumo-agua,#ranking-ahorro-agua,#ranking-consumo-gas,#ranking-ahorro-gas,#water-analysis,#gas-analysis,#plan-ahorro-agua,#plan-ahorro-gas{scroll-margin-top:115px}
+@media(max-width:900px){.resource-inner-nav{grid-template-columns:repeat(2,minmax(0,1fr));position:static}}
+@media(max-width:520px){.resource-inner-nav{grid-template-columns:1fr;padding:10px}.resource-inner-link{min-height:62px}}
+@media print{.resource-inner-nav{display:none!important}}
+
+/* ==========================================================
+   SiMeCO₂ v120 · Responsive universal
+   Teléfono, tablet, portátil, escritorio, Google Sites/iframe
+   ========================================================== */
+html{max-width:100%;overflow-x:hidden;-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{max-width:100%;overflow-x:hidden}
+img,svg,video,iframe{max-width:100%;height:auto}
+button,a,input,select,textarea{max-width:100%}
+button,.primary,.secondary,.file-label,.section-tab,.resource-inner-link{min-height:44px}
+
+/* El contenido nunca fuerza el ancho del viewport */
+.workspace-shell,.workspace-shell>main,.panel,.section-panel,.grid-2,.cards,.dashboard-grid,.compare-result{min-width:0}
+.panel,.section-panel{max-width:100%;overflow-wrap:anywhere}
+.table-wrap,.dashboard-table-wrap,.env-tracking-wrap{max-width:100%;-webkit-overflow-scrolling:touch;overscroll-behavior-inline:contain}
+canvas{display:block;max-width:100%!important;height:auto!important}
+
+/* Escritorios grandes: lectura cómoda sin estirar excesivamente */
+@media(min-width:1600px){
+  main,.workspace-shell{max-width:1760px;margin-inline:auto}
+  .panel{padding:28px}
+}
+
+/* Tablet y portátiles estrechos */
+@media(max-width:1024px){
+  main{padding-inline:14px}
+  .panel{padding:18px;border-radius:20px}
+  .grid-2,.toolbar,.mini-form{grid-template-columns:1fr!important}
+  .toolbar-buttons{justify-content:flex-start}
+  .compare-result,.dashboard-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .section-head{flex-direction:column;align-items:stretch}
+  .factor-box{width:100%;min-width:0}
+  .resource-inner-nav{grid-template-columns:repeat(2,minmax(0,1fr));position:static}
+}
+
+/* Teléfonos y Google Sites angosto */
+@media(max-width:760px){
+  body{font-size:15px}
+  main{padding:8px!important}
+  .panel,.section-panel{margin:12px 0!important;padding:14px!important;border-radius:17px!important}
+  .hero{padding:max(20px,env(safe-area-inset-top)) 15px 20px;gap:14px}
+  .hero h1{font-size:clamp(1.75rem,9vw,2.45rem);line-height:1.02}
+  .lead{font-size:.95rem;line-height:1.5}
+  .hero-top-links{display:flex!important;overflow-x:auto;scroll-snap-type:x proximity;gap:8px;padding-bottom:7px;-webkit-overflow-scrolling:touch}
+  .hero-top-links>*{flex:0 0 auto;scroll-snap-align:start}
+  .cards,.compare-result,.dashboard-grid{grid-template-columns:1fr!important}
+  .actions,.compare-controls,.toolbar-buttons{display:grid!important;grid-template-columns:1fr!important;width:100%}
+  .actions>* ,.compare-controls>* ,.toolbar-buttons>*{width:100%!important}
+  input,select,textarea{width:100%;font-size:16px!important;min-height:46px}
+  .primary,.secondary,.file-label{width:100%;min-height:48px;padding:12px 14px}
+  .resource-inner-nav{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important;padding:9px!important}
+  .resource-inner-link{min-width:0!important;padding:10px!important}
+  .table-wrap,.dashboard-table-wrap,.env-tracking-wrap{border-radius:14px;position:relative}
+  table{font-size:.84rem}
+  th,td{padding:10px 8px}
+  .chart-card{padding:8px 4px;margin-inline:0}
+  canvas{max-height:360px!important}
+  .status-pill{max-width:100%;white-space:normal}
+}
+
+/* Teléfonos pequeños */
+@media(max-width:480px){
+  .workspace-shell{padding-inline:4px!important}
+  .workspace-shell>main{padding-inline:0!important}
+  .panel,.section-panel{padding:12px!important;border-radius:15px!important}
+  .resource-inner-nav{grid-template-columns:1fr!important}
+  .resource-inner-link{min-height:52px!important}
+  .cards article,.metric,.big-total{padding:14px;border-radius:16px}
+  .cards strong,.metric strong{font-size:1.2rem}
+  .side-nav-mobile-launcher{width:calc(100% - 4px);top:max(4px,env(safe-area-inset-top));grid-template-columns:32px minmax(0,1fr);padding:7px 9px}
+  .side-nav-mobile-launcher>small{grid-column:1/-1;text-align:left;padding-left:2px}
+  .side-navigation{width:min(92vw,330px)!important}
+  .tutorial-modal-dialog{width:100vw!important}
+  .tutorial-video-shell{padding-inline:8px!important}
+}
+
+/* Pantallas extremadamente estrechas sin romper contenido */
+@media(max-width:360px){
+  body{font-size:14px}
+  .hero h1{font-size:1.7rem}
+  .panel,.section-panel{padding:10px!important}
+  .side-navigation{width:94vw!important}
+}
+
+/* Orientación horizontal en móvil: aprovecha altura limitada */
+@media(max-height:520px) and (orientation:landscape){
+  .side-navigation{overflow-y:auto!important}
+  .tutorial-modal-dialog{max-height:100dvh!important;min-height:100dvh!important}
+  .hero{padding-block:14px}
+}
+
+/* Accesibilidad y dispositivos táctiles */
+@media(hover:none) and (pointer:coarse){
+  button:hover,.file-label:hover,.section-tab:hover,.resource-inner-link:hover{transform:none!important}
+  button,.section-tab,.resource-inner-link{touch-action:manipulation}
+}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+}
