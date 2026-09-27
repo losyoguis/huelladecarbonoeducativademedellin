@@ -50,8 +50,8 @@ for(const file of fs.readdirSync(ROOT).filter(x=>x.endsWith('.html'))){
 const dataCtx={window:{}};dataCtx.window=dataCtx;vm.createContext(dataCtx);
 vm.runInContext(fs.readFileSync('data/registros.electricidad.min.js','utf8'),dataCtx);
 ok(Array.isArray(dataCtx.SIMECO_REGISTROS),'No se cargó SIMECO_REGISTROS');
-ok(dataCtx.SIMECO_REGISTROS.length===9147,`Registros esperados 9147, encontrados ${dataCtx.SIMECO_REGISTROS.length}`);
-ok(new Set(dataCtx.SIMECO_REGISTROS.map(r=>r.key)).size===9147,'Hay claves duplicadas en registros');
+ok(dataCtx.SIMECO_REGISTROS.length===9680,`Registros esperados 9680, encontrados ${dataCtx.SIMECO_REGISTROS.length}`);
+ok(new Set(dataCtx.SIMECO_REGISTROS.map(r=>r.key)).size===9680,'Hay claves duplicadas en registros');
 const recordSources=[...new Set(dataCtx.SIMECO_REGISTROS.map(r=>r.source).filter(Boolean))];
 ok(recordSources.length===17,`Se esperaban 17 facturas fuente en registros, hay ${recordSources.length}`);
 for(const source of recordSources) ok(fs.existsSync(path.join(ROOT,'data',source)),`Factura fuente inexistente: ${source}`);

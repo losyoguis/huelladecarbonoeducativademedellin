@@ -4,7 +4,7 @@ const c={window:{}};c.window=c;vm.createContext(c);
 vm.runInContext(fs.readFileSync('data/registros.gas.min.js','utf8'),c);
 vm.runInContext(fs.readFileSync('data/resumenes.gas.min.js','utf8'),c);
 const rows=c.SIMECO_GAS_RECORDS,s=c.SIMECO_GAS_SUMMARY_BUNDLE.summaries;
-ok(rows.length===9147,'Deben existir 9.147 registros base de gas');
+ok(rows.length===9680,'Deben existir 9.680 registros base de gas');
 const valid=rows.filter(r=>r.gasM3!==null&&r.gasM3!==undefined&&Number.isFinite(Number(r.gasM3)));
 ok(valid.length===381,`Lecturas de gas esperadas 381, hay ${valid.length}`);
 ok(valid.filter(r=>Number(r.gasM3)===0).length===304,'Las 304 lecturas de 0 m³ deben conservarse');

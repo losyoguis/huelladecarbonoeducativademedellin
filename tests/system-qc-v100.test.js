@@ -71,9 +71,9 @@ for(const file of fs.readdirSync(ROOT).filter(x=>x.endsWith('.html'))){
 function evalBundle(file,globalName){
   const c={window:{}};c.window=c;vm.createContext(c);vm.runInContext(fs.readFileSync(file,'utf8'),c);return c[globalName];
 }
-ok(evalBundle('data/registros.electricidad.min.js','SIMECO_REGISTROS').length===9147,'Base eléctrica alterada');
-ok(evalBundle('data/registros.agua.min.js','SIMECO_WATER_RECORDS').length===9147,'Base Agua alterada');
-ok(evalBundle('data/registros.gas.min.js','SIMECO_GAS_RECORDS').length===9147,'Base Gas alterada');
+ok(evalBundle('data/registros.electricidad.min.js','SIMECO_REGISTROS').length===9680,'Base eléctrica alterada');
+ok(evalBundle('data/registros.agua.min.js','SIMECO_WATER_RECORDS').length===9680,'Base Agua alterada');
+ok(evalBundle('data/registros.gas.min.js','SIMECO_GAS_RECORDS').length===9680,'Base Gas alterada');
 ok(app.includes("const DATA_VERSION = 'v100-ux-interface-organizada-20260808';"),'DATA_VERSION no es v100');
 ok(html.includes('app.js?v=100-ux-organizada'),'Cache-busting v100 ausente');
 

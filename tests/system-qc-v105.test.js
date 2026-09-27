@@ -74,9 +74,9 @@ function evalBundle(file,globalName){
 const electric=evalBundle('data/registros.electricidad.min.js','SIMECO_REGISTROS');
 const water=evalBundle('data/registros.agua.min.js','SIMECO_WATER_RECORDS');
 const gas=evalBundle('data/registros.gas.min.js','SIMECO_GAS_RECORDS');
-ok(electric.length>=9147,'Base eléctrica perdió registros canónicos');
-ok(water.length===9147,'Base Agua alterada');
-ok(gas.length===9147,'Base Gas alterada');
+ok(electric.length>=9680,'Base eléctrica perdió registros canónicos');
+ok(water.length===9680,'Base Agua alterada');
+ok(gas.length===9680,'Base Gas alterada');
 ok(electric.length>=water.length,'La base eléctrica no puede tener menos filas que Agua tras integrar data/inem');
 
 ok(app.includes("const DATA_VERSION = 'v108-action-plan-20260924';"),'DATA_VERSION no es v105');

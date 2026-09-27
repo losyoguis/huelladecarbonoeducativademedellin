@@ -33,11 +33,11 @@ for(const file of fs.readdirSync(ROOT).filter(x=>x.endsWith('.html'))){
 
 const ectx={window:{}};ectx.window=ectx;vm.createContext(ectx);
 vm.runInContext(fs.readFileSync('data/registros.electricidad.min.js','utf8'),ectx);
-ok(ectx.SIMECO_REGISTROS.length===9147,'Base eléctrica distinta de 9.147 registros');
+ok(ectx.SIMECO_REGISTROS.length===9680,'Base eléctrica distinta de 9.680 registros');
 
 const wctx={window:{}};wctx.window=wctx;vm.createContext(wctx);
 vm.runInContext(fs.readFileSync('data/registros.agua.min.js','utf8'),wctx);
-ok(wctx.SIMECO_WATER_RECORDS.length===9147,'Base de agua no conserva 9.147 registros');
+ok(wctx.SIMECO_WATER_RECORDS.length===9680,'Base de agua no conserva 9.680 registros');
 ok(wctx.SIMECO_WATER_RECORDS.filter(r=>r.waterM3!==null&&r.waterM3!==undefined).length===7317,'Cantidad de lecturas de agua inesperada');
 
 const wsctx={window:{}};wsctx.window=wsctx;vm.createContext(wsctx);
@@ -62,4 +62,4 @@ for(const marker of ['aggregateWaterSites','officialWaterStats','buildWaterSavin
   ok(water.includes(marker),`Falta ${marker}`);
 }
 ok(html.includes('water.js?v=93-agua'),'water.js no está versionado');
-console.log(JSON.stringify({ok:true,sections:8,electricRecords:9147,waterRecords:9147,waterReadings:7317,waterSummaries:17,officialWaterM3:official},null,2));
+console.log(JSON.stringify({ok:true,sections:8,electricRecords:9680,waterRecords:9680,waterReadings:7317,waterSummaries:17,officialWaterM3:official},null,2));

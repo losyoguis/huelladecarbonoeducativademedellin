@@ -34,7 +34,7 @@ function evalBundle(file,globalName){
 const electric=evalBundle('data/registros.electricidad.min.js','SIMECO_REGISTROS');
 const water=evalBundle('data/registros.agua.min.js','SIMECO_WATER_RECORDS');
 const gas=evalBundle('data/registros.gas.min.js','SIMECO_GAS_RECORDS');
-ok(electric.length===9147 && water.length===9147 && gas.length===9147,'Las tres bases deben conservar 9.147 registros');
+ok(electric.length===9680 && water.length===9680 && gas.length===9680,'Las tres bases deben conservar 9.680 registros');
 
 const wc={window:{}};wc.window=wc;vm.createContext(wc);vm.runInContext(fs.readFileSync('data/resumenes.agua.min.js','utf8'),wc);
 const gc={window:{}};gc.window=gc;vm.createContext(gc);vm.runInContext(fs.readFileSync('data/resumenes.gas.min.js','utf8'),gc);
@@ -67,4 +67,4 @@ ok(waterJs.includes('buildWaterPlanHistoryChartSvg'),'Falta gráfico histórico 
 ok(gasJs.includes('buildGasPlanHistoryChartSvg'),'Falta gráfico histórico del plan de Gas');
 ok(waterJs.includes('${buildWaterPlanHistoryChartSvg(plan.monthlyRows)}'),'Plan de Agua no inserta su gráfico');
 ok(gasJs.includes('${buildGasPlanHistoryChartSvg(plan.monthlyRows)}'),'Plan de Gas no inserta su gráfico');
-console.log(JSON.stringify({ok:true,sections:9,electricModules:7,waterModule:8,gasModule:9,electricRecords:9147,waterRecords:9147,gasRecords:9147,waterOfficialM3:waterOfficial,gasOfficialM3:gasOfficial},null,2));
+console.log(JSON.stringify({ok:true,sections:9,electricModules:7,waterModule:8,gasModule:9,electricRecords:9680,waterRecords:9680,gasRecords:9680,waterOfficialM3:waterOfficial,gasOfficialM3:gasOfficial},null,2));

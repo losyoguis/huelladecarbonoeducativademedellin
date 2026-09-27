@@ -40,7 +40,7 @@ const assistant=require('../api/_lib/assistant-core');
     assert.strictEqual(tool.parameters.additionalProperties,false,`additionalProperties debe ser false en ${tool.name}`);
   }
 
-  // El bundle compacto del navegador debe reconstruir los mismos 9.147 registros.
+  // El bundle compacto del navegador debe reconstruir los mismos 9.680 registros.
   const code=fs.readFileSync(path.join(__dirname,'..','data','registros.electricidad.min.js'),'utf8');
   const context={window:{}}; vm.createContext(context); vm.runInContext(code,context,{timeout:5000});
   const fullCount=JSON.parse(fs.readFileSync(path.join(__dirname,'..','data','registros.json'),'utf8')).records.length;

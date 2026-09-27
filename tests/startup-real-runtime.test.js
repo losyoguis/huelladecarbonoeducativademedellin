@@ -6,7 +6,7 @@ c.window=c;c.globalThis=c;vm.createContext(c);
 for(const f of ['data/registros.electricidad.min.js','data/resumenes.electricidad.min.js']) vm.runInContext(fs.readFileSync(f,'utf8'),c,{filename:f});
 vm.runInContext(fs.readFileSync('app.js','utf8'),c,{filename:'app.js'});
 const runtimeCount=vm.runInContext('state.records.length',c);
-ok(runtimeCount>=9147,'app.js perdió registros canónicos durante el arranque');
+ok(runtimeCount>=9680,'app.js perdió registros canónicos durante el arranque');
 ok(typeof listeners.DOMContentLoaded==='function','app.js no registró DOMContentLoaded');
 ok(vm.runInContext("typeof siteKey",c)==='function','siteKey no está disponible durante el arranque');
 const html=fs.readFileSync('index.html','utf8');

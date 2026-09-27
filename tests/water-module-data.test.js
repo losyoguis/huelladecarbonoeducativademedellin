@@ -4,7 +4,7 @@ const c={window:{}};c.window=c;vm.createContext(c);
 vm.runInContext(fs.readFileSync('data/registros.agua.min.js','utf8'),c);
 vm.runInContext(fs.readFileSync('data/resumenes.agua.min.js','utf8'),c);
 const rows=c.SIMECO_WATER_RECORDS,s=c.SIMECO_WATER_SUMMARY_BUNDLE.summaries;
-ok(rows.length===9147,'Deben existir 9.147 registros base');
+ok(rows.length===9680,'Deben existir 9.680 registros base');
 const valid=rows.filter(r=>r.waterM3!==null&&r.waterM3!==undefined&&Number.isFinite(Number(r.waterM3)));
 ok(valid.length===7317,`Lecturas de agua esperadas 7317, hay ${valid.length}`);
 ok(valid.filter(r=>Number(r.waterM3)===0).length===256,'Las lecturas de 0 m³ deben conservarse');

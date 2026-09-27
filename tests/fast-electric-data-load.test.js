@@ -11,7 +11,7 @@ ok(dataPos>=0 && appPos>dataPos,'El bundle eléctrico no carga antes de app.js')
 ok(html.includes('rel="preload" href="data/registros.electricidad.min.js?v=114-fixed-backend"'),'Falta preload del bundle');
 const ctx={window:{}};ctx.window=ctx;vm.createContext(ctx);vm.runInContext(fs.readFileSync(dataPath,'utf8'),ctx);
 ok(Array.isArray(ctx.SIMECO_REGISTROS),'El bundle no expone SIMECO_REGISTROS');
-ok(ctx.SIMECO_REGISTROS.length>=9147,`La base eléctrica no debe perder los 9.147 registros canónicos; hay ${ctx.SIMECO_REGISTROS.length}`);
+ok(ctx.SIMECO_REGISTROS.length>=9680,`La base eléctrica no debe perder los 9.680 registros canónicos; hay ${ctx.SIMECO_REGISTROS.length}`);
 ok(ctx.SIMECO_DATA_READY===true,'Falta bandera SIMECO_DATA_READY');
 ok(app.includes('async function waitForPreloadedData(maxMs=1200)'),'Falta espera corta de hidratación');
 ok(app.includes('hydrateStateFromPreloadedData()'),'Falta hidratación explícita');
