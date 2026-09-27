@@ -64,13 +64,13 @@ for s in official:
         print('PDF NO VÁLIDO:',p)
 
 errors=[]
-if len(records)!=9147: errors.append('La base debe contener 9.147 registros.')
-if len(valid)!=381: errors.append('Se esperaban 381 registros con lectura de gas.')
-if sum(1 for r in valid if r['gasM3']==0)!=304: errors.append('Se esperaban 304 lecturas válidas de 0 m³.')
+if len(records)!=9680: errors.append('La base debe contener 9.680 registros.')
+if len(valid)!=403: errors.append('Se esperaban 403 registros con lectura de gas.')
+if sum(1 for r in valid if r['gasM3']==0)!=321: errors.append('Se esperaban 321 lecturas válidas de 0 m³.')
 if len(gas_sites)!=28: errors.append('Se esperaban 28 sedes/cuentas con lectura de gas.')
-if len(official)!=17: errors.append('Se esperaban 17 periodos oficiales.')
-if abs(official_total-1094.52)>0.001: errors.append('El consumo oficial acumulado no coincide.')
-if abs(detail_total-1095.658)>0.001: errors.append('El consumo detallado acumulado no coincide.')
+if len(official)!=18: errors.append('Se esperaban 18 periodos oficiales.')
+if abs(official_total-1177.74)>0.001: errors.append('El consumo oficial acumulado no coincide.')
+if abs(detail_total-1178.876)>0.001: errors.append('El consumo detallado acumulado no coincide.')
 if max_abs>3.0: errors.append('La conciliación detalle/oficial supera 3%.')
 if not pdf_ok: errors.append('Hay PDF de fuente inválidos o faltantes.')
 for f in ['gas.js','data/registros.gas.min.js','data/resumenes.gas.min.js']:

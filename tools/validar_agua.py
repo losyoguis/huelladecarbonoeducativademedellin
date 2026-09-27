@@ -51,10 +51,10 @@ for s in official:
         print('PDF NO VÁLIDO:',p)
 
 errors=[]
-if len(records)!=9147: errors.append('La base debe contener 9.147 registros.')
-if len(valid)!=7317: errors.append('Se esperaban 7.317 registros con lectura de agua.')
-if len(official)!=17: errors.append('Se esperaban 17 periodos oficiales.')
-if abs(official_total-1351583.22)>0.01: errors.append('El consumo oficial acumulado no coincide.')
+if len(records)!=9680: errors.append('La base debe contener 9.680 registros.')
+if len(valid)!=7745: errors.append('Se esperaban 7.745 registros con lectura de agua.')
+if len(official)!=18: errors.append('Se esperaban 18 periodos oficiales.')
+if abs(official_total-1427418.37)>0.01: errors.append('El consumo oficial acumulado no coincide.')
 if max_abs>5.0: errors.append('La conciliación detalle/oficial supera 5%.')
 if not pdf_ok: errors.append('Hay PDF de fuente inválidos o faltantes.')
 if not (ROOT/'water.js').exists(): errors.append('Falta water.js.')
