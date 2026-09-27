@@ -1,6 +1,6 @@
 {
-  "name": "simeco2-v121-performance-qc",
-  "version": "121.0.0",
+  "name": "simeco2-v122-performance-qc",
+  "version": "122.0.0",
   "private": true,
   "description": "SiMeCO₂ v121: control de calidad, carga progresiva y sincronización automática optimizada.",
   "scripts": {

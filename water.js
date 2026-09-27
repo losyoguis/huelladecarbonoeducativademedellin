@@ -236,6 +236,7 @@
       const top=rows[0];
       $w('waterConsumptionSummary').innerHTML=top?`<strong>${rows.length} sedes con lectura.</strong> ${period?`Periodo: ${esc(monthLabelWater(period))}.`:'Acumulado de todos los periodos.'} Mayor consumo: <strong>${esc(top.displaySite)}</strong> con <strong>${fmt(top.waterM3)} m³</strong>. Total detallado de la selección: <strong>${fmt(total)} m³</strong>.`:'No hay sedes con lectura de agua para esta selección.';
     }
+    renderWaterRankingChart('waterConsumptionChart',rows,r=>r.waterM3,(r,v)=>`${fmt(v)} m³`,period?`Consumo de ${monthLabelWater(period)}`:'Consumo acumulado de todos los periodos');
     body.innerHTML=visible.length?visible.map((r,i)=>`<tr>
       <td>${start+i+1}</td>
       <td><strong>${esc(r.displaySite)}</strong>${r.displaySite!==r.site?`<small class="invoice-alias">En factura: ${esc(r.site)}</small>`:''}</td>
@@ -329,6 +330,7 @@
         :`<strong>${rows.length} sedes con ahorro neto y reducciones verificables.</strong> Mejor Índice de Gestión del Ahorro de Agua: <strong>${esc(top.displaySite)}</strong> con <strong>${fmt(top.managementScore,1)} puntos</strong>.`
         :'No hay sedes con ahorro verificable para esta selección.';
     }
+    renderWaterRankingChart('waterSavingsChart',rows,r=>selected?r.savingsM3:r.managementScore,(r,v)=>selected?`${fmt(v)} m³`:`${fmt(v,1)} pts`,selected?'Reducción mensual verificada':'Índice de gestión del ahorro');
     body.innerHTML=visible.length?visible.map((r,i)=>{
       const metric=selected?`<strong>↓ ${fmt(r.savingsM3)} m³</strong>`:`<strong>🏆 ${fmt(r.managementScore,1)} pts</strong>`;
       const saving=selected?`${fmt(r.savingsPercent,1)}% menos`:`Ahorro neto ${fmt(r.netSavingsM3)} m³`;

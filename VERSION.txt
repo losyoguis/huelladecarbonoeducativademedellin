@@ -1,1 +1,1 @@
-SiMeCO2 v121 · control de calidad + rendimiento progresivo
+SiMeCO2 v122 · rankings gráficos integrados de Agua y Gas

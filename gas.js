@@ -207,6 +207,20 @@
     drawGasHistory();
   }
 
+  function renderGasRankingChart(id,rows,valueGetter,valueFormatter,subtitle){
+    const host=$w(id);
+    if(!host) return;
+    const top=(rows||[]).slice(0,10);
+    if(!top.length){host.innerHTML='<div class="resource-chart-empty">Sin datos para representar en esta selección.</div>';return;}
+    const values=top.map(valueGetter).map(Number).filter(Number.isFinite);
+    const max=Math.max(...values,0);
+    host.innerHTML=`<div class="resource-chart-head"><div><strong>Ranking gráfico · Top ${top.length}</strong><small>${esc(subtitle)}</small></div><span>Mayor → menor</span></div><div class="resource-chart-grid">${top.map((r,i)=>{
+      const value=Number(valueGetter(r))||0;
+      const width=max>0?Math.max(2,100*value/max):0;
+      return `<div class="resource-chart-row"><div class="resource-chart-name"><b>${i+1}.</b><span title="${esc(r.displaySite)}">${esc(r.displaySite)}</span></div><div class="resource-chart-track"><i style="width:${width.toFixed(2)}%"></i></div><div class="resource-chart-value">${esc(valueFormatter(r,value))}</div></div>`;
+    }).join('')}</div>`;
+  }
+
   function filteredGasConsumptionRows(){
     const period=$w('gasConsumptionPeriod')?.value||'';
     const query=norm($w('gasConsumptionSearch')?.value||'');
@@ -236,6 +250,7 @@
       const top=rows[0];
       $w('gasConsumptionSummary').innerHTML=top?`<strong>${rows.length} sedes con lectura.</strong> ${period?`Periodo: ${esc(monthLabelGas(period))}.`:'Acumulado de todos los periodos.'} Mayor consumo: <strong>${esc(top.displaySite)}</strong> con <strong>${fmt(top.gasM3)} m³</strong>. Total detallado de la selección: <strong>${fmt(total)} m³</strong>.`:'No hay sedes con lectura de gas para esta selección.';
     }
+    renderGasRankingChart('gasConsumptionChart',rows,r=>r.gasM3,(r,v)=>`${fmt(v)} m³`,period?`Consumo de ${monthLabelGas(period)}`:'Consumo acumulado de todos los periodos');
     body.innerHTML=visible.length?visible.map((r,i)=>`<tr>
       <td>${start+i+1}</td>
       <td><strong>${esc(r.displaySite)}</strong>${r.displaySite!==r.site?`<small class="invoice-alias">En factura: ${esc(r.site)}</small>`:''}</td>
@@ -329,6 +344,7 @@
         :`<strong>${rows.length} sedes con ahorro neto y reducciones verificables.</strong> Mejor Índice de Gestión del Ahorro de Gas: <strong>${esc(top.displaySite)}</strong> con <strong>${fmt(top.managementScore,1)} puntos</strong>.`
         :'No hay sedes con ahorro verificable para esta selección.';
     }
+    renderGasRankingChart('gasSavingsChart',rows,r=>selected?r.savingsM3:r.managementScore,(r,v)=>selected?`${fmt(v)} m³`:`${fmt(v,1)} pts`,selected?'Reducción mensual verificada':'Índice de gestión del ahorro');
     body.innerHTML=visible.length?visible.map((r,i)=>{
       const metric=selected?`<strong>↓ ${fmt(r.savingsM3)} m³</strong>`:`<strong>🏆 ${fmt(r.managementScore,1)} pts</strong>`;
       const saving=selected?`${fmt(r.savingsPercent,1)}% menos`:`Ahorro neto ${fmt(r.netSavingsM3)} m³`;
