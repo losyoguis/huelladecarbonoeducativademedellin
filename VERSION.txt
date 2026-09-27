@@ -1,1 +1,1 @@
-SiMeCO2 v124 · corrección rankings Agua/Gas + caché de módulos
+SiMeCO2 v125 · rankings visuales Agua/Gas estilo eléctrico + lógica de ahorro normalizada

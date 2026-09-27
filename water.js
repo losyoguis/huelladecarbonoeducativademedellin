@@ -208,17 +208,12 @@
   }
 
   function renderWaterRankingChart(id,rows,valueGetter,valueFormatter,subtitle){
-    const host=$w(id);
-    if(!host) return;
+    const host=$w(id); if(!host) return;
     const top=(rows||[]).slice(0,10);
     if(!top.length){host.innerHTML='<div class="resource-chart-empty">Sin datos para representar en esta selección.</div>';return;}
-    const values=top.map(valueGetter).map(Number).filter(Number.isFinite);
-    const max=Math.max(...values,0);
-    host.innerHTML=`<div class="resource-chart-head"><div><strong>Ranking gráfico · Top ${top.length}</strong><small>${esc(subtitle)}</small></div><span>Mayor → menor</span></div><div class="resource-chart-grid">${top.map((r,i)=>{
-      const value=Number(valueGetter(r))||0;
-      const width=max>0?Math.max(2,100*value/max):0;
-      return `<div class="resource-chart-row"><div class="resource-chart-name"><b>${i+1}.</b><span title="${esc(r.displaySite)}">${esc(r.displaySite)}</span></div><div class="resource-chart-track"><i style="width:${width.toFixed(2)}%"></i></div><div class="resource-chart-value">${esc(valueFormatter(r,value))}</div></div>`;
-    }).join('')}</div>`;
+    const values=top.map(valueGetter).map(Number).filter(Number.isFinite),max=Math.max(...values,0);
+    const title=id.includes('Savings')?'Ranking de sedes por ahorro de agua':'Ranking de sedes por consumo de agua (m³)';
+    host.innerHTML=`<div class="resource-visual-title"><strong>${esc(title)}</strong><small>${esc(subtitle)} · nombre y dirección · vista de ${top.length} sedes.</small></div><div class="resource-chart-grid resource-chart-grid-electric">${top.map((r,i)=>{const value=Number(valueGetter(r))||0,width=max>0?Math.max(2,100*value/max):0;return `<div class="resource-chart-row resource-chart-row-electric"><div class="resource-chart-name"><b>${i+1}.</b><span title="${esc(r.displaySite)}">${esc(r.displaySite)}</span></div><div class="resource-chart-address" title="${esc(r.address||'Dirección no disponible')}">🏫 ${esc(r.address||'Dirección no disponible')}</div><div class="resource-chart-track"><i style="width:${width.toFixed(2)}%"></i></div><div class="resource-chart-value">${esc(valueFormatter(r,value))}</div></div>`;}).join('')}</div>`;
   }
 
   function filteredConsumptionRows(){
