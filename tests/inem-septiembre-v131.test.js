@@ -1,0 +1,11 @@
+const fs=require('fs');const assert=require('assert');const vm=require('vm');
+const html=fs.readFileSync('index.html','utf8');const app=fs.readFileSync('app.js','utf8');
+const source=fs.readFileSync('data/inem/factura-septiembre-2026.js','utf8');const context={window:{}};vm.runInNewContext(source,context);
+const invoice=context.window.SIMECO_INEM_SEPTEMBER_INVOICE;
+assert.strictEqual(invoice.invoicePeriod,'2026-09');assert.strictEqual(invoice.consumptionPeriod,'2026-08');assert.strictEqual(invoice.energyKwh,42443.21);
+assert(fs.existsSync(invoice.pdfUrl));assert(html.includes('id="inemInvoiceNotice"'));assert(html.includes('factura-septiembre-2026.js'));
+assert(app.includes('function updateInemInvoiceNotice()'));assert(app.includes('updateInemInvoiceNotice();'));
+const data=JSON.parse(fs.readFileSync('data/registros.json','utf8')).records.filter(r=>r.site==='Inem J F De Rpo'&&r.address==='Cr 48 Cl 1 -125');
+assert.strictEqual(data.filter(r=>r.period==='2026-08'&&r.energyKwh===42443.21).length,1);
+assert(!data.some(r=>r.period==='2026-09'&&r.energyKwh!=null),'El consumo de septiembre NO fue acreditado');
+console.log('PASS v131: factura septiembre visible, consumo agosto único, septiembre N.I.');
