@@ -13,9 +13,9 @@
   <meta name="description" content="Sistema interactivo para medir, interpretar y gestionar la huella de carbono educativa a partir del consumo de energía eléctrica." />
   <link rel="icon" type="image/png" href="assets/los-yoguis-logo-optimized.png" />
   <link rel="apple-touch-icon" href="assets/los-yoguis-logo-optimized.png" />
-  <link rel="preload" href="data/registros.electricidad.min.js?v=110-document-buttons" as="script" fetchpriority="high" />
-  <link rel="preload" href="data/resumenes.electricidad.min.js?v=110-document-buttons" as="script" fetchpriority="high" />
-  <link rel="stylesheet" href="styles.css?v=110-document-buttons" />
+  <link rel="preload" href="data/registros.electricidad.min.js?v=131-inem-septiembre" as="script" fetchpriority="high" />
+  <link rel="preload" href="data/resumenes.electricidad.min.js?v=131-inem-septiembre" as="script" fetchpriority="high" />
+  <link rel="stylesheet" href="styles.css?v=131-inem-septiembre" />
 </head>
 <body>
   <div class="invoice-loading active" id="invoiceLoading" role="status" aria-live="assertive" aria-hidden="false">
@@ -275,6 +275,7 @@
         <button id="compareBtn" class="primary">Comparar</button>
         <button id="downloadHistoryPdfBtn" class="secondary pdf-only-action">Descargar histórico PDF</button>
       </div>
+      <div id="inemInvoiceNotice" class="history-source-note" role="note" hidden></div>
       <div id="historyDataSourceNote" class="history-source-note" role="note"></div>
       <div id="compareNarrative" class="interpretation-box">Selecciona dos periodos para generar una interpretación automática.</div>
       <div id="compareResult" class="compare-result"></div>
@@ -1335,8 +1336,9 @@
   </script>
 
   <!-- v87: datos eléctricos ultracompactos cargados antes de app.js -->
-  <script src="data/registros.electricidad.min.js?v=110-document-buttons" fetchpriority="high"></script>
-  <script src="data/inem/registros.inem.js?v=110-document-buttons" fetchpriority="high"></script>
+  <script src="data/registros.electricidad.min.js?v=131-inem-septiembre" fetchpriority="high"></script>
+  <script src="data/inem/registros.inem.js?v=131-inem-septiembre" fetchpriority="high"></script>
+  <script src="data/inem/factura-septiembre-2026.js?v=131-inem-septiembre" fetchpriority="high"></script>
   <script>
     (() => {
       const records = Array.isArray(window.SIMECO_REGISTROS) ? window.SIMECO_REGISTROS.length : 0;
@@ -1375,10 +1377,10 @@
       }
     })();
   </script>
-  <script src="data/resumenes.electricidad.min.js?v=110-document-buttons" fetchpriority="high"></script>
-  <script defer src="data/excepciones-servicios.js?v=110-document-buttons"></script>
+  <script src="data/resumenes.electricidad.min.js?v=131-inem-septiembre" fetchpriority="high"></script>
+  <script defer src="data/excepciones-servicios.js?v=131-inem-septiembre"></script>
 
 
-  <script defer src="app.js?v=110-document-buttons" fetchpriority="high"></script>
+  <script defer src="app.js?v=131-inem-septiembre" fetchpriority="high"></script>
 </body>
 </html>

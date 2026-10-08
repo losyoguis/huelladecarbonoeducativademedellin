@@ -1953,10 +1953,23 @@ function comparePeriods(){
   drawChart(agg); updateHistorySourceNote();
 }
 
+function updateInemInvoiceNotice(){
+  const panel=$('inemInvoiceNotice');
+  if(!panel)return;
+  const selected=String($('compareSite')?.selectedOptions?.[0]?.textContent||'');
+  const isInem=/inem/i.test(selected) && /48|j f de rpo|jos[eé] f[eé]lix/i.test(selected);
+  if(!isInem){panel.hidden=true;panel.innerHTML='';return;}
+  const invoice=window.SIMECO_INEM_SEPTEMBER_INVOICE;
+  if(!invoice){panel.hidden=true;return;}
+  panel.hidden=false;
+  panel.innerHTML=`<strong>Factura INEM de septiembre de 2026 (disponible)</strong><p>Emitida el ${escapeHtml(invoice.issued)}; corresponde al <strong>consumo del 1 al 31 de agosto de 2026</strong>: <strong>${fmt(invoice.energyKwh)} kWh</strong>. En la gráfica y el ranking este consumo se cuenta <strong>una sola vez, en agosto</strong>. La lectura del consumo real de septiembre permanece <strong>sin informar (N.I.)</strong> hasta disponer de la factura siguiente.</p><a href="${escapeHtml(invoice.pdfUrl)}" target="_blank" rel="noopener noreferrer" download="9-2026-Septiembre.pdf">⬇ Descargar factura de septiembre de 2026</a>`;
+}
+
 function refreshHistoryModule(options={}){
   try{
     renderCompareControls({keepSite:true});
     comparePeriods();
+    updateInemInvoiceNotice();
     syncAllSearchableSelects();
     requestAnimationFrame(()=>{
       const data=comparisonGroups($('compareMode')?.value||'month');

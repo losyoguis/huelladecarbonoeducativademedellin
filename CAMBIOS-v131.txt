@@ -1,0 +1,11 @@
+SiMeCO₂ v131 – INEM: factura septiembre 2026
+
+- Se mantiene septiembre de 2026 como MES DE FACTURACIÓN, no como una lectura de energía de septiembre.
+- Los 42.443,21 kWh consignados en esta factura corresponden a AGOSTO de 2026 (01–31/08/2026).
+- En Histórico, al seleccionar INEM, aparece aviso con enlace de descarga de factura de septiembre de 2026 y trazabilidad del consumo.
+- El consumo real de septiembre de 2026 se mantiene N.I. mientras no exista su factura.
+- NO se incorpora 5.739 kWh de una fuente distinta al contrato INEM 10887186.
+- La serie eléctrica de 16 meses, rankings, gráficos y planes conserva el valor único de agosto.
+
+Archivos añadidos: data/inem/factura-septiembre-2026.js, CAMBIOS-v131.txt, tests/inem-septiembre-v131.test.js.
+Archivos modificados: app.js, index.html, VERSION.txt.
